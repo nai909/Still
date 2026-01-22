@@ -4181,9 +4181,9 @@ function Philos() {
   const lastTouchY = useRef(0);
   const containerRef = useRef(null);
 
-  // Typewriter effect state
-  const [revealedChars, setRevealedChars] = useState(0);
-  const typewriterRef = useRef(null);
+  // Text reveal state (gentle fade-in)
+  const [textRevealed, setTextRevealed] = useState(false);
+  const revealTimeoutRef = useRef(null);
 
   // ============================================================================
   // BREATH SESSION STATE (for dedicated breathwork view)
@@ -4361,45 +4361,26 @@ function Philos() {
   const nextQuote = filteredQuotes[(currentIndex + 1) % Math.max(filteredQuotes.length, 1)];
 
   // ============================================================================
-  // TYPEWRITER EFFECT - Letters appear like handwriting
+  // TEXT REVEAL - Gentle fade-in, no anxiety
   // ============================================================================
 
   useEffect(() => {
     if (!currentQuote) return;
 
-    // Clear any existing animation
-    if (typewriterRef.current) {
-      clearInterval(typewriterRef.current);
+    // Clear any existing timeout
+    if (revealTimeoutRef.current) {
+      clearTimeout(revealTimeoutRef.current);
     }
 
-    // Reset to 0 and start revealing
-    setRevealedChars(0);
-    const text = currentQuote.text;
-    let charIndex = 0;
-
-    // Slower, more meditative timing - like handwriting
-    const getDelay = (char) => {
-      if (char === ' ') return 50;
-      if (['.', '—', '–'].includes(char)) return 400;  // Long pause for periods
-      if ([',', ';', ':'].includes(char)) return 250;  // Medium pause
-      if (['?', '!'].includes(char)) return 500;       // Longest pause
-      return 55 + Math.random() * 35; // 55-90ms base speed
-    };
-
-    const revealNext = () => {
-      if (charIndex < text.length) {
-        charIndex++;
-        setRevealedChars(charIndex);
-        typewriterRef.current = setTimeout(revealNext, getDelay(text[charIndex]));
-      }
-    };
-
-    // Small delay before starting (let the smoke clear)
-    typewriterRef.current = setTimeout(revealNext, 400);
+    // Start hidden, then fade in after a brief moment
+    setTextRevealed(false);
+    revealTimeoutRef.current = setTimeout(() => {
+      setTextRevealed(true);
+    }, 100);
 
     return () => {
-      if (typewriterRef.current) {
-        clearTimeout(typewriterRef.current);
+      if (revealTimeoutRef.current) {
+        clearTimeout(revealTimeoutRef.current);
       }
     };
   }, [currentIndex, currentQuote]);
@@ -4725,16 +4706,20 @@ function Philos() {
                 margin: 0,
                 letterSpacing: '0.02em',
                 textShadow: '0 2px 15px rgba(0,0,0,0.4)',
+                opacity: textRevealed ? 1 : 0,
+                transform: textRevealed ? 'translateY(0)' : 'translateY(8px)',
+                transition: 'opacity 0.8s ease-out, transform 0.8s ease-out',
               }}>
-                {currentQuote.text.slice(0, revealedChars)}
+                {currentQuote.text}
               </blockquote>
 
               <div className="quote-meta" style={{
                 marginTop: '2rem',
-                transition: 'opacity 0.8s ease-out',
-                opacity: revealedChars >= currentQuote.text.length
+                transition: 'opacity 0.8s ease-out 0.3s, transform 0.8s ease-out 0.3s',
+                opacity: textRevealed
                   ? Math.max(0, 1 - Math.abs(displayProgress) * 3)
                   : 0,
+                transform: textRevealed ? 'translateY(0)' : 'translateY(8px)',
               }}>
                 <div style={{
                   fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
