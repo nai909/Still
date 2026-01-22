@@ -3597,9 +3597,622 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, getInteractionInfluence, drawRipples]);
 
-  // ========== JELLYFISH MODE ==========
+  // ========== JELLYFISH MODE (THREE.JS 3D) ==========
   React.useEffect(() => {
-    if (currentMode !== 'jellyfish' || !canvasRef.current) return;
+    if (currentMode !== 'jellyfish' || !containerRef.current) return;
+
+    // === COLOR SCHEME ===
+    const COLORS = {
+      bell: new THREE.Color('#4ECDC4'),
+      tentacle: new THREE.Color('#2A9D8F'),
+      accent: new THREE.Color('#7FFFE5'),
+      dim: new THREE.Color('#1A3A38'),
+      background: new THREE.Color('#000000')
+    };
+
+    // === STATE ===
+    let breathPhase = 'exhale';
+    let breathProgress = 1.0;
+    let isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let lastInteractionTime = 0;
+    let isAutoRotating = false;
+    let mousePos = new THREE.Vector2();
+    let mouse3D = new THREE.Vector3();
+    const raycaster = new THREE.Raycaster();
+    const clock = new THREE.Clock();
+    let bellFlashIntensity = 0;
+    let bloomStrength = 0.4;
+
+    // === SCENE SETUP ===
+    const scene = new THREE.Scene();
+    scene.background = COLORS.background;
+    scene.fog = new THREE.FogExp2(0x000000, 0.015);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 5);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    containerRef.current.appendChild(renderer.domElement);
+
+    // === ORBIT CONTROLS ===
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = 0.3;
+    controls.maxDistance = 15;
+    controls.enablePan = true;
+    controls.autoRotate = false;
+    controls.autoRotateSpeed = 0.3;
+
+    // === POST-PROCESSING ===
+    const composer = new THREE.EffectComposer(renderer);
+    const renderPass = new THREE.RenderPass(scene, camera);
+    composer.addPass(renderPass);
+
+    const bloomPass = new THREE.UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      0.6, 0.5, 0.3
+    );
+    composer.addPass(bloomPass);
+
+    // FXAA
+    const fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
+    fxaaPass.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+    composer.addPass(fxaaPass);
+
+    // Vignette shader
+    const vignetteShader = {
+      uniforms: {
+        tDiffuse: { value: null },
+        darkness: { value: 0.4 },
+        offset: { value: 0.5 }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D tDiffuse;
+        uniform float darkness;
+        uniform float offset;
+        varying vec2 vUv;
+        void main() {
+          vec4 color = texture2D(tDiffuse, vUv);
+          vec2 uv = (vUv - vec2(0.5)) * 2.0;
+          float vignette = 1.0 - smoothstep(offset, offset + 0.5, length(uv));
+          color.rgb *= mix(1.0 - darkness, 1.0, vignette);
+          gl_FragColor = color;
+        }
+      `
+    };
+    const vignettePass = new THREE.ShaderPass(vignetteShader);
+    composer.addPass(vignettePass);
+
+    // === JELLYFISH GROUP ===
+    const jellyfishGroup = new THREE.Group();
+    scene.add(jellyfishGroup);
+
+    // === BELL GEOMETRY (Parametric hemisphere with ruffled edge) ===
+    const bellGeometry = new THREE.BufferGeometry();
+    const bellSegments = 64;
+    const bellRings = 32;
+    const bellVertices = [];
+    const bellIndices = [];
+    const bellUvs = [];
+
+    for (let ring = 0; ring <= bellRings; ring++) {
+      const phi = (ring / bellRings) * Math.PI * 0.5; // Hemisphere
+      for (let seg = 0; seg <= bellSegments; seg++) {
+        const theta = (seg / bellSegments) * Math.PI * 2;
+
+        // Ruffled edge at rim
+        let radius = 1.0;
+        if (ring > bellRings * 0.7) {
+          const edgeFactor = (ring - bellRings * 0.7) / (bellRings * 0.3);
+          radius *= 1 + Math.sin(theta * 8) * 0.1 * edgeFactor + Math.sin(theta * 13) * 0.05 * edgeFactor;
+        }
+
+        const x = Math.sin(phi) * Math.cos(theta) * radius;
+        const y = -Math.cos(phi);
+        const z = Math.sin(phi) * Math.sin(theta) * radius;
+
+        bellVertices.push(x, y, z);
+        bellUvs.push(seg / bellSegments, ring / bellRings);
+      }
+    }
+
+    for (let ring = 0; ring < bellRings; ring++) {
+      for (let seg = 0; seg < bellSegments; seg++) {
+        const a = ring * (bellSegments + 1) + seg;
+        const b = a + bellSegments + 1;
+        bellIndices.push(a, b, a + 1);
+        bellIndices.push(b, b + 1, a + 1);
+      }
+    }
+
+    bellGeometry.setAttribute('position', new THREE.Float32BufferAttribute(bellVertices, 3));
+    bellGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(bellUvs, 2));
+    bellGeometry.setIndex(bellIndices);
+    bellGeometry.computeVertexNormals();
+
+    const bellMaterial = new THREE.MeshBasicMaterial({
+      color: COLORS.bell,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.8
+    });
+    const bell = new THREE.Mesh(bellGeometry, bellMaterial);
+    jellyfishGroup.add(bell);
+
+    // Inner bell for depth
+    const innerBellGeometry = bellGeometry.clone();
+    innerBellGeometry.scale(0.85, 0.85, 0.85);
+    const innerBellMaterial = new THREE.MeshBasicMaterial({
+      color: COLORS.bell,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.3
+    });
+    const innerBell = new THREE.Mesh(innerBellGeometry, innerBellMaterial);
+    jellyfishGroup.add(innerBell);
+
+    // === TENTACLES ===
+    const tentacles = [];
+    const tentacleCount = 12;
+    const tentacleLengths = [1.5, 1.5, 1.5, 1.5, 2.2, 2.2, 2.2, 2.2, 3.0, 3.0, 3.0, 3.0];
+    const tentacleSegments = 40;
+
+    for (let i = 0; i < tentacleCount; i++) {
+      const angle = (i / tentacleCount) * Math.PI * 2;
+      const attachRadius = 0.95;
+      const attachX = Math.sin(angle) * attachRadius;
+      const attachZ = Math.cos(angle) * attachRadius;
+      const length = tentacleLengths[i];
+
+      const points = [];
+      const basePoints = [];
+      const targetPoints = [];
+
+      for (let j = 0; j <= tentacleSegments; j++) {
+        const t = j / tentacleSegments;
+        const baseY = -0.2 - t * length;
+        const sway = Math.sin(angle + t * 3) * 0.3 * t;
+
+        const point = new THREE.Vector3(
+          attachX + sway,
+          baseY,
+          attachZ + Math.cos(angle + t * 2) * 0.2 * t
+        );
+        points.push(point.clone());
+        basePoints.push(point.clone());
+        targetPoints.push(point.clone());
+      }
+
+      const curve = new THREE.CatmullRomCurve3(points);
+      const tubeGeometry = new THREE.TubeGeometry(curve, tentacleSegments, 0.02, 8, false);
+      const tubeMaterial = new THREE.MeshBasicMaterial({
+        color: COLORS.tentacle,
+        transparent: true,
+        opacity: 0.7
+      });
+      const tentacleMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
+      jellyfishGroup.add(tentacleMesh);
+
+      tentacles.push({
+        mesh: tentacleMesh,
+        points,
+        basePoints,
+        targetPoints,
+        angle,
+        length,
+        noiseOffset: Math.random() * 1000
+      });
+    }
+
+    // === ORAL ARMS (4 shorter, thicker, ruffled) ===
+    const oralArms = [];
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      const attachRadius = 0.2;
+      const points = [];
+
+      for (let j = 0; j <= 20; j++) {
+        const t = j / 20;
+        const spiral = t * Math.PI * 2;
+        points.push(new THREE.Vector3(
+          Math.cos(angle) * attachRadius + Math.sin(spiral) * 0.15 * t,
+          -0.3 - t * 1.2,
+          Math.sin(angle) * attachRadius + Math.cos(spiral) * 0.15 * t
+        ));
+      }
+
+      const curve = new THREE.CatmullRomCurve3(points);
+      const tubeGeometry = new THREE.TubeGeometry(curve, 20, 0.04, 8, false);
+      const tubeMaterial = new THREE.MeshBasicMaterial({
+        color: COLORS.tentacle,
+        transparent: true,
+        opacity: 0.8
+      });
+      const oralMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
+      jellyfishGroup.add(oralMesh);
+      oralArms.push({ mesh: oralMesh, points, angle, noiseOffset: Math.random() * 1000 });
+    }
+
+    // === BIOLUMINESCENT PARTICLES ===
+    const particleCount = 50;
+    const particlesGeometry = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleSizes = new Float32Array(particleCount);
+    const particlePhases = new Float32Array(particleCount);
+
+    for (let i = 0; i < particleCount; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.random() * Math.PI * 0.5;
+      const r = 0.3 + Math.random() * 0.5;
+      particlePositions[i * 3] = Math.sin(phi) * Math.cos(theta) * r;
+      particlePositions[i * 3 + 1] = -Math.cos(phi) * r;
+      particlePositions[i * 3 + 2] = Math.sin(phi) * Math.sin(theta) * r;
+      particleSizes[i] = 0.02 + Math.random() * 0.03;
+      particlePhases[i] = Math.random() * Math.PI * 2;
+    }
+
+    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particlesMaterial = new THREE.PointsMaterial({
+      color: COLORS.accent,
+      size: 0.05,
+      transparent: true,
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true
+    });
+    const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+    jellyfishGroup.add(particles);
+
+    // === SIMPLE NOISE FUNCTION ===
+    const noise = (x, y, z) => {
+      const n = Math.sin(x * 1.3 + y * 2.1) * Math.cos(y * 1.7 + z * 2.3) * Math.sin(z * 1.9 + x * 2.7);
+      return n * 0.5 + 0.5;
+    };
+
+    // === BREATH SYNC FUNCTION (exported) ===
+    const setBreathePhase = (phase, progress) => {
+      breathPhase = phase;
+      breathProgress = progress;
+    };
+
+    // === UPDATE FUNCTION ===
+    const updateJellyfish = (deltaTime, elapsed) => {
+      // Bell animation based on breath
+      let bellScaleY = 1.0;
+      let bellScaleXZ = 1.0;
+      let bellY = 0;
+      let colorLerp = 0;
+
+      if (breathPhase === 'inhale') {
+        bellScaleY = 1.0 + breathProgress * 0.15;
+        bellScaleXZ = 1.0 - breathProgress * 0.08;
+        bellY = breathProgress * 0.1;
+        colorLerp = breathProgress;
+        bloomStrength = 0.4 + breathProgress * 0.4;
+      } else if (breathPhase === 'hold') {
+        const pulse = Math.sin(elapsed * 3) * 0.02;
+        bellScaleY = 1.15 + pulse;
+        bellScaleXZ = 0.92 - pulse * 0.5;
+        bellY = 0.1;
+        colorLerp = 1;
+        bloomStrength = 0.8;
+      } else { // exhale
+        bellScaleY = 1.15 - breathProgress * 0.15;
+        bellScaleXZ = 0.92 + breathProgress * 0.08;
+        bellY = 0.1 - breathProgress * 0.15;
+        colorLerp = 1 - breathProgress;
+        bloomStrength = 0.8 - breathProgress * 0.4;
+      }
+
+      // Apply bell transformations
+      bell.scale.set(bellScaleXZ, bellScaleY, bellScaleXZ);
+      innerBell.scale.set(bellScaleXZ * 0.85, bellScaleY * 0.85, bellScaleXZ * 0.85);
+      jellyfishGroup.position.y = bellY;
+
+      // Color transition
+      const currentColor = new THREE.Color().lerpColors(COLORS.dim, COLORS.bell, colorLerp);
+      bell.material.color.copy(currentColor);
+      innerBell.material.color.copy(currentColor);
+
+      // Bell flash decay
+      if (bellFlashIntensity > 0) {
+        bellFlashIntensity *= 0.95;
+        bell.material.color.lerp(COLORS.accent, bellFlashIntensity);
+      }
+
+      // Update bloom
+      bloomPass.strength = bloomStrength;
+
+      // Tentacle animation
+      const tentacleDelay = 0.3;
+      const delayedProgress = Math.max(0, breathProgress - tentacleDelay);
+
+      tentacles.forEach((tentacle, i) => {
+        const noiseVal = noise(elapsed * 0.3 + tentacle.noiseOffset, i * 0.5, 0);
+        const swayAmp = isReducedMotion ? 0.05 : (0.1 + noiseVal * 0.1);
+
+        for (let j = 0; j < tentacle.points.length; j++) {
+          const t = j / tentacle.points.length;
+          const base = tentacle.basePoints[j];
+
+          // Sway based on noise
+          const swayX = Math.sin(elapsed * 0.5 + j * 0.2 + tentacle.angle) * swayAmp * t;
+          const swayZ = Math.cos(elapsed * 0.4 + j * 0.3 + tentacle.noiseOffset) * swayAmp * t;
+
+          // Breath response - flare on exhale, stream on inhale
+          let breathOffset = 0;
+          if (breathPhase === 'exhale') {
+            breathOffset = delayedProgress * 0.3 * t;
+          } else if (breathPhase === 'inhale') {
+            breathOffset = -delayedProgress * 0.2 * t;
+          }
+
+          // Mouse avoidance
+          let avoidX = 0, avoidZ = 0;
+          const pointWorld = tentacle.points[j].clone();
+          jellyfishGroup.localToWorld(pointWorld);
+          const dist = pointWorld.distanceTo(mouse3D);
+          if (dist < 1.5) {
+            const pushStrength = (1.5 - dist) * 0.5 * t;
+            const dir = pointWorld.clone().sub(mouse3D).normalize();
+            avoidX = dir.x * pushStrength;
+            avoidZ = dir.z * pushStrength;
+          }
+
+          tentacle.targetPoints[j].set(
+            base.x + swayX + avoidX + breathOffset * Math.cos(tentacle.angle),
+            base.y + (breathPhase === 'exhale' ? breathOffset * 0.5 : -breathOffset * 0.3),
+            base.z + swayZ + avoidZ + breathOffset * Math.sin(tentacle.angle)
+          );
+
+          // Smooth lerp
+          tentacle.points[j].lerp(tentacle.targetPoints[j], 0.04);
+        }
+
+        // Rebuild tentacle geometry
+        const curve = new THREE.CatmullRomCurve3(tentacle.points);
+        const newGeometry = new THREE.TubeGeometry(curve, tentacleSegments, 0.02 * (1 - 0.5 * (breathPhase === 'exhale' ? breathProgress : 0)), 8, false);
+        tentacle.mesh.geometry.dispose();
+        tentacle.mesh.geometry = newGeometry;
+
+        // Update tentacle color
+        const tentacleColor = new THREE.Color().lerpColors(COLORS.dim, COLORS.tentacle, colorLerp);
+        tentacle.mesh.material.color.copy(tentacleColor);
+      });
+
+      // Oral arms animation
+      oralArms.forEach((arm, i) => {
+        for (let j = 1; j < arm.points.length; j++) {
+          const t = j / arm.points.length;
+          const sway = Math.sin(elapsed * 0.3 + j * 0.4 + arm.noiseOffset) * 0.08 * t;
+          arm.points[j].x += sway * 0.01;
+          arm.points[j].z += Math.cos(elapsed * 0.25 + j * 0.3) * 0.08 * t * 0.01;
+        }
+        const curve = new THREE.CatmullRomCurve3(arm.points);
+        const newGeometry = new THREE.TubeGeometry(curve, 20, 0.04, 8, false);
+        arm.mesh.geometry.dispose();
+        arm.mesh.geometry = newGeometry;
+        arm.mesh.material.color.copy(new THREE.Color().lerpColors(COLORS.dim, COLORS.tentacle, colorLerp));
+      });
+
+      // Particle shimmer
+      const positions = particles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        const shimmer = Math.sin(elapsed * 2 + particlePhases[i]) * 0.5 + 0.5;
+        particleSizes[i] = (0.02 + shimmer * 0.03) * (0.5 + colorLerp * 0.5);
+      }
+      particles.material.opacity = 0.3 + colorLerp * 0.5;
+      particles.geometry.attributes.position.needsUpdate = true;
+
+      // Ambient drift
+      if (!isReducedMotion) {
+        jellyfishGroup.position.x += Math.sin(elapsed * 0.1) * 0.0002;
+        jellyfishGroup.position.z += Math.cos(elapsed * 0.08) * 0.0002;
+      }
+
+      // Auto-rotate after idle
+      const now = Date.now();
+      if (now - lastInteractionTime > 8000 && !isReducedMotion) {
+        if (!isAutoRotating) {
+          isAutoRotating = true;
+          controls.autoRotate = true;
+        }
+      }
+
+      // Fog density based on breath
+      scene.fog.density = breathPhase === 'exhale' ? 0.015 + breathProgress * 0.005 : 0.015 - colorLerp * 0.003;
+    };
+
+    // === INTERACTION HANDLERS ===
+    const onMouseMove = (event) => {
+      mousePos.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mousePos.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mousePos, camera);
+      const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+      raycaster.ray.intersectPlane(plane, mouse3D);
+
+      lastInteractionTime = Date.now();
+      if (isAutoRotating) {
+        isAutoRotating = false;
+        controls.autoRotate = false;
+      }
+    };
+
+    const onTouchMove = (event) => {
+      if (event.touches.length > 0) {
+        const touch = event.touches[0];
+        mousePos.x = (touch.clientX / window.innerWidth) * 2 - 1;
+        mousePos.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mousePos, camera);
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        raycaster.ray.intersectPlane(plane, mouse3D);
+      }
+      lastInteractionTime = Date.now();
+    };
+
+    const onClick = (event) => {
+      raycaster.setFromCamera(mousePos, camera);
+      const intersects = raycaster.intersectObject(bell);
+      if (intersects.length > 0) {
+        bellFlashIntensity = 1.0;
+        if (navigator.vibrate) navigator.vibrate(10);
+      }
+      lastInteractionTime = Date.now();
+    };
+
+    const onDoubleClick = () => {
+      // Reset camera
+      const startPos = camera.position.clone();
+      const startTarget = controls.target.clone();
+      const endPos = new THREE.Vector3(0, 0, 5);
+      const endTarget = new THREE.Vector3(0, 0, 0);
+
+      let t = 0;
+      const animateReset = () => {
+        t += 0.02;
+        if (t >= 1) {
+          camera.position.copy(endPos);
+          controls.target.copy(endTarget);
+          return;
+        }
+        const ease = 1 - Math.pow(1 - t, 3);
+        camera.position.lerpVectors(startPos, endPos, ease);
+        controls.target.lerpVectors(startTarget, endTarget, ease);
+        requestAnimationFrame(animateReset);
+      };
+      animateReset();
+    };
+
+    const onKeyDown = (event) => {
+      const rotateAmount = 0.1;
+      switch(event.key) {
+        case 'ArrowLeft':
+          camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotateAmount);
+          break;
+        case 'ArrowRight':
+          camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotateAmount);
+          break;
+        case 'ArrowUp':
+          camera.position.y += 0.2;
+          break;
+        case 'ArrowDown':
+          camera.position.y -= 0.2;
+          break;
+        case '+':
+        case '=':
+          camera.position.multiplyScalar(0.9);
+          break;
+        case '-':
+          camera.position.multiplyScalar(1.1);
+          break;
+        case ' ':
+          onDoubleClick();
+          break;
+      }
+      lastInteractionTime = Date.now();
+    };
+
+    // === RESIZE HANDLER ===
+    const onResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
+      fxaaPass.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+    };
+
+    // === ANIMATION LOOP ===
+    let animationId;
+    const animate = () => {
+      animationId = requestAnimationFrame(animate);
+
+      const deltaTime = clock.getDelta();
+      const elapsed = clock.getElapsedTime();
+
+      // Update breath from app's breath cycle
+      const breathCycle = getBreathPhase(elapsed);
+      if (breathCycle < 0.45) {
+        setBreathePhase('inhale', breathCycle / 0.45);
+      } else if (breathCycle < 0.55) {
+        setBreathePhase('hold', (breathCycle - 0.45) / 0.1);
+      } else {
+        setBreathePhase('exhale', (breathCycle - 0.55) / 0.45);
+      }
+
+      updateJellyfish(deltaTime, elapsed);
+      controls.update();
+      composer.render();
+    };
+
+    // === EVENT LISTENERS ===
+    window.addEventListener('resize', onResize);
+    renderer.domElement.addEventListener('mousemove', onMouseMove);
+    renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: true });
+    renderer.domElement.addEventListener('click', onClick);
+    renderer.domElement.addEventListener('dblclick', onDoubleClick);
+    window.addEventListener('keydown', onKeyDown);
+
+    // Start animation
+    animate();
+
+    // === CLEANUP ===
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', onResize);
+      renderer.domElement.removeEventListener('mousemove', onMouseMove);
+      renderer.domElement.removeEventListener('touchmove', onTouchMove);
+      renderer.domElement.removeEventListener('click', onClick);
+      renderer.domElement.removeEventListener('dblclick', onDoubleClick);
+      window.removeEventListener('keydown', onKeyDown);
+
+      // Dispose geometries and materials
+      bell.geometry.dispose();
+      bell.material.dispose();
+      innerBell.geometry.dispose();
+      innerBell.material.dispose();
+      tentacles.forEach(t => {
+        t.mesh.geometry.dispose();
+        t.mesh.material.dispose();
+      });
+      oralArms.forEach(a => {
+        a.mesh.geometry.dispose();
+        a.mesh.material.dispose();
+      });
+      particles.geometry.dispose();
+      particles.material.dispose();
+
+      composer.dispose();
+      renderer.dispose();
+
+      if (containerRef.current && renderer.domElement.parentNode === containerRef.current) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
+    };
+  }, [currentMode]);
+
+  // ========== JELLYFISH MODE (LEGACY 2D - keeping for reference) ==========
+  // This is the original 2D canvas jellyfish - now replaced by Three.js version above
+  /*
+  React.useEffect(() => {
+    if (currentMode !== 'jellyfish_2d' || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -4321,6 +4934,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
   }, [currentMode, getInteractionInfluence, drawRipples]);
+  */
 
   // ========== INK IN WATER MODE ==========
   React.useEffect(() => {
