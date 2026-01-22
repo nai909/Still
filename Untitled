@@ -1,0 +1,141 @@
+- The "fill" is a brightness/saturation increase, like blood oxygenating
+- Unfilled = dimmer (#2A7A75), Filled = bright (#4ECDC4)
+- Transition should be smooth gradient along each branch segment, not sudden
+
+**On HOLD-IN:**
+- Everything at full brightness
+- Alveoli clusters pulse gently (scale 1.0 → 1.05 → 1.0, slow)
+- Subtle "shimmer" at endpoints — oxygen exchange happening
+
+**On EXHALE (0 → 1 progress):**
+- Reverse the flow — alveoli dim first, then branches, then trunk
+- Same staggered timing but inverted
+- Color shifts slightly toward cooler/dimmer as CO2 leaves
+
+**On HOLD-OUT:**
+- System at rest, baseline dim glow
+- Very subtle ambient pulse so it still feels alive
+- Ready for next inhale
+
+### 2. ALVEOLI BLOOM EFFECT
+
+When oxygen "arrives" at each alveoli cluster:
+- Brief brightness spike (1.0 → 1.5 → 1.0 emissive intensity over 300ms)
+- Subtle scale pop (1.0 → 1.08 → 1.0)
+- Creates a "ripple" effect as breath reaches the edges
+- Should feel like tiny lights turning on in sequence
+
+### 3. TRACHEA ENTRY GLOW
+
+The top center where breath enters needs emphasis:
+- Slightly brighter glow at the entry point
+- On inhale start, brief "flash" as breath begins (like air rushing in)
+- Visual focal point that draws eye to where the journey begins
+
+### 4. PARTICLE OXYGEN DOTS (Optional layer)
+
+Tiny glowing specs that travel through the branches:
+```javascript
+{
+  count: 50-100 particles,
+  size: 2-4 pixels,
+  color: #4ECDC4 with additive blending,
+  behavior: Follow branch paths from trunk to alveoli on inhale,
+  speed: Matched to breath progress,
+  fade: Particles fade in at trunk, fade out at alveoli
+}
+```
+- Particles should follow the actual branch geometry, not random paths
+- Creates sense of flow/movement through the system
+- Should be subtle — enhancement, not distraction
+
+### 5. LUNG OUTLINE REFINEMENT
+
+Current outline is visible — make it more subtle:
+- Reduce opacity to 0.1-0.15 (barely visible)
+- Or remove entirely and let the branches define the lung shape
+- If keeping, make it respond to breath (slight expand on inhale, contract on exhale)
+
+### 6. ANATOMICAL ASYMMETRY
+
+Real lungs are asymmetric:
+- Right lung: 3 lobes (larger)
+- Left lung: 2 lobes (smaller, makes room for heart)
+- Adjust branch distribution to reflect this
+- Not critical but adds subtle realism
+
+### 7. UI REFINEMENTS
+
+**Countdown number:**
+- Reduce size by 20%
+- Increase transparency (opacity 0.5)
+- Or replace with subtle progress arc around the lungs
+
+**"GENTLE CALM" label:**
+- This is the breath pattern name, yes?
+- Make smaller and dimmer (opacity 0.4)
+- Position top right corner or bottom, away from the visual
+
+**"BREATHE IN" text:**
+- Good size and position
+- Add subtle fade transition when switching phases (not instant swap)
+- Letter-spacing to match "STILL" logo style
+
+### 8. SHADER IMPLEMENTATION
+
+For the progressive fill, use a custom shader on branch segments:
+```glsl
+uniform float breathProgress;     // 0-1 from breath sync
+uniform float depthLevel;         // Which branch depth (0-5)
+uniform float branchPosition;     // 0-1 along this branch segment
+uniform vec3 colorDim;            // #2A7A75
+uniform vec3 colorBright;         // #4ECDC4
+
+void main() {
+  // Calculate when this segment should fill based on depth
+  float depthDelay = depthLevel * 0.15;
+  float depthWindow = 0.25;
+  
+  // Smooth fill based on breath progress and depth
+  float fillStart = depthDelay;
+  float fillEnd = depthDelay + depthWindow;
+  float depthProgress = smoothstep(fillStart, fillEnd, breathProgress);
+  
+  // Gradient along branch length (fills from base to tip)
+  float lengthFill = smoothstep(0.0, 1.0, depthProgress * 1.5 - (1.0 - branchPosition) * 0.5);
+  
+  // Final color
+  vec3 color = mix(colorDim, colorBright, lengthFill);
+  float emissive = lengthFill * 0.6;
+  
+  gl_FragColor = vec4(color + emissive, 1.0);
+}
+```
+
+### 9. EXHALE COLOR SHIFT
+
+On exhale, shift the color temperature slightly:
+- Inhale/Hold-in: #4ECDC4 (bright teal — oxygenated)
+- Exhale/Hold-out: #3AA89F (slightly muted/cooler — deoxygenated)
+- Subtle shift, not dramatic — just enough to feel the difference
+
+### 10. PERFORMANCE NOTES
+
+- Keep branch segment count under 500 for mobile performance
+- Use instanced meshes for alveoli spheres
+- Particles use THREE.Points, not individual meshes
+- Target 60fps on iPhone 12 and newer
+
+---
+
+## PRIORITY ORDER
+
+1. Progressive fill animation (this is the magic)
+2. Alveoli bloom on arrival
+3. Trachea entry glow
+4. Lung outline opacity reduction
+5. UI refinements
+6. Particle oxygen dots (optional polish)
+7. Anatomical asymmetry (optional realism)
+
+Start with the progressive fill shader — once that's working, everything else builds on top of it.

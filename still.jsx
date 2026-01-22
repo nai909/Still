@@ -3639,7 +3639,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.outputEncoding = THREE.sRGBEncoding;
     containerRef.current.appendChild(renderer.domElement);
 
     // === ORBIT CONTROLS ===
@@ -12978,13 +12978,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchMove={backgroundMode ? undefined : handleInteractionMove}
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
-      {/* Three.js container for geometry mode */}
-      {currentMode === 'geometry' && (
+      {/* Three.js container for 3D modes */}
+      {(currentMode === 'geometry' || currentMode === 'jellyfish') && (
         <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       )}
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       )}
 
