@@ -8430,9 +8430,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           const value = grid[y * cols + x];
           if (value > 0) {
             const maturity = value;
-            const hue = hue + (1 - maturity) * 15;
+            const mossHue = 130 + (1 - maturity) * 15;
             const lightness = 30 + maturity * 15;
-            ctx.fillStyle = `hsla(${hue}, 45%, ${lightness}%, ${maturity * 0.9})`;
+            ctx.fillStyle = `hsla(${mossHue}, 45%, ${lightness}%, ${maturity * 0.9})`;
             ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
           }
         }
@@ -8444,7 +8444,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         canvas.width / 2, canvas.height / 2, 0,
         canvas.width / 2, canvas.height / 2, canvas.width * 0.5
       );
-      glowGradient.addColorStop(0, `hsla(${hue}, 15%, 49%, ${0.05 + breath * 0.02})`);
+      glowGradient.addColorStop(0, `hsla(130, 15%, 49%, ${0.05 + breath * 0.02})`);
       glowGradient.addColorStop(1, 'transparent');
       ctx.fillStyle = glowGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
