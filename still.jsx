@@ -1223,9 +1223,12 @@ const gazeShapes = [
 const BREATH_CYCLE = 11; // seconds for full cycle
 const BREATH_SPEED = (2 * Math.PI) / BREATH_CYCLE;
 
-function GazeMode({ theme, primaryHue = 162, onHueChange }) {
+function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false }) {
   // Use primaryHue throughout for consistent color scheme
   const hue = primaryHue;
+  // Background mode: dimmer, slower, no interaction
+  const bgOpacity = backgroundMode ? 0.5 : 1;
+  const bgSpeed = backgroundMode ? 0.3 : 1;
   const containerRef = React.useRef(null);
   const canvasRef = React.useRef(null);
   const frameRef = React.useRef(null);
@@ -1260,6 +1263,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange }) {
 
   // Cycle to next/previous visual
   const cycleVisual = React.useCallback((direction) => {
+    if (backgroundMode) return; // No cycling in background mode
     const currentIndex = gazeModes.findIndex(m => m.key === currentMode);
     let newIndex;
     if (direction > 0) {
@@ -1271,11 +1275,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange }) {
     setShowVisualToast(true);
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     toastTimeoutRef.current = setTimeout(() => setShowVisualToast(false), 1500);
-  }, [currentMode]);
+  }, [currentMode, backgroundMode]);
 
   // Track touch/mouse positions with spring physics
   const handleInteractionStart = React.useCallback((e) => {
-    if (showUI) return;
+    if (backgroundMode || showUI) return; // No interaction in background mode
     e.preventDefault();
     const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY, identifier: 'mouse' }];
 
@@ -1307,10 +1311,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange }) {
         });
       }
     });
-  }, [showUI]);
+  }, [backgroundMode, showUI]);
 
   const handleInteractionMove = React.useCallback((e) => {
-    if (showUI) return;
+    if (backgroundMode || showUI) return;
     const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY, identifier: 'mouse' }];
     touches.forEach(touch => {
       const point = touchPointsRef.current.find(p => p.id === touch.identifier);
@@ -1321,9 +1325,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange }) {
         point.y = touch.clientY;
       }
     });
-  }, [showUI]);
+  }, [backgroundMode, showUI]);
 
   const handleInteractionEnd = React.useCallback((e) => {
+    if (backgroundMode) return; // No gesture handling in background mode
     const touches = e.changedTouches ? Array.from(e.changedTouches) : [{ identifier: 'mouse', clientX: e.clientX, clientY: e.clientY }];
 
     // Check for swipe gesture
@@ -1375,13 +1380,16 @@ function GazeMode({ theme, primaryHue = 162, onHueChange }) {
     setTimeout(() => {
       touchPointsRef.current = touchPointsRef.current.filter(p => p.active || Date.now() - p.endTime < 2000);
     }, 2000);
-  }, [cycleVisual, showUI]);
+  }, [backgroundMode, cycleVisual, showUI]);
 
   // Two-finger swipe (wheel event on trackpad) to open/close menu
   const showUIRef = React.useRef(showUI);
   showUIRef.current = showUI;
 
   React.useEffect(() => {
+    // Skip wheel handling in background mode
+    if (backgroundMode) return;
+
     const handleWheel = (e) => {
       // When menu is open, let scroll pass through naturally
       if (showUIRef.current) return;
@@ -1405,7 +1413,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange }) {
 
     window.addEventListener('wheel', handleWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleWheel);
-  }, []);
+  }, [backgroundMode]);
 
   // Helper: Calculate influence of touch points on a position
   const getInteractionInfluence = React.useCallback((x, y, maxRadius = 200) => {
@@ -9623,8 +9631,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange }) {
         ctx.closePath();
         ctx.fill();
 
-        // Top and bottom caps
-        ctx.fillStyle = PALETTE.sand;
+        // Top and bottom caps - use darker version of lantern hue
+        ctx.fillStyle = `hsl(${this.hue}, 40%, 35%)`;
         ctx.fillRect(-this.size * 0.2, -this.size - 5, this.size * 0.4, 8);
         ctx.fillRect(-this.size * 0.15, this.size - 3, this.size * 0.3, 6);
 
@@ -12264,18 +12272,21 @@ function GazeMode({ theme, primaryHue = 162, onHueChange }) {
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 2,
-        cursor: 'pointer',
-        background: '#000',
+        zIndex: backgroundMode ? 0 : 2,
+        cursor: backgroundMode ? 'default' : 'pointer',
+        background: backgroundMode ? 'transparent' : '#000',
         touchAction: 'none',
+        opacity: bgOpacity,
+        pointerEvents: backgroundMode ? 'none' : 'auto',
+        transition: 'opacity 1s ease',
       }}
-      onMouseDown={handleInteractionStart}
-      onMouseMove={handleInteractionMove}
-      onMouseUp={handleInteractionEnd}
-      onMouseLeave={handleInteractionEnd}
-      onTouchStart={handleInteractionStart}
-      onTouchMove={handleInteractionMove}
-      onTouchEnd={handleInteractionEnd}
+      onMouseDown={backgroundMode ? undefined : handleInteractionStart}
+      onMouseMove={backgroundMode ? undefined : handleInteractionMove}
+      onMouseUp={backgroundMode ? undefined : handleInteractionEnd}
+      onMouseLeave={backgroundMode ? undefined : handleInteractionEnd}
+      onTouchStart={backgroundMode ? undefined : handleInteractionStart}
+      onTouchMove={backgroundMode ? undefined : handleInteractionMove}
+      onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for geometry mode */}
       {currentMode === 'geometry' && (
@@ -12288,7 +12299,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange }) {
       )}
 
       {/* Visual name toast - shows on swipe */}
-      {showVisualToast && !showUI && (
+      {showVisualToast && !showUI && !backgroundMode && (
         <div style={{
           position: 'absolute',
           bottom: '2rem',
@@ -14329,6 +14340,15 @@ function Still() {
           transition: 'background 0.5s ease',
         }}
       >
+        {/* Background visual for scroll mode - very dim, slow */}
+        {(view === 'scroll' || view === 'filter' || view === 'saved') && (
+          <GazeMode
+            theme={currentTheme}
+            primaryHue={settings.primaryHue}
+            backgroundMode={true}
+          />
+        )}
+
         {/* Vignette */}
         <div style={{
           position: 'absolute',
