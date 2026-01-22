@@ -837,6 +837,16 @@ const breathTechniques = {
 // ============================================================================
 
 // Organized by energy level for nervous system regulation
+// Color palette constants
+const PALETTE = {
+  purple: '#7B68EE',
+  steelBlue: '#4A90A4',
+  sage: '#6B8E6B',
+  orange: '#E07B53',
+  sand: '#D4A574',
+  gray: '#8B8B8B',
+};
+
 const gazeModes = [
   { key: 'geometry', name: 'Torus' },
   { key: 'tree', name: 'Fractal Tree' },
@@ -853,26 +863,30 @@ const gazeModes = [
   { key: 'rain', name: 'Rain on Glass' },
   { key: 'jellyfish', name: 'Jellyfish' },
   { key: 'ink', name: 'Ink in Water' },
-  { key: 'fireflies', name: 'Fireflies' },
-];
-
-// Curated experiences - one decision instead of two
-// Each pairs a visual with an ideal breathing pattern
-const gazeExperiences = [
-  { key: 'deep-sleep', name: 'Deep Sleep', visual: 'jellyfish', breath: 'relaxation', description: 'Drift off peacefully' },
-  { key: 'storm-watch', name: 'Storm Watch', visual: 'rain', breath: 'extend', description: 'Release anxiety' },
-  { key: 'ocean-mind', name: 'Ocean Mind', visual: 'ink', breath: 'ocean', description: 'Fluid meditation' },
-  { key: 'focus', name: 'Focus', visual: 'geometry', breath: 'box', description: 'Sharp clarity' },
-  { key: 'forest-floor', name: 'Forest Floor', visual: 'mycelium', breath: 'extend', description: 'Grounded presence' },
-  { key: 'spring-bloom', name: 'Spring Bloom', visual: 'blossom', breath: 'resonance', description: 'Gentle renewal' },
-  { key: 'breathe-deep', name: 'Breathe Deep', visual: 'lungs', breath: 'relaxation', description: 'Guided breath' },
-  { key: 'coral-reef', name: 'Coral Reef', visual: 'coral', breath: 'ocean', description: 'Underwater peace' },
-  { key: 'ripple-effect', name: 'Ripple Effect', visual: 'ripples', breath: 'resonance', description: 'Radiating calm' },
-  { key: 'slow-unfurl', name: 'Slow Unfurl', visual: 'fern', breath: 'extend', description: 'Patient growth' },
-  { key: 'desert-calm', name: 'Desert Calm', visual: 'succulent', breath: 'coherent', description: 'Quiet resilience' },
-  { key: 'make-a-wish', name: 'Make a Wish', visual: 'dandelion', breath: 'calm', description: 'Lightness of being' },
-  { key: 'growing', name: 'Growing', visual: 'tree', breath: 'calm', description: 'Organic expansion' },
-  { key: 'balance', name: 'Balance', visual: 'bilateral', breath: 'box', description: 'Centered focus' },
+  { key: 'lava', name: 'Lava Lamp' },
+  { key: 'aurora', name: 'Aurora' },
+  { key: 'clouds', name: 'Clouds' },
+  { key: 'snow', name: 'Snow' },
+  { key: 'lotus', name: 'Lotus' },
+  { key: 'candle', name: 'Candle' },
+  { key: 'smoke', name: 'Smoke' },
+  { key: 'mandala', name: 'Mandala' },
+  { key: 'stars', name: 'Starfield' },
+  // New visuals
+  { key: 'caustics', name: 'Caustics' },
+  { key: 'mandelbrot', name: 'Mandelbrot' },
+  { key: 'tidepool', name: 'Tide Pool' },
+  { key: 'nebula', name: 'Nebula' },
+  { key: 'moss', name: 'Moss' },
+  { key: 'untangle', name: 'Untangle' },
+  { key: 'bamboo', name: 'Bamboo' },
+  { key: 'owl', name: 'Owl' },
+  { key: 'steam', name: 'Steam' },
+  { key: 'moon', name: 'Moon' },
+  { key: 'kaleidoscope', name: 'Kaleidoscope' },
+  { key: 'mushrooms', name: 'Mushrooms' },
+  { key: 'lanterns', name: 'Lanterns' },
+  { key: 'heartSync', name: 'Heart Sync' },
 ];
 
 const gazeShapes = [
@@ -897,28 +911,8 @@ function GazeMode({ theme }) {
   const [currentShape, setCurrentShape] = React.useState('torus');
   const [showUI, setShowUI] = React.useState(false);
   const [selectedTechnique, setSelectedTechnique] = React.useState('relaxation');
-  const [selectedExperience, setSelectedExperience] = React.useState('deep-sleep');
-  const [customMode, setCustomMode] = React.useState(false);
-  const [showExperienceToast, setShowExperienceToast] = React.useState(false);
+  const [showVisualToast, setShowVisualToast] = React.useState(false);
   const toastTimeoutRef = React.useRef(null);
-
-  // When experience changes, update visual and breath
-  const selectExperience = React.useCallback((expKey, showToast = false) => {
-    const exp = gazeExperiences.find(e => e.key === expKey);
-    if (exp) {
-      setSelectedExperience(expKey);
-      setCurrentMode(exp.visual);
-      setSelectedTechnique(exp.breath);
-      setCustomMode(false);
-
-      // Show toast when swiping
-      if (showToast) {
-        setShowExperienceToast(true);
-        if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-        toastTimeoutRef.current = setTimeout(() => setShowExperienceToast(false), 1500);
-      }
-    }
-  }, []);
 
   // Breath session state for technique-based breathing
   const breathSessionRef = React.useRef({
@@ -935,18 +929,20 @@ function GazeMode({ theme }) {
   const ripplesRef = React.useRef([]);
   const swipeStartRef = React.useRef(null);
 
-  // Cycle to next/previous experience
-  const cycleExperience = React.useCallback((direction) => {
-    if (customMode) return;
-    const currentIndex = gazeExperiences.findIndex(e => e.key === selectedExperience);
+  // Cycle to next/previous visual
+  const cycleVisual = React.useCallback((direction) => {
+    const currentIndex = gazeModes.findIndex(m => m.key === currentMode);
     let newIndex;
     if (direction > 0) {
-      newIndex = (currentIndex + 1) % gazeExperiences.length;
+      newIndex = (currentIndex + 1) % gazeModes.length;
     } else {
-      newIndex = (currentIndex - 1 + gazeExperiences.length) % gazeExperiences.length;
+      newIndex = (currentIndex - 1 + gazeModes.length) % gazeModes.length;
     }
-    selectExperience(gazeExperiences[newIndex].key, true); // Show toast on swipe
-  }, [customMode, selectedExperience, selectExperience]);
+    setCurrentMode(gazeModes[newIndex].key);
+    setShowVisualToast(true);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setShowVisualToast(false), 1500);
+  }, [currentMode]);
 
   // Track touch/mouse positions with spring physics
   const handleInteractionStart = React.useCallback((e) => {
@@ -1013,7 +1009,7 @@ function GazeMode({ theme }) {
       const minSwipeDistance = 60;
       const maxSwipeTime = 400;
       if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5 && deltaTime < maxSwipeTime) {
-        cycleExperience(deltaX > 0 ? -1 : 1); // Swipe left = next, swipe right = previous
+        cycleVisual(deltaX > 0 ? -1 : 1); // Swipe left = next, swipe right = previous
       }
       swipeStartRef.current = null;
     }
@@ -1029,7 +1025,7 @@ function GazeMode({ theme }) {
     setTimeout(() => {
       touchPointsRef.current = touchPointsRef.current.filter(p => p.active || Date.now() - p.endTime < 2000);
     }, 2000);
-  }, [cycleExperience]);
+  }, [cycleVisual]);
 
   // Helper: Calculate influence of touch points on a position
   const getInteractionInfluence = React.useCallback((x, y, maxRadius = 200) => {
@@ -3783,6 +3779,4488 @@ function GazeMode({ theme }) {
     };
   }, [currentMode, getInteractionInfluence, drawRipples]);
 
+  // ========== LAVA LAMP MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'lava' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Blob class - the "lava" inside the lamp
+    class Blob {
+      constructor(index, total) {
+        this.baseX = canvas.width * 0.3 + canvas.width * 0.4 * (index / total);
+        this.x = this.baseX;
+        this.y = canvas.height * 0.5 + (Math.random() - 0.5) * canvas.height * 0.3;
+        this.baseRadius = 40 + Math.random() * 60;
+        this.radius = this.baseRadius;
+        this.vy = 0;
+        this.phase = Math.random() * Math.PI * 2;
+        this.wobblePhase = Math.random() * Math.PI * 2;
+        this.hue = 169 + (Math.random() - 0.5) * 15; // Teal range
+        this.saturation = 60 + Math.random() * 20;
+      }
+
+      update(breath, isInhaling, dt) {
+        // Breath drives vertical movement
+        const targetY = isInhaling
+          ? canvas.height * 0.25 + Math.sin(this.phase) * 80
+          : canvas.height * 0.75 + Math.sin(this.phase) * 80;
+
+        this.vy += (targetY - this.y) * 0.0004 * dt;
+        this.vy *= 0.98;
+        this.y += this.vy;
+
+        // Horizontal wobble
+        this.wobblePhase += 0.001 * dt;
+        this.x = this.baseX + Math.sin(this.wobblePhase) * 30;
+
+        // Size pulsing with breath
+        this.radius = this.baseRadius * (0.85 + breath * 0.3);
+
+        // Update phase
+        this.phase += 0.0003 * dt;
+      }
+
+      draw(ctx) {
+        // Create gradient for blob
+        const gradient = ctx.createRadialGradient(
+          this.x - this.radius * 0.3, this.y - this.radius * 0.3, 0,
+          this.x, this.y, this.radius * 1.2
+        );
+        gradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, 70%, 0.95)`);
+        gradient.addColorStop(0.5, `hsla(${this.hue}, ${this.saturation}%, 50%, 0.85)`);
+        gradient.addColorStop(0.8, `hsla(${this.hue}, ${this.saturation}%, 35%, 0.7)`);
+        gradient.addColorStop(1, `hsla(${this.hue}, ${this.saturation}%, 25%, 0)`);
+
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * 1.2, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      }
+    }
+
+    // Initialize blobs
+    const blobCount = Math.min(12, Math.floor(canvas.width / 80));
+    const blobs = [];
+    for (let i = 0; i < blobCount; i++) {
+      blobs.push(new Blob(i, blobCount));
+    }
+
+    // Background lamp glow
+    const drawLampGlow = (breath) => {
+      // Dark background
+      ctx.fillStyle = '#05050c';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Lamp body glow
+      const centerX = canvas.width / 2;
+      const glowGradient = ctx.createRadialGradient(
+        centerX, canvas.height / 2, 0,
+        centerX, canvas.height / 2, canvas.width * 0.5
+      );
+      glowGradient.addColorStop(0, `rgba(127, 219, 202, ${0.08 + breath * 0.04})`);
+      glowGradient.addColorStop(0.5, `rgba(100, 180, 170, ${0.03 + breath * 0.02})`);
+      glowGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = glowGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Subtle lamp outline
+      const lampWidth = Math.min(canvas.width * 0.6, 400);
+      const lampLeft = (canvas.width - lampWidth) / 2;
+      ctx.strokeStyle = `rgba(127, 219, 202, ${0.1 + breath * 0.05})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(lampLeft, 60);
+      ctx.lineTo(lampLeft + lampWidth, 60);
+      ctx.moveTo(lampLeft, canvas.height - 60);
+      ctx.lineTo(lampLeft + lampWidth, canvas.height - 60);
+      ctx.stroke();
+    };
+
+    let lastTime = Date.now();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const dt = Math.min(now - lastTime, 50);
+      lastTime = now;
+
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
+
+      drawLampGlow(breath);
+
+      // Apply touch interactions - push blobs away
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          blobs.forEach(blob => {
+            const dx = blob.x - point.x;
+            const dy = blob.y - point.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 150 && dist > 1) {
+              const force = (1 - dist / 150) * 2;
+              blob.x += (dx / dist) * force;
+              blob.vy += (dy / dist) * force * 0.3;
+            }
+          });
+        }
+      });
+
+      // Update and draw blobs (sorted by y for depth)
+      blobs.sort((a, b) => a.y - b.y);
+      blobs.forEach(blob => {
+        blob.update(breath, isInhaling, dt);
+        blob.draw(ctx);
+      });
+
+      // Draw connection "bridges" between close blobs
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < blobs.length; i++) {
+        for (let j = i + 1; j < blobs.length; j++) {
+          const b1 = blobs[i];
+          const b2 = blobs[j];
+          const dx = b2.x - b1.x;
+          const dy = b2.y - b1.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const mergeThreshold = b1.radius + b2.radius + 20;
+
+          if (dist < mergeThreshold) {
+            const strength = 1 - dist / mergeThreshold;
+            const midX = (b1.x + b2.x) / 2;
+            const midY = (b1.y + b2.y) / 2;
+            const bridgeRadius = Math.min(b1.radius, b2.radius) * strength * 0.7;
+
+            const gradient = ctx.createRadialGradient(midX, midY, 0, midX, midY, bridgeRadius);
+            gradient.addColorStop(0, `hsla(169, 70%, 50%, ${strength * 0.6})`);
+            gradient.addColorStop(1, 'transparent');
+
+            ctx.beginPath();
+            ctx.arc(midX, midY, bridgeRadius, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+          }
+        }
+      }
+      ctx.globalCompositeOperation = 'source-over';
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== AURORA MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'aurora' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Aurora band class
+    class AuroraBand {
+      constructor(index, total) {
+        this.baseY = canvas.height * 0.2 + (index / total) * canvas.height * 0.35;
+        this.amplitude = 20 + Math.random() * 40;
+        this.frequency = 0.003 + Math.random() * 0.003;
+        this.speed = 0.0003 + Math.random() * 0.0003;
+        this.phase = Math.random() * Math.PI * 2;
+        this.height = 60 + Math.random() * 80;
+        this.hue = 150 + index * 10 + Math.random() * 20; // Teal to green range
+        this.alpha = 0.15 + Math.random() * 0.1;
+      }
+
+      draw(ctx, time, breath) {
+        const segments = 60;
+        const segmentWidth = canvas.width / segments;
+
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height);
+
+        // Bottom edge
+        for (let i = 0; i <= segments; i++) {
+          const x = i * segmentWidth;
+          const wave1 = Math.sin(x * this.frequency + time * this.speed + this.phase) * this.amplitude;
+          const wave2 = Math.sin(x * this.frequency * 0.5 + time * this.speed * 0.7) * this.amplitude * 0.5;
+          const y = this.baseY + wave1 + wave2 + (1 - breath) * 30;
+          ctx.lineTo(x, y + this.height * (0.8 + breath * 0.4));
+        }
+
+        // Top edge (going back)
+        for (let i = segments; i >= 0; i--) {
+          const x = i * segmentWidth;
+          const wave1 = Math.sin(x * this.frequency + time * this.speed + this.phase) * this.amplitude;
+          const wave2 = Math.sin(x * this.frequency * 0.5 + time * this.speed * 0.7) * this.amplitude * 0.5;
+          const y = this.baseY + wave1 + wave2 + (1 - breath) * 30;
+          ctx.lineTo(x, y);
+        }
+
+        ctx.closePath();
+
+        // Gradient fill
+        const gradY = this.baseY - this.amplitude;
+        const gradient = ctx.createLinearGradient(0, gradY, 0, gradY + this.height + this.amplitude * 2);
+        gradient.addColorStop(0, `hsla(${this.hue}, 80%, 60%, ${this.alpha * breath * 0.5})`);
+        gradient.addColorStop(0.3, `hsla(${this.hue}, 75%, 50%, ${this.alpha * (0.5 + breath * 0.5)})`);
+        gradient.addColorStop(0.7, `hsla(${this.hue + 10}, 70%, 45%, ${this.alpha * (0.3 + breath * 0.4)})`);
+        gradient.addColorStop(1, `hsla(${this.hue + 20}, 65%, 35%, 0)`);
+
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      }
+    }
+
+    // Shimmer particles
+    class ShimmerParticle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = canvas.height * 0.15 + Math.random() * canvas.height * 0.45;
+        this.size = 1 + Math.random() * 2;
+        this.alpha = 0;
+        this.maxAlpha = 0.3 + Math.random() * 0.4;
+        this.fadeIn = true;
+        this.fadeSpeed = 0.01 + Math.random() * 0.02;
+      }
+
+      update() {
+        if (this.fadeIn) {
+          this.alpha += this.fadeSpeed;
+          if (this.alpha >= this.maxAlpha) this.fadeIn = false;
+        } else {
+          this.alpha -= this.fadeSpeed * 0.5;
+          if (this.alpha <= 0) this.reset();
+        }
+      }
+
+      draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(200, 255, 240, ${this.alpha})`;
+        ctx.fill();
+      }
+    }
+
+    // Stars in background
+    const stars = [];
+    for (let i = 0; i < 150; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 1.5 + 0.5,
+        brightness: Math.random() * 0.5 + 0.2,
+        twinkleSpeed: Math.random() * 0.003 + 0.001,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+
+    // Initialize aurora bands
+    const bands = [];
+    for (let i = 0; i < 5; i++) {
+      bands.push(new AuroraBand(i, 5));
+    }
+
+    // Shimmer particles
+    const shimmers = [];
+    for (let i = 0; i < 40; i++) {
+      shimmers.push(new ShimmerParticle());
+    }
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Night sky gradient
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      skyGradient.addColorStop(0, '#020208');
+      skyGradient.addColorStop(0.3, '#050510');
+      skyGradient.addColorStop(0.6, '#080815');
+      skyGradient.addColorStop(1, '#0a0a18');
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw stars
+      stars.forEach(star => {
+        const twinkle = 0.5 + Math.sin(now * star.twinkleSpeed + star.phase) * 0.5;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${twinkle * star.brightness})`;
+        ctx.fill();
+      });
+
+      // Touch interactions - spawn shimmers and create disturbance
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          // Spawn shimmer at touch
+          if (Math.random() < 0.3) {
+            const shimmer = new ShimmerParticle();
+            shimmer.x = point.x + (Math.random() - 0.5) * 60;
+            shimmer.y = point.y + (Math.random() - 0.5) * 60;
+            shimmer.alpha = 0.5;
+            shimmer.maxAlpha = 0.7;
+            shimmers.push(shimmer);
+          }
+          // Draw touch glow
+          const touchGlow = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 100);
+          touchGlow.addColorStop(0, 'rgba(127, 219, 202, 0.3)');
+          touchGlow.addColorStop(0.5, 'rgba(127, 219, 202, 0.1)');
+          touchGlow.addColorStop(1, 'transparent');
+          ctx.fillStyle = touchGlow;
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 100, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // Limit shimmers
+      if (shimmers.length > 80) shimmers.splice(0, shimmers.length - 80);
+
+      // Draw aurora bands with blending
+      ctx.globalCompositeOperation = 'screen';
+      bands.forEach(band => band.draw(ctx, now, breath));
+      ctx.globalCompositeOperation = 'source-over';
+
+      // Draw shimmers
+      shimmers.forEach(shimmer => {
+        shimmer.update();
+        shimmer.draw(ctx);
+      });
+
+      // Silhouette mountains
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      for (let x = 0; x <= canvas.width; x += 20) {
+        const peak1 = Math.sin(x * 0.005) * 80;
+        const peak2 = Math.sin(x * 0.012 + 1) * 40;
+        const peak3 = Math.sin(x * 0.003 + 2) * 60;
+        const y = canvas.height - 80 - peak1 - peak2 - peak3;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.closePath();
+      ctx.fillStyle = '#03030a';
+      ctx.fill();
+
+      // Snow-covered peaks
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      for (let x = 0; x <= canvas.width; x += 20) {
+        const peak1 = Math.sin(x * 0.005) * 80;
+        const peak2 = Math.sin(x * 0.012 + 1) * 40;
+        const peak3 = Math.sin(x * 0.003 + 2) * 60;
+        const baseY = canvas.height - 80 - peak1 - peak2 - peak3;
+        const snowHeight = 8 + Math.sin(x * 0.05) * 4;
+        ctx.lineTo(x, baseY + snowHeight);
+      }
+      ctx.lineTo(canvas.width, canvas.height - 60);
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.closePath();
+      ctx.fillStyle = '#04040c';
+      ctx.fill();
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== CLOUDS MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'clouds' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Cloud class
+    class Cloud {
+      constructor(layer) {
+        this.layer = layer; // 0 = back, 1 = mid, 2 = front
+        this.reset(true);
+      }
+
+      reset(initial = false) {
+        const layerConfig = [
+          { y: 0.15, speed: 0.08, scale: 0.6, alpha: 0.3 },
+          { y: 0.35, speed: 0.15, scale: 0.8, alpha: 0.5 },
+          { y: 0.55, speed: 0.25, scale: 1.0, alpha: 0.7 },
+        ][this.layer];
+
+        this.y = canvas.height * (layerConfig.y + (Math.random() - 0.5) * 0.15);
+        this.speed = layerConfig.speed + Math.random() * 0.05;
+        this.scale = layerConfig.scale + Math.random() * 0.2;
+        this.alpha = layerConfig.alpha;
+
+        this.width = (120 + Math.random() * 180) * this.scale;
+        this.height = (40 + Math.random() * 40) * this.scale;
+
+        if (initial) {
+          this.x = Math.random() * (canvas.width + this.width * 2) - this.width;
+        } else {
+          this.x = -this.width - 50;
+        }
+
+        // Generate puffs for this cloud
+        this.puffs = [];
+        const puffCount = 5 + Math.floor(Math.random() * 4);
+        for (let i = 0; i < puffCount; i++) {
+          this.puffs.push({
+            offsetX: (i / puffCount - 0.5) * this.width + (Math.random() - 0.5) * 30,
+            offsetY: (Math.random() - 0.5) * this.height * 0.5,
+            radius: (20 + Math.random() * 25) * this.scale,
+            phase: Math.random() * Math.PI * 2,
+          });
+        }
+      }
+
+      update(dt, breath) {
+        this.x += this.speed * dt * 0.02 * (0.7 + breath * 0.3);
+        if (this.x > canvas.width + this.width) {
+          this.reset();
+        }
+      }
+
+      draw(ctx, time, breath) {
+        // Sort puffs by y for layering
+        const sortedPuffs = [...this.puffs].sort((a, b) => a.offsetY - b.offsetY);
+
+        sortedPuffs.forEach(puff => {
+          const px = this.x + puff.offsetX;
+          const py = this.y + puff.offsetY + Math.sin(time * 0.0005 + puff.phase) * 3;
+          const pr = puff.radius * (0.95 + breath * 0.1);
+
+          const gradient = ctx.createRadialGradient(px - pr * 0.3, py - pr * 0.3, 0, px, py, pr);
+          gradient.addColorStop(0, `rgba(255, 255, 255, ${this.alpha * 0.9})`);
+          gradient.addColorStop(0.4, `rgba(240, 245, 250, ${this.alpha * 0.7})`);
+          gradient.addColorStop(0.7, `rgba(200, 210, 220, ${this.alpha * 0.4})`);
+          gradient.addColorStop(1, `rgba(180, 190, 200, 0)`);
+
+          ctx.beginPath();
+          ctx.arc(px, py, pr, 0, Math.PI * 2);
+          ctx.fillStyle = gradient;
+          ctx.fill();
+        });
+      }
+    }
+
+    // Initialize clouds by layer
+    const clouds = [];
+    for (let layer = 0; layer < 3; layer++) {
+      const count = 4 + layer;
+      for (let i = 0; i < count; i++) {
+        clouds.push(new Cloud(layer));
+      }
+    }
+
+    // Sun rays
+    const drawSunRays = (breath) => {
+      const sunX = canvas.width * 0.85;
+      const sunY = canvas.height * 0.15;
+
+      // Sun glow
+      const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 150);
+      sunGlow.addColorStop(0, `rgba(255, 250, 220, ${0.4 + breath * 0.2})`);
+      sunGlow.addColorStop(0.3, `rgba(255, 240, 180, ${0.2 + breath * 0.1})`);
+      sunGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = sunGlow;
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, 150, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Rays
+      ctx.save();
+      ctx.translate(sunX, sunY);
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const rayLength = 300 + breath * 100;
+        const gradient = ctx.createLinearGradient(0, 0, Math.cos(angle) * rayLength, Math.sin(angle) * rayLength);
+        gradient.addColorStop(0, `rgba(255, 250, 200, ${0.15 + breath * 0.05})`);
+        gradient.addColorStop(1, 'transparent');
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(angle - 0.08) * rayLength, Math.sin(angle - 0.08) * rayLength);
+        ctx.lineTo(Math.cos(angle + 0.08) * rayLength, Math.sin(angle + 0.08) * rayLength);
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      }
+      ctx.restore();
+    };
+
+    let lastTime = Date.now();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const dt = Math.min(now - lastTime, 50);
+      lastTime = now;
+
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Sky gradient
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      skyGradient.addColorStop(0, '#4a7c9b');
+      skyGradient.addColorStop(0.3, '#6a9ab8');
+      skyGradient.addColorStop(0.6, '#8ab5cc');
+      skyGradient.addColorStop(1, '#a8c8d8');
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawSunRays(breath);
+
+      // Touch interactions - push clouds and create wind swirls
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          // Push nearby clouds
+          clouds.forEach(cloud => {
+            const dx = cloud.x - point.x;
+            const dy = cloud.y - point.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 200 && dist > 1) {
+              const force = (1 - dist / 200) * 3;
+              cloud.x += (dx / dist) * force;
+              cloud.y += (dy / dist) * force * 0.3;
+            }
+          });
+          // Draw wind swirl effect
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+          ctx.lineWidth = 2;
+          for (let i = 0; i < 3; i++) {
+            const angle = (now * 0.003) + (i * Math.PI * 2 / 3);
+            const radius = 30 + i * 15;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius, angle, angle + Math.PI * 0.5);
+            ctx.stroke();
+          }
+        }
+      });
+
+      // Sort and draw clouds by layer
+      clouds.sort((a, b) => a.layer - b.layer);
+      clouds.forEach(cloud => {
+        cloud.update(dt, breath);
+        cloud.draw(ctx, now, breath);
+      });
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== SNOW MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'snow' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Snowflake class
+    class Snowflake {
+      constructor() {
+        this.reset(true);
+      }
+
+      reset(initial = false) {
+        this.x = Math.random() * canvas.width;
+        this.y = initial ? Math.random() * canvas.height : -10;
+        this.z = Math.random(); // Depth: 0 = far, 1 = close
+        this.size = 2 + this.z * 4;
+        this.speed = 0.3 + this.z * 0.7;
+        this.wobblePhase = Math.random() * Math.PI * 2;
+        this.wobbleSpeed = 0.02 + Math.random() * 0.02;
+        this.wobbleAmount = 0.3 + Math.random() * 0.5;
+        this.alpha = 0.4 + this.z * 0.5;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotationSpeed = (Math.random() - 0.5) * 0.02;
+      }
+
+      update(dt, breath) {
+        const speedMod = 0.5 + breath * 0.5;
+        this.y += this.speed * speedMod * dt * 0.05;
+        this.wobblePhase += this.wobbleSpeed;
+        this.x += Math.sin(this.wobblePhase) * this.wobbleAmount;
+        this.rotation += this.rotationSpeed;
+
+        // Wind effect
+        this.x += (0.2 + breath * 0.1) * this.z * dt * 0.01;
+
+        if (this.y > canvas.height + 20 || this.x > canvas.width + 50) {
+          this.reset();
+        }
+      }
+
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        if (this.z > 0.5) {
+          // Detailed snowflake for close ones
+          ctx.strokeStyle = `rgba(255, 255, 255, ${this.alpha})`;
+          ctx.lineWidth = 1;
+          for (let i = 0; i < 6; i++) {
+            ctx.save();
+            ctx.rotate((i / 6) * Math.PI * 2);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -this.size);
+            // Branches
+            ctx.moveTo(0, -this.size * 0.4);
+            ctx.lineTo(-this.size * 0.3, -this.size * 0.6);
+            ctx.moveTo(0, -this.size * 0.4);
+            ctx.lineTo(this.size * 0.3, -this.size * 0.6);
+            ctx.stroke();
+            ctx.restore();
+          }
+        } else {
+          // Simple circle for distant ones
+          ctx.beginPath();
+          ctx.arc(0, 0, this.size * 0.5, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha * 0.7})`;
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+    }
+
+    // Initialize snowflakes
+    const snowflakeCount = Math.min(200, Math.floor((canvas.width * canvas.height) / 5000));
+    const snowflakes = [];
+    for (let i = 0; i < snowflakeCount; i++) {
+      snowflakes.push(new Snowflake());
+    }
+
+    // Ground snow accumulation points
+    const groundSnow = [];
+    for (let x = 0; x <= canvas.width; x += 8) {
+      groundSnow.push({
+        x,
+        height: 20 + Math.random() * 15 + Math.sin(x * 0.02) * 10,
+      });
+    }
+
+    // Pine trees
+    const trees = [];
+    const treeCount = Math.floor(canvas.width / 120);
+    for (let i = 0; i < treeCount; i++) {
+      trees.push({
+        x: (i / treeCount) * canvas.width + Math.random() * 60 - 30,
+        height: 80 + Math.random() * 60,
+        width: 30 + Math.random() * 20,
+        snowAmount: 0.3 + Math.random() * 0.3,
+      });
+    }
+
+    const drawTree = (tree) => {
+      const { x, height, width, snowAmount } = tree;
+      const baseY = canvas.height - 30;
+      const layers = 4;
+
+      for (let i = 0; i < layers; i++) {
+        const layerY = baseY - (i / layers) * height;
+        const layerWidth = width * (1 - i / (layers + 1));
+        const layerHeight = height / layers + 10;
+
+        // Tree layer
+        ctx.beginPath();
+        ctx.moveTo(x, layerY - layerHeight);
+        ctx.lineTo(x - layerWidth, layerY);
+        ctx.lineTo(x + layerWidth, layerY);
+        ctx.closePath();
+        ctx.fillStyle = '#1a2a25';
+        ctx.fill();
+
+        // Snow on tree
+        ctx.beginPath();
+        ctx.moveTo(x, layerY - layerHeight);
+        ctx.lineTo(x - layerWidth * 0.7, layerY - layerHeight * 0.3);
+        ctx.lineTo(x + layerWidth * 0.7, layerY - layerHeight * 0.3);
+        ctx.closePath();
+        ctx.fillStyle = `rgba(240, 245, 255, ${snowAmount})`;
+        ctx.fill();
+      }
+
+      // Trunk
+      ctx.fillStyle = '#2a1a15';
+      ctx.fillRect(x - 5, baseY - 10, 10, 25);
+    };
+
+    let lastTime = Date.now();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const dt = Math.min(now - lastTime, 50);
+      lastTime = now;
+
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Winter sky gradient
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      skyGradient.addColorStop(0, '#1a2535');
+      skyGradient.addColorStop(0.4, '#2a3545');
+      skyGradient.addColorStop(0.7, '#3a4555');
+      skyGradient.addColorStop(1, '#4a5565');
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Distant mountains
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      for (let x = 0; x <= canvas.width; x += 30) {
+        const y = canvas.height - 150 - Math.sin(x * 0.003) * 80 - Math.sin(x * 0.007) * 40;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.closePath();
+      ctx.fillStyle = '#3a4555';
+      ctx.fill();
+
+      // Snow on mountains
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height - 150);
+      for (let x = 0; x <= canvas.width; x += 30) {
+        const baseY = canvas.height - 150 - Math.sin(x * 0.003) * 80 - Math.sin(x * 0.007) * 40;
+        ctx.lineTo(x, baseY + 15);
+      }
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.lineTo(0, canvas.height);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(200, 210, 230, 0.3)';
+      ctx.fill();
+
+      // Draw trees
+      trees.forEach(tree => drawTree(tree));
+
+      // Ground snow
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      groundSnow.forEach(point => {
+        ctx.lineTo(point.x, canvas.height - point.height - breath * 5);
+      });
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.closePath();
+
+      const snowGradient = ctx.createLinearGradient(0, canvas.height - 50, 0, canvas.height);
+      snowGradient.addColorStop(0, '#e8f0f8');
+      snowGradient.addColorStop(0.5, '#d8e4f0');
+      snowGradient.addColorStop(1, '#c8d8e8');
+      ctx.fillStyle = snowGradient;
+      ctx.fill();
+
+      // Touch interactions - blow snowflakes away
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          snowflakes.forEach(flake => {
+            const dx = flake.x - point.x;
+            const dy = flake.y - point.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 120 && dist > 1) {
+              const force = (1 - dist / 120) * 2 * flake.z;
+              flake.x += (dx / dist) * force;
+              flake.y += (dy / dist) * force * 0.5;
+            }
+          });
+          // Draw wind swirl
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+          ctx.lineWidth = 1;
+          for (let i = 0; i < 5; i++) {
+            const angle = (Date.now() * 0.002) + (i * Math.PI * 2 / 5);
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 20 + i * 12, angle, angle + Math.PI * 0.4);
+            ctx.stroke();
+          }
+        }
+      });
+
+      // Update and draw snowflakes (sorted by depth)
+      snowflakes.sort((a, b) => a.z - b.z);
+      snowflakes.forEach(flake => {
+        flake.update(dt, breath);
+        flake.draw(ctx);
+      });
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== LOTUS MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'lotus' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    // Draw a single petal
+    const drawPetal = (ctx, x, y, width, height, angle, openness, color, shadowColor) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+
+      // Apply opening transform
+      ctx.scale(1, 0.3 + openness * 0.7);
+
+      // Petal shape
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(
+        -width * 0.5, -height * 0.3,
+        -width * 0.3, -height,
+        0, -height
+      );
+      ctx.bezierCurveTo(
+        width * 0.3, -height,
+        width * 0.5, -height * 0.3,
+        0, 0
+      );
+
+      // Gradient fill
+      const gradient = ctx.createLinearGradient(0, 0, 0, -height);
+      gradient.addColorStop(0, shadowColor);
+      gradient.addColorStop(0.4, color);
+      gradient.addColorStop(0.8, color);
+      gradient.addColorStop(1, `rgba(255, 255, 255, 0.3)`);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Subtle vein line
+      ctx.strokeStyle = `rgba(255, 255, 255, 0.15)`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, -height * 0.1);
+      ctx.lineTo(0, -height * 0.85);
+      ctx.stroke();
+
+      ctx.restore();
+    };
+
+    // Water ripple class
+    class WaterRipple {
+      constructor() {
+        this.x = centerX + (Math.random() - 0.5) * canvas.width * 0.8;
+        this.y = centerY + (Math.random() - 0.5) * canvas.height * 0.4 + canvas.height * 0.15;
+        this.radius = 0;
+        this.maxRadius = 30 + Math.random() * 50;
+        this.speed = 0.3 + Math.random() * 0.2;
+        this.alpha = 0.3;
+      }
+
+      update() {
+        this.radius += this.speed;
+        this.alpha = 0.3 * (1 - this.radius / this.maxRadius);
+        return this.radius < this.maxRadius;
+      }
+
+      draw(ctx) {
+        ctx.strokeStyle = `rgba(127, 219, 202, ${this.alpha})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y, this.radius, this.radius * 0.3, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    const ripples = [];
+
+    // Lily pads
+    const lilyPads = [];
+    for (let i = 0; i < 5; i++) {
+      lilyPads.push({
+        x: centerX + (Math.random() - 0.5) * canvas.width * 0.7,
+        y: centerY + Math.random() * canvas.height * 0.3 + canvas.height * 0.1,
+        radius: 30 + Math.random() * 25,
+        rotation: Math.random() * Math.PI * 2,
+        notchAngle: Math.random() * Math.PI * 2,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+
+    const drawLilyPad = (pad, time) => {
+      const wobble = Math.sin(time * 0.001 + pad.phase) * 0.02;
+
+      ctx.save();
+      ctx.translate(pad.x, pad.y);
+      ctx.rotate(pad.rotation + wobble);
+      ctx.scale(1, 0.4);
+
+      // Main pad
+      ctx.beginPath();
+      ctx.arc(0, 0, pad.radius, pad.notchAngle + 0.2, pad.notchAngle + Math.PI * 2 - 0.2);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+
+      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, pad.radius);
+      gradient.addColorStop(0, 'rgba(50, 120, 80, 0.8)');
+      gradient.addColorStop(0.7, 'rgba(40, 100, 70, 0.7)');
+      gradient.addColorStop(1, 'rgba(30, 80, 60, 0.6)');
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      ctx.restore();
+    };
+
+    let lastTime = Date.now();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const dt = Math.min(now - lastTime, 50);
+      lastTime = now;
+
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+      const openness = breath; // Lotus opens with inhale
+
+      // Dark water background
+      const waterGradient = ctx.createRadialGradient(
+        centerX, centerY, 0,
+        centerX, centerY, Math.max(canvas.width, canvas.height) * 0.7
+      );
+      waterGradient.addColorStop(0, '#0a1520');
+      waterGradient.addColorStop(0.5, '#081218');
+      waterGradient.addColorStop(1, '#050a0f');
+      ctx.fillStyle = waterGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Add occasional ripples
+      if (Math.random() < 0.02) {
+        ripples.push(new WaterRipple());
+      }
+
+      // Touch interactions - spawn ripples at touch points
+      touchPointsRef.current.forEach(point => {
+        if (point.active && Math.random() < 0.15) {
+          const ripple = new WaterRipple();
+          ripple.x = point.x + (Math.random() - 0.5) * 30;
+          ripple.y = point.y + (Math.random() - 0.5) * 30;
+          ripple.maxRadius = 60 + Math.random() * 40;
+          ripples.push(ripple);
+        }
+      });
+
+      // Limit ripples
+      if (ripples.length > 30) ripples.splice(0, ripples.length - 30);
+
+      // Update and draw ripples
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        if (!ripples[i].update()) {
+          ripples.splice(i, 1);
+        } else {
+          ripples[i].draw(ctx);
+        }
+      }
+
+      // Draw lily pads
+      lilyPads.forEach(pad => drawLilyPad(pad, now));
+
+      // Lotus center position (slightly bobbing)
+      const lotusY = centerY + Math.sin(now * 0.0008) * 8;
+      const lotusScale = Math.min(canvas.width, canvas.height) * 0.0015;
+
+      // Draw outer petals (3 layers)
+      const petalLayers = [
+        { count: 12, radius: 110 * lotusScale, size: { w: 35, h: 90 }, color: 'rgba(255, 180, 190, 0.9)', shadow: 'rgba(200, 100, 120, 0.8)' },
+        { count: 10, radius: 80 * lotusScale, size: { w: 30, h: 75 }, color: 'rgba(255, 200, 210, 0.9)', shadow: 'rgba(220, 130, 150, 0.8)' },
+        { count: 8, radius: 50 * lotusScale, size: { w: 25, h: 60 }, color: 'rgba(255, 220, 225, 0.95)', shadow: 'rgba(240, 160, 175, 0.85)' },
+      ];
+
+      petalLayers.forEach((layer, layerIndex) => {
+        const layerOpenness = Math.max(0, Math.min(1, openness * 1.5 - layerIndex * 0.2));
+
+        for (let i = 0; i < layer.count; i++) {
+          const angle = (i / layer.count) * Math.PI * 2 - Math.PI / 2;
+          const petalAngle = angle + Math.PI; // Point outward
+          const petalDist = layer.radius * (0.3 + layerOpenness * 0.7);
+          const px = centerX + Math.cos(angle) * petalDist;
+          const py = lotusY + Math.sin(angle) * petalDist * 0.4;
+
+          drawPetal(
+            ctx,
+            px, py,
+            layer.size.w * lotusScale,
+            layer.size.h * lotusScale * (0.7 + layerOpenness * 0.3),
+            petalAngle - Math.PI / 2 + (1 - layerOpenness) * (angle > 0 ? 0.3 : -0.3),
+            layerOpenness,
+            layer.color,
+            layer.shadow
+          );
+        }
+      });
+
+      // Center pistil/stamen
+      const centerSize = 25 * lotusScale;
+      const centerGradient = ctx.createRadialGradient(centerX, lotusY, 0, centerX, lotusY, centerSize);
+      centerGradient.addColorStop(0, 'rgba(255, 220, 100, 0.95)');
+      centerGradient.addColorStop(0.6, 'rgba(240, 180, 60, 0.9)');
+      centerGradient.addColorStop(1, 'rgba(200, 140, 40, 0.8)');
+      ctx.beginPath();
+      ctx.arc(centerX, lotusY, centerSize, 0, Math.PI * 2);
+      ctx.fillStyle = centerGradient;
+      ctx.fill();
+
+      // Stamen dots
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2;
+        const dist = centerSize * 0.6;
+        const sx = centerX + Math.cos(angle) * dist;
+        const sy = lotusY + Math.sin(angle) * dist * 0.5;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 2 * lotusScale, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(180, 120, 40, 0.8)';
+        ctx.fill();
+      }
+
+      // Glow around lotus
+      const glowGradient = ctx.createRadialGradient(centerX, lotusY, 0, centerX, lotusY, 200 * lotusScale);
+      glowGradient.addColorStop(0, `rgba(255, 200, 210, ${0.1 + breath * 0.1})`);
+      glowGradient.addColorStop(0.5, `rgba(255, 180, 190, ${0.05 + breath * 0.05})`);
+      glowGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, lotusY, 200 * lotusScale, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== CANDLE MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'candle' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const candleBottom = canvas.height * 0.75;
+
+    // Flame particle class
+    class FlameParticle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = centerX + (Math.random() - 0.5) * 10;
+        this.y = candleBottom - 120;
+        this.vx = (Math.random() - 0.5) * 0.3;
+        this.vy = -1 - Math.random() * 2;
+        this.life = 1;
+        this.decay = 0.02 + Math.random() * 0.02;
+        this.size = 3 + Math.random() * 4;
+      }
+
+      update(breath, isInhaling) {
+        // Wind effect from breath
+        const wind = isInhaling ? -0.05 : 0.05;
+        this.vx += wind * breath;
+
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy *= 0.98;
+        this.life -= this.decay;
+
+        if (this.life <= 0) this.reset();
+      }
+
+      draw(ctx) {
+        const alpha = this.life * 0.6;
+        const hue = 30 + (1 - this.life) * 20; // Orange to yellow
+
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${hue}, 100%, ${50 + this.life * 30}%, ${alpha})`;
+        ctx.fill();
+      }
+    }
+
+    // Initialize flame particles
+    const particles = [];
+    for (let i = 0; i < 30; i++) {
+      particles.push(new FlameParticle());
+    }
+
+    // Smoke particles
+    class SmokeParticle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = centerX + (Math.random() - 0.5) * 8;
+        this.y = candleBottom - 180;
+        this.vx = (Math.random() - 0.5) * 0.2;
+        this.vy = -0.3 - Math.random() * 0.3;
+        this.life = 1;
+        this.decay = 0.008 + Math.random() * 0.005;
+        this.size = 5 + Math.random() * 8;
+      }
+
+      update() {
+        this.x += this.vx + Math.sin(this.y * 0.01) * 0.3;
+        this.y += this.vy;
+        this.size += 0.1;
+        this.life -= this.decay;
+
+        if (this.life <= 0) this.reset();
+      }
+
+      draw(ctx) {
+        const alpha = this.life * 0.15;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(200, 200, 200, ${alpha})`;
+        ctx.fill();
+      }
+    }
+
+    const smokeParticles = [];
+    for (let i = 0; i < 15; i++) {
+      smokeParticles.push(new SmokeParticle());
+    }
+
+    // Draw candle body
+    const drawCandle = (breath) => {
+      const candleWidth = 50;
+      const candleHeight = 150;
+      const candleTop = candleBottom - candleHeight;
+
+      // Candle body gradient
+      const bodyGradient = ctx.createLinearGradient(
+        centerX - candleWidth / 2, 0,
+        centerX + candleWidth / 2, 0
+      );
+      bodyGradient.addColorStop(0, '#f5e6d3');
+      bodyGradient.addColorStop(0.3, '#fff8f0');
+      bodyGradient.addColorStop(0.7, '#fff8f0');
+      bodyGradient.addColorStop(1, '#e8d9c6');
+
+      // Main body
+      ctx.fillStyle = bodyGradient;
+      ctx.beginPath();
+      ctx.roundRect(
+        centerX - candleWidth / 2,
+        candleTop,
+        candleWidth,
+        candleHeight,
+        [5, 5, 0, 0]
+      );
+      ctx.fill();
+
+      // Wax drips
+      const drips = [
+        { x: -20, height: 25 },
+        { x: -10, height: 40 },
+        { x: 15, height: 30 },
+        { x: 22, height: 20 },
+      ];
+
+      drips.forEach(drip => {
+        ctx.fillStyle = '#f5e6d3';
+        ctx.beginPath();
+        ctx.ellipse(
+          centerX + drip.x,
+          candleTop + drip.height,
+          6,
+          drip.height,
+          0, 0, Math.PI * 2
+        );
+        ctx.fill();
+      });
+
+      // Wick
+      ctx.strokeStyle = '#2a2a2a';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(centerX, candleTop);
+      ctx.lineTo(centerX, candleTop - 20);
+      ctx.stroke();
+
+      // Melted pool at top
+      ctx.fillStyle = 'rgba(255, 200, 150, 0.6)';
+      ctx.beginPath();
+      ctx.ellipse(centerX, candleTop + 5, candleWidth / 2 - 5, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    // Draw flame
+    const drawFlame = (breath, isInhaling, time) => {
+      const flameX = centerX;
+      const flameY = candleBottom - 150;
+      const flameHeight = 60 + breath * 20;
+      const flameWidth = 20 + breath * 8;
+
+      // Flame wobble
+      const wobble = Math.sin(time * 0.005) * 3 + (isInhaling ? -5 : 5) * breath;
+
+      // Outer glow
+      const glowGradient = ctx.createRadialGradient(
+        flameX + wobble * 0.5, flameY - flameHeight * 0.3, 0,
+        flameX, flameY, flameHeight * 1.5
+      );
+      glowGradient.addColorStop(0, `rgba(255, 150, 50, ${0.3 + breath * 0.1})`);
+      glowGradient.addColorStop(0.5, `rgba(255, 100, 30, ${0.1 + breath * 0.05})`);
+      glowGradient.addColorStop(1, 'transparent');
+
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(flameX, flameY - flameHeight * 0.3, flameHeight * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Main flame shape
+      ctx.save();
+      ctx.translate(flameX + wobble, flameY);
+
+      // Outer flame (orange)
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(
+        -flameWidth * 0.8, -flameHeight * 0.3,
+        -flameWidth * 0.4, -flameHeight * 0.7,
+        0, -flameHeight
+      );
+      ctx.bezierCurveTo(
+        flameWidth * 0.4, -flameHeight * 0.7,
+        flameWidth * 0.8, -flameHeight * 0.3,
+        0, 0
+      );
+
+      const outerGradient = ctx.createLinearGradient(0, 0, 0, -flameHeight);
+      outerGradient.addColorStop(0, 'rgba(255, 100, 20, 0.9)');
+      outerGradient.addColorStop(0.3, 'rgba(255, 150, 50, 0.85)');
+      outerGradient.addColorStop(0.6, 'rgba(255, 200, 80, 0.8)');
+      outerGradient.addColorStop(1, 'rgba(255, 230, 150, 0.3)');
+      ctx.fillStyle = outerGradient;
+      ctx.fill();
+
+      // Inner flame (yellow-white)
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(
+        -flameWidth * 0.3, -flameHeight * 0.2,
+        -flameWidth * 0.2, -flameHeight * 0.5,
+        0, -flameHeight * 0.7
+      );
+      ctx.bezierCurveTo(
+        flameWidth * 0.2, -flameHeight * 0.5,
+        flameWidth * 0.3, -flameHeight * 0.2,
+        0, 0
+      );
+
+      const innerGradient = ctx.createLinearGradient(0, 0, 0, -flameHeight * 0.7);
+      innerGradient.addColorStop(0, 'rgba(100, 150, 255, 0.9)');
+      innerGradient.addColorStop(0.3, 'rgba(255, 255, 200, 0.95)');
+      innerGradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.9)');
+      innerGradient.addColorStop(1, 'rgba(255, 255, 200, 0.5)');
+      ctx.fillStyle = innerGradient;
+      ctx.fill();
+
+      ctx.restore();
+    };
+
+    let lastTime = Date.now();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const dt = Math.min(now - lastTime, 50);
+      lastTime = now;
+
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
+
+      // Dark ambient background
+      const bgGradient = ctx.createRadialGradient(
+        centerX, candleBottom - 100, 0,
+        centerX, candleBottom - 100, Math.max(canvas.width, canvas.height)
+      );
+      bgGradient.addColorStop(0, `rgba(40, 25, 15, ${0.95 + breath * 0.05})`);
+      bgGradient.addColorStop(0.3, '#0a0805');
+      bgGradient.addColorStop(1, '#050302');
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Light cast on surroundings
+      const lightRadius = 250 + breath * 50;
+      const lightGradient = ctx.createRadialGradient(
+        centerX, candleBottom - 120, 0,
+        centerX, candleBottom - 120, lightRadius
+      );
+      lightGradient.addColorStop(0, `rgba(255, 150, 80, ${0.15 + breath * 0.05})`);
+      lightGradient.addColorStop(0.5, `rgba(255, 100, 50, ${0.05 + breath * 0.02})`);
+      lightGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = lightGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Touch interactions - disturb flame and spawn sparks
+      let touchWindX = 0;
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          const dx = point.x - centerX;
+          const dy = point.y - (candleBottom - 150);
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 200) {
+            // Wind effect on flame
+            touchWindX += (dx / dist) * (1 - dist / 200) * 15;
+            // Spawn extra particles
+            if (Math.random() < 0.3) {
+              const p = new FlameParticle();
+              p.x = centerX + (Math.random() - 0.5) * 20;
+              p.y = candleBottom - 130;
+              p.vx = dx * 0.02;
+              p.vy = -2 - Math.random() * 2;
+              particles.push(p);
+            }
+          }
+          // Draw heat shimmer at touch
+          ctx.strokeStyle = `rgba(255, 150, 50, ${0.1 * (1 - dist / 200)})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 30, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      });
+
+      // Limit particles
+      if (particles.length > 60) particles.splice(0, particles.length - 60);
+
+      // Draw smoke
+      smokeParticles.forEach(p => {
+        p.update();
+        p.draw(ctx);
+      });
+
+      // Draw candle
+      drawCandle(breath);
+
+      // Draw flame particles
+      ctx.globalCompositeOperation = 'lighter';
+      particles.forEach(p => {
+        p.vx += touchWindX * 0.01;
+        p.update(breath, isInhaling);
+        p.draw(ctx);
+      });
+      ctx.globalCompositeOperation = 'source-over';
+
+      // Draw main flame (with touch wind effect)
+      drawFlame(breath, isInhaling, now + touchWindX * 50);
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== SMOKE MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'smoke' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height * 0.85;
+
+    // Smoke tendril class
+    class SmokeTendril {
+      constructor(index) {
+        this.baseX = centerX + (index - 2) * 30;
+        this.reset();
+      }
+
+      reset() {
+        this.points = [];
+        const pointCount = 20;
+        for (let i = 0; i < pointCount; i++) {
+          this.points.push({
+            x: this.baseX,
+            y: centerY - i * 15,
+            vx: 0,
+            age: 0,
+          });
+        }
+        this.hue = 169 + (Math.random() - 0.5) * 20; // Teal
+        this.width = 15 + Math.random() * 10;
+        this.phase = Math.random() * Math.PI * 2;
+        this.speed = 0.5 + Math.random() * 0.3;
+      }
+
+      update(dt, breath, isInhaling, time) {
+        // Move points upward
+        for (let i = this.points.length - 1; i >= 0; i--) {
+          const p = this.points[i];
+          p.age += dt * 0.001;
+
+          if (i === 0) {
+            // Base point stays at source
+            p.x = this.baseX + Math.sin(time * 0.002 + this.phase) * 5;
+          } else {
+            // Follow previous point with curl
+            const prev = this.points[i - 1];
+            const curl = Math.sin(time * 0.001 * this.speed + i * 0.3 + this.phase) * (3 + i * 0.5);
+
+            // Breath influence
+            const breathPush = isInhaling ? -1 : 1;
+            p.vx += breathPush * breath * 0.02;
+            p.vx *= 0.95;
+
+            p.x += p.vx + curl * 0.1;
+            p.y = prev.y - 12 - breath * 3;
+
+            // Spread as it rises
+            const spread = i * 0.8;
+            p.x = prev.x + p.vx + Math.sin(time * 0.001 + i * 0.2) * spread * 0.3;
+          }
+        }
+
+        // Reset if top point is off screen
+        if (this.points[this.points.length - 1].y < -50) {
+          this.reset();
+        }
+      }
+
+      draw(ctx, breath) {
+        if (this.points.length < 2) return;
+
+        // Draw as a flowing ribbon
+        ctx.beginPath();
+        ctx.moveTo(this.points[0].x - this.width / 2, this.points[0].y);
+
+        // Left edge
+        for (let i = 1; i < this.points.length; i++) {
+          const p = this.points[i];
+          const width = this.width * (1 - i / this.points.length) * (0.8 + breath * 0.2);
+          ctx.lineTo(p.x - width / 2, p.y);
+        }
+
+        // Right edge (reverse)
+        for (let i = this.points.length - 1; i >= 0; i--) {
+          const p = this.points[i];
+          const width = this.width * (1 - i / this.points.length) * (0.8 + breath * 0.2);
+          ctx.lineTo(p.x + width / 2, p.y);
+        }
+
+        ctx.closePath();
+
+        // Gradient fill
+        const gradient = ctx.createLinearGradient(0, centerY, 0, this.points[this.points.length - 1].y);
+        gradient.addColorStop(0, `hsla(${this.hue}, 30%, 60%, 0.4)`);
+        gradient.addColorStop(0.3, `hsla(${this.hue}, 25%, 55%, 0.25)`);
+        gradient.addColorStop(0.6, `hsla(${this.hue}, 20%, 50%, 0.15)`);
+        gradient.addColorStop(1, `hsla(${this.hue}, 15%, 45%, 0)`);
+
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      }
+    }
+
+    // Floating particle class
+    class FloatingParticle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = centerX + (Math.random() - 0.5) * 200;
+        this.y = centerY;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = -0.5 - Math.random() * 1;
+        this.size = 2 + Math.random() * 4;
+        this.life = 1;
+        this.decay = 0.003 + Math.random() * 0.003;
+        this.hue = 169 + (Math.random() - 0.5) * 30;
+      }
+
+      update(breath) {
+        this.x += this.vx + Math.sin(this.y * 0.01) * 0.5;
+        this.y += this.vy * (0.5 + breath * 0.5);
+        this.life -= this.decay;
+
+        if (this.life <= 0 || this.y < 0) this.reset();
+      }
+
+      draw(ctx) {
+        const alpha = this.life * 0.5;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${this.hue}, 40%, 70%, ${alpha})`;
+        ctx.fill();
+      }
+    }
+
+    // Initialize tendrils
+    const tendrils = [];
+    for (let i = 0; i < 5; i++) {
+      tendrils.push(new SmokeTendril(i));
+    }
+
+    // Initialize particles
+    const particles = [];
+    for (let i = 0; i < 50; i++) {
+      particles.push(new FloatingParticle());
+    }
+
+    // Incense holder
+    const drawIncenseHolder = () => {
+      // Bowl
+      ctx.beginPath();
+      ctx.ellipse(centerX, centerY + 10, 40, 15, 0, 0, Math.PI);
+      ctx.fillStyle = '#1a1a25';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.ellipse(centerX, centerY + 10, 40, 15, 0, Math.PI, Math.PI * 2);
+      ctx.fillStyle = '#252530';
+      ctx.fill();
+
+      // Incense stick
+      ctx.strokeStyle = '#3a3530';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX, centerY - 30);
+      ctx.stroke();
+
+      // Glowing tip
+      const gradient = ctx.createRadialGradient(centerX, centerY - 30, 0, centerX, centerY - 30, 8);
+      gradient.addColorStop(0, 'rgba(255, 150, 100, 0.9)');
+      gradient.addColorStop(0.5, 'rgba(255, 100, 50, 0.5)');
+      gradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY - 30, 8, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    let lastTime = Date.now();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const dt = Math.min(now - lastTime, 50);
+      lastTime = now;
+
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
+
+      // Dark background
+      ctx.fillStyle = '#05050c';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Ambient glow
+      const ambientGlow = ctx.createRadialGradient(
+        centerX, centerY - 100, 0,
+        centerX, centerY - 100, 300
+      );
+      ambientGlow.addColorStop(0, `rgba(127, 219, 202, ${0.05 + breath * 0.03})`);
+      ambientGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = ambientGlow;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Touch interactions - disperse smoke
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          // Push particles away
+          particles.forEach(p => {
+            const dx = p.x - point.x;
+            const dy = p.y - point.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 100 && dist > 1) {
+              const force = (1 - dist / 100) * 3;
+              p.x += (dx / dist) * force;
+              p.vx += (dx / dist) * force * 0.1;
+            }
+          });
+          // Push tendril points away
+          tendrils.forEach(t => {
+            t.points.forEach(p => {
+              const dx = p.x - point.x;
+              const dy = p.y - point.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 80 && dist > 1) {
+                const force = (1 - dist / 80) * 4;
+                p.vx += (dx / dist) * force * 0.15;
+              }
+            });
+          });
+          // Draw touch swirl
+          ctx.strokeStyle = 'rgba(127, 219, 202, 0.15)';
+          ctx.lineWidth = 1;
+          for (let i = 0; i < 3; i++) {
+            const angle = (now * 0.002) + (i * Math.PI * 2 / 3);
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 25 + i * 15, angle, angle + Math.PI * 0.6);
+            ctx.stroke();
+          }
+        }
+      });
+
+      // Update and draw particles (behind tendrils)
+      particles.forEach(p => {
+        p.update(breath);
+        p.draw(ctx);
+      });
+
+      // Update and draw tendrils
+      ctx.globalCompositeOperation = 'screen';
+      tendrils.forEach(t => {
+        t.update(dt, breath, isInhaling, now);
+        t.draw(ctx, breath);
+      });
+      ctx.globalCompositeOperation = 'source-over';
+
+      // Draw incense holder
+      drawIncenseHolder();
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== MANDALA MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'mandala' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const maxRadius = Math.min(canvas.width, canvas.height) * 0.4;
+
+    // Draw a single mandala ring
+    const drawRing = (radius, segments, breath, time, ringIndex) => {
+      const hue = 169 + ringIndex * 8;
+      const rotation = time * 0.0001 * (ringIndex % 2 === 0 ? 1 : -1);
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(rotation);
+
+      // Draw petals/segments
+      for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const petalLength = radius * (0.15 + breath * 0.05);
+        const petalWidth = (Math.PI * 2 / segments) * 0.4;
+
+        ctx.save();
+        ctx.rotate(angle);
+
+        // Petal shape
+        ctx.beginPath();
+        ctx.moveTo(radius - petalLength, 0);
+
+        // Bezier curve for petal
+        const cp1x = radius - petalLength * 0.3;
+        const cp1y = -petalLength * 0.4 * (0.8 + breath * 0.2);
+        const cp2x = radius + petalLength * 0.3;
+        const cp2y = -petalLength * 0.3 * (0.8 + breath * 0.2);
+
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, radius + petalLength * 0.5, 0);
+        ctx.bezierCurveTo(cp2x, -cp2y, cp1x, -cp1y, radius - petalLength, 0);
+
+        // Gradient fill
+        const gradient = ctx.createRadialGradient(radius, 0, 0, radius, 0, petalLength);
+        gradient.addColorStop(0, `hsla(${hue}, 70%, 60%, ${0.6 + breath * 0.2})`);
+        gradient.addColorStop(0.5, `hsla(${hue + 10}, 65%, 50%, ${0.4 + breath * 0.15})`);
+        gradient.addColorStop(1, `hsla(${hue + 20}, 60%, 40%, 0.1)`);
+
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // Connecting circles at intersections
+      for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        const dotSize = 3 + breath * 2;
+
+        ctx.beginPath();
+        ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${hue}, 80%, 70%, ${0.5 + breath * 0.3})`;
+        ctx.fill();
+      }
+
+      ctx.restore();
+    };
+
+    // Draw inner lotus pattern
+    const drawCenterLotus = (breath, time) => {
+      const petalCount = 8;
+      const petalLength = maxRadius * 0.15 * (0.9 + breath * 0.2);
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(time * 0.0002);
+
+      for (let i = 0; i < petalCount; i++) {
+        const angle = (i / petalCount) * Math.PI * 2;
+
+        ctx.save();
+        ctx.rotate(angle);
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(
+          petalLength * 0.3, -petalLength * 0.3,
+          petalLength * 0.8, -petalLength * 0.2,
+          petalLength, 0
+        );
+        ctx.bezierCurveTo(
+          petalLength * 0.8, petalLength * 0.2,
+          petalLength * 0.3, petalLength * 0.3,
+          0, 0
+        );
+
+        const gradient = ctx.createLinearGradient(0, 0, petalLength, 0);
+        gradient.addColorStop(0, `hsla(169, 80%, 70%, ${0.7 + breath * 0.2})`);
+        gradient.addColorStop(0.5, `hsla(175, 75%, 60%, ${0.5 + breath * 0.2})`);
+        gradient.addColorStop(1, `hsla(180, 70%, 50%, 0.2)`);
+
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // Center circle
+      const centerGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 20);
+      centerGradient.addColorStop(0, `hsla(169, 90%, 80%, ${0.8 + breath * 0.2})`);
+      centerGradient.addColorStop(0.5, `hsla(169, 85%, 65%, ${0.6 + breath * 0.15})`);
+      centerGradient.addColorStop(1, `hsla(169, 80%, 50%, 0.3)`);
+
+      ctx.beginPath();
+      ctx.arc(0, 0, 15 + breath * 5, 0, Math.PI * 2);
+      ctx.fillStyle = centerGradient;
+      ctx.fill();
+
+      ctx.restore();
+    };
+
+    // Outer decorative border
+    const drawOuterBorder = (breath, time) => {
+      const radius = maxRadius + 20;
+      const segments = 36;
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(-time * 0.00005);
+
+      for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+
+        // Triangle points outward
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle + Math.PI / 2);
+
+        const size = 8 + breath * 3;
+        ctx.beginPath();
+        ctx.moveTo(0, -size);
+        ctx.lineTo(-size * 0.6, size * 0.5);
+        ctx.lineTo(size * 0.6, size * 0.5);
+        ctx.closePath();
+
+        ctx.fillStyle = `hsla(169, 60%, 55%, ${0.3 + breath * 0.2})`;
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      ctx.restore();
+    };
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Dark background
+      ctx.fillStyle = '#05050c';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Center glow
+      const glowGradient = ctx.createRadialGradient(
+        centerX, centerY, 0,
+        centerX, centerY, maxRadius * 1.3
+      );
+      glowGradient.addColorStop(0, `rgba(127, 219, 202, ${0.1 + breath * 0.05})`);
+      glowGradient.addColorStop(0.5, `rgba(100, 180, 170, ${0.05 + breath * 0.02})`);
+      glowGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = glowGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Touch interactions - create glowing orbs and affect rotation
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          // Draw touch glow orb
+          const touchGlow = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 80);
+          touchGlow.addColorStop(0, 'rgba(127, 219, 202, 0.4)');
+          touchGlow.addColorStop(0.5, 'rgba(127, 219, 202, 0.15)');
+          touchGlow.addColorStop(1, 'transparent');
+          ctx.fillStyle = touchGlow;
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 80, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Draw expanding ring
+          const ringPhase = (now % 1000) / 1000;
+          ctx.strokeStyle = `rgba(127, 219, 202, ${0.5 * (1 - ringPhase)})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 20 + ringPhase * 60, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      });
+
+      // Draw outer border
+      drawOuterBorder(breath, now);
+
+      // Draw rings from outside in
+      const rings = [
+        { radius: maxRadius, segments: 16 },
+        { radius: maxRadius * 0.75, segments: 12 },
+        { radius: maxRadius * 0.5, segments: 8 },
+        { radius: maxRadius * 0.3, segments: 6 },
+      ];
+
+      rings.forEach((ring, index) => {
+        drawRing(ring.radius * (0.9 + breath * 0.1), ring.segments, breath, now, index);
+      });
+
+      // Draw center lotus
+      drawCenterLotus(breath, now);
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== STARFIELD MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'stars' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    // Star class - 3D star that moves toward viewer
+    class Star {
+      constructor() {
+        this.reset(true);
+      }
+
+      reset(initial = false) {
+        // Random position in 3D space
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * Math.max(canvas.width, canvas.height);
+        this.x = Math.cos(angle) * radius;
+        this.y = Math.sin(angle) * radius;
+        this.z = initial ? Math.random() * 1500 + 500 : 2000;
+        this.pz = this.z;
+
+        // Star properties
+        this.hue = Math.random() < 0.1 ? 169 + Math.random() * 30 : 0; // Some teal stars
+        this.brightness = 0.5 + Math.random() * 0.5;
+      }
+
+      update(speed) {
+        this.pz = this.z;
+        this.z -= speed;
+
+        if (this.z < 1) {
+          this.reset();
+        }
+      }
+
+      draw(ctx) {
+        // Project to 2D
+        const sx = centerX + (this.x / this.z) * 400;
+        const sy = centerY + (this.y / this.z) * 400;
+        const px = centerX + (this.x / this.pz) * 400;
+        const py = centerY + (this.y / this.pz) * 400;
+
+        // Check if on screen
+        if (sx < 0 || sx > canvas.width || sy < 0 || sy > canvas.height) return;
+
+        // Size based on depth
+        const size = Math.max(0.5, (1 - this.z / 2000) * 3);
+        const alpha = (1 - this.z / 2000) * this.brightness;
+
+        // Draw trail
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(sx, sy);
+        ctx.strokeStyle = this.hue > 0
+          ? `hsla(${this.hue}, 80%, 70%, ${alpha * 0.5})`
+          : `rgba(255, 255, 255, ${alpha * 0.5})`;
+        ctx.lineWidth = size * 0.5;
+        ctx.stroke();
+
+        // Draw star
+        ctx.beginPath();
+        ctx.arc(sx, sy, size, 0, Math.PI * 2);
+        ctx.fillStyle = this.hue > 0
+          ? `hsla(${this.hue}, 80%, 80%, ${alpha})`
+          : `rgba(255, 255, 255, ${alpha})`;
+        ctx.fill();
+      }
+    }
+
+    // Nebula class - distant colored clouds
+    class Nebula {
+      constructor() {
+        this.x = (Math.random() - 0.5) * canvas.width * 2;
+        this.y = (Math.random() - 0.5) * canvas.height * 2;
+        this.radius = 100 + Math.random() * 200;
+        this.hue = 169 + Math.random() * 60 - 30; // Teal to blue-green
+        this.alpha = 0.03 + Math.random() * 0.03;
+        this.z = 1500 + Math.random() * 500;
+      }
+
+      draw(ctx, centerOffset) {
+        const scale = 400 / this.z;
+        const sx = centerX + (this.x + centerOffset.x) * scale;
+        const sy = centerY + (this.y + centerOffset.y) * scale;
+        const r = this.radius * scale;
+
+        const gradient = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
+        gradient.addColorStop(0, `hsla(${this.hue}, 70%, 50%, ${this.alpha})`);
+        gradient.addColorStop(0.5, `hsla(${this.hue + 20}, 60%, 40%, ${this.alpha * 0.5})`);
+        gradient.addColorStop(1, 'transparent');
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Initialize stars
+    const starCount = Math.min(400, Math.floor((canvas.width * canvas.height) / 3000));
+    const stars = [];
+    for (let i = 0; i < starCount; i++) {
+      stars.push(new Star());
+    }
+
+    // Initialize nebulae
+    const nebulae = [];
+    for (let i = 0; i < 5; i++) {
+      nebulae.push(new Nebula());
+    }
+
+    // Background stars (static, distant)
+    const backgroundStars = [];
+    for (let i = 0; i < 200; i++) {
+      backgroundStars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 1 + 0.3,
+        brightness: Math.random() * 0.4 + 0.1,
+        twinklePhase: Math.random() * Math.PI * 2,
+        twinkleSpeed: Math.random() * 0.002 + 0.001,
+      });
+    }
+
+    let lastTime = Date.now();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const dt = Math.min(now - lastTime, 50);
+      lastTime = now;
+
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Speed based on breath - faster on inhale
+      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
+      const baseSpeed = isInhaling ? 8 : 3;
+      const speed = baseSpeed * (0.5 + breath * 0.5) * (dt / 16);
+
+      // Very dark space background
+      ctx.fillStyle = '#020204';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw background stars with twinkle
+      backgroundStars.forEach(star => {
+        const twinkle = 0.5 + Math.sin(now * star.twinkleSpeed + star.twinklePhase) * 0.5;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness * twinkle})`;
+        ctx.fill();
+      });
+
+      // Draw nebulae
+      const nebulaOffset = { x: Math.sin(now * 0.0001) * 50, y: Math.cos(now * 0.00015) * 30 };
+      nebulae.forEach(n => n.draw(ctx, nebulaOffset));
+
+      // Update and draw moving stars
+      stars.forEach(star => {
+        star.update(speed);
+        star.draw(ctx);
+      });
+
+      // Touch interactions - gravitational pull and spawn burst
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          // Draw gravitational well
+          const wellGradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 100);
+          wellGradient.addColorStop(0, 'rgba(127, 219, 202, 0.3)');
+          wellGradient.addColorStop(0.5, 'rgba(127, 219, 202, 0.1)');
+          wellGradient.addColorStop(1, 'transparent');
+          ctx.fillStyle = wellGradient;
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 100, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Bend nearby star trails toward touch point
+          stars.forEach(star => {
+            const sx = centerX + (star.x / star.z) * 400;
+            const sy = centerY + (star.y / star.z) * 400;
+            const dx = point.x - sx;
+            const dy = point.y - sy;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 150 && dist > 1) {
+              const pull = (1 - dist / 150) * 0.5;
+              star.x += (dx / dist) * pull * star.z * 0.01;
+              star.y += (dy / dist) * pull * star.z * 0.01;
+            }
+          });
+
+          // Draw swirling effect
+          ctx.strokeStyle = 'rgba(127, 219, 202, 0.2)';
+          ctx.lineWidth = 1;
+          for (let i = 0; i < 4; i++) {
+            const angle = (now * 0.002) + (i * Math.PI * 0.5);
+            const r = 30 + i * 15;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, r, angle, angle + Math.PI * 0.4);
+            ctx.stroke();
+          }
+        }
+      });
+
+      // Center glow (destination)
+      const glowSize = 50 + breath * 30;
+      const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowSize);
+      glowGradient.addColorStop(0, `rgba(127, 219, 202, ${0.2 + breath * 0.1})`);
+      glowGradient.addColorStop(0.5, `rgba(100, 180, 170, ${0.1 + breath * 0.05})`);
+      glowGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, glowSize, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== UNDERWATER CAUSTICS MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'caustics' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Noise function for caustics
+    const noise = (x, y, t) => {
+      const s1 = Math.sin(x * 0.02 + t * 0.5) * Math.cos(y * 0.015 + t * 0.3);
+      const s2 = Math.sin(x * 0.015 - t * 0.4) * Math.cos(y * 0.02 + t * 0.6);
+      const s3 = Math.sin((x + y) * 0.01 + t * 0.2);
+      return (s1 + s2 + s3) / 3;
+    };
+
+    // Floating debris particles
+    const debris = [];
+    for (let i = 0; i < 30; i++) {
+      debris.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: 1 + Math.random() * 3,
+        speed: 0.1 + Math.random() * 0.2,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+
+    // Touch disturbance points
+    const disturbances = [];
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Sandy floor gradient
+      const floorGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      floorGradient.addColorStop(0, '#1a2830');
+      floorGradient.addColorStop(0.3, '#2a3840');
+      floorGradient.addColorStop(1, '#3d4a4f');
+      ctx.fillStyle = floorGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw caustic light pattern
+      const cellSize = 8;
+      for (let x = 0; x < canvas.width; x += cellSize) {
+        for (let y = 0; y < canvas.height; y += cellSize) {
+          // Add disturbance influence
+          let disturbance = 0;
+          disturbances.forEach(d => {
+            const dx = x - d.x;
+            const dy = y - d.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < d.radius) {
+              disturbance += Math.sin(dist * 0.1 - d.age * 5) * (1 - dist / d.radius) * d.strength;
+            }
+          });
+
+          const n = noise(x + disturbance * 20, y + disturbance * 20, elapsed * 0.8);
+          const intensity = (n + 1) * 0.5;
+
+          if (intensity > 0.55) {
+            const alpha = (intensity - 0.55) * 2 * (0.3 + breath * 0.15);
+            // Steel blue and sage green caustics
+            const hue = intensity > 0.7 ? 160 : 195;
+            ctx.fillStyle = `hsla(${hue}, 45%, 55%, ${alpha})`;
+            ctx.fillRect(x, y, cellSize + 1, cellSize + 1);
+          }
+        }
+      }
+
+      // Add touch disturbances
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          disturbances.push({
+            x: point.x,
+            y: point.y,
+            radius: 150,
+            age: 0,
+            strength: 1,
+          });
+        }
+      });
+
+      // Update disturbances
+      for (let i = disturbances.length - 1; i >= 0; i--) {
+        disturbances[i].age += 0.016;
+        disturbances[i].radius += 2;
+        disturbances[i].strength *= 0.98;
+        if (disturbances[i].strength < 0.01) {
+          disturbances.splice(i, 1);
+        }
+      }
+
+      // Limit disturbances
+      if (disturbances.length > 10) disturbances.splice(0, disturbances.length - 10);
+
+      // Draw floating debris
+      debris.forEach(d => {
+        d.y -= d.speed;
+        d.x += Math.sin(elapsed + d.phase) * 0.3;
+        if (d.y < -10) {
+          d.y = canvas.height + 10;
+          d.x = Math.random() * canvas.width;
+        }
+        ctx.fillStyle = `rgba(180, 190, 170, ${0.3 + breath * 0.1})`;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Bloom overlay
+      ctx.globalCompositeOperation = 'screen';
+      const bloomGradient = ctx.createRadialGradient(
+        canvas.width / 2, 0, 0,
+        canvas.width / 2, 0, canvas.height
+      );
+      bloomGradient.addColorStop(0, `rgba(74, 144, 164, ${0.1 + breath * 0.05})`);
+      bloomGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = bloomGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'source-over';
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== MANDELBROT MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'mandelbrot' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Mandelbrot zoom state
+    let centerX = -0.745;
+    let centerY = 0.186;
+    let zoom = 0.005;
+    let targetZoom = zoom;
+    const maxIterations = 100;
+
+    // Color palette based on app colors
+    const getColor = (iter, maxIter) => {
+      if (iter === maxIter) return [5, 5, 12];
+      const t = iter / maxIter;
+      const palette = [
+        [123, 104, 238], // purple
+        [74, 144, 164],  // steel blue
+        [107, 142, 107], // sage
+        [212, 165, 116], // sand
+        [224, 123, 83],  // orange
+      ];
+      const idx = t * (palette.length - 1);
+      const i = Math.floor(idx);
+      const f = idx - i;
+      const c1 = palette[Math.min(i, palette.length - 1)];
+      const c2 = palette[Math.min(i + 1, palette.length - 1)];
+      return [
+        c1[0] + (c2[0] - c1[0]) * f,
+        c1[1] + (c2[1] - c1[1]) * f,
+        c1[2] + (c2[2] - c1[2]) * f,
+      ];
+    };
+
+    // Low-res buffer for performance
+    const bufferScale = 4;
+    const bufferWidth = Math.floor(canvas.width / bufferScale);
+    const bufferHeight = Math.floor(canvas.height / bufferScale);
+    const imageData = ctx.createImageData(bufferWidth, bufferHeight);
+
+    const renderMandelbrot = () => {
+      const aspect = canvas.width / canvas.height;
+
+      for (let py = 0; py < bufferHeight; py++) {
+        for (let px = 0; px < bufferWidth; px++) {
+          const x0 = centerX + (px / bufferWidth - 0.5) * zoom * aspect;
+          const y0 = centerY + (py / bufferHeight - 0.5) * zoom;
+
+          let x = 0, y = 0;
+          let iter = 0;
+
+          while (x * x + y * y <= 4 && iter < maxIterations) {
+            const xTemp = x * x - y * y + x0;
+            y = 2 * x * y + y0;
+            x = xTemp;
+            iter++;
+          }
+
+          const color = getColor(iter, maxIterations);
+          const idx = (py * bufferWidth + px) * 4;
+          imageData.data[idx] = color[0];
+          imageData.data[idx + 1] = color[1];
+          imageData.data[idx + 2] = color[2];
+          imageData.data[idx + 3] = 255;
+        }
+      }
+
+      // Draw scaled up
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = bufferWidth;
+      tempCanvas.height = bufferHeight;
+      tempCanvas.getContext('2d').putImageData(imageData, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+    };
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Auto zoom
+      targetZoom *= 0.998;
+      zoom += (targetZoom - zoom) * 0.1;
+
+      // Reset if too deep
+      if (zoom < 0.0000001) {
+        zoom = 0.005;
+        targetZoom = 0.005;
+        centerX = -0.745 + (Math.random() - 0.5) * 0.1;
+        centerY = 0.186 + (Math.random() - 0.5) * 0.1;
+      }
+
+      // Touch to change target
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          const aspect = canvas.width / canvas.height;
+          centerX += (point.x / canvas.width - 0.5) * zoom * aspect * 0.1;
+          centerY += (point.y / canvas.height - 0.5) * zoom * 0.1;
+        }
+      });
+
+      renderMandelbrot();
+
+      // Bloom glow
+      ctx.globalCompositeOperation = 'screen';
+      const glowGradient = ctx.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, 0,
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.5
+      );
+      glowGradient.addColorStop(0, `rgba(123, 104, 238, ${0.1 + breath * 0.05})`);
+      glowGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = glowGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'source-over';
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== TIDE POOL MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'tidepool' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    // Anemone class
+    class Anemone {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.tentacles = 12 + Math.floor(Math.random() * 8);
+        this.baseRadius = 20 + Math.random() * 15;
+        this.tentacleLength = 30 + Math.random() * 20;
+        this.hue = Math.random() > 0.5 ? 107 : 15; // Sage or orange
+        this.retracted = 0;
+        this.phase = Math.random() * Math.PI * 2;
+      }
+
+      update(elapsed) {
+        this.retracted *= 0.95;
+      }
+
+      retract() {
+        this.retracted = 1;
+      }
+
+      draw(ctx, elapsed, breath) {
+        const sway = Math.sin(elapsed * 0.5 + this.phase) * 5;
+        const length = this.tentacleLength * (1 - this.retracted * 0.7) * (0.9 + breath * 0.1);
+
+        // Draw tentacles
+        for (let i = 0; i < this.tentacles; i++) {
+          const angle = (i / this.tentacles) * Math.PI * 2;
+          const tipX = this.x + Math.cos(angle) * (this.baseRadius + length) + sway;
+          const tipY = this.y + Math.sin(angle) * (this.baseRadius + length) * 0.5;
+
+          ctx.strokeStyle = `hsla(${this.hue}, 50%, 55%, 0.8)`;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(this.x + Math.cos(angle) * this.baseRadius, this.y + Math.sin(angle) * this.baseRadius * 0.5);
+          ctx.quadraticCurveTo(
+            this.x + Math.cos(angle) * (this.baseRadius + length * 0.5) + sway * 0.5,
+            this.y + Math.sin(angle) * (this.baseRadius + length * 0.5) * 0.5,
+            tipX, tipY
+          );
+          ctx.stroke();
+        }
+
+        // Center body
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.baseRadius);
+        gradient.addColorStop(0, `hsla(${this.hue}, 60%, 50%, 0.9)`);
+        gradient.addColorStop(1, `hsla(${this.hue}, 50%, 40%, 0.7)`);
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y, this.baseRadius, this.baseRadius * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Small creature class (starfish/crab)
+    class Creature {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.type = Math.random() > 0.5 ? 'star' : 'crab';
+        this.size = 10 + Math.random() * 10;
+        this.speed = 0.1 + Math.random() * 0.1;
+        this.angle = Math.random() * Math.PI * 2;
+        this.rotation = Math.random() * Math.PI * 2;
+      }
+
+      update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+        if (Math.random() < 0.01) this.angle += (Math.random() - 0.5) * 0.5;
+        if (this.x < 0 || this.x > canvas.width) this.angle = Math.PI - this.angle;
+        if (this.y < 0 || this.y > canvas.height) this.angle = -this.angle;
+      }
+
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        if (this.type === 'star') {
+          ctx.fillStyle = '#E07B53';
+          for (let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            ctx.ellipse(0, -this.size, this.size * 0.3, this.size, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.rotate(Math.PI * 2 / 5);
+          }
+        } else {
+          ctx.fillStyle = '#D4A574';
+          ctx.beginPath();
+          ctx.ellipse(0, 0, this.size, this.size * 0.6, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+    }
+
+    // Water ripple
+    const waterRipples = [];
+
+    // Initialize
+    const anemones = [];
+    for (let i = 0; i < 6; i++) {
+      anemones.push(new Anemone(
+        canvas.width * 0.2 + Math.random() * canvas.width * 0.6,
+        canvas.height * 0.3 + Math.random() * canvas.height * 0.5
+      ));
+    }
+
+    const creatures = [];
+    for (let i = 0; i < 4; i++) {
+      creatures.push(new Creature());
+    }
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Water background
+      const waterGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, canvas.width * 0.6);
+      waterGradient.addColorStop(0, '#3a6070');
+      waterGradient.addColorStop(1, '#1a3040');
+      ctx.fillStyle = waterGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Sandy bottom pattern
+      for (let x = 0; x < canvas.width; x += 20) {
+        for (let y = 0; y < canvas.height; y += 20) {
+          const noise = Math.sin(x * 0.05) * Math.cos(y * 0.05 + elapsed * 0.2) * 0.5 + 0.5;
+          if (noise > 0.6) {
+            ctx.fillStyle = `rgba(180, 160, 140, ${(noise - 0.6) * 0.3})`;
+            ctx.fillRect(x, y, 15, 15);
+          }
+        }
+      }
+
+      // Touch interactions
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          // Check anemone tap
+          anemones.forEach(a => {
+            const dist = Math.sqrt((point.x - a.x) ** 2 + (point.y - a.y) ** 2);
+            if (dist < a.baseRadius + a.tentacleLength) {
+              a.retract();
+            }
+          });
+          // Add ripple
+          if (Math.random() < 0.1) {
+            waterRipples.push({ x: point.x, y: point.y, radius: 0, alpha: 0.5 });
+          }
+        }
+      });
+
+      // Update and draw ripples
+      for (let i = waterRipples.length - 1; i >= 0; i--) {
+        const r = waterRipples[i];
+        r.radius += 2;
+        r.alpha *= 0.97;
+        if (r.alpha < 0.01) {
+          waterRipples.splice(i, 1);
+        } else {
+          ctx.strokeStyle = `rgba(74, 144, 164, ${r.alpha})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
+      // Update and draw creatures
+      creatures.forEach(c => {
+        c.update();
+        c.draw(ctx);
+      });
+
+      // Update and draw anemones
+      anemones.forEach(a => {
+        a.update(elapsed);
+        a.draw(ctx, elapsed, breath);
+      });
+
+      // Caustic overlay
+      ctx.globalCompositeOperation = 'screen';
+      for (let i = 0; i < 5; i++) {
+        const x = canvas.width * 0.2 + Math.sin(elapsed * 0.3 + i) * canvas.width * 0.3;
+        const y = canvas.height * 0.3 + Math.cos(elapsed * 0.4 + i * 0.7) * canvas.height * 0.2;
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, 100);
+        gradient.addColorStop(0, `rgba(74, 144, 164, ${0.1 + breath * 0.05})`);
+        gradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, 100, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== NEBULA MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'nebula' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Star particles
+    const stars = [];
+    for (let i = 0; i < 200; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2 + 0.5,
+        twinkle: Math.random() * Math.PI * 2,
+        speed: Math.random() * 0.003 + 0.001,
+      });
+    }
+
+    // Nebula cloud layers
+    class NebulaCloud {
+      constructor(hue) {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.radius = 100 + Math.random() * 200;
+        this.hue = hue;
+        this.phase = Math.random() * Math.PI * 2;
+        this.rotationSpeed = (Math.random() - 0.5) * 0.0002;
+      }
+
+      draw(ctx, elapsed, breath, disturbX, disturbY) {
+        const x = this.x + Math.sin(elapsed * 0.1 + this.phase) * 20 + disturbX;
+        const y = this.y + Math.cos(elapsed * 0.15 + this.phase) * 15 + disturbY;
+        const r = this.radius * (0.9 + breath * 0.2);
+
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, r);
+        gradient.addColorStop(0, `hsla(${this.hue}, 70%, 50%, 0.15)`);
+        gradient.addColorStop(0.5, `hsla(${this.hue}, 60%, 40%, 0.08)`);
+        gradient.addColorStop(1, 'transparent');
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    const clouds = [];
+    const hues = [270, 195, 15]; // Purple, steel blue, orange
+    for (let i = 0; i < 8; i++) {
+      clouds.push(new NebulaCloud(hues[i % hues.length]));
+    }
+
+    let disturbX = 0, disturbY = 0;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Dark space background
+      ctx.fillStyle = '#030308';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw stars
+      stars.forEach(star => {
+        const twinkle = 0.5 + Math.sin(now * star.speed + star.twinkle) * 0.5;
+        ctx.fillStyle = `rgba(255, 255, 255, ${twinkle * 0.8})`;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Touch disturbance
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          disturbX += (point.x - canvas.width / 2) * 0.01;
+          disturbY += (point.y - canvas.height / 2) * 0.01;
+        }
+      });
+      disturbX *= 0.95;
+      disturbY *= 0.95;
+
+      // Draw nebula clouds
+      ctx.globalCompositeOperation = 'screen';
+      clouds.forEach(cloud => cloud.draw(ctx, elapsed, breath, disturbX, disturbY));
+      ctx.globalCompositeOperation = 'source-over';
+
+      // Center glow
+      const glowGradient = ctx.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, 0,
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.4
+      );
+      glowGradient.addColorStop(0, `rgba(123, 104, 238, ${0.05 + breath * 0.03})`);
+      glowGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = glowGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== MOSS MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'moss' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Grid for cellular automata
+    const cellSize = 6;
+    const cols = Math.ceil(canvas.width / cellSize);
+    const rows = Math.ceil(canvas.height / cellSize);
+    const grid = new Array(cols * rows).fill(0);
+
+    // Initial growth points
+    const seeds = 5;
+    for (let i = 0; i < seeds; i++) {
+      const x = Math.floor(Math.random() * cols);
+      const y = Math.floor(Math.random() * rows);
+      grid[y * cols + x] = 1;
+    }
+
+    // Growth function
+    const grow = () => {
+      const newGrowth = [];
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          if (grid[y * cols + x] > 0) {
+            // Try to grow to neighbors
+            const neighbors = [
+              [x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1],
+              [x - 1, y - 1], [x + 1, y - 1], [x - 1, y + 1], [x + 1, y + 1],
+            ];
+            neighbors.forEach(([nx, ny]) => {
+              if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+                if (grid[ny * cols + nx] === 0 && Math.random() < 0.002) {
+                  newGrowth.push([nx, ny]);
+                }
+              }
+            });
+          }
+        }
+      }
+      newGrowth.forEach(([x, y]) => {
+        grid[y * cols + x] = 0.1;
+      });
+
+      // Mature existing moss
+      for (let i = 0; i < grid.length; i++) {
+        if (grid[i] > 0 && grid[i] < 1) {
+          grid[i] = Math.min(1, grid[i] + 0.005);
+        }
+      }
+    };
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Stone background
+      ctx.fillStyle = '#4a4a4a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Stone texture
+      for (let x = 0; x < canvas.width; x += 30) {
+        for (let y = 0; y < canvas.height; y += 30) {
+          const noise = Math.sin(x * 0.1) * Math.cos(y * 0.1) * 0.5 + 0.5;
+          ctx.fillStyle = `rgba(80, 80, 80, ${noise * 0.3})`;
+          ctx.fillRect(x, y, 25, 25);
+        }
+      }
+
+      // Touch to plant new growth
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          const gx = Math.floor(point.x / cellSize);
+          const gy = Math.floor(point.y / cellSize);
+          if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) {
+            // Plant in area around touch
+            for (let dx = -2; dx <= 2; dx++) {
+              for (let dy = -2; dy <= 2; dy++) {
+                const nx = gx + dx;
+                const ny = gy + dy;
+                if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+                  if (grid[ny * cols + nx] === 0 && Math.random() < 0.3) {
+                    grid[ny * cols + nx] = 0.1;
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      // Grow moss
+      grow();
+
+      // Draw moss
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const value = grid[y * cols + x];
+          if (value > 0) {
+            const maturity = value;
+            const hue = 107 + (1 - maturity) * 20;
+            const lightness = 30 + maturity * 15;
+            ctx.fillStyle = `hsla(${hue}, 45%, ${lightness}%, ${maturity * 0.9})`;
+            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+          }
+        }
+      }
+
+      // Subtle glow on moss
+      ctx.globalCompositeOperation = 'screen';
+      const glowGradient = ctx.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, 0,
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.5
+      );
+      glowGradient.addColorStop(0, `rgba(107, 142, 107, ${0.05 + breath * 0.02})`);
+      glowGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = glowGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.globalCompositeOperation = 'source-over';
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== UNTANGLE MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'untangle' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    // Line nodes
+    class Node {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.targetX = x;
+        this.targetY = y;
+        this.vx = 0;
+        this.vy = 0;
+      }
+
+      update(breath) {
+        // Move toward target
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
+        this.vx += dx * 0.01;
+        this.vy += dy * 0.01;
+        this.vx *= 0.95;
+        this.vy *= 0.95;
+        this.x += this.vx;
+        this.y += this.vy;
+      }
+    }
+
+    // Create tangled lines
+    const lines = [];
+    const nodeCount = 8;
+
+    for (let i = 0; i < 5; i++) {
+      const line = {
+        nodes: [],
+        color: [139, 139, 139], // Start gray
+        targetColor: [74, 144, 164], // End blue
+        untangled: 0,
+      };
+
+      const startAngle = (i / 5) * Math.PI * 2;
+      const endAngle = startAngle + Math.PI + (Math.random() - 0.5);
+
+      for (let j = 0; j < nodeCount; j++) {
+        const t = j / (nodeCount - 1);
+        // Tangled starting positions
+        const angle = startAngle + (endAngle - startAngle) * t;
+        const radius = 50 + Math.sin(t * Math.PI * 3 + i) * 80;
+        const x = centerX + Math.cos(angle) * radius + (Math.random() - 0.5) * 100;
+        const y = centerY + Math.sin(angle) * radius + (Math.random() - 0.5) * 100;
+        line.nodes.push(new Node(x, y));
+      }
+
+      // Set untangled target positions (smooth curve)
+      const finalRadius = 100 + i * 20;
+      for (let j = 0; j < nodeCount; j++) {
+        const t = j / (nodeCount - 1);
+        const angle = startAngle + (endAngle - startAngle) * t;
+        line.nodes[j].targetX = centerX + Math.cos(angle) * finalRadius;
+        line.nodes[j].targetY = centerY + Math.sin(angle) * finalRadius;
+      }
+
+      lines.push(line);
+    }
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+      const isExhaling = Math.sin(elapsed * BREATH_SPEED) < 0;
+
+      // Dark background
+      ctx.fillStyle = '#05050c';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Touch to help untangle
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          lines.forEach(line => {
+            line.nodes.forEach(node => {
+              const dx = node.x - point.x;
+              const dy = node.y - point.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 100 && dist > 1) {
+                // Push toward target when touched
+                node.x += (node.targetX - node.x) * 0.1;
+                node.y += (node.targetY - node.y) * 0.1;
+              }
+            });
+          });
+        }
+      });
+
+      // Update and draw lines
+      lines.forEach(line => {
+        // Calculate untangle progress
+        let totalDist = 0;
+        line.nodes.forEach(node => {
+          node.update(breath);
+          // Breath sync - exhale helps untangle
+          if (isExhaling) {
+            node.x += (node.targetX - node.x) * 0.002;
+            node.y += (node.targetY - node.y) * 0.002;
+          }
+          const dx = node.x - node.targetX;
+          const dy = node.y - node.targetY;
+          totalDist += Math.sqrt(dx * dx + dy * dy);
+        });
+        line.untangled = Math.max(0, 1 - totalDist / (line.nodes.length * 100));
+
+        // Interpolate color
+        const r = line.color[0] + (line.targetColor[0] - line.color[0]) * line.untangled;
+        const g = line.color[1] + (line.targetColor[1] - line.color[1]) * line.untangled;
+        const b = line.color[2] + (line.targetColor[2] - line.color[2]) * line.untangled;
+
+        // Draw line
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(line.nodes[0].x, line.nodes[0].y);
+        for (let i = 1; i < line.nodes.length; i++) {
+          ctx.lineTo(line.nodes[i].x, line.nodes[i].y);
+        }
+        ctx.stroke();
+
+        // Glow on untangled parts
+        if (line.untangled > 0.8) {
+          ctx.strokeStyle = `rgba(74, 144, 164, ${(line.untangled - 0.8) * 2 * 0.3})`;
+          ctx.lineWidth = 8;
+          ctx.stroke();
+        }
+      });
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== BAMBOO WATER FEATURE MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'bamboo' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    // Bamboo tube state
+    let fillLevel = 0;
+    let tipping = false;
+    let tipAngle = 0;
+    let waterParticles = [];
+
+    // Water stream
+    const streamParticles = [];
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Background - zen garden
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      bgGradient.addColorStop(0, '#1a2520');
+      bgGradient.addColorStop(1, '#0a1510');
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Background foliage hints
+      for (let i = 0; i < 8; i++) {
+        const x = canvas.width * 0.1 + (i / 8) * canvas.width * 0.8;
+        const height = 50 + Math.sin(i * 1.5) * 30;
+        ctx.fillStyle = 'rgba(107, 142, 107, 0.2)';
+        ctx.beginPath();
+        ctx.ellipse(x, 50, 30, height, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Water basin
+      const basinY = centerY + 100;
+      ctx.fillStyle = '#2a3a35';
+      ctx.beginPath();
+      ctx.ellipse(centerX, basinY + 30, 120, 40, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#4A90A4';
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath();
+      ctx.ellipse(centerX, basinY + 25, 100, 30, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Bamboo pivot point
+      const pivotX = centerX;
+      const pivotY = centerY - 20;
+      const tubeLength = 120;
+      const tubeWidth = 25;
+
+      // Touch to tip early
+      touchPointsRef.current.forEach(point => {
+        if (point.active && !tipping) {
+          const dx = point.x - pivotX;
+          const dy = point.y - pivotY;
+          if (Math.sqrt(dx * dx + dy * dy) < 100) {
+            tipping = true;
+          }
+        }
+      });
+
+      // Fill the tube
+      if (!tipping) {
+        fillLevel += 0.003;
+        if (fillLevel >= 1) {
+          tipping = true;
+        }
+      }
+
+      // Tipping animation
+      if (tipping) {
+        tipAngle += 0.05;
+        if (tipAngle > Math.PI * 0.4) {
+          // Spawn water particles
+          if (waterParticles.length < 20) {
+            waterParticles.push({
+              x: pivotX + Math.cos(-Math.PI / 2 + tipAngle) * tubeLength,
+              y: pivotY + Math.sin(-Math.PI / 2 + tipAngle) * tubeLength,
+              vx: (Math.random() - 0.5) * 2,
+              vy: 2 + Math.random() * 3,
+            });
+          }
+        }
+        if (tipAngle > Math.PI * 0.6) {
+          tipAngle = 0;
+          tipping = false;
+          fillLevel = 0;
+          waterParticles = [];
+        }
+      }
+
+      // Draw bamboo tube
+      ctx.save();
+      ctx.translate(pivotX, pivotY);
+      ctx.rotate(-Math.PI / 2 + tipAngle);
+
+      // Tube body
+      ctx.fillStyle = '#D4A574';
+      ctx.beginPath();
+      ctx.roundRect(-tubeWidth / 2, 0, tubeWidth, tubeLength, 5);
+      ctx.fill();
+
+      // Tube opening
+      ctx.fillStyle = '#a08060';
+      ctx.beginPath();
+      ctx.ellipse(0, tubeLength, tubeWidth / 2, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Water inside
+      if (fillLevel > 0 && !tipping) {
+        ctx.fillStyle = 'rgba(74, 144, 164, 0.7)';
+        const waterHeight = tubeLength * 0.8 * fillLevel;
+        ctx.fillRect(-tubeWidth / 2 + 3, tubeLength - waterHeight, tubeWidth - 6, waterHeight);
+      }
+
+      ctx.restore();
+
+      // Pivot decoration
+      ctx.fillStyle = '#8B8B8B';
+      ctx.beginPath();
+      ctx.arc(pivotX, pivotY, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Water stream from source
+      if (!tipping && fillLevel > 0) {
+        ctx.strokeStyle = 'rgba(74, 144, 164, 0.6)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(centerX - 80, centerY - 100);
+        ctx.quadraticCurveTo(
+          centerX - 40, centerY - 50,
+          pivotX + Math.cos(-Math.PI / 2) * tubeLength,
+          pivotY + Math.sin(-Math.PI / 2) * tubeLength
+        );
+        ctx.stroke();
+      }
+
+      // Draw and update water particles
+      waterParticles.forEach(p => {
+        p.vy += 0.2;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        ctx.fillStyle = 'rgba(74, 144, 164, 0.7)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Remove particles that hit basin
+      waterParticles = waterParticles.filter(p => p.y < basinY + 20);
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== OWL MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'owl' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    // Owl state
+    let blinkProgress = 0;
+    let isBlinking = false;
+    let headTilt = 0;
+    let targetTilt = 0;
+    let lastBlink = 0;
+    let eyeContactTime = 0;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Dark background
+      ctx.fillStyle = '#0a0a12';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Touch interactions
+      let isTouching = false;
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          isTouching = true;
+          // Tap to tilt head
+          if (Math.random() < 0.02) {
+            targetTilt = (Math.random() - 0.5) * 0.3;
+          }
+        }
+      });
+
+      // Eye contact triggers slow blink
+      if (isTouching) {
+        eyeContactTime += 0.016;
+        if (eyeContactTime > 2 && !isBlinking && now - lastBlink > 3000) {
+          isBlinking = true;
+          lastBlink = now;
+          eyeContactTime = 0;
+        }
+      } else {
+        eyeContactTime = 0;
+        // Random blinks
+        if (!isBlinking && Math.random() < 0.002) {
+          isBlinking = true;
+          lastBlink = now;
+        }
+      }
+
+      // Blink animation
+      if (isBlinking) {
+        blinkProgress += 0.08;
+        if (blinkProgress >= 1) {
+          blinkProgress = 0;
+          isBlinking = false;
+        }
+      }
+
+      // Head tilt
+      headTilt += (targetTilt - headTilt) * 0.05;
+      if (Math.abs(targetTilt) > 0.01) {
+        targetTilt *= 0.99;
+      }
+
+      const scale = Math.min(canvas.width, canvas.height) * 0.003;
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(headTilt);
+
+      // Face shape
+      const faceGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 120 * scale);
+      faceGradient.addColorStop(0, '#D4A574');
+      faceGradient.addColorStop(0.7, '#a08060');
+      faceGradient.addColorStop(1, '#806040');
+      ctx.fillStyle = faceGradient;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 100 * scale, 110 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Facial disc patterns
+      ctx.strokeStyle = '#c09570';
+      ctx.lineWidth = 2 * scale;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.ellipse(0, 10 * scale, (60 + i * 20) * scale, (70 + i * 20) * scale, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Eyes
+      const eyeY = -15 * scale;
+      const eyeSpacing = 35 * scale;
+      const eyeSize = 25 * scale;
+      const blinkHeight = 1 - Math.sin(blinkProgress * Math.PI);
+
+      [-1, 1].forEach(side => {
+        const eyeX = side * eyeSpacing;
+
+        // Eye ring
+        ctx.fillStyle = '#E07B53';
+        ctx.beginPath();
+        ctx.ellipse(eyeX, eyeY, eyeSize + 5 * scale, (eyeSize + 5 * scale) * blinkHeight, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye white
+        ctx.fillStyle = '#f0f0e8';
+        ctx.beginPath();
+        ctx.ellipse(eyeX, eyeY, eyeSize, eyeSize * blinkHeight, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Iris
+        if (blinkHeight > 0.3) {
+          ctx.fillStyle = '#4A90A4';
+          ctx.beginPath();
+          ctx.ellipse(eyeX, eyeY, eyeSize * 0.6, eyeSize * 0.6 * blinkHeight, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Pupil
+          ctx.fillStyle = '#1a1a20';
+          ctx.beginPath();
+          ctx.ellipse(eyeX, eyeY, eyeSize * 0.3, eyeSize * 0.3 * blinkHeight, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Eye highlight
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+          ctx.beginPath();
+          ctx.ellipse(eyeX - eyeSize * 0.15, eyeY - eyeSize * 0.15, eyeSize * 0.12, eyeSize * 0.12 * blinkHeight, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // Beak
+      ctx.fillStyle = '#3a3530';
+      ctx.beginPath();
+      ctx.moveTo(0, 15 * scale);
+      ctx.lineTo(-10 * scale, 35 * scale);
+      ctx.lineTo(10 * scale, 35 * scale);
+      ctx.closePath();
+      ctx.fill();
+
+      // Ear tufts
+      [-1, 1].forEach(side => {
+        ctx.fillStyle = '#a08060';
+        ctx.beginPath();
+        ctx.moveTo(side * 70 * scale, -60 * scale);
+        ctx.lineTo(side * 90 * scale, -120 * scale);
+        ctx.lineTo(side * 50 * scale, -80 * scale);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      ctx.restore();
+
+      // Subtle ambient glow
+      const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 200 * scale);
+      glowGradient.addColorStop(0, `rgba(212, 165, 116, ${0.05 + breath * 0.02})`);
+      glowGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 200 * scale, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== STEAM MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'steam' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const cupTop = canvas.height * 0.65;
+
+    // Steam particle class
+    class SteamParticle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = centerX + (Math.random() - 0.5) * 40;
+        this.y = cupTop - 20;
+        this.size = 8 + Math.random() * 15;
+        this.life = 1;
+        this.decay = 0.005 + Math.random() * 0.005;
+        this.vx = (Math.random() - 0.5) * 0.3;
+        this.vy = -0.5 - Math.random() * 0.5;
+        this.phase = Math.random() * Math.PI * 2;
+        this.dispersed = false;
+      }
+
+      update(elapsed) {
+        if (this.dispersed) {
+          this.life -= this.decay * 3;
+          this.size *= 1.02;
+        } else {
+          this.life -= this.decay;
+          this.size += 0.1;
+        }
+
+        this.x += this.vx + Math.sin(elapsed * 2 + this.phase) * 0.3;
+        this.y += this.vy;
+
+        if (this.life <= 0) this.reset();
+      }
+
+      disperse() {
+        this.dispersed = true;
+        this.vx += (Math.random() - 0.5) * 3;
+        this.vy -= 2;
+      }
+
+      draw(ctx) {
+        const alpha = this.life * 0.4;
+        ctx.fillStyle = `rgba(200, 200, 200, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Initialize steam particles
+    const steamParticles = [];
+    for (let i = 0; i < 25; i++) {
+      const p = new SteamParticle();
+      p.y = cupTop - 20 - Math.random() * 150;
+      p.life = Math.random();
+      steamParticles.push(p);
+    }
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Warm dark background
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      bgGradient.addColorStop(0, '#0a0808');
+      bgGradient.addColorStop(1, '#151210');
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Touch to disperse steam
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          steamParticles.forEach(p => {
+            const dx = p.x - point.x;
+            const dy = p.y - point.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 80) {
+              p.disperse();
+            }
+          });
+        }
+      });
+
+      // Warm glow from cup
+      const warmGlow = ctx.createRadialGradient(centerX, cupTop + 30, 0, centerX, cupTop + 30, 150);
+      warmGlow.addColorStop(0, 'rgba(212, 165, 116, 0.15)');
+      warmGlow.addColorStop(0.5, 'rgba(212, 165, 116, 0.05)');
+      warmGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = warmGlow;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Update and draw steam
+      steamParticles.forEach(p => {
+        p.update(elapsed);
+        p.draw(ctx);
+      });
+
+      // Tea cup
+      const cupWidth = 80;
+      const cupHeight = 60;
+
+      // Cup body
+      ctx.fillStyle = '#f5f0e8';
+      ctx.beginPath();
+      ctx.moveTo(centerX - cupWidth / 2, cupTop);
+      ctx.lineTo(centerX - cupWidth / 2 + 10, cupTop + cupHeight);
+      ctx.lineTo(centerX + cupWidth / 2 - 10, cupTop + cupHeight);
+      ctx.lineTo(centerX + cupWidth / 2, cupTop);
+      ctx.closePath();
+      ctx.fill();
+
+      // Cup rim
+      ctx.fillStyle = '#e8e0d8';
+      ctx.beginPath();
+      ctx.ellipse(centerX, cupTop, cupWidth / 2, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tea surface
+      ctx.fillStyle = '#8B6914';
+      ctx.beginPath();
+      ctx.ellipse(centerX, cupTop + 5, cupWidth / 2 - 5, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cup handle
+      ctx.strokeStyle = '#f5f0e8';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.arc(centerX + cupWidth / 2 + 15, cupTop + cupHeight / 2, 20, -Math.PI * 0.4, Math.PI * 0.4);
+      ctx.stroke();
+
+      // Saucer
+      ctx.fillStyle = '#f0ebe0';
+      ctx.beginPath();
+      ctx.ellipse(centerX, cupTop + cupHeight + 10, cupWidth * 0.8, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== MOON MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'moon' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    // Moon phase (0 = new, 0.5 = full, 1 = new again)
+    let phase = 0.5;
+    let targetPhase = 0.5;
+
+    // Stars
+    const stars = [];
+    for (let i = 0; i < 150; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 1.5 + 0.5,
+        twinkle: Math.random() * Math.PI * 2,
+      });
+    }
+
+    // Craters
+    const craters = [];
+    for (let i = 0; i < 12; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * 0.7;
+      craters.push({
+        x: Math.cos(angle) * dist,
+        y: Math.sin(angle) * dist,
+        size: 0.05 + Math.random() * 0.1,
+      });
+    }
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Night sky
+      const skyGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, canvas.width * 0.7);
+      skyGradient.addColorStop(0, '#0f0f20');
+      skyGradient.addColorStop(1, '#050510');
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Touch to change phase
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          const dx = point.x - centerX;
+          targetPhase += dx * 0.0001;
+          targetPhase = ((targetPhase % 1) + 1) % 1;
+        }
+      });
+
+      // Auto phase cycle
+      targetPhase += 0.0001;
+      if (targetPhase > 1) targetPhase = 0;
+
+      phase += (targetPhase - phase) * 0.05;
+
+      // Draw stars
+      stars.forEach(star => {
+        const twinkle = 0.5 + Math.sin(now * 0.003 + star.twinkle) * 0.5;
+        ctx.fillStyle = `rgba(255, 255, 255, ${twinkle * 0.7})`;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      const moonRadius = Math.min(canvas.width, canvas.height) * 0.2;
+
+      // Moon glow
+      const glowGradient = ctx.createRadialGradient(centerX, centerY, moonRadius * 0.8, centerX, centerY, moonRadius * 2);
+      glowGradient.addColorStop(0, `rgba(212, 200, 180, ${0.2 + breath * 0.1})`);
+      glowGradient.addColorStop(0.5, 'rgba(180, 170, 160, 0.05)');
+      glowGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, moonRadius * 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Moon base
+      const moonGradient = ctx.createRadialGradient(
+        centerX - moonRadius * 0.3, centerY - moonRadius * 0.3, 0,
+        centerX, centerY, moonRadius
+      );
+      moonGradient.addColorStop(0, '#f5f0e5');
+      moonGradient.addColorStop(0.5, '#e8e0d5');
+      moonGradient.addColorStop(1, '#d0c8c0');
+      ctx.fillStyle = moonGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, moonRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Craters
+      craters.forEach(crater => {
+        const cx = centerX + crater.x * moonRadius;
+        const cy = centerY + crater.y * moonRadius;
+        const cr = crater.size * moonRadius;
+
+        ctx.fillStyle = 'rgba(180, 170, 160, 0.3)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(200, 190, 180, 0.2)';
+        ctx.beginPath();
+        ctx.arc(cx - cr * 0.2, cy - cr * 0.2, cr * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Phase shadow
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, moonRadius, 0, Math.PI * 2);
+      ctx.clip();
+
+      // Calculate shadow position based on phase
+      const shadowPhase = phase * Math.PI * 2;
+      const shadowX = centerX + Math.cos(shadowPhase) * moonRadius * 2;
+
+      ctx.fillStyle = 'rgba(5, 5, 15, 0.95)';
+      ctx.beginPath();
+      ctx.arc(shadowX, centerY, moonRadius * 1.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== KALEIDOSCOPE MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'kaleidoscope' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const segments = 8;
+
+    // Floating shapes
+    const shapes = [];
+    for (let i = 0; i < 15; i++) {
+      shapes.push({
+        x: Math.random() * 200 - 100,
+        y: Math.random() * 200 - 100,
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        size: 10 + Math.random() * 30,
+        hue: [270, 195, 107, 15, 35][Math.floor(Math.random() * 5)],
+        type: Math.floor(Math.random() * 3),
+      });
+    }
+
+    let touchX = 0, touchY = 0;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Dark background
+      ctx.fillStyle = '#05050c';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Touch influence
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          touchX = point.x - centerX;
+          touchY = point.y - centerY;
+        }
+      });
+      touchX *= 0.95;
+      touchY *= 0.95;
+
+      // Update shapes
+      shapes.forEach(shape => {
+        shape.x += shape.vx + touchX * 0.01;
+        shape.y += shape.vy + touchY * 0.01;
+
+        // Bounce
+        const maxDist = 150;
+        const dist = Math.sqrt(shape.x * shape.x + shape.y * shape.y);
+        if (dist > maxDist) {
+          const angle = Math.atan2(shape.y, shape.x);
+          shape.x = Math.cos(angle) * maxDist;
+          shape.y = Math.sin(angle) * maxDist;
+          shape.vx = -shape.vx * 0.8;
+          shape.vy = -shape.vy * 0.8;
+        }
+      });
+
+      // Draw kaleidoscope
+      const maxRadius = Math.min(canvas.width, canvas.height) * 0.45;
+
+      for (let i = 0; i < segments; i++) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate((i / segments) * Math.PI * 2 + elapsed * 0.1);
+
+        // Clip to segment
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(maxRadius, 0);
+        ctx.arc(0, 0, maxRadius, 0, Math.PI / (segments / 2));
+        ctx.closePath();
+        ctx.clip();
+
+        // Mirror for even segments
+        if (i % 2 === 1) {
+          ctx.scale(1, -1);
+        }
+
+        // Draw shapes in this segment
+        shapes.forEach(shape => {
+          const alpha = 0.6 + breath * 0.2;
+          ctx.fillStyle = `hsla(${shape.hue}, 70%, 55%, ${alpha})`;
+
+          ctx.beginPath();
+          if (shape.type === 0) {
+            ctx.arc(shape.x + 75, shape.y + 75, shape.size, 0, Math.PI * 2);
+          } else if (shape.type === 1) {
+            ctx.rect(shape.x + 75 - shape.size / 2, shape.y + 75 - shape.size / 2, shape.size, shape.size);
+          } else {
+            const s = shape.size;
+            ctx.moveTo(shape.x + 75, shape.y + 75 - s);
+            ctx.lineTo(shape.x + 75 + s, shape.y + 75 + s);
+            ctx.lineTo(shape.x + 75 - s, shape.y + 75 + s);
+            ctx.closePath();
+          }
+          ctx.fill();
+        });
+
+        ctx.restore();
+      }
+
+      // Center glow
+      const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 50);
+      glowGradient.addColorStop(0, `rgba(123, 104, 238, ${0.3 + breath * 0.1})`);
+      glowGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== MUSHROOMS MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'mushrooms' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Mushroom class
+    class Mushroom {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.capRadius = 20 + Math.random() * 25;
+        this.stemHeight = 25 + Math.random() * 20;
+        this.stemWidth = 8 + Math.random() * 6;
+        this.hue = Math.random() > 0.5 ? 195 : 107; // Blue or green
+        this.phase = Math.random() * Math.PI * 2;
+        this.pulseSpeed = 0.5 + Math.random() * 0.5;
+        this.spores = [];
+      }
+
+      addSpores() {
+        for (let i = 0; i < 8; i++) {
+          this.spores.push({
+            x: this.x,
+            y: this.y - this.stemHeight - this.capRadius * 0.5,
+            vx: (Math.random() - 0.5) * 2,
+            vy: -1 - Math.random() * 2,
+            size: 2 + Math.random() * 3,
+            life: 1,
+          });
+        }
+      }
+
+      update(elapsed) {
+        // Update spores
+        this.spores = this.spores.filter(spore => {
+          spore.x += spore.vx;
+          spore.y += spore.vy;
+          spore.vy -= 0.01;
+          spore.life -= 0.01;
+          return spore.life > 0;
+        });
+      }
+
+      draw(ctx, elapsed, breath) {
+        const pulse = 0.5 + Math.sin(elapsed * this.pulseSpeed + this.phase) * 0.5;
+        const glowIntensity = 0.3 + pulse * 0.4 + breath * 0.2;
+
+        // Stem
+        ctx.fillStyle = '#8B8B8B';
+        ctx.beginPath();
+        ctx.moveTo(this.x - this.stemWidth / 2, this.y);
+        ctx.lineTo(this.x - this.stemWidth / 3, this.y - this.stemHeight);
+        ctx.lineTo(this.x + this.stemWidth / 3, this.y - this.stemHeight);
+        ctx.lineTo(this.x + this.stemWidth / 2, this.y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Cap glow
+        const glowGradient = ctx.createRadialGradient(
+          this.x, this.y - this.stemHeight, 0,
+          this.x, this.y - this.stemHeight, this.capRadius * 2
+        );
+        glowGradient.addColorStop(0, `hsla(${this.hue}, 70%, 50%, ${glowIntensity * 0.5})`);
+        glowGradient.addColorStop(0.5, `hsla(${this.hue}, 60%, 40%, ${glowIntensity * 0.2})`);
+        glowGradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - this.stemHeight, this.capRadius * 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cap
+        const capGradient = ctx.createRadialGradient(
+          this.x - this.capRadius * 0.3, this.y - this.stemHeight - this.capRadius * 0.3, 0,
+          this.x, this.y - this.stemHeight, this.capRadius
+        );
+        capGradient.addColorStop(0, `hsla(${this.hue}, 70%, 60%, 0.9)`);
+        capGradient.addColorStop(0.7, `hsla(${this.hue}, 60%, 45%, 0.8)`);
+        capGradient.addColorStop(1, `hsla(${this.hue}, 50%, 35%, 0.7)`);
+        ctx.fillStyle = capGradient;
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y - this.stemHeight, this.capRadius, this.capRadius * 0.6, 0, Math.PI, Math.PI * 2);
+        ctx.fill();
+
+        // Spots on cap
+        for (let i = 0; i < 5; i++) {
+          const spotAngle = (i / 5) * Math.PI + 0.3;
+          const spotDist = this.capRadius * 0.5;
+          const spotX = this.x + Math.cos(spotAngle) * spotDist;
+          const spotY = this.y - this.stemHeight - Math.sin(spotAngle) * spotDist * 0.5;
+          ctx.fillStyle = `hsla(${this.hue}, 80%, 70%, ${0.5 + pulse * 0.3})`;
+          ctx.beginPath();
+          ctx.arc(spotX, spotY, 3 + Math.random() * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Draw spores
+        this.spores.forEach(spore => {
+          ctx.fillStyle = `hsla(${this.hue}, 60%, 60%, ${spore.life * 0.6})`;
+          ctx.beginPath();
+          ctx.arc(spore.x, spore.y, spore.size * spore.life, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+    }
+
+    // Initialize mushrooms
+    const mushrooms = [];
+    for (let i = 0; i < 8; i++) {
+      mushrooms.push(new Mushroom(
+        canvas.width * 0.15 + (i / 8) * canvas.width * 0.7 + (Math.random() - 0.5) * 50,
+        canvas.height * 0.7 + Math.random() * canvas.height * 0.15
+      ));
+    }
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Forest floor background
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      bgGradient.addColorStop(0, '#0a0a10');
+      bgGradient.addColorStop(0.6, '#0f1015');
+      bgGradient.addColorStop(1, '#15181d');
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Ground texture
+      ctx.fillStyle = 'rgba(60, 55, 50, 0.3)';
+      for (let x = 0; x < canvas.width; x += 30) {
+        const y = canvas.height * 0.75 + Math.sin(x * 0.05) * 20;
+        ctx.beginPath();
+        ctx.ellipse(x, y, 20, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Touch to release spores
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          mushrooms.forEach(m => {
+            const dist = Math.sqrt((point.x - m.x) ** 2 + (point.y - (m.y - m.stemHeight)) ** 2);
+            if (dist < m.capRadius + 30 && m.spores.length < 20) {
+              m.addSpores();
+            }
+          });
+        }
+      });
+
+      // Update and draw mushrooms
+      mushrooms.forEach(m => {
+        m.update(elapsed);
+        m.draw(ctx, elapsed, breath);
+      });
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== LANTERNS MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'lanterns' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Lantern class
+    class Lantern {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = 30 + Math.random() * 20;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = -0.5 - Math.random() * 0.5;
+        this.rotation = (Math.random() - 0.5) * 0.1;
+        this.rotationSpeed = (Math.random() - 0.5) * 0.002;
+        this.hue = 25 + Math.random() * 15; // Orange-ish
+        this.alpha = 1;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.rotation += this.rotationSpeed;
+
+        // Shrink as they rise
+        if (this.y < canvas.height * 0.3) {
+          this.size *= 0.998;
+          this.alpha *= 0.998;
+        }
+
+        // Remove when off screen or too small
+        return this.y > -100 && this.size > 5 && this.alpha > 0.1;
+      }
+
+      draw(ctx, breath) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.globalAlpha = this.alpha;
+
+        // Lantern glow
+        const glowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size * 2);
+        glowGradient.addColorStop(0, `hsla(${this.hue}, 80%, 55%, ${0.4 + breath * 0.1})`);
+        glowGradient.addColorStop(0.5, `hsla(${this.hue}, 70%, 45%, 0.1)`);
+        glowGradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.size * 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Lantern body
+        const bodyGradient = ctx.createLinearGradient(-this.size / 2, -this.size, this.size / 2, this.size);
+        bodyGradient.addColorStop(0, `hsla(${this.hue}, 70%, 60%, 0.9)`);
+        bodyGradient.addColorStop(0.5, `hsla(${this.hue - 5}, 80%, 55%, 0.95)`);
+        bodyGradient.addColorStop(1, `hsla(${this.hue}, 70%, 50%, 0.85)`);
+        ctx.fillStyle = bodyGradient;
+
+        // Lantern shape
+        ctx.beginPath();
+        ctx.moveTo(-this.size * 0.3, -this.size);
+        ctx.quadraticCurveTo(-this.size * 0.6, 0, -this.size * 0.3, this.size);
+        ctx.lineTo(this.size * 0.3, this.size);
+        ctx.quadraticCurveTo(this.size * 0.6, 0, this.size * 0.3, -this.size);
+        ctx.closePath();
+        ctx.fill();
+
+        // Top and bottom caps
+        ctx.fillStyle = '#D4A574';
+        ctx.fillRect(-this.size * 0.2, -this.size - 5, this.size * 0.4, 8);
+        ctx.fillRect(-this.size * 0.15, this.size - 3, this.size * 0.3, 6);
+
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // Stars
+    const stars = [];
+    for (let i = 0; i < 100; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height * 0.7,
+        size: Math.random() * 1.5 + 0.5,
+        twinkle: Math.random() * Math.PI * 2,
+      });
+    }
+
+    const lanterns = [];
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Night sky
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      skyGradient.addColorStop(0, '#05050f');
+      skyGradient.addColorStop(0.7, '#0a0a18');
+      skyGradient.addColorStop(1, '#101025');
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw stars
+      stars.forEach(star => {
+        const twinkle = 0.5 + Math.sin(now * 0.002 + star.twinkle) * 0.5;
+        ctx.fillStyle = `rgba(255, 255, 255, ${twinkle * 0.6})`;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Touch to release lantern
+      touchPointsRef.current.forEach(point => {
+        if (point.active && lanterns.length < 20 && Math.random() < 0.05) {
+          lanterns.push(new Lantern(point.x, canvas.height + 50));
+        }
+      });
+
+      // Auto release occasionally
+      if (Math.random() < 0.005 && lanterns.length < 15) {
+        lanterns.push(new Lantern(
+          canvas.width * 0.2 + Math.random() * canvas.width * 0.6,
+          canvas.height + 50
+        ));
+      }
+
+      // Update and draw lanterns
+      for (let i = lanterns.length - 1; i >= 0; i--) {
+        if (!lanterns[i].update()) {
+          lanterns.splice(i, 1);
+        } else {
+          lanterns[i].draw(ctx, breath);
+        }
+      }
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
+  // ========== HEART SYNC MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'heartSync' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    // Two hearts with different rhythms
+    const hearts = [
+      { x: centerX - 80, phase: 0, speed: 1.2, hue: 15, baseSize: 40 },
+      { x: centerX + 80, phase: Math.PI, speed: 0.8, hue: 195, baseSize: 40 },
+    ];
+
+    let syncLevel = 0;
+    let lastTapTime = 0;
+    let tapRhythm = 1;
+
+    // Draw heart shape
+    const drawHeart = (x, y, size, hue, pulse) => {
+      const s = size * (0.9 + pulse * 0.2);
+
+      // Heart glow
+      const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, s * 2);
+      glowGradient.addColorStop(0, `hsla(${hue}, 70%, 50%, ${0.2 + pulse * 0.2})`);
+      glowGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = glowGradient;
+      ctx.beginPath();
+      ctx.arc(x, y, s * 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Heart shape
+      ctx.fillStyle = `hsla(${hue}, 70%, 55%, 0.9)`;
+      ctx.beginPath();
+      ctx.moveTo(x, y + s * 0.7);
+      ctx.bezierCurveTo(x - s * 1.5, y - s * 0.5, x - s * 0.8, y - s * 1.3, x, y - s * 0.6);
+      ctx.bezierCurveTo(x + s * 0.8, y - s * 1.3, x + s * 1.5, y - s * 0.5, x, y + s * 0.7);
+      ctx.fill();
+
+      // Highlight
+      ctx.fillStyle = `hsla(${hue}, 60%, 70%, 0.4)`;
+      ctx.beginPath();
+      ctx.ellipse(x - s * 0.3, y - s * 0.4, s * 0.25, s * 0.2, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Dark background
+      ctx.fillStyle = '#05050c';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Touch to set rhythm for first heart
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          const timeSinceTap = now - lastTapTime;
+          if (timeSinceTap > 200) {
+            tapRhythm = Math.max(0.5, Math.min(2, 1000 / timeSinceTap));
+            lastTapTime = now;
+            hearts[0].speed = tapRhythm;
+          }
+        }
+      });
+
+      // Second heart gradually syncs to first
+      const speedDiff = hearts[0].speed - hearts[1].speed;
+      hearts[1].speed += speedDiff * 0.001;
+
+      // Calculate sync level based on phase alignment
+      const phaseDiff = Math.abs(Math.sin(hearts[0].phase) - Math.sin(hearts[1].phase));
+      syncLevel = 1 - phaseDiff;
+
+      // Breath sync option - first heart follows breath
+      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
+      if (isInhaling) {
+        hearts[0].phase += 0.02;
+      }
+
+      // Update and draw hearts
+      hearts.forEach((heart, i) => {
+        heart.phase += 0.05 * heart.speed;
+        const pulse = (Math.sin(heart.phase) + 1) / 2;
+
+        // Merge color when synced
+        let drawHue = heart.hue;
+        if (syncLevel > 0.8) {
+          drawHue = 280; // Purple blend
+        }
+
+        drawHeart(heart.x, centerY, heart.baseSize, drawHue, pulse);
+      });
+
+      // Sync burst effect
+      if (syncLevel > 0.9) {
+        const burstGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 150);
+        burstGradient.addColorStop(0, `rgba(123, 104, 238, ${(syncLevel - 0.9) * 2})`);
+        burstGradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = burstGradient;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 150, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Connection line between hearts
+      ctx.strokeStyle = `rgba(180, 150, 200, ${0.2 + syncLevel * 0.3})`;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(hearts[0].x + 30, centerY);
+      ctx.lineTo(hearts[1].x - 30, centerY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Sync indicator
+      ctx.fillStyle = `rgba(255, 255, 255, 0.5)`;
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Sync: ${Math.round(syncLevel * 100)}%`, centerX, centerY + 100);
+
+      drawRipples(ctx);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, drawRipples]);
+
   return (
     <div
       style={{
@@ -3815,11 +8293,11 @@ function GazeMode({ theme }) {
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       )}
 
-      {/* Experience name toast - shows on swipe */}
-      {showExperienceToast && !showUI && (
+      {/* Visual name toast - shows on swipe */}
+      {showVisualToast && !showUI && (
         <div style={{
           position: 'absolute',
-          top: '2rem',
+          bottom: '2rem',
           left: '50%',
           transform: 'translateX(-50%)',
           background: 'rgba(0,0,0,0.7)',
@@ -3836,176 +8314,58 @@ function GazeMode({ theme }) {
             fontFamily: '"Jost", sans-serif',
             letterSpacing: '0.1em',
           }}>
-            {gazeExperiences.find(e => e.key === selectedExperience)?.name || ''}
+            {gazeModes.find(m => m.key === currentMode)?.name || ''}
           </span>
         </div>
       )}
       <style>{`
         @keyframes fadeInOut {
-          0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+          0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
           15% { opacity: 1; transform: translateX(-50%) translateY(0); }
           85% { opacity: 1; transform: translateX(-50%) translateY(0); }
           100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
         }
       `}</style>
 
-      {/* Experience selector */}
+      {/* Visual selector */}
       {showUI && (
         <div style={{
           position: 'absolute',
           top: '3rem',
           left: '50%',
           transform: 'translateX(-50%)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.75rem',
-          alignItems: 'center',
-          maxWidth: '95vw',
+          maxWidth: '90vw',
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          padding: '0.75rem 1rem',
+          background: 'rgba(0,0,0,0.85)',
+          borderRadius: '16px',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          WebkitOverflowScrolling: 'touch',
         }}>
-          {/* Curated experiences - single row */}
-          {!customMode && (
-            <div style={{
-              maxWidth: '90vw',
-              overflowX: 'auto',
-              overflowY: 'hidden',
-              padding: '0.75rem 1rem',
-              background: 'rgba(0,0,0,0.85)',
-              borderRadius: '16px',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              WebkitOverflowScrolling: 'touch',
-            }}>
-              <div style={{ display: 'flex', gap: '0.5rem', whiteSpace: 'nowrap' }}>
-                {gazeExperiences.map(exp => (
-                  <button
-                    key={exp.key}
-                    onClick={(e) => { e.stopPropagation(); selectExperience(exp.key); }}
-                    style={{
-                      background: selectedExperience === exp.key && !customMode ? 'rgba(127,219,202,0.2)' : 'transparent',
-                      border: selectedExperience === exp.key && !customMode ? '1px solid rgba(127,219,202,0.4)' : '1px solid rgba(255,255,255,0.08)',
-                      color: selectedExperience === exp.key && !customMode ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
-                      padding: '0.5rem 0.9rem',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '0.7rem',
-                      fontFamily: '"Jost", sans-serif',
-                      flexShrink: 0,
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    {exp.name}
-                  </button>
-                ))}
-                {/* Custom toggle */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); setCustomMode(true); }}
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    color: 'rgba(255,255,255,0.4)',
-                    padding: '0.5rem 0.9rem',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '0.65rem',
-                    fontFamily: '"Jost", sans-serif',
-                    flexShrink: 0,
-                    fontStyle: 'italic',
-                  }}
-                >
-                  Custom...
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Custom mode - visual + breath selectors */}
-          {customMode && (
-            <>
-              <div style={{
-                maxWidth: '90vw',
-                overflowX: 'auto',
-                overflowY: 'hidden',
-                padding: '0.6rem 0.8rem',
-                background: 'rgba(0,0,0,0.85)',
-                borderRadius: '12px',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                WebkitOverflowScrolling: 'touch',
-              }}>
-                <div style={{ display: 'flex', gap: '0.4rem', whiteSpace: 'nowrap', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.5rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginRight: '0.25rem' }}>Visual</span>
-                  {gazeModes.map(mode => (
-                    <button
-                      key={mode.key}
-                      onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
-                      style={{
-                        background: currentMode === mode.key ? 'rgba(127,219,202,0.2)' : 'transparent',
-                        border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.4)' : '1px solid rgba(255,255,255,0.06)',
-                        color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.4)',
-                        padding: '0.35rem 0.6rem',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        fontSize: '0.6rem',
-                        fontFamily: '"Jost", sans-serif',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {mode.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div style={{
-                maxWidth: '90vw',
-                overflowX: 'auto',
-                overflowY: 'hidden',
-                padding: '0.5rem 0.7rem',
-                background: 'rgba(0,0,0,0.75)',
-                borderRadius: '10px',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(127,219,202,0.1)',
-                WebkitOverflowScrolling: 'touch',
-              }}>
-                <div style={{ display: 'flex', gap: '0.35rem', whiteSpace: 'nowrap', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.5rem', color: 'rgba(127,219,202,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', marginRight: '0.25rem' }}>Breath</span>
-                  {Object.entries(breathTechniques).map(([key, tech]) => (
-                    <button
-                      key={key}
-                      onClick={(e) => { e.stopPropagation(); setSelectedTechnique(key); }}
-                      style={{
-                        background: selectedTechnique === key ? 'rgba(127,219,202,0.15)' : 'transparent',
-                        border: selectedTechnique === key ? '1px solid rgba(127,219,202,0.3)' : '1px solid rgba(255,255,255,0.05)',
-                        color: selectedTechnique === key ? '#7FDBCA' : 'rgba(255,255,255,0.35)',
-                        padding: '0.3rem 0.55rem',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '0.55rem',
-                        fontFamily: '"Jost", sans-serif',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {tech.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {/* Back to experiences */}
+          <div style={{ display: 'flex', gap: '0.5rem', whiteSpace: 'nowrap' }}>
+            {gazeModes.map(mode => (
               <button
-                onClick={(e) => { e.stopPropagation(); setCustomMode(false); }}
+                key={mode.key}
+                onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
                 style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'rgba(255,255,255,0.3)',
-                  fontSize: '0.55rem',
-                  fontFamily: '"Jost", sans-serif',
+                  background: currentMode === mode.key ? 'rgba(127,219,202,0.2)' : 'transparent',
+                  border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                  color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
+                  padding: '0.5rem 0.9rem',
+                  borderRadius: '8px',
                   cursor: 'pointer',
-                  padding: '0.3rem',
+                  fontSize: '0.7rem',
+                  fontFamily: '"Jost", sans-serif',
+                  flexShrink: 0,
+                  transition: 'all 0.2s ease',
                 }}
               >
-                back to experiences
+                {mode.name}
               </button>
-            </>
-          )}
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -4086,6 +8446,247 @@ const shareQuote = async (quote) => {
 
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
+
+// ============================================================================
+// BREATHWORK VIEW COMPONENT
+// ============================================================================
+
+function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession }) {
+  const canvasRef = useRef(null);
+  const frameRef = useRef(null);
+  const ripplesRef = useRef([]);
+
+  // Animation loop for ripples
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    // Ripple class
+    class Ripple {
+      constructor(phase, progress) {
+        this.phase = phase; // 'inhale', 'exhale', 'holdFull', 'holdEmpty'
+        this.startProgress = progress;
+        this.birth = Date.now();
+        this.maxRadius = Math.min(canvas.width, canvas.height) * 0.45;
+        this.baseRadius = 70; // Match the pulsing circle
+      }
+
+      update() {
+        const age = (Date.now() - this.birth) / 1000;
+        const lifetime = 2.5; // seconds
+
+        if (age > lifetime) return false;
+
+        this.progress = age / lifetime;
+        return true;
+      }
+
+      draw(ctx) {
+        const eased = easeOutCubic(this.progress);
+
+        let radius, alpha;
+        const isHold = this.phase === 'holdFull' || this.phase === 'holdEmpty';
+
+        if (this.phase === 'inhale') {
+          // Expand outward
+          radius = this.baseRadius + eased * (this.maxRadius - this.baseRadius);
+          alpha = (1 - eased) * 0.4;
+        } else if (this.phase === 'exhale') {
+          // Contract inward
+          radius = this.maxRadius - eased * (this.maxRadius - this.baseRadius);
+          alpha = (1 - eased) * 0.4;
+        } else {
+          // Hold - gentle pulse at current size
+          const holdRadius = this.phase === 'holdFull' ? this.maxRadius * 0.7 : this.baseRadius * 1.2;
+          radius = holdRadius + Math.sin(this.progress * Math.PI * 4) * 15;
+          alpha = (1 - eased) * 0.25;
+        }
+
+        const color = isHold ? '255, 215, 100' : '127, 219, 202';
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(${color}, ${alpha})`;
+        ctx.lineWidth = 2 - eased * 1.5;
+        ctx.stroke();
+      }
+    }
+
+    let lastPhase = null;
+    let lastSpawnTime = 0;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Spawn new ripples based on breath phase
+      if (breathSession.isActive) {
+        const now = Date.now();
+        const currentPhase = breathSession.phase;
+        const spawnInterval = currentPhase.includes('hold') ? 600 : 400;
+
+        // Spawn ripple on phase change or at intervals
+        if (currentPhase !== lastPhase || now - lastSpawnTime > spawnInterval) {
+          ripplesRef.current.push(new Ripple(currentPhase, breathSession.phaseProgress));
+          lastSpawnTime = now;
+          lastPhase = currentPhase;
+        }
+      }
+
+      // Update and draw ripples
+      ripplesRef.current = ripplesRef.current.filter(ripple => {
+        if (ripple.update()) {
+          ripple.draw(ctx);
+          return true;
+        }
+        return false;
+      });
+
+      // Limit ripple count
+      if (ripplesRef.current.length > 15) {
+        ripplesRef.current = ripplesRef.current.slice(-15);
+      }
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [breathSession.isActive, breathSession.phase, breathSession.phaseProgress]);
+
+  return (
+    <main
+      onClick={() => !breathSession.isActive && startBreathSession(breathSession.technique)}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#000',
+        cursor: 'pointer',
+      }}
+    >
+      {/* Ripple canvas */}
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Technique selector - horizontal scroll */}
+      <div style={{
+        position: 'absolute',
+        top: '5rem',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        maxWidth: '85vw',
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        padding: '0.5rem',
+        WebkitOverflowScrolling: 'touch',
+        zIndex: 1,
+      }}>
+        <div style={{ display: 'flex', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+          {Object.entries(breathTechniques).map(([key, tech]) => (
+            <button
+              key={key}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (breathSession.isActive) stopBreathSession();
+                startBreathSession(key);
+              }}
+              style={{
+                background: breathSession.technique === key ? 'rgba(127,219,202,0.15)' : 'transparent',
+                border: breathSession.technique === key ? '1px solid rgba(127,219,202,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                color: breathSession.technique === key ? '#7FDBCA' : 'rgba(255,255,255,0.4)',
+                padding: '0.4rem 0.8rem',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.65rem',
+                fontFamily: '"Jost", sans-serif',
+                flexShrink: 0,
+              }}
+            >
+              {tech.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Pulsing circle */}
+      <div style={{
+        width: `${140 + (breathSession.isActive ? breathSession.phaseProgress : 0.5) * 100}px`,
+        height: `${140 + (breathSession.isActive ? breathSession.phaseProgress : 0.5) * 100}px`,
+        borderRadius: '50%',
+        background: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
+          ? 'radial-gradient(circle, rgba(255,215,100,0.12) 0%, rgba(255,215,100,0.04) 50%, transparent 70%)'
+          : 'radial-gradient(circle, rgba(127,219,202,0.15) 0%, rgba(127,219,202,0.05) 50%, transparent 70%)',
+        border: `1.5px solid ${breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,215,100,0.35)' : 'rgba(127,219,202,0.3)'}`,
+        transition: 'width 0.15s ease-out, height 0.15s ease-out, background 0.3s ease, border-color 0.3s ease',
+        zIndex: 1,
+      }} />
+
+      {/* Phase label */}
+      <div style={{
+        marginTop: '2.5rem',
+        color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,215,100,0.8)' : 'rgba(127,219,202,0.7)',
+        fontSize: '0.9rem',
+        fontFamily: '"Jost", sans-serif',
+        letterSpacing: '0.2em',
+        textTransform: 'uppercase',
+        transition: 'color 0.3s ease',
+        zIndex: 1,
+      }}>
+        {breathSession.isActive
+          ? breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label || ''
+          : 'tap to begin'}
+      </div>
+
+      {/* Countdown */}
+      {breathSession.isActive && (
+        <div style={{
+          marginTop: '1rem',
+          color: 'rgba(255,255,255,0.25)',
+          fontSize: '1.5rem',
+          fontFamily: '"Jost", sans-serif',
+          fontWeight: 300,
+          zIndex: 1,
+        }}>
+          {Math.ceil(breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.duration * (1 - breathSession.phaseProgress)) || ''}
+        </div>
+      )}
+    </main>
+  );
+}
 
 // ============================================================================
 // MAIN COMPONENT
@@ -4943,6 +9544,14 @@ function Philos() {
 
         {/* Breathwork View - Dedicated breathing practice */}
         {view === 'breathwork' && (
+          <BreathworkView
+            breathSession={breathSession}
+            breathTechniques={breathTechniques}
+            startBreathSession={startBreathSession}
+            stopBreathSession={stopBreathSession}
+          />
+        )}
+        {false && view === 'breathwork-old' && (
           <main
             onClick={() => !breathSession.isActive && startBreathSession(breathSession.technique)}
             style={{
