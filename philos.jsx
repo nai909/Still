@@ -2140,7 +2140,7 @@ function GazeMode({ theme }) {
 
       // Breath indicator text
       ctx.fillStyle = `rgba(200, 240, 255, ${0.3 + breath * 0.3})`;
-      ctx.font = '16px "Cormorant Garamond", Georgia, serif';
+      ctx.font = '16px "Jost", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', centerX, canvas.height - 40);
     };
@@ -2216,7 +2216,7 @@ function GazeMode({ theme }) {
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '0.7rem',
-                  fontFamily: '"Cormorant Garamond", Georgia, serif',
+                  fontFamily: '"Jost", sans-serif',
                   flexShrink: 0,
                 }}
               >
@@ -2237,7 +2237,7 @@ function GazeMode({ theme }) {
           transform: 'translateX(-50%)',
           color: 'rgba(255,255,255,0.2)',
           fontSize: '0.6rem',
-          fontFamily: '"Cormorant Garamond", Georgia, serif',
+          fontFamily: '"Jost", sans-serif',
           letterSpacing: '0.15em',
           textTransform: 'uppercase',
         }}>
@@ -2819,7 +2819,7 @@ function Philos() {
           overflow: 'hidden',
           background: currentTheme.bg,
           color: currentTheme.text,
-          fontFamily: '"Cormorant Garamond", Georgia, serif',
+          fontFamily: '"Jost", sans-serif',
           position: 'relative',
           touchAction: view === 'scroll' ? 'none' : 'auto',
           transition: 'background 0.5s ease',
@@ -2853,7 +2853,7 @@ function Philos() {
             onClick={() => { setView('scroll'); physicsRef.current.position = 0; physicsRef.current.velocity = 0; indexRef.current = 0; setCurrentIndex(0); }}
             style={{
               fontSize: 'clamp(1.2rem, 3vw, 1.5rem)',
-              fontFamily: '"Cormorant Garamond", Georgia, serif',
+              fontFamily: '"Jost", sans-serif',
               fontWeight: 400,
               letterSpacing: '0.2em',
               margin: 0,
@@ -2882,7 +2882,7 @@ function Philos() {
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '0.75rem',
-                  fontFamily: '"Cormorant Garamond", Georgia, serif',
+                  fontFamily: '"Jost", sans-serif',
                   letterSpacing: '0.05em',
                   transition: 'all 0.3s ease',
                   display: 'flex',
@@ -2917,7 +2917,7 @@ function Philos() {
             >
               <blockquote style={{
                 fontSize: 'clamp(1.6rem, 6vw, 3rem)',
-                fontFamily: '"Cormorant Garamond", Georgia, serif',
+                fontFamily: '"Jost", sans-serif',
                 fontWeight: 500,
                 lineHeight: 1.6,
                 color: currentTheme.text,
@@ -2937,7 +2937,7 @@ function Philos() {
               }}>
                 <div style={{
                   fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
-                  fontFamily: '"Cormorant Garamond", Georgia, serif',
+                  fontFamily: '"Jost", sans-serif',
                   fontWeight: 500,
                   color: currentTheme.textMuted,
                   letterSpacing: '0.1em',
@@ -3051,7 +3051,7 @@ function Philos() {
                         cursor: 'pointer',
                         textAlign: 'left',
                         fontSize: '0.8rem',
-                        fontFamily: '"Cormorant Garamond", Georgia, serif',
+                        fontFamily: '"Jost", sans-serif',
                         transition: 'background 0.2s ease',
                       }}
                       onMouseEnter={(e) => e.target.style.background = currentTheme.border}
@@ -3130,7 +3130,7 @@ function Philos() {
               {/* Phase label */}
               <span style={{
                 fontSize: breathSession.isActive ? '0.9rem' : '0.6rem',
-                fontFamily: '"Cormorant Garamond", Georgia, serif',
+                fontFamily: '"Jost", sans-serif',
                 letterSpacing: breathSession.isActive ? '0.05em' : '0.2em',
                 textTransform: breathSession.isActive ? 'none' : 'uppercase',
                 opacity: breathSession.isActive ? 0.8 : 0.3,
@@ -3166,7 +3166,7 @@ function Philos() {
                       borderRadius: '4px',
                       cursor: 'pointer',
                       fontSize: '0.6rem',
-                      fontFamily: '"Cormorant Garamond", Georgia, serif',
+                      fontFamily: '"Jost", sans-serif',
                     }}
                   >
                     stop
@@ -3255,7 +3255,7 @@ function Philos() {
                     >
                       <div style={{
                         fontSize: '1rem',
-                        fontFamily: '"Cormorant Garamond", Georgia, serif',
+                        fontFamily: '"Jost", sans-serif',
                         color: currentTheme.text,
                         marginBottom: '0.25rem',
                       }}>
@@ -3264,7 +3264,7 @@ function Philos() {
                       <div style={{
                         fontSize: '0.75rem',
                         color: currentTheme.textMuted,
-                        fontFamily: '"Cormorant Garamond", Georgia, serif',
+                        fontFamily: '"Jost", sans-serif',
                       }}>
                         {tech.description}
                       </div>
@@ -3349,7 +3349,7 @@ function Philos() {
                 }}>
                   <div style={{
                     fontSize: '1.5rem',
-                    fontFamily: '"Cormorant Garamond", Georgia, serif',
+                    fontFamily: '"Jost", sans-serif',
                     color: currentTheme.text,
                     opacity: 0.9,
                     letterSpacing: '0.05em',
@@ -3383,7 +3383,7 @@ function Philos() {
                   gap: '2rem',
                   fontSize: '0.75rem',
                   color: currentTheme.textMuted,
-                  fontFamily: '"Cormorant Garamond", Georgia, serif',
+                  fontFamily: '"Jost", sans-serif',
                 }}>
                   <div>Cycle {breathSession.cycleCount + 1}</div>
                   <div>{Math.floor(breathSession.sessionTime / 60)}:{String(breathSession.sessionTime % 60).padStart(2, '0')}</div>
@@ -3406,7 +3406,7 @@ function Philos() {
                       borderRadius: '8px',
                       cursor: 'pointer',
                       fontSize: '0.85rem',
-                      fontFamily: '"Cormorant Garamond", Georgia, serif',
+                      fontFamily: '"Jost", sans-serif',
                     }}
                   >
                     {breathSession.isPaused ? '▶ Resume' : '⏸ Pause'}
@@ -3421,7 +3421,7 @@ function Philos() {
                       borderRadius: '8px',
                       cursor: 'pointer',
                       fontSize: '0.85rem',
-                      fontFamily: '"Cormorant Garamond", Georgia, serif',
+                      fontFamily: '"Jost", sans-serif',
                     }}
                   >
                     ✕ End
@@ -3548,7 +3548,7 @@ function Philos() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 {savedQuotes.map((quote, i) => (
                   <div key={i} style={{ padding: '1.5rem', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
-                    <blockquote style={{ fontSize: '1.1rem', fontFamily: '"Cormorant Garamond", Georgia, serif', fontStyle: 'italic', lineHeight: 1.6, color: currentTheme.text, margin: 0 }}>"{quote.text}"</blockquote>
+                    <blockquote style={{ fontSize: '1.1rem', fontFamily: '"Jost", sans-serif', fontStyle: 'italic', lineHeight: 1.6, color: currentTheme.text, margin: 0 }}>"{quote.text}"</blockquote>
                     <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
                       <div>
                         <div style={{ fontSize: '0.85rem', color: currentTheme.textMuted, fontWeight: 500 }}>{quote.author}</div>
