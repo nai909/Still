@@ -860,7 +860,6 @@ const gazeModes = [
 // Each pairs a visual with an ideal breathing pattern
 const gazeExperiences = [
   { key: 'deep-sleep', name: 'Deep Sleep', visual: 'jellyfish', breath: 'relaxation', description: 'Drift off peacefully' },
-  { key: 'morning-light', name: 'Morning Light', visual: 'glow', breath: 'calm', description: 'Gentle awakening' },
   { key: 'storm-watch', name: 'Storm Watch', visual: 'rain', breath: 'extend', description: 'Release anxiety' },
   { key: 'night-walk', name: 'Night Walk', visual: 'fireflies', breath: 'resonance', description: 'Evening calm' },
   { key: 'ocean-mind', name: 'Ocean Mind', visual: 'ink', breath: 'ocean', description: 'Fluid meditation' },
