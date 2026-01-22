@@ -853,10 +853,6 @@ const gazeModes = [
 ];
 
 const gazeShapes = [
-  { key: 'icosahedron', name: 'Icosahedron', create: () => new THREE.IcosahedronGeometry(1, 0) },
-  { key: 'dodecahedron', name: 'Dodecahedron', create: () => new THREE.DodecahedronGeometry(1, 0) },
-  { key: 'octahedron', name: 'Octahedron', create: () => new THREE.OctahedronGeometry(1, 0) },
-  { key: 'tetrahedron', name: 'Tetrahedron', create: () => new THREE.TetrahedronGeometry(1, 0) },
   { key: 'torus', name: 'Torus', create: () => new THREE.TorusGeometry(1, 0.4, 16, 100) },
   { key: 'torusKnot', name: 'Knot', create: () => new THREE.TorusKnotGeometry(0.7, 0.25, 100, 16) },
 ];
@@ -875,7 +871,7 @@ function GazeMode({ theme }) {
   const clockRef = React.useRef(null);
 
   const [currentMode, setCurrentMode] = React.useState('geometry');
-  const [currentShape, setCurrentShape] = React.useState('icosahedron');
+  const [currentShape, setCurrentShape] = React.useState('torus');
   const [showUI, setShowUI] = React.useState(false);
 
   // ========== TOUCH INTERACTION SYSTEM ==========
@@ -2231,41 +2227,6 @@ function GazeMode({ theme }) {
         </div>
       )}
 
-      {/* Shape selector for geometry mode */}
-      {showUI && currentMode === 'geometry' && (
-        <div style={{
-          position: 'absolute',
-          bottom: '2rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          gap: '0.5rem',
-          padding: '0.75rem',
-          background: 'rgba(0,0,0,0.7)',
-          borderRadius: '12px',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.1)',
-        }}>
-          {gazeShapes.map(shape => (
-            <button
-              key={shape.key}
-              onClick={(e) => { e.stopPropagation(); setCurrentShape(shape.key); }}
-              style={{
-                background: currentShape === shape.key ? 'rgba(127,219,202,0.25)' : 'rgba(255,255,255,0.05)',
-                border: currentShape === shape.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.1)',
-                color: currentShape === shape.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
-                padding: '0.4rem 0.6rem',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.65rem',
-                fontFamily: '"Cormorant Garamond", Georgia, serif',
-              }}
-            >
-              {shape.name}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Hint text */}
       {!showUI && (
