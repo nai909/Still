@@ -13805,6 +13805,7 @@ function Still() {
   const [musicOpen, setMusicOpen] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef(null);
   const audioRef2 = useRef(null); // Second audio element for crossfade
   const activeAudioRef = useRef(1); // Track which audio is currently active (1 or 2)
@@ -13893,6 +13894,14 @@ function Still() {
       }
     }, stepDuration);
   }, []);
+
+  // Toggle mute
+  const toggleMute = useCallback(() => {
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+    if (audioRef.current) audioRef.current.muted = newMuted;
+    if (audioRef2.current) audioRef2.current.muted = newMuted;
+  }, [isMuted]);
 
   // Autoplay music on app start
   useEffect(() => {
@@ -15160,6 +15169,28 @@ function Still() {
                     }}
                   >
                     ◼ Stop
+                  </button>
+                )}
+                {/* Mute button */}
+                {isPlaying && (
+                  <button
+                    onClick={toggleMute}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      background: 'none',
+                      border: 'none',
+                      color: isMuted ? primaryColor : 'rgba(255,255,255,0.5)',
+                      padding: '0.5rem 0.75rem',
+                      fontSize: '0.75rem',
+                      fontFamily: '"Jost", sans-serif',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid rgba(255,255,255,0.1)',
+                      marginBottom: '0.25rem',
+                    }}
+                  >
+                    {isMuted ? '🔇 Unmute' : '🔊 Mute'}
                   </button>
                 )}
                 {musicTracks.map((track, i) => (
