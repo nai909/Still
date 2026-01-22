@@ -1227,7 +1227,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   // Use primaryHue throughout for consistent color scheme
   const hue = primaryHue;
   // Background mode: dimmer, slower, no interaction
-  const bgOpacity = backgroundMode ? 0.5 : 1;
+  const bgOpacity = backgroundMode ? 0.3 : 1;
   const bgSpeed = backgroundMode ? 0.3 : 1;
   const containerRef = React.useRef(null);
   const canvasRef = React.useRef(null);
