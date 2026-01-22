@@ -1541,17 +1541,16 @@ function Philos() {
               }}
             >
               <blockquote style={{
-                fontSize: 'clamp(1.4rem, 5vw, 2.5rem)',
-                fontFamily: '"Cormorant Garamond", Georgia, serif',
-                fontWeight: 400,
-                lineHeight: 1.5,
+                fontSize: 'clamp(1.6rem, 6vw, 3rem)',
+                fontFamily: '"Caveat", cursive',
+                fontWeight: 500,
+                lineHeight: 1.6,
                 color: currentTheme.text,
                 margin: 0,
-                fontStyle: 'italic',
-                letterSpacing: '0.01em',
-                textShadow: settings.theme === 'dawn' ? 'none' : '0 2px 20px rgba(0,0,0,0.5)',
+                letterSpacing: '0.02em',
+                textShadow: settings.theme === 'dawn' ? 'none' : '0 2px 15px rgba(0,0,0,0.4)',
               }}>
-                "{currentQuote.text.slice(0, revealedChars)}"
+                {currentQuote.text.slice(0, revealedChars)}
               </blockquote>
 
               <div className="quote-meta" style={{
