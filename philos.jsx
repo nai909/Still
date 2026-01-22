@@ -914,7 +914,7 @@ function Philos() {
       setCurrentIndex(newIndex);
       setDisplayProgress(0);
       isAnimating.current = false;
-    }, 300);
+    }, 800); // Slower, like smoke clearing
   }, [currentIndex, filteredQuotes.length]);
 
   // Accumulated scroll for threshold detection
@@ -1409,7 +1409,7 @@ function Philos() {
         {/* Main Scroll View */}
         {view === 'scroll' && currentQuote && (
           <main style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
-            {/* Quote Card */}
+            {/* Quote Card - emerges like smoke */}
             <div
               style={{
                 position: 'absolute',
@@ -1417,10 +1417,11 @@ function Philos() {
                 maxWidth: '700px',
                 padding: '0 2rem',
                 textAlign: 'center',
-                willChange: 'transform, opacity',
-                transition: 'transform 0.3s ease-out, opacity 0.3s ease-out',
-                opacity: Math.abs(displayProgress) > 0.5 ? 0 : 1 - Math.abs(displayProgress),
-                transform: `translate3d(0, ${displayProgress * -60}px, 0)`,
+                willChange: 'transform, opacity, filter',
+                transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s ease-out, filter 0.8s ease-out',
+                opacity: Math.abs(displayProgress) > 0.3 ? 0 : 1 - Math.abs(displayProgress) * 2,
+                filter: `blur(${Math.abs(displayProgress) * 12}px)`,
+                transform: `translate3d(0, ${displayProgress * -40}px, 0) scale(${1 - Math.abs(displayProgress) * 0.05})`,
               }}
             >
               <blockquote style={{
@@ -1439,7 +1440,8 @@ function Philos() {
 
               <div className="quote-meta" style={{
                 marginTop: '2rem',
-                opacity: Math.max(0, 1 - Math.abs(displayProgress) * 2.5),
+                transition: 'opacity 0.8s ease-out',
+                opacity: Math.max(0, 1 - Math.abs(displayProgress) * 3),
               }}>
                 <div style={{
                   fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
