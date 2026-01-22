@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Philos - Endless Philosophy Quotes</title>
+  <title>Still</title>
   <meta name="theme-color" content="#000">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -48,10 +48,10 @@
 
   <script>
     // Fetch and compile JSX since Babel standalone doesn't reliably handle external src
-    fetch('philos.jsx')
+    fetch('still.jsx')
       .then(res => res.text())
       .then(jsx => {
-        const compiled = Babel.transform(jsx + '\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(React.createElement(Philos));', {
+        const compiled = Babel.transform(jsx + '\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(React.createElement(Still));', {
           presets: ['react']
         }).code;
         eval(compiled);

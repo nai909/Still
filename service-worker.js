@@ -1,4 +1,4 @@
-const CACHE_NAME = 'philos-v1';
+const CACHE_NAME = 'still-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -13,7 +13,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Philos: Caching app assets');
+        console.log('Still: Caching app assets');
         return cache.addAll(ASSETS_TO_CACHE);
       })
       .then(() => self.skipWaiting())
@@ -77,7 +77,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification('Philos - Daily Wisdom', options)
+    self.registration.showNotification('Still - Daily Wisdom', options)
   );
 });
 

@@ -170,6 +170,81 @@ const allQuotes = [
   { text: "Trying to define yourself is like trying to bite your own teeth.", author: "Alan Watts", school: "Eastern Philosophy", era: "20th Century", themes: ["self", "wisdom"] },
   { text: "Man suffers only because he takes seriously what the gods made for fun.", author: "Alan Watts", school: "Eastern Philosophy", era: "20th Century", themes: ["suffering", "joy"] },
 
+  // SPIRITUAL TEACHERS
+  // Ram Dass
+  { text: "Be here now.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["wisdom", "joy"] },
+  { text: "The next message you need is always right where you are.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["wisdom", "meaning"] },
+  { text: "We're all just walking each other home.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["love", "meaning"] },
+  { text: "The heart surrenders everything to the moment. The mind judges and holds back.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["love", "wisdom"] },
+  { text: "Treat everyone you meet like God in drag.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["love", "truth"] },
+  { text: "As long as you have certain desires about how it ought to be you can't see how it is.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["wisdom", "freedom"] },
+  { text: "The resistance to the unpleasant situation is the root of suffering.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["suffering", "wisdom"] },
+  { text: "I would like my life to be a statement of love and compassion—and where it isn't, that's where my work lies.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["love", "self"] },
+  { text: "The game is not about becoming somebody, it's about becoming nobody.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["self", "freedom"] },
+  { text: "Learn to watch your drama unfold while at the same time knowing you are more than your drama.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["self", "wisdom"] },
+  { text: "Everything changes once we identify with being the witness to the story, instead of the actor in it.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["self", "freedom"] },
+  { text: "Suffering is part of our training program for becoming wise.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["suffering", "wisdom"] },
+  { text: "Our whole spiritual transformation brings us to the point where we realize that in our own being, we are enough.", author: "Ram Dass", school: "Spiritual", era: "20th Century", themes: ["self", "meaning"] },
+
+  // Eckhart Tolle
+  { text: "Realize deeply that the present moment is all you ever have.", author: "Eckhart Tolle", school: "Spiritual", era: "21st Century", themes: ["wisdom", "joy"] },
+  { text: "Life is the dancer and you are the dance.", author: "Eckhart Tolle", school: "Spiritual", era: "21st Century", themes: ["meaning", "joy"] },
+  { text: "The primary cause of unhappiness is never the situation but your thoughts about it.", author: "Eckhart Tolle", school: "Spiritual", era: "21st Century", themes: ["suffering", "wisdom"] },
+  { text: "Whatever you fight, you strengthen, and what you resist, persists.", author: "Eckhart Tolle", school: "Spiritual", era: "21st Century", themes: ["wisdom", "freedom"] },
+  { text: "You are not your thoughts. You are the awareness behind the thoughts.", author: "Eckhart Tolle", school: "Spiritual", era: "21st Century", themes: ["self", "truth"] },
+  { text: "Acknowledging the good that you already have in your life is the foundation for all abundance.", author: "Eckhart Tolle", school: "Spiritual", era: "21st Century", themes: ["joy", "wisdom"] },
+  { text: "The moment you become aware of the ego in you, it is strictly speaking no longer the ego.", author: "Eckhart Tolle", school: "Spiritual", era: "21st Century", themes: ["self", "wisdom"] },
+  { text: "You find peace not by rearranging the circumstances of your life, but by realizing who you are at the deepest level.", author: "Eckhart Tolle", school: "Spiritual", era: "21st Century", themes: ["self", "joy"] },
+  { text: "Give up defining yourself — to yourself or to others. You won't die. You will come to life.", author: "Eckhart Tolle", school: "Spiritual", era: "21st Century", themes: ["self", "freedom"] },
+  { text: "What a liberation to realize that the voice in my head is not who I am.", author: "Eckhart Tolle", school: "Spiritual", era: "21st Century", themes: ["self", "freedom"] },
+
+  // Pema Chödrön
+  { text: "You are the sky. Everything else is just the weather.", author: "Pema Chödrön", school: "Spiritual", era: "20th Century", themes: ["self", "wisdom"] },
+  { text: "Nothing ever goes away until it has taught us what we need to know.", author: "Pema Chödrön", school: "Spiritual", era: "20th Century", themes: ["suffering", "wisdom"] },
+  { text: "The most fundamental aggression to ourselves is to remain ignorant by not having the courage to look at ourselves honestly.", author: "Pema Chödrön", school: "Spiritual", era: "20th Century", themes: ["self", "courage"] },
+  { text: "Fear is a natural reaction to moving closer to the truth.", author: "Pema Chödrön", school: "Spiritual", era: "20th Century", themes: ["courage", "truth"] },
+  { text: "Compassion is not a relationship between the healer and the wounded. It's a relationship between equals.", author: "Pema Chödrön", school: "Spiritual", era: "20th Century", themes: ["love", "wisdom"] },
+  { text: "To be fully alive, fully human, and completely awake is to be continually thrown out of the nest.", author: "Pema Chödrön", school: "Spiritual", era: "20th Century", themes: ["courage", "change"] },
+  { text: "The only reason we don't open our hearts and minds to other people is that they trigger confusion in us.", author: "Pema Chödrön", school: "Spiritual", era: "20th Century", themes: ["love", "self"] },
+  { text: "Rather than letting our negativity get the better of us, we could acknowledge that right now we feel like a piece of shit and not be squeamish about taking a good look.", author: "Pema Chödrön", school: "Spiritual", era: "20th Century", themes: ["self", "courage"] },
+
+  // Mooji
+  { text: "Step into the fire of self-discovery. This fire will not burn you, it will only burn what you are not.", author: "Mooji", school: "Spiritual", era: "21st Century", themes: ["self", "change"] },
+  { text: "Don't be a storehouse of memories. Leave past, future and even present thoughts behind.", author: "Mooji", school: "Spiritual", era: "21st Century", themes: ["freedom", "wisdom"] },
+  { text: "The mind is like a parachute. It works best when it's open.", author: "Mooji", school: "Spiritual", era: "21st Century", themes: ["wisdom", "freedom"] },
+  { text: "Life cannot be against you, for you are life itself.", author: "Mooji", school: "Spiritual", era: "21st Century", themes: ["meaning", "self"] },
+  { text: "The greatest healing would be to wake up from what we are not.", author: "Mooji", school: "Spiritual", era: "21st Century", themes: ["self", "truth"] },
+
+  // Adyashanti
+  { text: "Enlightenment is a destructive process. It has nothing to do with becoming better or being happier. Enlightenment is the crumbling away of untruth.", author: "Adyashanti", school: "Spiritual", era: "21st Century", themes: ["truth", "change"] },
+  { text: "The biggest embrace of love you'll ever make is to embrace yourself completely.", author: "Adyashanti", school: "Spiritual", era: "21st Century", themes: ["love", "self"] },
+  { text: "We realize that who we are is not the story of me, but the awakeness that's aware of everything.", author: "Adyashanti", school: "Spiritual", era: "21st Century", themes: ["self", "truth"] },
+  { text: "The question is not how to get enlightened but rather how to stop unenlightening yourself.", author: "Adyashanti", school: "Spiritual", era: "21st Century", themes: ["wisdom", "self"] },
+
+  // Jack Kornfield
+  { text: "In the end, just three things matter: How well we have lived. How well we have loved. How well we have learned to let go.", author: "Jack Kornfield", school: "Spiritual", era: "20th Century", themes: ["meaning", "love"] },
+  { text: "The things that matter most in our lives are not fantastic or grand. They are moments when we touch one another.", author: "Jack Kornfield", school: "Spiritual", era: "20th Century", themes: ["love", "meaning"] },
+  { text: "Forgiveness is giving up all hope of a better past.", author: "Jack Kornfield", school: "Spiritual", era: "20th Century", themes: ["freedom", "wisdom"] },
+  { text: "In a moment of mindfulness, we observe the flow of thoughts without being caught by them.", author: "Jack Kornfield", school: "Spiritual", era: "20th Century", themes: ["wisdom", "self"] },
+
+  // Nisargadatta Maharaj
+  { text: "Wisdom tells me I am nothing. Love tells me I am everything. Between the two my life flows.", author: "Nisargadatta Maharaj", school: "Spiritual", era: "20th Century", themes: ["wisdom", "love"] },
+  { text: "The mind creates the abyss, the heart crosses it.", author: "Nisargadatta Maharaj", school: "Spiritual", era: "20th Century", themes: ["love", "wisdom"] },
+  { text: "Once you realize that all comes from within, that the world in which you live is not projected onto you but by you.", author: "Nisargadatta Maharaj", school: "Spiritual", era: "20th Century", themes: ["self", "truth"] },
+  { text: "There is nothing to practice. To know yourself, be yourself.", author: "Nisargadatta Maharaj", school: "Spiritual", era: "20th Century", themes: ["self", "wisdom"] },
+
+  // Ramana Maharshi
+  { text: "Your own Self-Realization is the greatest service you can render the world.", author: "Ramana Maharshi", school: "Spiritual", era: "20th Century", themes: ["self", "meaning"] },
+  { text: "Happiness is your nature. It is not wrong to desire it. What is wrong is seeking it outside when it is inside.", author: "Ramana Maharshi", school: "Spiritual", era: "20th Century", themes: ["joy", "self"] },
+  { text: "The question 'Who am I?' is not really meant to get an answer, the question 'Who am I?' is meant to dissolve the questioner.", author: "Ramana Maharshi", school: "Spiritual", era: "20th Century", themes: ["self", "truth"] },
+  { text: "No one succeeds without effort. Mind control is not your birthright. Those who succeed owe their success to perseverance.", author: "Ramana Maharshi", school: "Spiritual", era: "20th Century", themes: ["courage", "wisdom"] },
+
+  // Paramahansa Yogananda
+  { text: "The season of failure is the best time for sowing the seeds of success.", author: "Paramahansa Yogananda", school: "Spiritual", era: "20th Century", themes: ["courage", "change"] },
+  { text: "Live quietly in the moment and see the beauty of all before you. The future will take care of itself.", author: "Paramahansa Yogananda", school: "Spiritual", era: "20th Century", themes: ["joy", "wisdom"] },
+  { text: "There is a magnet in your heart that will attract true friends.", author: "Paramahansa Yogananda", school: "Spiritual", era: "20th Century", themes: ["love", "truth"] },
+  { text: "Kindness is the light that dissolves all walls between souls.", author: "Paramahansa Yogananda", school: "Spiritual", era: "20th Century", themes: ["love", "wisdom"] },
+
   // CONFUCIANISM
   { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius", school: "Confucianism", era: "6th Century BCE", themes: ["courage", "wisdom"] },
   { text: "Our greatest glory is not in never falling, but in rising every time we fall.", author: "Confucius", school: "Confucianism", era: "6th Century BCE", themes: ["courage", "change"] },
@@ -651,6 +726,84 @@ const allQuotes = [
   { text: "Hope is important because it can make the present moment less difficult to bear. If we believe that tomorrow will be better, we can bear a hardship today.", author: "Thich Nhat Hanh", school: "Buddhism", era: "20th Century", themes: ["courage", "suffering"] },
   { text: "The mind can go in a thousand directions, but on this beautiful path, I walk in peace.", author: "Thich Nhat Hanh", school: "Buddhism", era: "20th Century", themes: ["self", "joy"] },
   { text: "Anxiety, the illness of our time, comes primarily from our inability to dwell in the present moment.", author: "Thich Nhat Hanh", school: "Buddhism", era: "20th Century", themes: ["suffering", "wisdom"] },
+
+  // AYYA KHEMA (Theravada Buddhism)
+  { text: "The only way to have peace is to let go of expecting anything.", author: "Ayya Khema", school: "Buddhism", era: "20th Century", themes: ["freedom", "joy"] },
+  { text: "We cannot change the outer world, but we can change our inner world.", author: "Ayya Khema", school: "Buddhism", era: "20th Century", themes: ["self", "wisdom"] },
+  { text: "Meditation is not about feeling a certain way. It's about feeling the way you feel.", author: "Ayya Khema", school: "Buddhism", era: "20th Century", themes: ["truth", "self"] },
+  { text: "The mind that is not baffled is not employed. The impeded stream is the one that sings.", author: "Ayya Khema", school: "Buddhism", era: "20th Century", themes: ["suffering", "wisdom"] },
+  { text: "There is no enlightenment outside of daily life.", author: "Ayya Khema", school: "Buddhism", era: "20th Century", themes: ["meaning", "truth"] },
+  { text: "Letting go is the lesson. Letting go is always the lesson.", author: "Ayya Khema", school: "Buddhism", era: "20th Century", themes: ["freedom", "change"] },
+  { text: "The ego is nothing other than the focus of conscious attention.", author: "Ayya Khema", school: "Buddhism", era: "20th Century", themes: ["self", "truth"] },
+  { text: "Peace is not the absence of conflict, but the ability to cope with it.", author: "Ayya Khema", school: "Buddhism", era: "20th Century", themes: ["courage", "joy"] },
+
+  // PEMA CHÖDRÖN (Tibetan Buddhism)
+  { text: "You are the sky. Everything else is just the weather.", author: "Pema Chödrön", school: "Buddhism", era: "20th Century", themes: ["self", "change"] },
+  { text: "Nothing ever goes away until it has taught us what we need to know.", author: "Pema Chödrön", school: "Buddhism", era: "20th Century", themes: ["suffering", "wisdom"] },
+  { text: "The most fundamental aggression to ourselves is to remain ignorant by not having the courage to look at ourselves honestly.", author: "Pema Chödrön", school: "Buddhism", era: "20th Century", themes: ["courage", "truth"] },
+  { text: "Fear is a natural reaction to moving closer to the truth.", author: "Pema Chödrön", school: "Buddhism", era: "20th Century", themes: ["courage", "truth"] },
+  { text: "To be fully alive, fully human, and completely awake is to be continually thrown out of the nest.", author: "Pema Chödrön", school: "Buddhism", era: "20th Century", themes: ["change", "courage"] },
+  { text: "Compassion is not a relationship between the healer and the wounded. It's a relationship between equals.", author: "Pema Chödrön", school: "Buddhism", era: "20th Century", themes: ["love", "wisdom"] },
+  { text: "Only to the extent that we expose ourselves over and over to annihilation can that which is indestructible in us be found.", author: "Pema Chödrön", school: "Buddhism", era: "20th Century", themes: ["courage", "self"] },
+  { text: "The healing comes from letting there be room for all of this to happen: room for grief, for relief, for misery, for joy.", author: "Pema Chödrön", school: "Buddhism", era: "20th Century", themes: ["suffering", "freedom"] },
+  { text: "So even if the hot loneliness is there, and for 1.6 seconds we sit with that restlessness when yesterday we couldn't sit for even one—that's the journey of the warrior.", author: "Pema Chödrön", school: "Buddhism", era: "20th Century", themes: ["courage", "self"] },
+  { text: "When you begin to touch your heart or let your heart be touched, you begin to discover that it's bottomless.", author: "Pema Chödrön", school: "Buddhism", era: "20th Century", themes: ["love", "self"] },
+
+  // AJAHN CHAH (Thai Forest Tradition)
+  { text: "If you let go a little, you will have a little peace. If you let go a lot, you will have a lot of peace.", author: "Ajahn Chah", school: "Buddhism", era: "20th Century", themes: ["freedom", "joy"] },
+  { text: "Looking for peace is like looking for a turtle with a mustache. You won't be able to find it. But when your heart is ready, peace will come looking for you.", author: "Ajahn Chah", school: "Buddhism", era: "20th Century", themes: ["joy", "wisdom"] },
+  { text: "Do not try to become anything. Do not make yourself into anything. Do not be a meditator. Do not become enlightened.", author: "Ajahn Chah", school: "Buddhism", era: "20th Century", themes: ["self", "freedom"] },
+  { text: "If you want to understand suffering, you have to look into the nature of the mind.", author: "Ajahn Chah", school: "Buddhism", era: "20th Century", themes: ["suffering", "wisdom"] },
+  { text: "Read yourself, not books. Truth is not outside; it's within.", author: "Ajahn Chah", school: "Buddhism", era: "20th Century", themes: ["truth", "self"] },
+  { text: "The heart of the path is quite simple: do not be attached to anything.", author: "Ajahn Chah", school: "Buddhism", era: "20th Century", themes: ["freedom", "wisdom"] },
+  { text: "We don't meditate to see heaven, but to end suffering.", author: "Ajahn Chah", school: "Buddhism", era: "20th Century", themes: ["suffering", "meaning"] },
+
+  // SHARON SALZBERG (Insight Meditation)
+  { text: "You yourself, as much as anybody in the entire universe, deserve your love and affection.", author: "Sharon Salzberg", school: "Buddhism", era: "20th Century", themes: ["love", "self"] },
+  { text: "Mindfulness isn't difficult. What's difficult is to remember to be mindful.", author: "Sharon Salzberg", school: "Buddhism", era: "20th Century", themes: ["wisdom", "self"] },
+  { text: "The difference between misery and happiness depends on what we do with our attention.", author: "Sharon Salzberg", school: "Buddhism", era: "20th Century", themes: ["joy", "self"] },
+  { text: "Life is like an ever-shifting kaleidoscope — a slight change, and all patterns alter.", author: "Sharon Salzberg", school: "Buddhism", era: "20th Century", themes: ["change", "truth"] },
+  { text: "Each decision we make, each action we take, is born out of an intention.", author: "Sharon Salzberg", school: "Buddhism", era: "20th Century", themes: ["meaning", "self"] },
+  { text: "Faith is not a commodity we either have or don't have—it is an inner quality that unfolds as we learn to trust our own deepest experience.", author: "Sharon Salzberg", school: "Buddhism", era: "20th Century", themes: ["courage", "truth"] },
+
+  // JACK KORNFIELD (Insight Meditation)
+  { text: "In the end, just three things matter: How well we have lived. How well we have loved. How well we have learned to let go.", author: "Jack Kornfield", school: "Buddhism", era: "20th Century", themes: ["death", "love"] },
+  { text: "The things that matter most in our lives are not fantastic or grand. They are moments when we touch one another.", author: "Jack Kornfield", school: "Buddhism", era: "20th Century", themes: ["love", "meaning"] },
+  { text: "In a moment of mindfulness, we are not only more aware, we are more compassionate.", author: "Jack Kornfield", school: "Buddhism", era: "20th Century", themes: ["love", "wisdom"] },
+  { text: "The art of attention is to quiet the restless mind.", author: "Jack Kornfield", school: "Buddhism", era: "20th Century", themes: ["self", "wisdom"] },
+  { text: "Even in the midst of suffering, there is the possibility of finding peace.", author: "Jack Kornfield", school: "Buddhism", era: "20th Century", themes: ["suffering", "joy"] },
+  { text: "Forgiveness does not mean we will forget, nor does it mean we condone the wrong. It means we let go of the pain.", author: "Jack Kornfield", school: "Buddhism", era: "20th Century", themes: ["freedom", "suffering"] },
+
+  // TARA BRACH (Insight Meditation)
+  { text: "The boundary to what we can accept is the boundary to our freedom.", author: "Tara Brach", school: "Buddhism", era: "21st Century", themes: ["freedom", "truth"] },
+  { text: "Perhaps the biggest tragedy of our lives is that freedom is possible, yet we can pass our years trapped in the same old patterns.", author: "Tara Brach", school: "Buddhism", era: "21st Century", themes: ["freedom", "change"] },
+  { text: "Radical acceptance is the willingness to experience ourselves and our lives as it is.", author: "Tara Brach", school: "Buddhism", era: "21st Century", themes: ["truth", "self"] },
+  { text: "Feeling compassion for ourselves in no way releases us from responsibility for our actions. Rather, it releases us from the self-hatred that prevents us from responding to our life with clarity and balance.", author: "Tara Brach", school: "Buddhism", era: "21st Century", themes: ["love", "self"] },
+  { text: "We are uncomfortable because everything in our life keeps changing.", author: "Tara Brach", school: "Buddhism", era: "21st Century", themes: ["change", "suffering"] },
+  { text: "What would it be like if I could accept life—accept this moment—exactly as it is?", author: "Tara Brach", school: "Buddhism", era: "21st Century", themes: ["freedom", "joy"] },
+
+  // RAM DASS (Western Buddhism/Hinduism)
+  { text: "Be here now.", author: "Ram Dass", school: "Eastern Philosophy", era: "20th Century", themes: ["wisdom", "joy"] },
+  { text: "The quieter you become, the more you can hear.", author: "Ram Dass", school: "Eastern Philosophy", era: "20th Century", themes: ["wisdom", "self"] },
+  { text: "We're all just walking each other home.", author: "Ram Dass", school: "Eastern Philosophy", era: "20th Century", themes: ["love", "death"] },
+  { text: "The heart surrenders everything to the moment. The mind judges and holds back.", author: "Ram Dass", school: "Eastern Philosophy", era: "20th Century", themes: ["love", "self"] },
+  { text: "Suffering is part of our training program for becoming wise.", author: "Ram Dass", school: "Eastern Philosophy", era: "20th Century", themes: ["suffering", "wisdom"] },
+  { text: "The next message you need is always right where you are.", author: "Ram Dass", school: "Eastern Philosophy", era: "20th Century", themes: ["truth", "meaning"] },
+  { text: "As long as you have certain desires about how it ought to be you can't see how it is.", author: "Ram Dass", school: "Eastern Philosophy", era: "20th Century", themes: ["truth", "freedom"] },
+  { text: "Treat everyone you meet like God in drag.", author: "Ram Dass", school: "Eastern Philosophy", era: "20th Century", themes: ["love", "truth"] },
+
+  // ADYASHANTI (Non-dual)
+  { text: "Enlightenment is a destructive process. It has nothing to do with becoming better or being happier. It is the crumbling away of untruth.", author: "Adyashanti", school: "Eastern Philosophy", era: "21st Century", themes: ["truth", "change"] },
+  { text: "The Truth is the only thing you'll ever run into that has no agenda.", author: "Adyashanti", school: "Eastern Philosophy", era: "21st Century", themes: ["truth", "freedom"] },
+  { text: "When you rest in quietness and your image of yourself fades, and your image of the world fades, and your ideas of others fade, what's left?", author: "Adyashanti", school: "Eastern Philosophy", era: "21st Century", themes: ["self", "truth"] },
+  { text: "Do not be attached to the outcome of your practice; be attached only to the practice itself.", author: "Adyashanti", school: "Eastern Philosophy", era: "21st Century", themes: ["wisdom", "freedom"] },
+  { text: "The separate self dissolves when you realize it never existed in the first place.", author: "Adyashanti", school: "Eastern Philosophy", era: "21st Century", themes: ["self", "truth"] },
+
+  // S.N. GOENKA (Vipassana)
+  { text: "The entire path is nothing but learning to observe the reality of this moment.", author: "S.N. Goenka", school: "Buddhism", era: "20th Century", themes: ["wisdom", "truth"] },
+  { text: "Remain equanimous. Understanding the true nature of this moment, this too will pass.", author: "S.N. Goenka", school: "Buddhism", era: "20th Century", themes: ["change", "wisdom"] },
+  { text: "The only conversion involved in Vipassana is from misery to happiness, from bondage to liberation.", author: "S.N. Goenka", school: "Buddhism", era: "20th Century", themes: ["freedom", "joy"] },
+  { text: "Learn to use meditation in daily life, that is the real work.", author: "S.N. Goenka", school: "Buddhism", era: "20th Century", themes: ["meaning", "wisdom"] },
 ];
 
 // ============================================================================
@@ -829,6 +982,162 @@ const breathTechniques = {
     ],
     color: { inhale: '#2a3a4a', exhale: '#1a3a4a' },
   },
+
+  // PARASYMPATHETIC ACTIVATION TECHNIQUES
+
+  physiologicalSigh: {
+    name: 'Physiological Sigh',
+    description: 'Fastest way to calm (Huberman)',
+    phases: [
+      { name: 'inhale', label: 'Inhale', duration: 2 },
+      { name: 'inhale', label: 'Sip more air', duration: 1 },
+      { name: 'exhale', label: 'Long exhale', duration: 6 },
+      { name: 'holdEmpty', label: 'Rest', duration: 1 },
+    ],
+    color: { inhale: '#1a3a5a', exhale: '#1a2a4a', holdEmpty: '#1a2a3a' },
+  },
+
+  twoToOne: {
+    name: '2:1 Breathing',
+    description: 'Exhale double the inhale',
+    phases: [
+      { name: 'inhale', label: 'Inhale', duration: 4 },
+      { name: 'exhale', label: 'Slow exhale', duration: 8 },
+    ],
+    color: { inhale: '#1a3a4a', exhale: '#1a2a3a' },
+  },
+
+  fourSixBreath: {
+    name: '4-6 Anxiety Relief',
+    description: 'Quick parasympathetic shift',
+    phases: [
+      { name: 'inhale', label: 'Inhale', duration: 4 },
+      { name: 'exhale', label: 'Exhale', duration: 6 },
+    ],
+    color: { inhale: '#2a3a4a', exhale: '#1a2a4a' },
+  },
+
+  deepBelly: {
+    name: 'Diaphragmatic',
+    description: 'Deep belly breathing',
+    phases: [
+      { name: 'inhale', label: 'Fill belly', duration: 5 },
+      { name: 'holdFull', label: 'Pause', duration: 2 },
+      { name: 'exhale', label: 'Release', duration: 6 },
+    ],
+    color: { inhale: '#1a4a3a', holdFull: '#2a4a4a', exhale: '#1a3a3a' },
+  },
+
+  pursedLip: {
+    name: 'Pursed Lip',
+    description: 'Calms acute anxiety',
+    phases: [
+      { name: 'inhale', label: 'Nose inhale', duration: 3 },
+      { name: 'exhale', label: 'Pursed lips out', duration: 6 },
+    ],
+    color: { inhale: '#2a3a4a', exhale: '#1a2a4a' },
+  },
+
+  vagalTone: {
+    name: 'Vagal Toning',
+    description: 'Activates vagus nerve',
+    phases: [
+      { name: 'inhale', label: 'Deep inhale', duration: 4 },
+      { name: 'holdFull', label: 'Brief hold', duration: 2 },
+      { name: 'exhale', label: 'Humming exhale', duration: 10 },
+      { name: 'holdEmpty', label: 'Natural pause', duration: 2 },
+    ],
+    color: { inhale: '#1a3a5a', holdFull: '#2a4a5a', exhale: '#1a2a5a', holdEmpty: '#1a2a3a' },
+  },
+
+  alternate: {
+    name: 'Alternate Nostril',
+    description: 'Nadi Shodhana - balances',
+    phases: [
+      { name: 'inhale', label: 'Left nostril in', duration: 4 },
+      { name: 'holdFull', label: 'Hold', duration: 4 },
+      { name: 'exhale', label: 'Right nostril out', duration: 4 },
+      { name: 'inhale', label: 'Right nostril in', duration: 4 },
+      { name: 'holdFull', label: 'Hold', duration: 4 },
+      { name: 'exhale', label: 'Left nostril out', duration: 4 },
+    ],
+    color: { inhale: '#1a3a5a', holdFull: '#2a4a4a', exhale: '#1a2a4a' },
+  },
+
+  threeSixFive: {
+    name: '365 Method',
+    description: '3x daily, 6 breaths/min, 5 min',
+    phases: [
+      { name: 'inhale', label: 'Inhale', duration: 5 },
+      { name: 'exhale', label: 'Exhale', duration: 5 },
+    ],
+    color: { inhale: '#2a4a4a', exhale: '#1a3a4a' },
+  },
+
+  softBelly: {
+    name: 'Soft Belly',
+    description: 'Mindful belly softening',
+    phases: [
+      { name: 'inhale', label: 'Soft...', duration: 4 },
+      { name: 'exhale', label: 'Belly...', duration: 6 },
+    ],
+    color: { inhale: '#2a3a3a', exhale: '#1a2a3a' },
+  },
+
+  cooling: {
+    name: 'Sitali Cooling',
+    description: 'Cools body and mind',
+    phases: [
+      { name: 'inhale', label: 'Inhale through tongue', duration: 4 },
+      { name: 'holdFull', label: 'Hold', duration: 2 },
+      { name: 'exhale', label: 'Nose exhale', duration: 6 },
+    ],
+    color: { inhale: '#1a4a5a', holdFull: '#2a5a5a', exhale: '#1a3a4a' },
+  },
+
+  moonBreath: {
+    name: 'Chandra Bhedana',
+    description: 'Left nostril only - calming',
+    phases: [
+      { name: 'inhale', label: 'Left nostril in', duration: 4 },
+      { name: 'holdFull', label: 'Hold gently', duration: 2 },
+      { name: 'exhale', label: 'Right nostril out', duration: 6 },
+    ],
+    color: { inhale: '#1a2a4a', holdFull: '#2a3a5a', exhale: '#1a2a3a' },
+  },
+
+  relaxingBreath: {
+    name: 'Relaxing 5-2-7',
+    description: 'Gentle sleep preparation',
+    phases: [
+      { name: 'inhale', label: 'Gentle inhale', duration: 5 },
+      { name: 'holdFull', label: 'Soft hold', duration: 2 },
+      { name: 'exhale', label: 'Releasing', duration: 7 },
+    ],
+    color: { inhale: '#1a2a4a', holdFull: '#2a3a4a', exhale: '#1a1a3a' },
+  },
+
+  triangle: {
+    name: 'Triangle Breath',
+    description: 'Equal inhale-hold-exhale',
+    phases: [
+      { name: 'inhale', label: 'Inhale', duration: 4 },
+      { name: 'holdFull', label: 'Hold', duration: 4 },
+      { name: 'exhale', label: 'Exhale', duration: 4 },
+    ],
+    color: { inhale: '#1a3a4a', holdFull: '#2a4a4a', exhale: '#1a2a4a' },
+  },
+
+  antiAnxiety: {
+    name: 'Anti-Anxiety',
+    description: 'Long exhale with pause',
+    phases: [
+      { name: 'inhale', label: 'Gentle inhale', duration: 3 },
+      { name: 'exhale', label: 'Extended exhale', duration: 9 },
+      { name: 'holdEmpty', label: 'Natural rest', duration: 3 },
+    ],
+    color: { inhale: '#1a3a4a', exhale: '#1a2a3a', holdEmpty: '#0a1a2a' },
+  },
 };
 
 // ============================================================================
@@ -845,6 +1154,16 @@ const PALETTE = {
   orange: '#E07B53',
   sand: '#D4A574',
   gray: '#8B8B8B',
+  teal: '#7FDBCA',
+  // HSL hues for animations
+  hues: {
+    purple: 255,
+    steelBlue: 191,
+    sage: 120,
+    orange: 17,
+    sand: 31,
+    teal: 162,
+  }
 };
 
 const gazeModes = [
@@ -857,36 +1176,26 @@ const gazeModes = [
   { key: 'dandelion', name: 'Dandelion' },
   { key: 'blossom', name: 'Cherry Blossom' },
   { key: 'lungs', name: 'Breath Tree' },
-  { key: 'bilateral', name: 'Bilateral' },
   { key: 'ripples', name: 'Ripples' },
-  { key: 'glow', name: 'Soft Glow' },
   { key: 'rain', name: 'Rain on Glass' },
   { key: 'jellyfish', name: 'Jellyfish' },
   { key: 'ink', name: 'Ink in Water' },
   { key: 'lava', name: 'Lava Lamp' },
   { key: 'aurora', name: 'Aurora' },
   { key: 'clouds', name: 'Clouds' },
-  { key: 'snow', name: 'Snow' },
   { key: 'lotus', name: 'Lotus' },
-  { key: 'candle', name: 'Candle' },
   { key: 'smoke', name: 'Smoke' },
   { key: 'mandala', name: 'Mandala' },
   { key: 'stars', name: 'Starfield' },
   // New visuals
   { key: 'caustics', name: 'Caustics' },
   { key: 'mandelbrot', name: 'Mandelbrot' },
-  { key: 'tidepool', name: 'Tide Pool' },
   { key: 'nebula', name: 'Nebula' },
   { key: 'moss', name: 'Moss' },
-  { key: 'untangle', name: 'Untangle' },
-  { key: 'bamboo', name: 'Bamboo' },
-  { key: 'owl', name: 'Owl' },
-  { key: 'steam', name: 'Steam' },
   { key: 'moon', name: 'Moon' },
   { key: 'kaleidoscope', name: 'Kaleidoscope' },
   { key: 'mushrooms', name: 'Mushrooms' },
   { key: 'lanterns', name: 'Lanterns' },
-  { key: 'heartSync', name: 'Heart Sync' },
 ];
 
 const gazeShapes = [
@@ -898,7 +1207,9 @@ const gazeShapes = [
 const BREATH_CYCLE = 11; // seconds for full cycle
 const BREATH_SPEED = (2 * Math.PI) / BREATH_CYCLE;
 
-function GazeMode({ theme }) {
+function GazeMode({ theme, primaryHue = 162, onHueChange }) {
+  // Use primaryHue throughout for consistent color scheme
+  const hue = primaryHue;
   const containerRef = React.useRef(null);
   const canvasRef = React.useRef(null);
   const frameRef = React.useRef(null);
@@ -1005,12 +1316,33 @@ function GazeMode({ theme }) {
       const deltaY = endY - swipeStartRef.current.y;
       const deltaTime = Date.now() - swipeStartRef.current.time;
 
-      // Detect horizontal swipe: fast enough, long enough, more horizontal than vertical
       const minSwipeDistance = 60;
       const maxSwipeTime = 400;
+
+      // Detect horizontal swipe: change visual
       if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5 && deltaTime < maxSwipeTime) {
         cycleVisual(deltaX > 0 ? -1 : 1); // Swipe left = next, swipe right = previous
+        swipeStartRef.current = null;
+        return; // Don't process further
       }
+
+      // Detect vertical swipe UP: open mode selector (swipe must start in bottom third of screen)
+      const screenHeight = window.innerHeight;
+      if (deltaY < -minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime) {
+        if (swipeStartRef.current.y > screenHeight * 0.5) { // Started in bottom half
+          setShowUI(true);
+          swipeStartRef.current = null;
+          return;
+        }
+      }
+
+      // Detect vertical swipe DOWN: close mode selector
+      if (deltaY > minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime && showUI) {
+        setShowUI(false);
+        swipeStartRef.current = null;
+        return;
+      }
+
       swipeStartRef.current = null;
     }
 
@@ -1025,7 +1357,7 @@ function GazeMode({ theme }) {
     setTimeout(() => {
       touchPointsRef.current = touchPointsRef.current.filter(p => p.active || Date.now() - p.endTime < 2000);
     }, 2000);
-  }, [cycleVisual]);
+  }, [cycleVisual, showUI]);
 
   // Helper: Calculate influence of touch points on a position
   const getInteractionInfluence = React.useCallback((x, y, maxRadius = 200) => {
@@ -1068,13 +1400,13 @@ function GazeMode({ theme }) {
 
       ctx.beginPath();
       ctx.arc(ripple.x, ripple.y, radius, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(127, 219, 202, ${opacity})`;
+      ctx.strokeStyle = `hsla(${hue}, 52%, 68%, ${opacity})`;
       ctx.lineWidth = 2 * (1 - progress);
       ctx.stroke();
 
       return true;
     });
-  }, []);
+  }, [hue]);
 
   // Get breath info based on selected technique
   const getBreathInfo = React.useCallback((elapsed) => {
@@ -1313,9 +1645,9 @@ function GazeMode({ theme }) {
       // Main orb
       const radius = 30 + breath * 20;
       const gradient = ctx.createRadialGradient(x, centerY, 0, x, centerY, radius * 2);
-      gradient.addColorStop(0, `rgba(127, 219, 202, ${0.6 + breath * 0.3})`);
-      gradient.addColorStop(0.5, `rgba(127, 219, 202, ${0.2 + breath * 0.2})`);
-      gradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
+      gradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.6 + breath * 0.3})`);
+      gradient.addColorStop(0.5, `hsla(${hue}, 52%, 68%, ${0.2 + breath * 0.2})`);
+      gradient.addColorStop(1, `hsla(${hue}, 52%, 68%, 0)`);
 
       ctx.beginPath();
       ctx.arc(x, centerY, radius * 2, 0, Math.PI * 2);
@@ -1334,7 +1666,7 @@ function GazeMode({ theme }) {
         const trailRadius = (radius * 0.3) / i;
         ctx.beginPath();
         ctx.arc(trailX, centerY, trailRadius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(127, 219, 202, ${0.15 / i})`;
+        ctx.fillStyle = `hsla(${hue}, 52%, 68%, ${0.15 / i})`;
         ctx.fill();
       }
 
@@ -1413,7 +1745,7 @@ function GazeMode({ theme }) {
 
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(127, 219, 202, ${opacity})`;
+        ctx.strokeStyle = `hsla(${hue}, 52%, 68%, ${opacity})`;
         ctx.lineWidth = 2 - progress;
         ctx.stroke();
       });
@@ -1422,7 +1754,7 @@ function GazeMode({ theme }) {
       const centerInfluence = getInteractionInfluence(centerX, centerY, 200);
       const coreRadius = 20 + breath * 30 + centerInfluence.strength * 20;
       const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreRadius * 2);
-      coreGradient.addColorStop(0, `rgba(127, 219, 202, ${0.4 + breath * 0.3 + centerInfluence.strength * 0.3})`);
+      coreGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.4 + breath * 0.3 + centerInfluence.strength * 0.3})`);
       coreGradient.addColorStop(0.5, `rgba(100, 180, 170, ${0.2 + breath * 0.1})`);
       coreGradient.addColorStop(1, 'rgba(80, 150, 140, 0)');
 
@@ -1491,7 +1823,7 @@ function GazeMode({ theme }) {
 
         // Very soft, defocused glow - brighter when touched
         const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius * 3);
-        gradient.addColorStop(0, `rgba(127, 219, 202, ${0.15 + orbBreath * 0.1 + influence.strength * 0.2})`);
+        gradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.15 + orbBreath * 0.1 + influence.strength * 0.2})`);
         gradient.addColorStop(0.3, `rgba(100, 180, 170, ${0.08 + orbBreath * 0.05 + influence.strength * 0.1})`);
         gradient.addColorStop(0.6, `rgba(80, 150, 140, ${0.03 + influence.strength * 0.05})`);
         gradient.addColorStop(1, 'rgba(60, 120, 110, 0)');
@@ -1509,7 +1841,7 @@ function GazeMode({ theme }) {
       const centerRadius = 40 + breath * 30 + centerInfluence.strength * 20;
       const centerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, centerRadius * 2);
       centerGradient.addColorStop(0, `rgba(200, 240, 230, ${0.1 + breath * 0.08 + centerInfluence.strength * 0.15})`);
-      centerGradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
+      centerGradient.addColorStop(1, `hsla(${hue}, 52%, 68%, 0)`);
 
       ctx.beginPath();
       ctx.arc(centerX + centerInfluence.x * 0.1, centerY + centerInfluence.y * 0.1, centerRadius * 2, 0, Math.PI * 2);
@@ -1862,7 +2194,7 @@ function GazeMode({ theme }) {
     const generateCoral = (x, y, angle, depth, maxDepth) => {
       if (depth > maxDepth) return;
 
-      const length = 40 - depth * 5 + Math.random() * 20;
+      const length = 65 - depth * 7 + Math.random() * 30; // Larger branches
       const endX = x + Math.cos(angle) * length;
       const endY = y + Math.sin(angle) * length;
 
@@ -1875,11 +2207,13 @@ function GazeMode({ theme }) {
       }
     };
 
-    // Create multiple coral structures
+    // Create multiple coral structures - larger and more
     const coralBases = [
-      { x: canvas.width * 0.3, maxDepth: 6 },
-      { x: canvas.width * 0.5, maxDepth: 7 },
-      { x: canvas.width * 0.7, maxDepth: 6 },
+      { x: canvas.width * 0.15, maxDepth: 7 },
+      { x: canvas.width * 0.35, maxDepth: 8 },
+      { x: canvas.width * 0.5, maxDepth: 9 },
+      { x: canvas.width * 0.65, maxDepth: 8 },
+      { x: canvas.width * 0.85, maxDepth: 7 },
     ];
 
     coralBases.forEach(base => {
@@ -1930,7 +2264,7 @@ function GazeMode({ theme }) {
           const tipGlow = influence.strength * 0.5;
           ctx.beginPath();
           ctx.arc(x2, y2, 2 + breath * 2 + influence.strength * 3, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(127, 219, 202, ${0.3 + breath * 0.5 + tipGlow})`;
+          ctx.fillStyle = `hsla(${hue}, 52%, 68%, ${0.3 + breath * 0.5 + tipGlow})`;
           ctx.fill();
         }
       });
@@ -2130,7 +2464,7 @@ function GazeMode({ theme }) {
         const midY = (from.y + to.y) / 2;
         const influence = getInteractionInfluence(midX, midY, 150);
 
-        ctx.strokeStyle = `rgba(127, 219, 202, ${0.1 + breath * 0.1 + influence.strength * 0.3})`;
+        ctx.strokeStyle = `hsla(${hue}, 52%, 68%, ${0.1 + breath * 0.1 + influence.strength * 0.3})`;
         ctx.lineWidth = 0.5 + influence.strength * 1.5;
         ctx.beginPath();
         ctx.moveTo(from.x, from.y);
@@ -2145,7 +2479,7 @@ function GazeMode({ theme }) {
 
         ctx.beginPath();
         ctx.arc(px, py, 2 + influence.strength * 2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(127, 219, 202, ${0.5 + breath * 0.3 + influence.strength * 0.3})`;
+        ctx.fillStyle = `hsla(${hue}, 52%, 68%, ${0.5 + breath * 0.3 + influence.strength * 0.3})`;
         ctx.fill();
       });
 
@@ -2156,8 +2490,8 @@ function GazeMode({ theme }) {
         const radius = node.radius * (1 + pulse) * (0.8 + breath * 0.2) * (1 + influence.strength * 0.5);
 
         const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, radius * 2);
-        gradient.addColorStop(0, `rgba(127, 219, 202, ${0.6 + breath * 0.3 + influence.strength * 0.4})`);
-        gradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
+        gradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.6 + breath * 0.3 + influence.strength * 0.4})`);
+        gradient.addColorStop(1, `hsla(${hue}, 52%, 68%, 0)`);
 
         ctx.beginPath();
         ctx.arc(node.x + influence.x * 0.1, node.y + influence.y * 0.1, radius * 2, 0, Math.PI * 2);
@@ -2194,26 +2528,26 @@ function GazeMode({ theme }) {
     const generateLung = (x, y, angle, depth, maxDepth, side) => {
       if (depth > maxDepth) return;
 
-      const length = 60 - depth * 8;
+      const length = 120 - depth * 12;  // Larger branches
       const endX = x + Math.cos(angle) * length;
       const endY = y + Math.sin(angle) * length;
 
       branches.push({ x1: x, y1: y, x2: endX, y2: endY, depth, maxDepth, side });
 
-      const spread = 0.4 - depth * 0.03;
+      const spread = 0.45 - depth * 0.03;  // Slightly wider spread
       generateLung(endX, endY, angle - spread, depth + 1, maxDepth, side);
       generateLung(endX, endY, angle + spread, depth + 1, maxDepth, side);
     };
 
     const centerX = canvas.width / 2;
-    const startY = canvas.height * 0.2;
+    const startY = canvas.height * 0.08;  // Start higher on screen
 
-    // Trachea
-    branches.push({ x1: centerX, y1: startY - 40, x2: centerX, y2: startY, depth: 0, maxDepth: 6, side: 'center' });
+    // Trachea (longer)
+    branches.push({ x1: centerX, y1: startY - 60, x2: centerX, y2: startY, depth: 0, maxDepth: 7, side: 'center' });
 
-    // Left and right lungs
-    generateLung(centerX, startY, Math.PI / 2 - 0.5, 1, 6, 'left');
-    generateLung(centerX, startY, Math.PI / 2 + 0.5, 1, 6, 'right');
+    // Left and right lungs (more depth, wider angle)
+    generateLung(centerX, startY, Math.PI / 2 - 0.55, 1, 7, 'left');
+    generateLung(centerX, startY, Math.PI / 2 + 0.55, 1, 7, 'right');
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
@@ -2253,7 +2587,7 @@ function GazeMode({ theme }) {
 
           const gradient = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, 15);
           gradient.addColorStop(0, `rgba(200, 240, 255, ${flowProgress * 0.6})`);
-          gradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
+          gradient.addColorStop(1, `hsla(${hue}, 52%, 68%, 0)`);
 
           ctx.beginPath();
           ctx.arc(glowX, glowY, 15, 0, Math.PI * 2);
@@ -2268,7 +2602,7 @@ function GazeMode({ theme }) {
           const tipY = branch.y2 + influence.y * 0.15;
           const gradient = ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, glowSize);
           gradient.addColorStop(0, `rgba(200, 240, 255, ${0.3 + breath * 0.4 + influence.strength * 0.4})`);
-          gradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
+          gradient.addColorStop(1, `hsla(${hue}, 52%, 68%, 0)`);
 
           ctx.beginPath();
           ctx.arc(tipX, tipY, glowSize, 0, Math.PI * 2);
@@ -2289,6 +2623,473 @@ function GazeMode({ theme }) {
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
   }, [currentMode, getInteractionInfluence, drawRipples]);
+
+  // ========== LUNG CAPILLARIES MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'lungCapillaries' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const centerX = canvas.width / 2;
+    const startY = canvas.height * 0.12;
+
+    // Colors based on selected hue - darker for deoxygenated, brighter for oxygenated
+    const colorDeoxygenated = { h: hue, s: 40, l: 35 }; // Dimmer version
+    const colorOxygenated = { h: hue, s: 60, l: 70 };   // Brighter version
+    const colorBlue = { h: hue, s: 50, l: 50 };         // Mid tone
+
+    // Branch class for the bronchial tree
+    class Branch {
+      constructor(x1, y1, angle, length, depth, maxDepth, side, parent = null) {
+        this.x1 = x1;
+        this.y1 = y1;
+        this.angle = angle;
+        this.length = length;
+        this.depth = depth;
+        this.maxDepth = maxDepth;
+        this.side = side;
+        this.parent = parent;
+
+        // Calculate endpoint with slight organic curve
+        const curve = Math.sin(depth * 1.5) * 0.1;
+        this.x2 = x1 + Math.cos(angle + curve) * length;
+        this.y2 = y1 + Math.sin(angle + curve) * length;
+
+        // Visual properties
+        this.thickness = Math.max(1, 8 - depth * 0.9);
+        this.fillProgress = 0;
+        this.targetFillProgress = 0;
+
+        // For animation timing - deeper branches fill later
+        this.fillDelay = depth * 0.12;
+        this.children = [];
+        this.alveoli = null;
+      }
+
+      // Calculate distance from trachea for fill timing
+      getPathDistance() {
+        let dist = this.length;
+        let current = this.parent;
+        while (current) {
+          dist += current.length;
+          current = current.parent;
+        }
+        return dist;
+      }
+    }
+
+    // Alveoli cluster class (grape-like endpoint clusters)
+    class AlveoliCluster {
+      constructor(x, y, depth, side) {
+        this.x = x;
+        this.y = y;
+        this.depth = depth;
+        this.side = side;
+        this.fillProgress = 0;
+        this.pulsePhase = Math.random() * Math.PI * 2;
+
+        // Generate 4-7 small spheres in a cluster
+        this.spheres = [];
+        const count = 4 + Math.floor(Math.random() * 4);
+        for (let i = 0; i < count; i++) {
+          const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+          const dist = 3 + Math.random() * 5;
+          this.spheres.push({
+            offsetX: Math.cos(angle) * dist,
+            offsetY: Math.sin(angle) * dist,
+            radius: 2 + Math.random() * 3,
+            phase: Math.random() * Math.PI * 2,
+          });
+        }
+      }
+    }
+
+    // Generate the bronchial tree using L-system-like recursion
+    const allBranches = [];
+    const allAlveoli = [];
+
+    const generateBranch = (x, y, angle, length, depth, maxDepth, side, parent = null) => {
+      if (depth > maxDepth) {
+        // Create alveoli cluster at endpoint
+        const cluster = new AlveoliCluster(x, y, depth, side);
+        allAlveoli.push(cluster);
+        if (parent) parent.alveoli = cluster;
+        return null;
+      }
+
+      const branch = new Branch(x, y, angle, length, depth, maxDepth, side, parent);
+      allBranches.push(branch);
+
+      // Calculate child branch parameters
+      const nextLength = length * (0.72 + Math.random() * 0.08);
+      const spread = 0.35 - depth * 0.025;
+      const jitter = (Math.random() - 0.5) * 0.15;
+
+      // Generate 2-3 child branches
+      const childCount = depth < 3 ? 2 : (Math.random() > 0.3 ? 2 : 3);
+
+      if (childCount === 2) {
+        const child1 = generateBranch(branch.x2, branch.y2, angle - spread + jitter, nextLength, depth + 1, maxDepth, side, branch);
+        const child2 = generateBranch(branch.x2, branch.y2, angle + spread + jitter, nextLength, depth + 1, maxDepth, side, branch);
+        if (child1) branch.children.push(child1);
+        if (child2) branch.children.push(child2);
+      } else {
+        const child1 = generateBranch(branch.x2, branch.y2, angle - spread + jitter, nextLength, depth + 1, maxDepth, side, branch);
+        const child2 = generateBranch(branch.x2, branch.y2, angle + jitter * 0.5, nextLength * 0.9, depth + 1, maxDepth, side, branch);
+        const child3 = generateBranch(branch.x2, branch.y2, angle + spread + jitter, nextLength, depth + 1, maxDepth, side, branch);
+        if (child1) branch.children.push(child1);
+        if (child2) branch.children.push(child2);
+        if (child3) branch.children.push(child3);
+      }
+
+      return branch;
+    };
+
+    // Create trachea
+    const tracheaLength = canvas.height * 0.08;
+    const trachea = new Branch(centerX, startY - tracheaLength, Math.PI / 2, tracheaLength, 0, 7, 'center');
+    allBranches.push(trachea);
+
+    // Right lung (3 lobes - slightly larger)
+    const rightMaxDepth = 7;
+    const rightStartAngle = Math.PI / 2 + 0.45;
+    generateBranch(centerX, startY, rightStartAngle, 55, 1, rightMaxDepth, 'right', trachea);
+    // Upper lobe branch
+    generateBranch(centerX + 15, startY + 20, rightStartAngle - 0.6, 40, 2, rightMaxDepth - 1, 'right', trachea);
+    // Middle lobe branch
+    generateBranch(centerX + 25, startY + 60, rightStartAngle - 0.3, 35, 3, rightMaxDepth - 1, 'right', trachea);
+
+    // Left lung (2 lobes - slightly smaller, with cardiac notch)
+    const leftMaxDepth = 6;
+    const leftStartAngle = Math.PI / 2 - 0.45;
+    generateBranch(centerX, startY, leftStartAngle, 50, 1, leftMaxDepth, 'left', trachea);
+    // Upper lobe branch
+    generateBranch(centerX - 15, startY + 25, leftStartAngle + 0.5, 38, 2, leftMaxDepth - 1, 'left', trachea);
+
+    // Particle system for oxygen molecules
+    const particles = [];
+    const MAX_PARTICLES = 150;
+
+    class OxygenParticle {
+      constructor(startX, startY, branch) {
+        this.x = startX;
+        this.y = startY;
+        this.branch = branch;
+        this.progress = 0; // 0-1 along branch
+        this.speed = 0.02 + Math.random() * 0.015;
+        this.size = 1.5 + Math.random() * 1.5;
+        this.alpha = 0.6 + Math.random() * 0.4;
+        this.alive = true;
+        this.direction = 1; // 1 = inward (inhale), -1 = outward (exhale)
+      }
+
+      update(isInhaling) {
+        this.direction = isInhaling ? 1 : -1;
+        this.progress += this.speed * this.direction;
+
+        if (this.progress >= 1 && this.direction === 1) {
+          // Reached end of branch - pick a child branch or die at alveoli
+          if (this.branch.children.length > 0) {
+            this.branch = this.branch.children[Math.floor(Math.random() * this.branch.children.length)];
+            this.progress = 0;
+          } else {
+            this.alive = false;
+          }
+        } else if (this.progress <= 0 && this.direction === -1) {
+          // Going backwards - move to parent
+          if (this.branch.parent) {
+            this.branch = this.branch.parent;
+            this.progress = 1;
+          } else {
+            this.alive = false;
+          }
+        }
+
+        // Calculate position along branch
+        const t = Math.max(0, Math.min(1, this.progress));
+        this.x = this.branch.x1 + (this.branch.x2 - this.branch.x1) * t;
+        this.y = this.branch.y1 + (this.branch.y2 - this.branch.y1) * t;
+      }
+    }
+
+    // Spawn particles from trachea during inhale
+    const spawnParticle = () => {
+      if (particles.length < MAX_PARTICLES) {
+        const p = new OxygenParticle(trachea.x1, trachea.y1, trachea);
+        particles.push(p);
+      }
+    };
+
+    // Calculate max path distance for normalization
+    let maxPathDist = 0;
+    allBranches.forEach(b => {
+      const dist = b.getPathDistance();
+      if (dist > maxPathDist) maxPathDist = dist;
+    });
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+
+      // Get detailed breath info
+      const breathInfo = getBreathInfo(elapsed);
+      const phase = breathInfo.phase; // 0-1
+      const phaseName = breathInfo.phaseName; // inhale, holdFull, exhale, holdEmpty
+      const phaseProgress = breathInfo.phaseProgress || phase;
+      const isInhaling = phaseName === 'inhale';
+      const isHoldingFull = phaseName === 'holdFull';
+      const isExhaling = phaseName === 'exhale';
+      const isHoldingEmpty = phaseName === 'holdEmpty';
+
+      // Dark background with subtle vignette
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Vignette effect
+      const vignette = ctx.createRadialGradient(
+        centerX, canvas.height * 0.45, 0,
+        centerX, canvas.height * 0.45, canvas.width * 0.7
+      );
+      vignette.addColorStop(0, 'transparent');
+      vignette.addColorStop(0.7, 'transparent');
+      vignette.addColorStop(1, 'rgba(0, 0, 0, 0.6)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Calculate fill progress for each branch based on breath phase and depth
+      allBranches.forEach(branch => {
+        const depthNorm = branch.depth / branch.maxDepth;
+        const pathDist = branch.getPathDistance() / maxPathDist;
+
+        if (isInhaling) {
+          // Fill from trachea outward - deeper branches fill later
+          const fillTiming = depthNorm * 0.7; // stagger by depth
+          branch.targetFillProgress = Math.max(0, Math.min(1, (phaseProgress - fillTiming) / (1 - fillTiming)));
+        } else if (isHoldingFull) {
+          // Full glow with subtle pulse
+          branch.targetFillProgress = 1;
+        } else if (isExhaling) {
+          // Drain from endpoints inward - tips empty first
+          const drainTiming = (1 - depthNorm) * 0.7;
+          branch.targetFillProgress = 1 - Math.max(0, Math.min(1, (phaseProgress - drainTiming) / (1 - drainTiming)));
+        } else if (isHoldingEmpty) {
+          // Minimal glow
+          branch.targetFillProgress = 0;
+        }
+
+        // Smooth transition
+        branch.fillProgress += (branch.targetFillProgress - branch.fillProgress) * 0.15;
+      });
+
+      // Update alveoli fill progress
+      allAlveoli.forEach(alveolus => {
+        const depthNorm = alveolus.depth / 7;
+
+        if (isInhaling) {
+          const fillTiming = 0.6; // Alveoli fill near end of inhale
+          alveolus.fillProgress = Math.max(0, Math.min(1, (phaseProgress - fillTiming) / (1 - fillTiming)));
+        } else if (isHoldingFull) {
+          alveolus.fillProgress = 1;
+        } else if (isExhaling) {
+          alveolus.fillProgress = 1 - phaseProgress;
+        } else {
+          alveolus.fillProgress = 0;
+        }
+      });
+
+      // Spawn particles during inhale
+      if (isInhaling && Math.random() < 0.3) {
+        spawnParticle();
+      }
+
+      // Update particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update(isInhaling);
+        if (!particles[i].alive) {
+          particles.splice(i, 1);
+        }
+      }
+
+      // Draw branches with gradient fill effect
+      allBranches.forEach(branch => {
+        const fill = branch.fillProgress;
+
+        // Interpolate color based on fill
+        const h = colorDeoxygenated.h + (colorOxygenated.h - colorDeoxygenated.h) * fill;
+        const s = colorDeoxygenated.s + (colorOxygenated.s - colorDeoxygenated.s) * fill;
+        const l = colorDeoxygenated.l + (colorOxygenated.l - colorDeoxygenated.l) * fill + fill * 10;
+
+        // Touch interaction
+        const influence = getInteractionInfluence(branch.x2, branch.y2, 100);
+
+        // Draw branch glow (outer)
+        if (fill > 0.1) {
+          ctx.strokeStyle = `hsla(${h}, ${s}%, ${l}%, ${0.15 * fill})`;
+          ctx.lineWidth = branch.thickness + 6;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(branch.x1 + influence.x * 0.05, branch.y1 + influence.y * 0.05);
+          ctx.lineTo(branch.x2 + influence.x * 0.1, branch.y2 + influence.y * 0.1);
+          ctx.stroke();
+        }
+
+        // Draw main branch
+        const baseAlpha = 0.3 + fill * 0.5 + influence.strength * 0.2;
+        ctx.strokeStyle = `hsla(${h}, ${s}%, ${l}%, ${baseAlpha})`;
+        ctx.lineWidth = branch.thickness + influence.strength * 2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(branch.x1 + influence.x * 0.05, branch.y1 + influence.y * 0.05);
+        ctx.lineTo(branch.x2 + influence.x * 0.1, branch.y2 + influence.y * 0.1);
+        ctx.stroke();
+
+        // Draw fill gradient along branch length
+        if (fill > 0.05) {
+          const gradStart = { x: branch.x1, y: branch.y1 };
+          const gradEnd = { x: branch.x2, y: branch.y2 };
+
+          // Animated fill position along branch
+          const fillPos = isInhaling ? fill : (1 - fill);
+          const fillX = branch.x1 + (branch.x2 - branch.x1) * fillPos;
+          const fillY = branch.y1 + (branch.y2 - branch.y1) * fillPos;
+
+          const fillGradient = ctx.createRadialGradient(fillX, fillY, 0, fillX, fillY, 12);
+          fillGradient.addColorStop(0, `hsla(${colorOxygenated.h}, 80%, 65%, ${0.5 * fill})`);
+          fillGradient.addColorStop(1, 'transparent');
+
+          ctx.beginPath();
+          ctx.arc(fillX, fillY, 12, 0, Math.PI * 2);
+          ctx.fillStyle = fillGradient;
+          ctx.fill();
+        }
+      });
+
+      // Draw alveoli clusters
+      allAlveoli.forEach(cluster => {
+        const fill = cluster.fillProgress;
+        const pulse = isHoldingFull ? Math.sin(elapsed * 3 + cluster.pulsePhase) * 0.15 : 0;
+        const influence = getInteractionInfluence(cluster.x, cluster.y, 80);
+
+        cluster.spheres.forEach(sphere => {
+          const x = cluster.x + sphere.offsetX + influence.x * 0.15;
+          const y = cluster.y + sphere.offsetY + influence.y * 0.15;
+          const r = sphere.radius * (1 + fill * 0.3 + pulse) + influence.strength * 2;
+
+          // Interpolate color
+          const h = colorDeoxygenated.h + (colorOxygenated.h - colorDeoxygenated.h) * fill;
+          const glowSize = r * (2 + fill * 1.5);
+
+          // Outer glow
+          const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, glowSize);
+          glowGradient.addColorStop(0, `hsla(${h}, 80%, 65%, ${0.4 * fill + influence.strength * 0.3})`);
+          glowGradient.addColorStop(0.5, `hsla(${h}, 70%, 55%, ${0.15 * fill})`);
+          glowGradient.addColorStop(1, 'transparent');
+
+          ctx.beginPath();
+          ctx.arc(x, y, glowSize, 0, Math.PI * 2);
+          ctx.fillStyle = glowGradient;
+          ctx.fill();
+
+          // Core sphere
+          const coreGradient = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r);
+          coreGradient.addColorStop(0, `hsla(${h}, 75%, 70%, ${0.6 + fill * 0.3})`);
+          coreGradient.addColorStop(0.7, `hsla(${h}, 70%, 55%, ${0.4 + fill * 0.3})`);
+          coreGradient.addColorStop(1, `hsla(${h}, 65%, 45%, ${0.2 + fill * 0.2})`);
+
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fillStyle = coreGradient;
+          ctx.fill();
+        });
+      });
+
+      // Draw particles (oxygen molecules)
+      particles.forEach(p => {
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+        gradient.addColorStop(0, `hsla(${colorOxygenated.h}, 90%, 70%, ${p.alpha})`);
+        gradient.addColorStop(0.5, `hsla(${colorOxygenated.h}, 80%, 60%, ${p.alpha * 0.5})`);
+        gradient.addColorStop(1, 'transparent');
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      });
+
+      // Draw subtle lung silhouette outline
+      ctx.strokeStyle = `hsla(${hue}, 30%, 40%, 0.15)`;
+      ctx.lineWidth = 1;
+
+      // Right lung outline
+      ctx.beginPath();
+      ctx.moveTo(centerX + 20, startY);
+      ctx.quadraticCurveTo(centerX + 180, startY + 100, centerX + 170, startY + 280);
+      ctx.quadraticCurveTo(centerX + 140, startY + 380, centerX + 20, startY + 350);
+      ctx.stroke();
+
+      // Left lung outline (with cardiac notch)
+      ctx.beginPath();
+      ctx.moveTo(centerX - 20, startY);
+      ctx.quadraticCurveTo(centerX - 160, startY + 100, centerX - 150, startY + 200);
+      ctx.quadraticCurveTo(centerX - 100, startY + 280, centerX - 80, startY + 300); // Cardiac notch
+      ctx.quadraticCurveTo(centerX - 130, startY + 350, centerX - 20, startY + 350);
+      ctx.stroke();
+
+      // Draw touch ripples
+      drawRipples(ctx);
+
+      // Phase indicator at bottom
+      const phaseText = {
+        'inhale': 'Inhale...',
+        'holdFull': 'Hold...',
+        'exhale': 'Exhale...',
+        'holdEmpty': 'Rest...'
+      }[phaseName] || 'Breathe...';
+
+      ctx.fillStyle = `hsla(${hue}, 50%, 70%, 0.6)`;
+      ctx.font = '14px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(phaseText, centerX, canvas.height - 40);
+
+      // Progress arc
+      const arcRadius = 20;
+      const arcX = centerX;
+      const arcY = canvas.height - 70;
+
+      ctx.strokeStyle = `hsla(${hue}, 30%, 40%, 0.3)`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(arcX, arcY, arcRadius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = `hsla(${hue}, 60%, 60%, 0.8)`;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(arcX, arcY, arcRadius, -Math.PI / 2, -Math.PI / 2 + phaseProgress * Math.PI * 2);
+      ctx.stroke();
+    };
+
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, getBreathInfo, getInteractionInfluence, drawRipples]);
 
   // ========== RAIN ON GLASS MODE ==========
   React.useEffect(() => {
@@ -2375,8 +3176,8 @@ function GazeMode({ theme }) {
 
         // Outer glow
         const glowGradient = ctx.createRadialGradient(this.x, this.y, r * 0.3, this.x, this.y, r * 1.8);
-        glowGradient.addColorStop(0, `rgba(127, 219, 202, ${0.15 * this.opacity * breath})`);
-        glowGradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
+        glowGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.15 * this.opacity * breath})`);
+        glowGradient.addColorStop(1, `hsla(${hue}, 52%, 68%, 0)`);
         ctx.fillStyle = glowGradient;
         ctx.beginPath();
         ctx.arc(this.x, this.y, r * 1.8, 0, Math.PI * 2);
@@ -2391,7 +3192,7 @@ function GazeMode({ theme }) {
         // Drop gradient
         const dropGradient = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 0, 0, 0, r);
         dropGradient.addColorStop(0, `rgba(200, 240, 255, ${0.5 * this.opacity})`);
-        dropGradient.addColorStop(0.3, `rgba(127, 219, 202, ${0.35 * this.opacity})`);
+        dropGradient.addColorStop(0.3, `hsla(${hue}, 52%, 68%, ${0.35 * this.opacity})`);
         dropGradient.addColorStop(0.7, `rgba(100, 180, 170, ${0.2 * this.opacity})`);
         dropGradient.addColorStop(1, `rgba(80, 150, 140, ${0.1 * this.opacity})`);
 
@@ -2603,7 +3404,7 @@ function GazeMode({ theme }) {
         for (let i = 1; i < drop.trail.length; i++) {
           trailCtx.lineTo(drop.trail[i].x, drop.trail[i].y);
         }
-        trailCtx.strokeStyle = `rgba(127, 219, 202, 0.12)`;
+        trailCtx.strokeStyle = `hsla(${hue}, 52%, 68%, 0.12)`;
         trailCtx.lineWidth = drop.radius * 0.35;
         trailCtx.lineCap = 'round';
         trailCtx.stroke();
@@ -2670,55 +3471,73 @@ function GazeMode({ theme }) {
     canvas.height = window.innerHeight;
     let startTime = Date.now();
 
-    // Tentacle class with verlet physics
+    // Use main PALETTE colors - teal as primary (matches other visuals)
+    const JELLY_COLORS = {
+      primary: { h: hue, s: 52, l: 68 },    // Main teal #7FDBCA
+      deep: { h: hue, s: 50, l: 50 },       // Deeper teal
+      accent: { h: hue + 15, s: 60, l: 75 },// Lighter accent
+      sand: { h: hue + 20, s: 50, l: 65 }    // Accent for spots
+    };
+
+    // Thin trailing tentacle class with verlet physics
     class Tentacle {
-      constructor(parent, index, segments, segmentLength, isOralArm = false) {
+      constructor(parent, index, totalCount, segments, segmentLength) {
         this.parent = parent;
         this.index = index;
         this.segments = segments;
         this.segmentLength = segmentLength;
-        this.isOralArm = isOralArm;
         this.points = [];
         this.oldPoints = [];
 
-        const angleOffset = (index / (isOralArm ? 4 : 8)) * Math.PI * 2;
-        const startX = Math.cos(angleOffset) * parent.size * (isOralArm ? 0.15 : 0.35);
+        // Distribute around bell margin
+        const angleOffset = (index / totalCount) * Math.PI * 2;
+        this.angleOffset = angleOffset;
+        const attachRadius = 0.95; // Attach at bell rim
+        const startX = Math.cos(angleOffset) * parent.size * attachRadius;
+        const startY = Math.sin(angleOffset) * parent.size * 0.15; // Slight vertical spread
 
+        // Initialize with natural hanging curve
         for (let i = 0; i < segments; i++) {
+          const t = i / segments;
+          const sway = Math.sin(angleOffset + i * 0.2) * (5 + i * 1.5);
           this.points.push({
-            x: parent.position.x + startX,
-            y: parent.position.y + parent.bellHeight * 0.8 + i * segmentLength
+            x: parent.position.x + startX + sway,
+            y: parent.position.y + parent.bellHeight + i * segmentLength + startY
           });
-          this.oldPoints.push({ x: this.points[i].x, y: this.points[i].y });
+          this.oldPoints.push({
+            x: this.points[i].x - sway * 0.05,
+            y: this.points[i].y - 0.3
+          });
         }
       }
 
       update(pulse, elapsed) {
-        const angleOffset = (this.index / (this.isOralArm ? 4 : 8)) * Math.PI * 2;
-        const expansion = 1 + pulse * 0.15;
-        const attachRadius = this.isOralArm ? 0.15 : 0.4;
+        const expansion = 1 + pulse * 0.12;
+        const attachRadius = 0.95;
 
-        // First point follows bell edge
-        this.points[0].x = this.parent.position.x + Math.cos(angleOffset) * this.parent.size * attachRadius * expansion;
-        this.points[0].y = this.parent.position.y + this.parent.bellHeight * 0.85;
+        // First point follows bell rim
+        const rimX = Math.cos(this.angleOffset) * this.parent.size * attachRadius * expansion;
+        const rimY = Math.sin(this.angleOffset) * this.parent.size * 0.15;
+        this.points[0].x = this.parent.position.x + rimX;
+        this.points[0].y = this.parent.position.y + this.parent.bellHeight * 0.3 + rimY;
 
-        // Verlet integration
+        // Verlet integration with drag
         for (let i = 1; i < this.segments; i++) {
           const p = this.points[i];
           const old = this.oldPoints[i];
 
-          const vx = (p.x - old.x) * 0.96;
-          const vy = (p.y - old.y) * 0.96;
+          const vx = (p.x - old.x) * 0.97; // High drag for slow flow
+          const vy = (p.y - old.y) * 0.97;
 
           old.x = p.x;
           old.y = p.y;
 
           p.x += vx;
-          p.y += vy + 0.03;
+          p.y += vy + 0.015; // Very gentle gravity
 
-          // Sway
-          const swayAmp = this.isOralArm ? 0.15 : 0.08;
-          p.x += Math.sin(elapsed * 0.8 + i * 0.4 + this.index * 0.7) * swayAmp;
+          // Gentle organic sway
+          const swayAmp = 0.04 * (1 + i * 0.1);
+          p.x += Math.sin(elapsed * 0.5 + i * 0.3 + this.index * 0.5) * swayAmp;
         }
 
         // Constraint iterations
@@ -2748,13 +3567,12 @@ function GazeMode({ theme }) {
         }
       }
 
-      draw(ctx, hue, glow) {
+      draw(ctx, glow) {
         if (this.points.length < 2) return;
 
+        // Draw thin tentacle with taper
         ctx.beginPath();
         ctx.moveTo(this.points[0].x, this.points[0].y);
-
-        // Smooth curve through points
         for (let i = 1; i < this.points.length - 1; i++) {
           const xc = (this.points[i].x + this.points[i + 1].x) / 2;
           const yc = (this.points[i].y + this.points[i + 1].y) / 2;
@@ -2762,16 +3580,30 @@ function GazeMode({ theme }) {
         }
         ctx.lineTo(this.points[this.points.length - 1].x, this.points[this.points.length - 1].y);
 
-        const baseWidth = this.isOralArm ? 4 : 2.5;
-        ctx.strokeStyle = `hsla(${hue}, 70%, 65%, ${0.4 + glow * 0.3})`;
-        ctx.lineWidth = baseWidth;
+        // Gradient stroke - sage to teal at tips
+        const gradient = ctx.createLinearGradient(
+          this.points[0].x, this.points[0].y,
+          this.points[this.points.length - 1].x, this.points[this.points.length - 1].y
+        );
+        gradient.addColorStop(0, `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s}%, ${JELLY_COLORS.primary.l}%, ${0.4 + glow * 0.2})`);
+        gradient.addColorStop(0.7, `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s}%, ${JELLY_COLORS.primary.l + 10}%, ${0.25})`);
+        gradient.addColorStop(1, `hsla(${JELLY_COLORS.accent.h}, ${JELLY_COLORS.accent.s}%, ${JELLY_COLORS.accent.l}%, ${0.15})`);
+
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 1.5;
         ctx.lineCap = 'round';
         ctx.stroke();
 
-        // Glow effect
-        ctx.strokeStyle = `hsla(${hue}, 80%, 75%, ${0.15 + glow * 0.2})`;
-        ctx.lineWidth = baseWidth + 4;
-        ctx.stroke();
+        // Bioluminescent tip glow
+        const tipIdx = this.points.length - 1;
+        const tip = this.points[tipIdx];
+        const tipGlow = ctx.createRadialGradient(tip.x, tip.y, 0, tip.x, tip.y, 4);
+        tipGlow.addColorStop(0, `hsla(${JELLY_COLORS.accent.h}, 60%, 70%, ${0.3 * glow})`);
+        tipGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = tipGlow;
+        ctx.beginPath();
+        ctx.arc(tip.x, tip.y, 4, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       applyForce(fx, fy, strength) {
@@ -2782,46 +3614,191 @@ function GazeMode({ theme }) {
       }
     }
 
-    // Jellyfish class
+    // Frilly oral arm class
+    class OralArm {
+      constructor(parent, index, totalCount) {
+        this.parent = parent;
+        this.index = index;
+        this.segments = 18;
+        this.segmentLength = 5;
+        this.points = [];
+        this.oldPoints = [];
+        this.frillPhases = [];
+
+        const angleOffset = (index / totalCount) * Math.PI * 2;
+        this.angleOffset = angleOffset;
+        const attachRadius = 0.2;
+        const startX = Math.cos(angleOffset) * parent.size * attachRadius;
+
+        for (let i = 0; i < this.segments; i++) {
+          const sway = Math.sin(angleOffset + i * 0.4) * 8;
+          this.points.push({
+            x: parent.position.x + startX + sway,
+            y: parent.position.y + parent.bellHeight * 0.5 + i * this.segmentLength
+          });
+          this.oldPoints.push({
+            x: this.points[i].x - sway * 0.05,
+            y: this.points[i].y - 0.2
+          });
+          this.frillPhases.push(Math.random() * Math.PI * 2);
+        }
+      }
+
+      update(pulse, elapsed) {
+        const attachRadius = 0.2;
+        const startX = Math.cos(this.angleOffset) * this.parent.size * attachRadius;
+
+        this.points[0].x = this.parent.position.x + startX;
+        this.points[0].y = this.parent.position.y + this.parent.bellHeight * 0.4;
+
+        for (let i = 1; i < this.segments; i++) {
+          const p = this.points[i];
+          const old = this.oldPoints[i];
+
+          const vx = (p.x - old.x) * 0.96;
+          const vy = (p.y - old.y) * 0.96;
+
+          old.x = p.x;
+          old.y = p.y;
+
+          p.x += vx;
+          p.y += vy + 0.02;
+
+          // Slower sway for oral arms
+          const swayAmp = 0.08 * (1 + i * 0.05);
+          p.x += Math.sin(elapsed * 0.3 + i * 0.5 + this.index * 1.2) * swayAmp;
+        }
+
+        // Constraints
+        for (let j = 0; j < 3; j++) {
+          for (let i = 1; i < this.segments; i++) {
+            const p1 = this.points[i - 1];
+            const p2 = this.points[i];
+
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist === 0) continue;
+
+            const diff = this.segmentLength - dist;
+            const percent = diff / dist / 2;
+
+            if (i > 1) {
+              p1.x -= dx * percent;
+              p1.y -= dy * percent;
+            }
+            p2.x += dx * percent;
+            p2.y += dy * percent;
+          }
+        }
+      }
+
+      draw(ctx, elapsed, glow) {
+        if (this.points.length < 2) return;
+
+        // Draw frilly ribbon shape
+        for (let i = 0; i < this.points.length - 1; i++) {
+          const p1 = this.points[i];
+          const p2 = this.points[i + 1];
+          const t = i / (this.points.length - 1);
+
+          // Width tapers and has frill
+          const baseWidth = 6 * (1 - t * 0.5);
+          const frillWave = Math.sin(elapsed * 1.5 + i * 0.8 + this.frillPhases[i]) * 3;
+          const width = baseWidth + Math.abs(frillWave);
+
+          // Calculate perpendicular
+          const dx = p2.x - p1.x;
+          const dy = p2.y - p1.y;
+          const len = Math.sqrt(dx * dx + dy * dy) || 1;
+          const nx = -dy / len;
+          const ny = dx / len;
+
+          // Draw segment as quad
+          ctx.beginPath();
+          ctx.moveTo(p1.x + nx * width, p1.y + ny * width);
+          ctx.lineTo(p2.x + nx * width * 0.9, p2.y + ny * width * 0.9);
+          ctx.lineTo(p2.x - nx * width * 0.9, p2.y - ny * width * 0.9);
+          ctx.lineTo(p1.x - nx * width, p1.y - ny * width);
+          ctx.closePath();
+
+          const alpha = (0.4 - t * 0.2) + glow * 0.15;
+          ctx.fillStyle = `hsla(${JELLY_COLORS.deep.h}, ${JELLY_COLORS.deep.s}%, ${JELLY_COLORS.deep.l}%, ${alpha})`;
+          ctx.fill();
+
+          // Frill edge highlight in sand color
+          ctx.strokeStyle = `hsla(${JELLY_COLORS.sand.h}, ${JELLY_COLORS.sand.s}%, ${JELLY_COLORS.sand.l}%, ${alpha * 0.6})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+
+      applyForce(fx, fy, strength) {
+        for (let i = 1; i < this.points.length; i++) {
+          this.points[i].x += fx * strength * (i / this.points.length) * 0.7;
+          this.points[i].y += fy * strength * (i / this.points.length) * 0.7;
+        }
+      }
+    }
+
+    // Jellyfish class - anatomically accurate
     class Jellyfish {
       constructor(x, y, size) {
         this.position = { x, y };
         this.size = size;
-        this.bellHeight = size * 0.6;
+        this.bellHeight = size * 0.6; // Slightly flattened dome
         this.pulsePhase = Math.random() * Math.PI * 2;
-        this.pulseSpeed = 0.018 + Math.random() * 0.008;
-        this.driftVelocity = { x: (Math.random() - 0.5) * 0.3, y: -0.15 - Math.random() * 0.1 };
+        this.pulseSpeed = 0.008 + Math.random() * 0.004; // SLOW pulse
+        this.driftVelocity = { x: (Math.random() - 0.5) * 0.1, y: -0.02 - Math.random() * 0.015 }; // Gentle upward drift
         this.lastPulse = 0;
 
-        this.hue = 169 + (Math.random() - 0.5) * 20; // Teal, matching app accent (#7FDBCA)
-        this.glow = 0.5;
+        this.glow = 0.6;
         this.following = false;
-        this.bellSegments = 24;
+        this.bellSegments = 48; // Smooth bell curve
 
-        // Create tentacles
-        this.tentacles = [];
+        // Bioluminescent spots inside bell
+        this.bioSpots = [];
         for (let i = 0; i < 8; i++) {
-          this.tentacles.push(new Tentacle(this, i, 18, 7, false));
+          const angle = Math.random() * Math.PI * 2;
+          const r = Math.random() * 0.5 + 0.2;
+          this.bioSpots.push({
+            angle,
+            radius: r,
+            size: Math.random() * 2 + 1,
+            phase: Math.random() * Math.PI * 2,
+            speed: Math.random() * 0.008 + 0.004
+          });
         }
 
-        // Create oral arms (frillier, center)
+        // Create many thin trailing tentacles (24-32)
+        this.tentacles = [];
+        const tentacleCount = 24 + Math.floor(Math.random() * 8);
+        for (let i = 0; i < tentacleCount; i++) {
+          // Variable lengths - some 2x, some 4x bell size
+          const lengthMult = 2 + Math.random() * 2;
+          const segCount = Math.floor(12 + lengthMult * 4);
+          this.tentacles.push(new Tentacle(this, i, tentacleCount, segCount, 4));
+        }
+
+        // Create 4-6 frilly oral arms
         this.oralArms = [];
-        for (let i = 0; i < 4; i++) {
-          this.oralArms.push(new Tentacle(this, i, 12, 5, true));
+        const oralCount = 4 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < oralCount; i++) {
+          this.oralArms.push(new OralArm(this, i, oralCount));
         }
       }
 
       update(elapsed, breathPhase) {
-        // Sync pulse with breath in breath mode
+        // Very slow pulse synced loosely with breath
         const targetPhase = breathPhase * Math.PI;
-        this.pulsePhase += (targetPhase - this.pulsePhase) * 0.02 + this.pulseSpeed * 0.3;
+        this.pulsePhase += (targetPhase - this.pulsePhase) * 0.01 + this.pulseSpeed;
 
         const pulse = Math.sin(this.pulsePhase);
 
-        // Propulsion on contraction
-        if (pulse > 0.85 && this.lastPulse <= 0.85) {
-          this.driftVelocity.y -= 0.4 + Math.random() * 0.2;
-          this.driftVelocity.x += (Math.random() - 0.5) * 0.2;
+        // Gentle upward thrust on pulse peak
+        if (pulse > 0.9 && this.lastPulse <= 0.9) {
+          this.driftVelocity.y -= 0.08 + Math.random() * 0.04;
+          this.driftVelocity.x += (Math.random() - 0.5) * 0.06;
         }
         this.lastPulse = pulse;
 
@@ -2829,91 +3806,173 @@ function GazeMode({ theme }) {
         this.position.x += this.driftVelocity.x;
         this.position.y += this.driftVelocity.y;
 
-        // Friction and sink
-        this.driftVelocity.x *= 0.992;
-        this.driftVelocity.y *= 0.994;
-        this.driftVelocity.y += 0.008;
+        // High friction and very gentle buoyancy (rise)
+        this.driftVelocity.x *= 0.998;
+        this.driftVelocity.y *= 0.998;
+        this.driftVelocity.y -= 0.002; // Very gentle rise (buoyancy)
 
-        // Boundaries - wrap around
-        if (this.position.y < -this.size * 2) this.position.y = canvas.height + this.size;
-        if (this.position.y > canvas.height + this.size * 2) this.position.y = -this.size;
-        if (this.position.x < -this.size) this.position.x = canvas.width + this.size;
-        if (this.position.x > canvas.width + this.size) this.position.x = -this.size;
+        // Boundaries - wrap from top to bottom (swimming upward)
+        if (this.position.y < -this.size * 4) this.position.y = canvas.height + this.size * 3;
+        if (this.position.y > canvas.height + this.size * 4) this.position.y = canvas.height + this.size * 2;
+        if (this.position.x < -this.size * 2) this.position.x = canvas.width + this.size;
+        if (this.position.x > canvas.width + this.size * 2) this.position.x = -this.size;
 
         // Decay glow
-        if (!this.following) this.glow = this.glow * 0.98 + 0.5 * 0.02;
+        if (!this.following) this.glow = this.glow * 0.99 + 0.6 * 0.01;
 
-        // Update tentacles
+        // Update appendages
         this.tentacles.forEach(t => t.update(pulse, elapsed));
         this.oralArms.forEach(o => o.update(pulse, elapsed));
       }
 
-      draw(ctx) {
+      draw(ctx, elapsed) {
         const pulse = Math.sin(this.pulsePhase);
-        const expansion = 1 + pulse * 0.15;
+        const expansion = 1 + pulse * 0.12;
+
+        // Draw tentacles FIRST (behind everything)
+        this.tentacles.forEach(t => t.draw(ctx, this.glow));
+
+        // Draw oral arms (behind bell but in front of tentacles)
+        this.oralArms.forEach(o => o.draw(ctx, elapsed, this.glow));
 
         ctx.save();
         ctx.translate(this.position.x, this.position.y);
 
-        // Bell glow (outer)
+        // Outer glow (bioluminescence)
         const glowGradient = ctx.createRadialGradient(0, this.bellHeight * 0.3, 0, 0, this.bellHeight * 0.3, this.size * 2);
-        glowGradient.addColorStop(0, `hsla(${this.hue}, 80%, 70%, ${0.2 * this.glow})`);
-        glowGradient.addColorStop(0.5, `hsla(${this.hue}, 70%, 50%, ${0.08 * this.glow})`);
+        glowGradient.addColorStop(0, `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s + 20}%, 70%, ${0.12 * this.glow})`);
+        glowGradient.addColorStop(0.5, `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s}%, 50%, ${0.04 * this.glow})`);
         glowGradient.addColorStop(1, 'transparent');
         ctx.fillStyle = glowGradient;
         ctx.beginPath();
         ctx.arc(0, this.bellHeight * 0.3, this.size * 2, 0, Math.PI * 2);
         ctx.fill();
 
-        // Bell shape
+        // Draw bell dome - organic curve bulging UPWARD
         ctx.beginPath();
-        for (let i = 0; i <= this.bellSegments; i++) {
-          const angle = (i / this.bellSegments) * Math.PI;
-          const x = Math.cos(angle) * this.size * expansion;
-          const y = Math.sin(angle) * this.bellHeight * (1 - pulse * 0.12);
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
+        // Start at left rim
+        ctx.moveTo(-this.size * expansion, this.bellHeight * 0.3);
+        // Curve up to apex (above origin) then down to right rim
+        ctx.bezierCurveTo(
+          -this.size * expansion * 0.7, -this.bellHeight * 0.8 * (1 - pulse * 0.1), // left control
+          this.size * expansion * 0.7, -this.bellHeight * 0.8 * (1 - pulse * 0.1),  // right control
+          this.size * expansion, this.bellHeight * 0.3                               // end at right rim
+        );
+        // Close bottom with slight curve inward
+        ctx.quadraticCurveTo(0, this.bellHeight * 0.5, -this.size * expansion, this.bellHeight * 0.3);
 
-        // Bell gradient
-        const bellGradient = ctx.createRadialGradient(0, -this.size * 0.2, 0, 0, this.bellHeight * 0.5, this.size * 1.2);
-        bellGradient.addColorStop(0, `hsla(${this.hue}, 85%, 80%, ${0.5 + this.glow * 0.3})`);
-        bellGradient.addColorStop(0.3, `hsla(${this.hue}, 75%, 60%, ${0.35 + this.glow * 0.2})`);
-        bellGradient.addColorStop(0.7, `hsla(${this.hue}, 65%, 45%, ${0.2 + this.glow * 0.15})`);
-        bellGradient.addColorStop(1, `hsla(${this.hue}, 55%, 35%, 0.1)`);
+        // Multi-layer translucent fill
+        const bellGradient = ctx.createRadialGradient(0, 0, 0, 0, this.bellHeight * 0.2, this.size * 1.2);
+        bellGradient.addColorStop(0, `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s - 5}%, 75%, ${0.35 + this.glow * 0.15})`);
+        bellGradient.addColorStop(0.4, `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s}%, 60%, ${0.25 + this.glow * 0.1})`);
+        bellGradient.addColorStop(0.8, `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s + 5}%, 50%, ${0.15})`);
+        bellGradient.addColorStop(1, `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s}%, 40%, ${0.08})`);
         ctx.fillStyle = bellGradient;
         ctx.fill();
 
-        // Bell edge highlight
-        ctx.strokeStyle = `hsla(${this.hue}, 90%, 85%, ${0.4 + this.glow * 0.4})`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+        // Inner mesoglea layer (subsurface effect)
+        ctx.save();
+        ctx.scale(0.88, 0.88);
+        ctx.beginPath();
+        ctx.moveTo(-this.size * expansion, this.bellHeight * 0.25);
+        ctx.bezierCurveTo(
+          -this.size * expansion * 0.65, -this.bellHeight * 0.65 * (1 - pulse * 0.1),
+          this.size * expansion * 0.65, -this.bellHeight * 0.65 * (1 - pulse * 0.1),
+          this.size * expansion, this.bellHeight * 0.25
+        );
+        ctx.quadraticCurveTo(0, this.bellHeight * 0.4, -this.size * expansion, this.bellHeight * 0.25);
 
-        // Inner bell details (gonads pattern)
+        const innerGradient = ctx.createRadialGradient(0, -this.bellHeight * 0.2, 0, 0, this.bellHeight * 0.1, this.size * 0.9);
+        innerGradient.addColorStop(0, `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s - 10}%, 85%, ${0.25 + this.glow * 0.2})`);
+        innerGradient.addColorStop(0.6, `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s}%, 70%, ${0.12})`);
+        innerGradient.addColorStop(1, `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s + 5}%, 55%, ${0.05})`);
+        ctx.fillStyle = innerGradient;
+        ctx.fill();
+        ctx.restore();
+
+        // Radial canals (4 visible internal lines)
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < 4; i++) {
+          const angle = (i / 4) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.moveTo(0, -this.bellHeight * 0.3);
+          const endX = Math.cos(angle) * this.size * 0.75 * expansion;
+          const endY = this.bellHeight * 0.2;
+          const ctrlX = Math.cos(angle) * this.size * 0.4;
+          const ctrlY = 0;
+          ctx.quadraticCurveTo(ctrlX, ctrlY, endX, endY);
+          ctx.strokeStyle = `hsla(${JELLY_COLORS.primary.h + 10}, 35%, 75%, ${0.2 + this.glow * 0.1})`;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Gonads (4 horseshoe organs)
         for (let i = 0; i < 4; i++) {
           const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
-          const r = this.size * 0.35;
-          const cx = Math.cos(angle) * r * 0.5;
-          const cy = this.bellHeight * 0.35 + Math.sin(angle) * r * 0.2;
+          const cx = Math.cos(angle) * this.size * 0.4;
+          const cy = -this.bellHeight * 0.1 + Math.sin(angle) * this.size * 0.08;
+
           ctx.beginPath();
-          ctx.arc(cx, cy, r * 0.25, 0, Math.PI * 2);
-          ctx.fillStyle = `hsla(${this.hue + 20}, 70%, 70%, ${0.25 + this.glow * 0.2})`;
+          ctx.arc(cx, cy, this.size * 0.15, Math.PI * 0.3, Math.PI * 0.7, false);
+          ctx.strokeStyle = `hsla(${JELLY_COLORS.sand.h}, ${JELLY_COLORS.sand.s}%, ${JELLY_COLORS.sand.l}%, ${0.4 + this.glow * 0.2})`;
+          ctx.lineWidth = this.size * 0.06;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+
+          // Gonad glow
+          const gonadGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, this.size * 0.2);
+          gonadGlow.addColorStop(0, `hsla(${JELLY_COLORS.sand.h}, ${JELLY_COLORS.sand.s + 10}%, 75%, ${0.2 * this.glow})`);
+          gonadGlow.addColorStop(1, 'transparent');
+          ctx.fillStyle = gonadGlow;
+          ctx.beginPath();
+          ctx.arc(cx, cy, this.size * 0.2, 0, Math.PI * 2);
           ctx.fill();
         }
 
-        ctx.restore();
+        // Bioluminescent spots (pulsing)
+        ctx.globalCompositeOperation = 'lighter';
+        this.bioSpots.forEach(spot => {
+          const spotPulse = Math.sin(elapsed * spot.speed * 60 + spot.phase) * 0.5 + 0.5;
+          const x = Math.cos(spot.angle) * this.size * spot.radius * expansion * 0.6;
+          const y = -this.bellHeight * spot.radius * 0.4;
 
-        // Draw tentacles and oral arms
-        this.tentacles.forEach(t => t.draw(ctx, this.hue, this.glow));
-        this.oralArms.forEach(o => o.draw(ctx, this.hue + 15, this.glow));
+          const spotGlow = ctx.createRadialGradient(x, y, 0, x, y, spot.size * 4);
+          spotGlow.addColorStop(0, `hsla(${JELLY_COLORS.sand.h}, 70%, 85%, ${0.35 * spotPulse * this.glow})`);
+          spotGlow.addColorStop(0.5, `hsla(${JELLY_COLORS.primary.h}, 50%, 65%, ${0.12 * spotPulse})`);
+          spotGlow.addColorStop(1, 'transparent');
+          ctx.fillStyle = spotGlow;
+          ctx.beginPath();
+          ctx.arc(x, y, spot.size * 4, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Bell rim (margin) - thicker, more opaque
+        ctx.beginPath();
+        ctx.moveTo(-this.size * expansion, this.bellHeight * 0.3);
+        ctx.bezierCurveTo(
+          -this.size * expansion * 0.7, -this.bellHeight * 0.8 * (1 - pulse * 0.1),
+          this.size * expansion * 0.7, -this.bellHeight * 0.8 * (1 - pulse * 0.1),
+          this.size * expansion, this.bellHeight * 0.3
+        );
+        ctx.strokeStyle = `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s + 10}%, 80%, ${0.5 + this.glow * 0.25})`;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // Subtle outer glow on rim
+        ctx.strokeStyle = `hsla(${JELLY_COLORS.primary.h}, ${JELLY_COLORS.primary.s}%, 70%, ${0.15 + this.glow * 0.1})`;
+        ctx.lineWidth = 6;
+        ctx.stroke();
+
+        ctx.restore();
       }
 
       applyForce(fx, fy) {
-        this.driftVelocity.x += fx;
-        this.driftVelocity.y += fy;
-        this.tentacles.forEach(t => t.applyForce(fx, fy, 2));
-        this.oralArms.forEach(o => o.applyForce(fx, fy, 1.5));
+        this.driftVelocity.x += fx * 0.5;
+        this.driftVelocity.y += fy * 0.5;
+        this.tentacles.forEach(t => t.applyForce(fx, fy, 1.5));
+        this.oralArms.forEach(o => o.applyForce(fx, fy, 1));
       }
     }
 
@@ -2922,17 +3981,17 @@ function GazeMode({ theme }) {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2 + 0.5;
-        this.speed = Math.random() * 0.3 + 0.1;
+        this.size = Math.random() * 1.5 + 0.3;
+        this.speed = Math.random() * 0.15 + 0.05;
         this.angle = Math.random() * Math.PI * 2;
         this.wobble = Math.random() * Math.PI * 2;
-        this.opacity = Math.random() * 0.4 + 0.1;
+        this.opacity = Math.random() * 0.3 + 0.1;
       }
 
       update(elapsed) {
-        this.wobble += 0.02;
-        this.x += Math.cos(this.angle + Math.sin(this.wobble) * 0.5) * this.speed;
-        this.y += Math.sin(this.angle) * this.speed * 0.5 - 0.1;
+        this.wobble += 0.01;
+        this.x += Math.cos(this.angle + Math.sin(this.wobble) * 0.3) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed * 0.3 - 0.05;
 
         if (this.y < -10) { this.y = canvas.height + 10; this.x = Math.random() * canvas.width; }
         if (this.x < -10) this.x = canvas.width + 10;
@@ -2942,24 +4001,24 @@ function GazeMode({ theme }) {
       draw(ctx) {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(127, 219, 202, ${this.opacity})`; // Teal accent
+        ctx.fillStyle = `hsla(${JELLY_COLORS.primary.h}, 40%, 60%, ${this.opacity})`;
         ctx.fill();
       }
     }
 
-    // Initialize
+    // Initialize - fewer jellyfish, larger and more majestic, starting from bottom
     const jellies = [];
-    const jellyCount = Math.min(Math.floor(canvas.width / 300) + 2, 5);
+    const jellyCount = Math.min(Math.floor(canvas.width / 400) + 1, 3);
     for (let i = 0; i < jellyCount; i++) {
       jellies.push(new Jellyfish(
-        Math.random() * canvas.width,
-        Math.random() * canvas.height,
-        60 + Math.random() * 50
+        canvas.width * 0.2 + Math.random() * canvas.width * 0.6,
+        canvas.height * 0.6 + Math.random() * canvas.height * 0.3 + i * 80,  // Start visible, in lower portion
+        70 + Math.random() * 40
       ));
     }
 
     const plankton = [];
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < 40; i++) {
       plankton.push(new Plankton());
     }
 
@@ -2968,12 +4027,12 @@ function GazeMode({ theme }) {
 
     // God rays
     const rays = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 4; i++) {
       rays.push({
         x: Math.random() * canvas.width,
-        width: Math.random() * 100 + 50,
-        opacity: Math.random() * 0.06 + 0.02,
-        speed: Math.random() * 0.2 + 0.1
+        width: Math.random() * 80 + 40,
+        opacity: Math.random() * 0.04 + 0.01,
+        speed: Math.random() * 0.1 + 0.05
       });
     }
 
@@ -3106,7 +4165,7 @@ function GazeMode({ theme }) {
       // Update and draw jellyfish
       jellies.forEach(jelly => {
         jelly.update(elapsed, breath);
-        jelly.draw(ctx);
+        jelly.draw(ctx, elapsed);
       });
 
       // Touch ripples
@@ -3148,14 +4207,14 @@ function GazeMode({ theme }) {
       colorB: new Float32Array(GRID_SIZE * GRID_SIZE),
     };
 
-    // Ink colors - luminous on dark background
+    // Ink colors - using palette colors
     const inkColors = [
-      { r: 0.3, g: 0.5, b: 1.0 },     // Electric Blue
-      { r: 1.0, g: 0.3, b: 0.4 },     // Coral
-      { r: 0.2, g: 0.9, b: 0.6 },     // Mint
-      { r: 0.7, g: 0.4, b: 1.0 },     // Lavender
-      { r: 1.0, g: 0.8, b: 0.2 },     // Gold
-      { r: 0.5, g: 0.86, b: 0.8 },    // Teal (matches app accent)
+      { r: 0.5, g: 0.86, b: 0.79 },   // Teal (palette)
+      { r: 0.48, g: 0.41, b: 0.93 },  // Purple (palette)
+      { r: 0.29, g: 0.56, b: 0.64 },  // Steel Blue (palette)
+      { r: 0.42, g: 0.56, b: 0.42 },  // Sage (palette)
+      { r: 0.88, g: 0.48, b: 0.33 },  // Orange (palette)
+      { r: 0.83, g: 0.65, b: 0.45 },  // Sand (palette)
     ];
     let colorIndex = 0;
 
@@ -3492,7 +4551,7 @@ function GazeMode({ theme }) {
         this.patternTime = Math.random() * 10;
 
         this.size = 2 + this.z * 3;
-        this.hue = 55 + Math.random() * 25; // Yellow-green
+        this.hue = hue + Math.random() * 20 - 10; // Teal with slight variation
       }
 
       generatePattern() {
@@ -3780,6 +4839,7 @@ function GazeMode({ theme }) {
   }, [currentMode, getInteractionInfluence, drawRipples]);
 
   // ========== LAVA LAMP MODE ==========
+  // Based on real lava lamp physics: heat-driven convection, density changes, surface tension
   React.useEffect(() => {
     if (currentMode !== 'lava' || !canvasRef.current) return;
 
@@ -3789,96 +4849,548 @@ function GazeMode({ theme }) {
     canvas.height = window.innerHeight;
     let startTime = Date.now();
 
-    // Blob class - the "lava" inside the lamp
-    class Blob {
-      constructor(index, total) {
-        this.baseX = canvas.width * 0.3 + canvas.width * 0.4 * (index / total);
-        this.x = this.baseX;
-        this.y = canvas.height * 0.5 + (Math.random() - 0.5) * canvas.height * 0.3;
-        this.baseRadius = 40 + Math.random() * 60;
-        this.radius = this.baseRadius;
+    // Lamp dimensions - classic lava lamp proportions
+    const centerX = canvas.width / 2;
+    const lampHeight = Math.min(canvas.height * 0.8, 650);
+    const lampWidth = lampHeight * 0.26;
+    const lampTop = (canvas.height - lampHeight) / 2;
+    const lampBottom = lampTop + lampHeight;
+
+    // Glass bottle dimensions (tapered shape)
+    const glassTop = lampTop + lampHeight * 0.07;
+    const glassBottom = lampBottom - lampHeight * 0.11;
+    const glassHeight = glassBottom - glassTop;
+    const bottleNeckTop = glassTop;
+    const bottleNeckWidth = lampWidth * 0.32;
+    const bottleBulgeStart = glassTop + glassHeight * 0.12;
+    const bottleBulgeWidth = lampWidth;
+    const bottleBottomWidth = lampWidth * 0.82;
+
+    // Heat coil at bottom (simulated)
+    const heatZoneTop = glassBottom - glassHeight * 0.12;
+    const coolZoneBottom = glassTop + glassHeight * 0.15;
+
+    // Metaball threshold for smooth blob rendering
+    const METABALL_THRESHOLD = 1.0;
+
+    // Wax blob class with realistic physics
+    class WaxBlob {
+      constructor(x, y, radius, fromPool = false) {
+        this.x = x;
+        this.y = y;
+        this.vx = 0;
         this.vy = 0;
+        this.baseRadius = radius;
+        this.radius = radius;
+        this.temperature = fromPool ? 0.9 : 0.3 + Math.random() * 0.4;
         this.phase = Math.random() * Math.PI * 2;
         this.wobblePhase = Math.random() * Math.PI * 2;
-        this.hue = 169 + (Math.random() - 0.5) * 15; // Teal range
-        this.saturation = 60 + Math.random() * 20;
+        this.stretchY = 1; // Vertical stretch based on velocity
+        this.age = 0;
+        this.rising = fromPool;
       }
 
-      update(breath, isInhaling, dt) {
-        // Breath drives vertical movement
-        const targetY = isInhaling
-          ? canvas.height * 0.25 + Math.sin(this.phase) * 80
-          : canvas.height * 0.75 + Math.sin(this.phase) * 80;
+      getWidthAtY(y) {
+        const relY = (y - glassTop) / glassHeight;
+        if (relY < 0.12) {
+          const t = relY / 0.12;
+          return bottleNeckWidth * 0.5 + (bottleBulgeWidth * 0.4 - bottleNeckWidth * 0.5) * t;
+        } else if (relY < 0.88) {
+          const t = (relY - 0.12) / 0.76;
+          const bulge = Math.sin(t * Math.PI);
+          return bottleBulgeWidth * 0.42 + bulge * bottleBulgeWidth * 0.12;
+        } else {
+          const t = (relY - 0.88) / 0.12;
+          return bottleBulgeWidth * 0.42 * (1 - t * 0.15);
+        }
+      }
 
-        this.vy += (targetY - this.y) * 0.0004 * dt;
-        this.vy *= 0.98;
+      update(dt, elapsed) {
+        this.age += dt;
+        const relY = (this.y - glassTop) / glassHeight;
+
+        // Heat transfer - bottom heats, top cools (realistic convection)
+        if (this.y > heatZoneTop) {
+          // In heat zone - rapid heating from light bulb
+          this.temperature = Math.min(1, this.temperature + 0.0025 * dt);
+        } else if (this.y < coolZoneBottom) {
+          // Near top - cooling zone
+          this.temperature = Math.max(0, this.temperature - 0.002 * dt);
+        } else {
+          // Middle - gradual cooling as heat dissipates
+          this.temperature = Math.max(0.2, this.temperature - 0.0005 * dt);
+        }
+
+        // Buoyancy: hot wax expands (less dense) and rises, cold wax sinks
+        // When temp > 0.5, wax is less dense than surrounding liquid
+        const densityDiff = (this.temperature - 0.48);
+        const buoyancy = -densityDiff * 0.0008 * dt; // Negative = up when hot
+        this.vy += buoyancy;
+
+        // Very slow, viscous movement (real lava lamps are very slow)
+        this.vy *= 0.992;
+        this.vx *= 0.985;
+
+        // Subtle horizontal drift
+        this.wobblePhase += 0.0004 * dt;
+        this.vx += Math.sin(this.wobblePhase + this.phase) * 0.00008 * dt;
+
+        // Apply velocity
         this.y += this.vy;
+        this.x += this.vx;
 
-        // Horizontal wobble
-        this.wobblePhase += 0.001 * dt;
-        this.x = this.baseX + Math.sin(this.wobblePhase) * 30;
+        // Stretch based on velocity (moving blobs elongate)
+        const speed = Math.abs(this.vy);
+        this.stretchY = 1 + speed * 8;
+        this.stretchY = Math.min(1.6, Math.max(0.7, this.stretchY));
 
-        // Size pulsing with breath
-        this.radius = this.baseRadius * (0.85 + breath * 0.3);
+        // Constrain to lamp bounds
+        const maxWidth = this.getWidthAtY(this.y);
+        const leftBound = centerX - maxWidth + this.radius * 0.8;
+        const rightBound = centerX + maxWidth - this.radius * 0.8;
+        if (this.x < leftBound) { this.x = leftBound; this.vx = Math.abs(this.vx) * 0.3; }
+        if (this.x > rightBound) { this.x = rightBound; this.vx = -Math.abs(this.vx) * 0.3; }
 
-        // Update phase
-        this.phase += 0.0003 * dt;
+        // Vertical bounds
+        const topBound = glassTop + glassHeight * 0.08 + this.radius;
+        const bottomBound = glassBottom - this.radius * 0.5;
+        if (this.y < topBound) {
+          this.y = topBound;
+          this.vy = Math.abs(this.vy) * 0.2;
+          this.temperature *= 0.92; // Cool down at top
+        }
+        if (this.y > bottomBound) {
+          this.y = bottomBound;
+          this.vy = -Math.abs(this.vy) * 0.15;
+        }
+
+        // Size varies with temperature (hot wax expands)
+        const tempExpansion = 1 + this.temperature * 0.2;
+        this.radius = this.baseRadius * tempExpansion;
+
+        // Organic pulsing
+        this.phase += 0.0002 * dt;
+        this.radius *= (0.95 + Math.sin(this.phase) * 0.08);
+      }
+    }
+
+    // Initialize blobs - start mostly in the pool at bottom
+    const blobs = [];
+    const initialBlobCount = 6;
+
+    // Pool blobs (at bottom, will heat up and rise)
+    for (let i = 0; i < 3; i++) {
+      const x = centerX + (Math.random() - 0.5) * lampWidth * 0.5;
+      const y = glassBottom - 20 - Math.random() * 30;
+      blobs.push(new WaxBlob(x, y, 22 + Math.random() * 18, true));
+    }
+
+    // Some blobs already floating
+    for (let i = 0; i < initialBlobCount - 3; i++) {
+      const x = centerX + (Math.random() - 0.5) * lampWidth * 0.4;
+      const y = glassTop + glassHeight * 0.25 + Math.random() * glassHeight * 0.5;
+      const blob = new WaxBlob(x, y, 18 + Math.random() * 22);
+      blob.temperature = 0.3 + Math.random() * 0.4;
+      blobs.push(blob);
+    }
+
+    // Calculate metaball field value at a point
+    const getFieldValue = (px, py) => {
+      let sum = 0;
+      for (const blob of blobs) {
+        const dx = px - blob.x;
+        const dy = (py - blob.y) / blob.stretchY; // Account for stretch
+        const distSq = dx * dx + dy * dy;
+        if (distSq > 0) {
+          sum += (blob.radius * blob.radius) / distSq;
+        }
+      }
+      return sum;
+    };
+
+    // Draw metaball wax using marching squares approximation
+    const drawMetaballs = (breath) => {
+      // Create offscreen canvas for metaball rendering
+      const resolution = 3; // Pixel step size
+      const margin = 20;
+
+      // Get lamp bounds for rendering area
+      const renderLeft = centerX - lampWidth * 0.6;
+      const renderRight = centerX + lampWidth * 0.6;
+      const renderTop = glassTop + 10;
+      const renderBottom = glassBottom - 5;
+
+      // Sample the field and draw where threshold is met
+      ctx.beginPath();
+
+      for (let y = renderTop; y < renderBottom; y += resolution) {
+        for (let x = renderLeft; x < renderRight; x += resolution) {
+          const field = getFieldValue(x, y);
+          if (field >= METABALL_THRESHOLD) {
+            ctx.rect(x, y, resolution, resolution);
+          }
+        }
       }
 
-      draw(ctx) {
-        // Create gradient for blob
-        const gradient = ctx.createRadialGradient(
-          this.x - this.radius * 0.3, this.y - this.radius * 0.3, 0,
-          this.x, this.y, this.radius * 1.2
+      // Fill with gradient based on average temperature
+      let avgTemp = 0;
+      blobs.forEach(b => avgTemp += b.temperature);
+      avgTemp /= blobs.length;
+
+      const brightness = 50 + avgTemp * 20;
+      const gradient = ctx.createLinearGradient(centerX, renderTop, centerX, renderBottom);
+      gradient.addColorStop(0, `hsla(${hue}, 55%, ${brightness - 5}%, 0.92)`);
+      gradient.addColorStop(0.5, `hsla(${hue}, 60%, ${brightness + 5}%, 0.95)`);
+      gradient.addColorStop(1, `hsla(${hue}, 50%, ${brightness + 15}%, 0.98)`);
+
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Add glow/highlight to each blob center
+      blobs.forEach(blob => {
+        const glowRadius = blob.radius * 1.5;
+        const glow = ctx.createRadialGradient(
+          blob.x - blob.radius * 0.2, blob.y - blob.radius * 0.3 / blob.stretchY, 0,
+          blob.x, blob.y, glowRadius
         );
-        gradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, 70%, 0.95)`);
-        gradient.addColorStop(0.5, `hsla(${this.hue}, ${this.saturation}%, 50%, 0.85)`);
-        gradient.addColorStop(0.8, `hsla(${this.hue}, ${this.saturation}%, 35%, 0.7)`);
-        gradient.addColorStop(1, `hsla(${this.hue}, ${this.saturation}%, 25%, 0)`);
+        const blobBrightness = 55 + blob.temperature * 25;
+        glow.addColorStop(0, `hsla(${hue + 5}, 65%, ${blobBrightness + 15}%, 0.5)`);
+        glow.addColorStop(0.4, `hsla(${hue}, 60%, ${blobBrightness}%, 0.2)`);
+        glow.addColorStop(1, 'transparent');
 
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius * 1.2, 0, Math.PI * 2);
+        ctx.ellipse(blob.x, blob.y, glowRadius, glowRadius / blob.stretchY, 0, 0, Math.PI * 2);
+        ctx.fillStyle = glow;
+        ctx.fill();
+      });
+    };
+
+    // Draw smooth organic blobs (fallback/enhancement)
+    const drawOrganicBlobs = () => {
+      // Sort by y for proper layering
+      const sortedBlobs = [...blobs].sort((a, b) => b.y - a.y);
+
+      sortedBlobs.forEach(blob => {
+        const brightness = 48 + blob.temperature * 25;
+
+        // Main blob with organic shape
+        ctx.save();
+        ctx.translate(blob.x, blob.y);
+        ctx.scale(1, 1 / blob.stretchY);
+
+        // Create organic blob shape using bezier curves
+        const points = 8;
+        ctx.beginPath();
+        for (let i = 0; i <= points; i++) {
+          const angle = (i / points) * Math.PI * 2;
+          const wobble = 1 + Math.sin(angle * 3 + blob.phase) * 0.12 + Math.sin(angle * 5 + blob.wobblePhase) * 0.06;
+          const r = blob.radius * wobble;
+          const x = Math.cos(angle) * r;
+          const y = Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+
+        // Gradient fill
+        const gradient = ctx.createRadialGradient(
+          -blob.radius * 0.25, -blob.radius * 0.25, 0,
+          0, 0, blob.radius * 1.2
+        );
+        gradient.addColorStop(0, `hsla(${hue + 8}, 65%, ${brightness + 18}%, 0.98)`);
+        gradient.addColorStop(0.3, `hsla(${hue + 3}, 60%, ${brightness + 8}%, 0.95)`);
+        gradient.addColorStop(0.7, `hsla(${hue}, 55%, ${brightness}%, 0.92)`);
+        gradient.addColorStop(1, `hsla(${hue - 5}, 50%, ${brightness - 10}%, 0.88)`);
+
         ctx.fillStyle = gradient;
         ctx.fill();
+
+        // Subtle inner glow
+        const innerGlow = ctx.createRadialGradient(
+          -blob.radius * 0.3, -blob.radius * 0.3, 0,
+          0, 0, blob.radius * 0.7
+        );
+        innerGlow.addColorStop(0, `hsla(${hue + 15}, 70%, 80%, 0.3)`);
+        innerGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = innerGlow;
+        ctx.fill();
+
+        ctx.restore();
+      });
+
+      // Draw stretchy bridges between close blobs
+      for (let i = 0; i < blobs.length; i++) {
+        for (let j = i + 1; j < blobs.length; j++) {
+          const b1 = blobs[i];
+          const b2 = blobs[j];
+          const dx = b2.x - b1.x;
+          const dy = b2.y - b1.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const mergeThreshold = (b1.radius + b2.radius) * 1.8;
+
+          if (dist < mergeThreshold && dist > b1.radius * 0.5) {
+            const strength = 1 - dist / mergeThreshold;
+
+            // Draw hourglass bridge shape
+            const midX = (b1.x + b2.x) / 2;
+            const midY = (b1.y + b2.y) / 2;
+            const angle = Math.atan2(dy, dx);
+
+            // Bridge width tapers in the middle (like stretching wax)
+            const bridgeWidth1 = b1.radius * 0.6 * strength;
+            const bridgeWidth2 = b2.radius * 0.6 * strength;
+            const neckWidth = Math.min(bridgeWidth1, bridgeWidth2) * 0.3 * strength;
+
+            ctx.save();
+            ctx.translate(midX, midY);
+            ctx.rotate(angle);
+
+            const halfDist = dist / 2;
+
+            ctx.beginPath();
+            // Top edge
+            ctx.moveTo(-halfDist, -bridgeWidth1);
+            ctx.quadraticCurveTo(0, -neckWidth, halfDist, -bridgeWidth2);
+            // Bottom edge
+            ctx.lineTo(halfDist, bridgeWidth2);
+            ctx.quadraticCurveTo(0, neckWidth, -halfDist, bridgeWidth1);
+            ctx.closePath();
+
+            const avgTemp = (b1.temperature + b2.temperature) / 2;
+            const bridgeBrightness = 50 + avgTemp * 20;
+            ctx.fillStyle = `hsla(${hue}, 58%, ${bridgeBrightness}%, ${0.85 * strength})`;
+            ctx.fill();
+
+            ctx.restore();
+          }
+        }
       }
-    }
+    };
 
-    // Initialize blobs
-    const blobCount = Math.min(12, Math.floor(canvas.width / 80));
-    const blobs = [];
-    for (let i = 0; i < blobCount; i++) {
-      blobs.push(new Blob(i, blobCount));
-    }
+    // Draw wax pool at bottom
+    const drawWaxPool = (breath) => {
+      const poolTop = glassBottom - 45;
+      const poolHeight = 40;
 
-    // Background lamp glow
-    const drawLampGlow = (breath) => {
-      // Dark background
-      ctx.fillStyle = '#05050c';
+      // Animated pool surface
+      ctx.beginPath();
+      ctx.moveTo(centerX - lampWidth * 0.45, glassBottom);
+
+      // Wavy top surface
+      const wavePoints = 20;
+      for (let i = 0; i <= wavePoints; i++) {
+        const t = i / wavePoints;
+        const x = centerX - lampWidth * 0.45 + t * lampWidth * 0.9;
+        const wave = Math.sin(t * Math.PI * 4 + breath * 3) * 3 + Math.sin(t * Math.PI * 2 + breath * 2) * 2;
+        const y = poolTop + wave;
+        ctx.lineTo(x, y);
+      }
+
+      ctx.lineTo(centerX + lampWidth * 0.45, glassBottom);
+      ctx.closePath();
+
+      const poolGradient = ctx.createLinearGradient(0, poolTop, 0, glassBottom);
+      poolGradient.addColorStop(0, `hsla(${hue}, 55%, 55%, 0.95)`);
+      poolGradient.addColorStop(0.4, `hsla(${hue}, 52%, 45%, 0.97)`);
+      poolGradient.addColorStop(1, `hsla(${hue - 5}, 48%, 35%, 0.98)`);
+      ctx.fillStyle = poolGradient;
+      ctx.fill();
+
+      // Pool surface highlight
+      ctx.beginPath();
+      for (let i = 0; i <= wavePoints; i++) {
+        const t = i / wavePoints;
+        const x = centerX - lampWidth * 0.4 + t * lampWidth * 0.8;
+        const wave = Math.sin(t * Math.PI * 4 + breath * 3) * 3 + Math.sin(t * Math.PI * 2 + breath * 2) * 2;
+        const y = poolTop + wave + 2;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = `hsla(${hue + 10}, 65%, 70%, 0.4)`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    };
+
+    // Draw lamp container
+    const drawLampContainer = (breath) => {
+      ctx.fillStyle = '#06060a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Lamp body glow
-      const centerX = canvas.width / 2;
+      // Ambient glow
       const glowGradient = ctx.createRadialGradient(
-        centerX, canvas.height / 2, 0,
-        centerX, canvas.height / 2, canvas.width * 0.5
+        centerX, lampTop + lampHeight * 0.5, lampWidth * 0.4,
+        centerX, lampTop + lampHeight * 0.5, lampWidth * 3
       );
-      glowGradient.addColorStop(0, `rgba(127, 219, 202, ${0.08 + breath * 0.04})`);
-      glowGradient.addColorStop(0.5, `rgba(100, 180, 170, ${0.03 + breath * 0.02})`);
+      glowGradient.addColorStop(0, `hsla(${hue}, 55%, 45%, ${0.18 + breath * 0.08})`);
+      glowGradient.addColorStop(0.4, `hsla(${hue}, 45%, 35%, ${0.08 + breath * 0.04})`);
       glowGradient.addColorStop(1, 'transparent');
       ctx.fillStyle = glowGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Subtle lamp outline
-      const lampWidth = Math.min(canvas.width * 0.6, 400);
-      const lampLeft = (canvas.width - lampWidth) / 2;
-      ctx.strokeStyle = `rgba(127, 219, 202, ${0.1 + breath * 0.05})`;
-      ctx.lineWidth = 2;
+      // Metal base
+      const baseHeight = lampHeight * 0.11;
+      const baseTop = lampBottom - baseHeight;
+      const baseGradient = ctx.createLinearGradient(centerX - lampWidth * 0.6, 0, centerX + lampWidth * 0.6, 0);
+      baseGradient.addColorStop(0, '#151515');
+      baseGradient.addColorStop(0.2, '#2a2a2a');
+      baseGradient.addColorStop(0.5, '#383838');
+      baseGradient.addColorStop(0.8, '#2a2a2a');
+      baseGradient.addColorStop(1, '#151515');
+
       ctx.beginPath();
-      ctx.moveTo(lampLeft, 60);
-      ctx.lineTo(lampLeft + lampWidth, 60);
-      ctx.moveTo(lampLeft, canvas.height - 60);
-      ctx.lineTo(lampLeft + lampWidth, canvas.height - 60);
+      ctx.moveTo(centerX - lampWidth * 0.28, baseTop);
+      ctx.lineTo(centerX - lampWidth * 0.52, lampBottom);
+      ctx.lineTo(centerX + lampWidth * 0.52, lampBottom);
+      ctx.lineTo(centerX + lampWidth * 0.28, baseTop);
+      ctx.closePath();
+      ctx.fillStyle = baseGradient;
+      ctx.fill();
+
+      // Heat glow from base (simulating light bulb)
+      const heatGlow = ctx.createRadialGradient(
+        centerX, baseTop, 0,
+        centerX, baseTop - 30, lampWidth * 0.5
+      );
+      heatGlow.addColorStop(0, `hsla(30, 80%, 50%, ${0.15 + breath * 0.05})`);
+      heatGlow.addColorStop(0.5, `hsla(${hue}, 60%, 40%, ${0.08})`);
+      heatGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = heatGlow;
+      ctx.beginPath();
+      ctx.arc(centerX, baseTop, lampWidth * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Base rim
+      ctx.strokeStyle = '#4a4a4a';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(centerX - lampWidth * 0.28, baseTop);
+      ctx.lineTo(centerX + lampWidth * 0.28, baseTop);
       ctx.stroke();
+
+      // Metal cap
+      const capHeight = lampHeight * 0.07;
+      const capGradient = ctx.createLinearGradient(centerX - lampWidth * 0.3, 0, centerX + lampWidth * 0.3, 0);
+      capGradient.addColorStop(0, '#151515');
+      capGradient.addColorStop(0.3, '#2a2a2a');
+      capGradient.addColorStop(0.5, '#383838');
+      capGradient.addColorStop(0.7, '#2a2a2a');
+      capGradient.addColorStop(1, '#151515');
+
+      ctx.beginPath();
+      ctx.moveTo(centerX - bottleNeckWidth * 0.45, glassTop);
+      ctx.quadraticCurveTo(centerX - bottleNeckWidth * 0.55, lampTop + capHeight * 0.3, centerX - lampWidth * 0.22, lampTop);
+      ctx.lineTo(centerX + lampWidth * 0.22, lampTop);
+      ctx.quadraticCurveTo(centerX + bottleNeckWidth * 0.55, lampTop + capHeight * 0.3, centerX + bottleNeckWidth * 0.45, glassTop);
+      ctx.closePath();
+      ctx.fillStyle = capGradient;
+      ctx.fill();
+    };
+
+    // Draw glass bottle with clipping
+    const drawGlassBottle = () => {
+      ctx.save();
+      ctx.beginPath();
+
+      ctx.moveTo(centerX - bottleNeckWidth * 0.38, bottleNeckTop);
+      ctx.quadraticCurveTo(
+        centerX - bottleNeckWidth * 0.42, bottleBulgeStart,
+        centerX - bottleBulgeWidth * 0.46, bottleBulgeStart + glassHeight * 0.14
+      );
+      ctx.quadraticCurveTo(
+        centerX - bottleBulgeWidth * 0.50, glassTop + glassHeight * 0.5,
+        centerX - bottleBottomWidth * 0.42, glassBottom - glassHeight * 0.04
+      );
+      ctx.quadraticCurveTo(
+        centerX, glassBottom + 4,
+        centerX + bottleBottomWidth * 0.42, glassBottom - glassHeight * 0.04
+      );
+      ctx.quadraticCurveTo(
+        centerX + bottleBulgeWidth * 0.50, glassTop + glassHeight * 0.5,
+        centerX + bottleBulgeWidth * 0.46, bottleBulgeStart + glassHeight * 0.14
+      );
+      ctx.quadraticCurveTo(
+        centerX + bottleNeckWidth * 0.42, bottleBulgeStart,
+        centerX + bottleNeckWidth * 0.38, bottleNeckTop
+      );
+
+      ctx.closePath();
+      ctx.clip();
+
+      // Dark liquid interior
+      const interiorGradient = ctx.createLinearGradient(centerX - lampWidth/2, glassTop, centerX + lampWidth/2, glassTop);
+      interiorGradient.addColorStop(0, 'rgba(8, 12, 16, 0.96)');
+      interiorGradient.addColorStop(0.5, 'rgba(12, 16, 20, 0.94)');
+      interiorGradient.addColorStop(1, 'rgba(8, 12, 16, 0.96)');
+      ctx.fillStyle = interiorGradient;
+      ctx.fillRect(centerX - lampWidth, glassTop, lampWidth * 2, glassHeight);
+    };
+
+    const drawGlassOverlay = (breath) => {
+      ctx.restore();
+
+      // Glass outline
+      ctx.beginPath();
+      ctx.moveTo(centerX - bottleNeckWidth * 0.38, bottleNeckTop);
+      ctx.quadraticCurveTo(
+        centerX - bottleNeckWidth * 0.42, bottleBulgeStart,
+        centerX - bottleBulgeWidth * 0.46, bottleBulgeStart + glassHeight * 0.14
+      );
+      ctx.quadraticCurveTo(
+        centerX - bottleBulgeWidth * 0.50, glassTop + glassHeight * 0.5,
+        centerX - bottleBottomWidth * 0.42, glassBottom - glassHeight * 0.04
+      );
+      ctx.quadraticCurveTo(
+        centerX, glassBottom + 4,
+        centerX + bottleBottomWidth * 0.42, glassBottom - glassHeight * 0.04
+      );
+      ctx.quadraticCurveTo(
+        centerX + bottleBulgeWidth * 0.50, glassTop + glassHeight * 0.5,
+        centerX + bottleBulgeWidth * 0.46, bottleBulgeStart + glassHeight * 0.14
+      );
+      ctx.quadraticCurveTo(
+        centerX + bottleNeckWidth * 0.42, bottleBulgeStart,
+        centerX + bottleNeckWidth * 0.38, bottleNeckTop
+      );
+
+      ctx.strokeStyle = `hsla(${hue}, 40%, 60%, ${0.25 + breath * 0.1})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Glass reflection highlight
+      ctx.beginPath();
+      ctx.moveTo(centerX - bottleNeckWidth * 0.32, bottleNeckTop + 15);
+      ctx.quadraticCurveTo(
+        centerX - bottleBulgeWidth * 0.40, glassTop + glassHeight * 0.4,
+        centerX - bottleBottomWidth * 0.35, glassBottom - glassHeight * 0.12
+      );
+      ctx.strokeStyle = `rgba(255, 255, 255, ${0.06 + breath * 0.03})`;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Specular highlight
+      ctx.beginPath();
+      ctx.ellipse(centerX - bottleBulgeWidth * 0.28, glassTop + glassHeight * 0.32, 3, 12, -0.15, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.12 + breath * 0.04})`;
+      ctx.fill();
+    };
+
+    // Occasionally spawn new blobs from pool
+    let lastSpawnTime = 0;
+    const spawnBlob = (elapsed) => {
+      if (elapsed - lastSpawnTime > 8 && blobs.length < 10 && Math.random() < 0.01) {
+        const x = centerX + (Math.random() - 0.5) * lampWidth * 0.4;
+        const y = glassBottom - 25;
+        blobs.push(new WaxBlob(x, y, 15 + Math.random() * 20, true));
+        lastSpawnTime = elapsed;
+      }
+
+      // Remove blobs that have been at bottom too long and are cold
+      for (let i = blobs.length - 1; i >= 0; i--) {
+        const blob = blobs[i];
+        if (blob.y > glassBottom - 30 && blob.temperature < 0.3 && blob.age > 15000 && blobs.length > 4) {
+          blobs.splice(i, 1);
+        }
+      }
     };
 
     let lastTime = Date.now();
@@ -3891,63 +5403,40 @@ function GazeMode({ theme }) {
 
       const elapsed = (now - startTime) / 1000;
       const breath = getBreathPhase(elapsed);
-      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
 
-      drawLampGlow(breath);
+      drawLampContainer(breath);
+      drawGlassBottle();
 
-      // Apply touch interactions - push blobs away
+      // Touch interaction
       touchPointsRef.current.forEach(point => {
         if (point.active) {
           blobs.forEach(blob => {
             const dx = blob.x - point.x;
             const dy = blob.y - point.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 150 && dist > 1) {
-              const force = (1 - dist / 150) * 2;
-              blob.x += (dx / dist) * force;
+            if (dist < 80 && dist > 1) {
+              const force = (1 - dist / 80) * 0.8;
+              blob.vx += (dx / dist) * force * 0.3;
               blob.vy += (dy / dist) * force * 0.3;
+              blob.temperature = Math.min(1, blob.temperature + 0.02); // Heat from touch
             }
           });
         }
       });
 
-      // Update and draw blobs (sorted by y for depth)
-      blobs.sort((a, b) => a.y - b.y);
-      blobs.forEach(blob => {
-        blob.update(breath, isInhaling, dt);
-        blob.draw(ctx);
-      });
+      // Update blobs
+      blobs.forEach(blob => blob.update(dt, elapsed));
 
-      // Draw connection "bridges" between close blobs
-      ctx.globalCompositeOperation = 'lighter';
-      for (let i = 0; i < blobs.length; i++) {
-        for (let j = i + 1; j < blobs.length; j++) {
-          const b1 = blobs[i];
-          const b2 = blobs[j];
-          const dx = b2.x - b1.x;
-          const dy = b2.y - b1.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const mergeThreshold = b1.radius + b2.radius + 20;
+      // Spawn/despawn blobs
+      spawnBlob(elapsed);
 
-          if (dist < mergeThreshold) {
-            const strength = 1 - dist / mergeThreshold;
-            const midX = (b1.x + b2.x) / 2;
-            const midY = (b1.y + b2.y) / 2;
-            const bridgeRadius = Math.min(b1.radius, b2.radius) * strength * 0.7;
+      // Draw wax pool first (behind blobs)
+      drawWaxPool(breath);
 
-            const gradient = ctx.createRadialGradient(midX, midY, 0, midX, midY, bridgeRadius);
-            gradient.addColorStop(0, `hsla(169, 70%, 50%, ${strength * 0.6})`);
-            gradient.addColorStop(1, 'transparent');
+      // Draw organic blobs
+      drawOrganicBlobs();
 
-            ctx.beginPath();
-            ctx.arc(midX, midY, bridgeRadius, 0, Math.PI * 2);
-            ctx.fillStyle = gradient;
-            ctx.fill();
-          }
-        }
-      }
-      ctx.globalCompositeOperation = 'source-over';
-
+      drawGlassOverlay(breath);
       drawRipples(ctx);
     };
 
@@ -3963,7 +5452,7 @@ function GazeMode({ theme }) {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [currentMode, drawRipples]);
+  }, [currentMode, getBreathPhase, drawRipples]);
 
   // ========== AURORA MODE ==========
   React.useEffect(() => {
@@ -3984,7 +5473,8 @@ function GazeMode({ theme }) {
         this.speed = 0.0003 + Math.random() * 0.0003;
         this.phase = Math.random() * Math.PI * 2;
         this.height = 60 + Math.random() * 80;
-        this.hue = 150 + index * 10 + Math.random() * 20; // Teal to green range
+        // Use teal hue with variations
+        this.hue = hue + (Math.random() - 0.5) * 25;
         this.alpha = 0.15 + Math.random() * 0.1;
       }
 
@@ -4057,7 +5547,7 @@ function GazeMode({ theme }) {
       draw(ctx) {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(200, 255, 240, ${this.alpha})`;
+        ctx.fillStyle = `hsla(${hue}, 70%, 85%, ${this.alpha})`;
         ctx.fill();
       }
     }
@@ -4125,8 +5615,8 @@ function GazeMode({ theme }) {
           }
           // Draw touch glow
           const touchGlow = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 100);
-          touchGlow.addColorStop(0, 'rgba(127, 219, 202, 0.3)');
-          touchGlow.addColorStop(0.5, 'rgba(127, 219, 202, 0.1)');
+          touchGlow.addColorStop(0, `hsla(${hue}, 52%, 68%, 0.3)`);
+          touchGlow.addColorStop(0.5, `hsla(${hue}, 52%, 68%, 0.1)`);
           touchGlow.addColorStop(1, 'transparent');
           ctx.fillStyle = touchGlow;
           ctx.beginPath();
@@ -4293,24 +5783,24 @@ function GazeMode({ theme }) {
       const sunX = canvas.width * 0.85;
       const sunY = canvas.height * 0.15;
 
-      // Sun glow
+      // Sun glow - using teal color
       const sunGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 150);
-      sunGlow.addColorStop(0, `rgba(255, 250, 220, ${0.4 + breath * 0.2})`);
-      sunGlow.addColorStop(0.3, `rgba(255, 240, 180, ${0.2 + breath * 0.1})`);
+      sunGlow.addColorStop(0, `hsla(${hue}, 55%, 80%, ${0.4 + breath * 0.2})`);
+      sunGlow.addColorStop(0.3, `hsla(${hue}, 50%, 70%, ${0.2 + breath * 0.1})`);
       sunGlow.addColorStop(1, 'transparent');
       ctx.fillStyle = sunGlow;
       ctx.beginPath();
       ctx.arc(sunX, sunY, 150, 0, Math.PI * 2);
       ctx.fill();
 
-      // Rays
+      // Rays - using teal color
       ctx.save();
       ctx.translate(sunX, sunY);
       for (let i = 0; i < 8; i++) {
         const angle = (i / 8) * Math.PI * 2;
         const rayLength = 300 + breath * 100;
         const gradient = ctx.createLinearGradient(0, 0, Math.cos(angle) * rayLength, Math.sin(angle) * rayLength);
-        gradient.addColorStop(0, `rgba(255, 250, 200, ${0.15 + breath * 0.05})`);
+        gradient.addColorStop(0, `hsla(${hue}, 50%, 75%, ${0.15 + breath * 0.05})`);
         gradient.addColorStop(1, 'transparent');
 
         ctx.beginPath();
@@ -4726,7 +6216,7 @@ function GazeMode({ theme }) {
       }
 
       draw(ctx) {
-        ctx.strokeStyle = `rgba(127, 219, 202, ${this.alpha})`;
+        ctx.strokeStyle = `hsla(${hue}, 52%, 68%, ${this.alpha})`;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.ellipse(this.x, this.y, this.radius, this.radius * 0.3, 0, 0, Math.PI * 2);
@@ -4764,9 +6254,9 @@ function GazeMode({ theme }) {
       ctx.closePath();
 
       const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, pad.radius);
-      gradient.addColorStop(0, 'rgba(50, 120, 80, 0.8)');
-      gradient.addColorStop(0.7, 'rgba(40, 100, 70, 0.7)');
-      gradient.addColorStop(1, 'rgba(30, 80, 60, 0.6)');
+      gradient.addColorStop(0, `hsla(${hue}, 30%, 30%, 0.8)`);
+      gradient.addColorStop(0.7, `hsla(${hue}, 28%, 22%, 0.7)`);
+      gradient.addColorStop(1, `hsla(${hue}, 25%, 15%, 0.6)`);
       ctx.fillStyle = gradient;
       ctx.fill();
 
@@ -4831,11 +6321,11 @@ function GazeMode({ theme }) {
       const lotusY = centerY + Math.sin(now * 0.0008) * 8;
       const lotusScale = Math.min(canvas.width, canvas.height) * 0.0015;
 
-      // Draw outer petals (3 layers)
+      // Draw outer petals (3 layers) - using teal color scheme
       const petalLayers = [
-        { count: 12, radius: 110 * lotusScale, size: { w: 35, h: 90 }, color: 'rgba(255, 180, 190, 0.9)', shadow: 'rgba(200, 100, 120, 0.8)' },
-        { count: 10, radius: 80 * lotusScale, size: { w: 30, h: 75 }, color: 'rgba(255, 200, 210, 0.9)', shadow: 'rgba(220, 130, 150, 0.8)' },
-        { count: 8, radius: 50 * lotusScale, size: { w: 25, h: 60 }, color: 'rgba(255, 220, 225, 0.95)', shadow: 'rgba(240, 160, 175, 0.85)' },
+        { count: 12, radius: 110 * lotusScale, size: { w: 35, h: 90 }, color: `hsla(${hue}, 45%, 72%, 0.9)`, shadow: `hsla(${hue - 10}, 50%, 50%, 0.8)` },
+        { count: 10, radius: 80 * lotusScale, size: { w: 30, h: 75 }, color: `hsla(${hue}, 48%, 76%, 0.9)`, shadow: `hsla(${hue - 10}, 45%, 55%, 0.8)` },
+        { count: 8, radius: 50 * lotusScale, size: { w: 25, h: 60 }, color: `hsla(${hue}, 50%, 82%, 0.95)`, shadow: `hsla(${hue - 10}, 40%, 60%, 0.85)` },
       ];
 
       petalLayers.forEach((layer, layerIndex) => {
@@ -5284,7 +6774,7 @@ function GazeMode({ theme }) {
             age: 0,
           });
         }
-        this.hue = 169 + (Math.random() - 0.5) * 20; // Teal
+        this.hue = hue + (Math.random() - 0.5) * 20;
         this.width = 15 + Math.random() * 10;
         this.phase = Math.random() * Math.PI * 2;
         this.speed = 0.5 + Math.random() * 0.3;
@@ -5373,7 +6863,7 @@ function GazeMode({ theme }) {
         this.size = 2 + Math.random() * 4;
         this.life = 1;
         this.decay = 0.003 + Math.random() * 0.003;
-        this.hue = 169 + (Math.random() - 0.5) * 30;
+        this.hue = hue + (Math.random() - 0.5) * 30;
       }
 
       update(breath) {
@@ -5458,7 +6948,7 @@ function GazeMode({ theme }) {
         centerX, centerY - 100, 0,
         centerX, centerY - 100, 300
       );
-      ambientGlow.addColorStop(0, `rgba(127, 219, 202, ${0.05 + breath * 0.03})`);
+      ambientGlow.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.05 + breath * 0.03})`);
       ambientGlow.addColorStop(1, 'transparent');
       ctx.fillStyle = ambientGlow;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -5490,7 +6980,7 @@ function GazeMode({ theme }) {
             });
           });
           // Draw touch swirl
-          ctx.strokeStyle = 'rgba(127, 219, 202, 0.15)';
+          ctx.strokeStyle = `hsla(${hue}, 52%, 68%, 0.15)`;
           ctx.lineWidth = 1;
           for (let i = 0; i < 3; i++) {
             const angle = (now * 0.002) + (i * Math.PI * 2 / 3);
@@ -5551,7 +7041,7 @@ function GazeMode({ theme }) {
 
     // Draw a single mandala ring
     const drawRing = (radius, segments, breath, time, ringIndex) => {
-      const hue = 169 + ringIndex * 8;
+      const hue = hue + ringIndex * 8;
       const rotation = time * 0.0001 * (ringIndex % 2 === 0 ? 1 : -1);
 
       ctx.save();
@@ -5637,9 +7127,9 @@ function GazeMode({ theme }) {
         );
 
         const gradient = ctx.createLinearGradient(0, 0, petalLength, 0);
-        gradient.addColorStop(0, `hsla(169, 80%, 70%, ${0.7 + breath * 0.2})`);
-        gradient.addColorStop(0.5, `hsla(175, 75%, 60%, ${0.5 + breath * 0.2})`);
-        gradient.addColorStop(1, `hsla(180, 70%, 50%, 0.2)`);
+        gradient.addColorStop(0, `hsla(${hue}, 80%, 70%, ${0.7 + breath * 0.2})`);
+        gradient.addColorStop(0.5, `hsla(${hue + 10}, 75%, 60%, ${0.5 + breath * 0.2})`);
+        gradient.addColorStop(1, `hsla(${hue + 18}, 70%, 50%, 0.2)`);
 
         ctx.fillStyle = gradient;
         ctx.fill();
@@ -5649,9 +7139,9 @@ function GazeMode({ theme }) {
 
       // Center circle
       const centerGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, 20);
-      centerGradient.addColorStop(0, `hsla(169, 90%, 80%, ${0.8 + breath * 0.2})`);
-      centerGradient.addColorStop(0.5, `hsla(169, 85%, 65%, ${0.6 + breath * 0.15})`);
-      centerGradient.addColorStop(1, `hsla(169, 80%, 50%, 0.3)`);
+      centerGradient.addColorStop(0, `hsla(${hue}, 90%, 80%, ${0.8 + breath * 0.2})`);
+      centerGradient.addColorStop(0.5, `hsla(${hue}, 85%, 65%, ${0.6 + breath * 0.15})`);
+      centerGradient.addColorStop(1, `hsla(${hue}, 80%, 50%, 0.3)`);
 
       ctx.beginPath();
       ctx.arc(0, 0, 15 + breath * 5, 0, Math.PI * 2);
@@ -5687,7 +7177,7 @@ function GazeMode({ theme }) {
         ctx.lineTo(size * 0.6, size * 0.5);
         ctx.closePath();
 
-        ctx.fillStyle = `hsla(169, 60%, 55%, ${0.3 + breath * 0.2})`;
+        ctx.fillStyle = `hsla(${hue}, 60%, 55%, ${0.3 + breath * 0.2})`;
         ctx.fill();
 
         ctx.restore();
@@ -5711,7 +7201,7 @@ function GazeMode({ theme }) {
         centerX, centerY, 0,
         centerX, centerY, maxRadius * 1.3
       );
-      glowGradient.addColorStop(0, `rgba(127, 219, 202, ${0.1 + breath * 0.05})`);
+      glowGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.1 + breath * 0.05})`);
       glowGradient.addColorStop(0.5, `rgba(100, 180, 170, ${0.05 + breath * 0.02})`);
       glowGradient.addColorStop(1, 'transparent');
       ctx.fillStyle = glowGradient;
@@ -5722,8 +7212,8 @@ function GazeMode({ theme }) {
         if (point.active) {
           // Draw touch glow orb
           const touchGlow = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 80);
-          touchGlow.addColorStop(0, 'rgba(127, 219, 202, 0.4)');
-          touchGlow.addColorStop(0.5, 'rgba(127, 219, 202, 0.15)');
+          touchGlow.addColorStop(0, `hsla(${hue}, 52%, 68%, 0.4)`);
+          touchGlow.addColorStop(0.5, `hsla(${hue}, 52%, 68%, 0.15)`);
           touchGlow.addColorStop(1, 'transparent');
           ctx.fillStyle = touchGlow;
           ctx.beginPath();
@@ -5732,7 +7222,7 @@ function GazeMode({ theme }) {
 
           // Draw expanding ring
           const ringPhase = (now % 1000) / 1000;
-          ctx.strokeStyle = `rgba(127, 219, 202, ${0.5 * (1 - ringPhase)})`;
+          ctx.strokeStyle = `hsla(${hue}, 52%, 68%, ${0.5 * (1 - ringPhase)})`;
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.arc(point.x, point.y, 20 + ringPhase * 60, 0, Math.PI * 2);
@@ -5804,7 +7294,7 @@ function GazeMode({ theme }) {
         this.pz = this.z;
 
         // Star properties
-        this.hue = Math.random() < 0.1 ? 169 + Math.random() * 30 : 0; // Some teal stars
+        this.hue = Math.random() < 0.1 ? hue + Math.random() * 30 : 0; // Some teal stars
         this.brightness = 0.5 + Math.random() * 0.5;
       }
 
@@ -5857,7 +7347,7 @@ function GazeMode({ theme }) {
         this.x = (Math.random() - 0.5) * canvas.width * 2;
         this.y = (Math.random() - 0.5) * canvas.height * 2;
         this.radius = 100 + Math.random() * 200;
-        this.hue = 169 + Math.random() * 60 - 30; // Teal to blue-green
+        this.hue = hue + Math.random() * 60 - 30; // Teal to blue-green
         this.alpha = 0.03 + Math.random() * 0.03;
         this.z = 1500 + Math.random() * 500;
       }
@@ -5950,8 +7440,8 @@ function GazeMode({ theme }) {
         if (point.active) {
           // Draw gravitational well
           const wellGradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, 100);
-          wellGradient.addColorStop(0, 'rgba(127, 219, 202, 0.3)');
-          wellGradient.addColorStop(0.5, 'rgba(127, 219, 202, 0.1)');
+          wellGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, 0.3)`);
+          wellGradient.addColorStop(0.5, `hsla(${hue}, 52%, 68%, 0.1)`);
           wellGradient.addColorStop(1, 'transparent');
           ctx.fillStyle = wellGradient;
           ctx.beginPath();
@@ -5973,7 +7463,7 @@ function GazeMode({ theme }) {
           });
 
           // Draw swirling effect
-          ctx.strokeStyle = 'rgba(127, 219, 202, 0.2)';
+          ctx.strokeStyle = `hsla(${hue}, 52%, 68%, 0.2)`;
           ctx.lineWidth = 1;
           for (let i = 0; i < 4; i++) {
             const angle = (now * 0.002) + (i * Math.PI * 0.5);
@@ -5988,7 +7478,7 @@ function GazeMode({ theme }) {
       // Center glow (destination)
       const glowSize = 50 + breath * 30;
       const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowSize);
-      glowGradient.addColorStop(0, `rgba(127, 219, 202, ${0.2 + breath * 0.1})`);
+      glowGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.2 + breath * 0.1})`);
       glowGradient.addColorStop(0.5, `rgba(100, 180, 170, ${0.1 + breath * 0.05})`);
       glowGradient.addColorStop(1, 'transparent');
       ctx.fillStyle = glowGradient;
@@ -6080,8 +7570,8 @@ function GazeMode({ theme }) {
 
           if (intensity > 0.55) {
             const alpha = (intensity - 0.55) * 2 * (0.3 + breath * 0.15);
-            // Steel blue and sage green caustics
-            const hue = intensity > 0.7 ? 160 : 195;
+            // Steel blue and teal caustics from palette
+            const hue = hue + (intensity > 0.7 ? 10 : -10); // Teal variations
             ctx.fillStyle = `hsla(${hue}, 45%, 55%, ${alpha})`;
             ctx.fillRect(x, y, cellSize + 1, cellSize + 1);
           }
@@ -6274,7 +7764,7 @@ function GazeMode({ theme }) {
         canvas.width / 2, canvas.height / 2, 0,
         canvas.width / 2, canvas.height / 2, canvas.width * 0.5
       );
-      glowGradient.addColorStop(0, `rgba(123, 104, 238, ${0.1 + breath * 0.05})`);
+      glowGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.1 + breath * 0.05})`);
       glowGradient.addColorStop(1, 'transparent');
       ctx.fillStyle = glowGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -6577,7 +8067,7 @@ function GazeMode({ theme }) {
     }
 
     const clouds = [];
-    const hues = [270, 195, 15]; // Purple, steel blue, orange
+    const hues = [hue, hue + 15, hue - 15]; // Teal variations
     for (let i = 0; i < 8; i++) {
       clouds.push(new NebulaCloud(hues[i % hues.length]));
     }
@@ -6623,7 +8113,7 @@ function GazeMode({ theme }) {
         canvas.width / 2, canvas.height / 2, 0,
         canvas.width / 2, canvas.height / 2, canvas.width * 0.4
       );
-      glowGradient.addColorStop(0, `rgba(123, 104, 238, ${0.05 + breath * 0.03})`);
+      glowGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.05 + breath * 0.03})`);
       glowGradient.addColorStop(1, 'transparent');
       ctx.fillStyle = glowGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -6752,7 +8242,7 @@ function GazeMode({ theme }) {
           const value = grid[y * cols + x];
           if (value > 0) {
             const maturity = value;
-            const hue = 107 + (1 - maturity) * 20;
+            const hue = hue + (1 - maturity) * 15;
             const lightness = 30 + maturity * 15;
             ctx.fillStyle = `hsla(${hue}, 45%, ${lightness}%, ${maturity * 0.9})`;
             ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
@@ -6766,7 +8256,7 @@ function GazeMode({ theme }) {
         canvas.width / 2, canvas.height / 2, 0,
         canvas.width / 2, canvas.height / 2, canvas.width * 0.5
       );
-      glowGradient.addColorStop(0, `rgba(107, 142, 107, ${0.05 + breath * 0.02})`);
+      glowGradient.addColorStop(0, `hsla(${hue}, 15%, 49%, ${0.05 + breath * 0.02})`);
       glowGradient.addColorStop(1, 'transparent');
       ctx.fillStyle = glowGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -7667,7 +9157,7 @@ function GazeMode({ theme }) {
         vx: (Math.random() - 0.5) * 2,
         vy: (Math.random() - 0.5) * 2,
         size: 10 + Math.random() * 30,
-        hue: [270, 195, 107, 15, 35][Math.floor(Math.random() * 5)],
+        hue: hue + (Math.random() - 0.5) * 30, // Teal with variation
         type: Math.floor(Math.random() * 3),
       });
     }
@@ -7757,7 +9247,7 @@ function GazeMode({ theme }) {
 
       // Center glow
       const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 50);
-      glowGradient.addColorStop(0, `rgba(123, 104, 238, ${0.3 + breath * 0.1})`);
+      glowGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.3 + breath * 0.1})`);
       glowGradient.addColorStop(1, 'transparent');
       ctx.fillStyle = glowGradient;
       ctx.beginPath();
@@ -7799,7 +9289,7 @@ function GazeMode({ theme }) {
         this.capRadius = 20 + Math.random() * 25;
         this.stemHeight = 25 + Math.random() * 20;
         this.stemWidth = 8 + Math.random() * 6;
-        this.hue = Math.random() > 0.5 ? 195 : 107; // Blue or green
+        this.hue = hue + (Math.random() - 0.5) * 20; // Teal with variation
         this.phase = Math.random() * Math.PI * 2;
         this.pulseSpeed = 0.5 + Math.random() * 0.5;
         this.spores = [];
@@ -7834,7 +9324,7 @@ function GazeMode({ theme }) {
         const glowIntensity = 0.3 + pulse * 0.4 + breath * 0.2;
 
         // Stem
-        ctx.fillStyle = '#8B8B8B';
+        ctx.fillStyle = PALETTE.gray;
         ctx.beginPath();
         ctx.moveTo(this.x - this.stemWidth / 2, this.y);
         ctx.lineTo(this.x - this.stemWidth / 3, this.y - this.stemHeight);
@@ -7978,7 +9468,7 @@ function GazeMode({ theme }) {
         this.vy = -0.5 - Math.random() * 0.5;
         this.rotation = (Math.random() - 0.5) * 0.1;
         this.rotationSpeed = (Math.random() - 0.5) * 0.002;
-        this.hue = 25 + Math.random() * 15; // Orange-ish
+        this.hue = hue + Math.random() * 15; // Teal from palette
         this.alpha = 1;
       }
 
@@ -8030,7 +9520,7 @@ function GazeMode({ theme }) {
         ctx.fill();
 
         // Top and bottom caps
-        ctx.fillStyle = '#D4A574';
+        ctx.fillStyle = PALETTE.sand;
         ctx.fillRect(-this.size * 0.2, -this.size - 5, this.size * 0.4, 8);
         ctx.fillRect(-this.size * 0.15, this.size - 3, this.size * 0.3, 6);
 
@@ -8129,10 +9619,10 @@ function GazeMode({ theme }) {
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
 
-    // Two hearts with different rhythms
+    // Two hearts with different rhythms - using selected hue with variations
     const hearts = [
-      { x: centerX - 80, phase: 0, speed: 1.2, hue: 15, baseSize: 40 },
-      { x: centerX + 80, phase: Math.PI, speed: 0.8, hue: 195, baseSize: 40 },
+      { x: centerX - 80, phase: 0, speed: 1.2, hue: hue, baseSize: 40 },
+      { x: centerX + 80, phase: Math.PI, speed: 0.8, hue: hue + 30, baseSize: 40 },
     ];
 
     let syncLevel = 0;
@@ -8211,7 +9701,7 @@ function GazeMode({ theme }) {
         // Merge color when synced
         let drawHue = heart.hue;
         if (syncLevel > 0.8) {
-          drawHue = 280; // Purple blend
+          drawHue = hue; // Use selected hue when synced
         }
 
         drawHeart(heart.x, centerY, heart.baseSize, drawHue, pulse);
@@ -8220,7 +9710,7 @@ function GazeMode({ theme }) {
       // Sync burst effect
       if (syncLevel > 0.9) {
         const burstGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 150);
-        burstGradient.addColorStop(0, `rgba(123, 104, 238, ${(syncLevel - 0.9) * 2})`);
+        burstGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${(syncLevel - 0.9) * 2})`);
         burstGradient.addColorStop(1, 'transparent');
         ctx.fillStyle = burstGradient;
         ctx.beginPath();
@@ -8274,7 +9764,6 @@ function GazeMode({ theme }) {
         background: '#000',
         touchAction: 'none',
       }}
-      onClick={() => setShowUI(!showUI)}
       onMouseDown={handleInteractionStart}
       onMouseMove={handleInteractionMove}
       onMouseUp={handleInteractionEnd}
@@ -8304,12 +9793,12 @@ function GazeMode({ theme }) {
           backdropFilter: 'blur(10px)',
           padding: '0.5rem 1rem',
           borderRadius: '20px',
-          border: '1px solid rgba(127,219,202,0.2)',
+          border: `1px solid hsla(${hue}, 52%, 68%, 0.2)`,
           pointerEvents: 'none',
           animation: 'fadeInOut 1.5s ease-in-out',
         }}>
           <span style={{
-            color: '#7FDBCA',
+            color: `hsl(${hue}, 52%, 68%)`,
             fontSize: '0.75rem',
             fontFamily: '"Jost", sans-serif',
             letterSpacing: '0.1em',
@@ -8327,47 +9816,141 @@ function GazeMode({ theme }) {
         }
       `}</style>
 
-      {/* Visual selector */}
-      {showUI && (
+      {/* Swipe hint at bottom - only show briefly on first load or after inactivity */}
+      {!showUI && !showVisualToast && (
         <div style={{
           position: 'absolute',
-          top: '3rem',
+          bottom: '1.5rem',
           left: '50%',
           transform: 'translateX(-50%)',
-          maxWidth: '90vw',
-          overflowX: 'auto',
-          overflowY: 'hidden',
-          padding: '0.75rem 1rem',
-          background: 'rgba(0,0,0,0.85)',
-          borderRadius: '16px',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          WebkitOverflowScrolling: 'touch',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '0.3rem',
+          opacity: 0.25,
+          pointerEvents: 'none',
         }}>
-          <div style={{ display: 'flex', gap: '0.5rem', whiteSpace: 'nowrap' }}>
-            {gazeModes.map(mode => (
-              <button
-                key={mode.key}
-                onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
-                style={{
-                  background: currentMode === mode.key ? 'rgba(127,219,202,0.2)' : 'transparent',
-                  border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.4)' : '1px solid rgba(255,255,255,0.08)',
-                  color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
-                  padding: '0.5rem 0.9rem',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '0.7rem',
-                  fontFamily: '"Jost", sans-serif',
-                  flexShrink: 0,
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                {mode.name}
-              </button>
-            ))}
-          </div>
+          <div style={{
+            width: '2px',
+            height: '24px',
+            background: `linear-gradient(to top, hsla(${hue}, 52%, 68%, 0.5), transparent)`,
+            borderRadius: '1px',
+          }} />
         </div>
       )}
+
+      {/* Visual selector - bottom drawer */}
+      {showUI && (
+        <>
+          {/* Backdrop - tap to close */}
+          <div
+            onClick={() => setShowUI(false)}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              zIndex: 10,
+              animation: 'fadeIn 0.5s ease-out',
+            }}
+          />
+          {/* Bottom drawer */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            maxHeight: '55vh',
+            background: 'rgba(10,10,15,0.95)',
+            borderRadius: '20px 20px 0 0',
+            backdropFilter: 'blur(20px)',
+            border: `1px solid hsla(${hue}, 52%, 68%, 0.12)`,
+            borderBottom: 'none',
+            zIndex: 11,
+            animation: 'slideUpDrawer 0.5s ease-out',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            {/* Drawer handle */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '0.75rem',
+              cursor: 'pointer',
+            }} onClick={() => setShowUI(false)}>
+              <div style={{
+                width: '36px',
+                height: '4px',
+                background: `hsla(${hue}, 52%, 68%, 0.3)`,
+                borderRadius: '2px',
+              }} />
+            </div>
+
+            {/* Title */}
+            <div style={{
+              textAlign: 'center',
+              padding: '0.75rem 1rem',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              <span style={{
+                color: `hsla(${hue}, 52%, 68%, 0.7)`,
+                fontSize: '0.6rem',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+              }}>Visuals</span>
+            </div>
+
+            {/* Scrollable list */}
+            <div style={{
+              overflowY: 'auto',
+              padding: '0.5rem 0',
+              WebkitOverflowScrolling: 'touch',
+            }}>
+              {gazeModes.map(mode => (
+                <button
+                  key={mode.key}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTimeout(() => {
+                      setCurrentMode(mode.key);
+                      setShowUI(false);
+                      setShowVisualToast(true);
+                      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+                      toastTimeoutRef.current = setTimeout(() => setShowVisualToast(false), 1500);
+                    }, 80);
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    background: currentMode === mode.key ? `hsla(${hue}, 52%, 68%, 0.1)` : 'transparent',
+                    border: 'none',
+                    borderLeft: currentMode === mode.key ? `3px solid hsla(${hue}, 52%, 68%, 0.6)` : '3px solid transparent',
+                    color: currentMode === mode.key ? `hsl(${hue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                    padding: '0.85rem 1.5rem',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontFamily: '"Jost", sans-serif',
+                    textAlign: 'left',
+                    transition: 'all 0.4s ease',
+                  }}
+                >
+                  {mode.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+      <style>{`
+        @keyframes slideUpDrawer {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -8385,11 +9968,22 @@ const defaultSettings = {
   breathMode: false,      // Quotes advance with breath
   autoAdvance: false,     // Auto-advance quotes
   autoAdvanceInterval: 20, // Seconds between quotes
+  primaryHue: 162,        // App color scheme (162 = teal)
 };
 
+// Color presets for the app
+const COLOR_PRESETS = [
+  { name: 'Teal', hue: 162, hex: '#7FDBCA' },
+  { name: 'Ocean', hue: 195, hex: '#7FC8DB' },
+  { name: 'Violet', hue: 270, hex: '#A87FDB' },
+  { name: 'Rose', hue: 340, hex: '#DB7F9E' },
+  { name: 'Sage', hue: 140, hex: '#7FDB9E' },
+  { name: 'Amber', hue: 40, hex: '#DBC07F' },
+];
+
 const STORAGE_KEYS = {
-  SAVED_QUOTES: 'philos_saved_quotes',
-  SETTINGS: 'philos_settings',
+  SAVED_QUOTES: 'still_saved_quotes',
+  SETTINGS: 'still_settings',
 };
 
 // ============================================================================
@@ -8435,7 +10029,7 @@ const saveSettings = (settings) => {
 const shareQuote = async (quote) => {
   const text = '"' + quote.text + '"\n\n— ' + quote.author;
   if (navigator.share) {
-    try { await navigator.share({ title: 'Wisdom from Philos', text }); }
+    try { await navigator.share({ title: 'Wisdom from Still', text }); }
     catch (e) { if (e.name !== 'AbortError') navigator.clipboard.writeText(text); }
   } else { navigator.clipboard.writeText(text); }
 };
@@ -8451,12 +10045,14 @@ const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 // BREATHWORK VIEW COMPONENT
 // ============================================================================
 
-function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession }) {
+function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
   const canvasRef = useRef(null);
   const frameRef = useRef(null);
-  const ripplesRef = useRef([]);
+  const lungDataRef = useRef(null);
+  const [showUI, setShowUI] = useState(false);
+  const swipeStartRef = useRef(null);
 
-  // Animation loop for ripples
+  // Initialize lung capillaries data structure
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -8466,98 +10062,308 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
     canvas.height = window.innerHeight;
 
     const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
+    const startY = canvas.height * 0.25;
 
-    // Ripple class
-    class Ripple {
-      constructor(phase, progress) {
-        this.phase = phase; // 'inhale', 'exhale', 'holdFull', 'holdEmpty'
-        this.startProgress = progress;
-        this.birth = Date.now();
-        this.maxRadius = Math.min(canvas.width, canvas.height) * 0.45;
-        this.baseRadius = 70; // Match the pulsing circle
+    // Colors - exact values from spec
+    // #2A7A75 (dim/deoxygenated): hsl(176, 49%, 32%)
+    // #4ECDC4 (bright/oxygenated): hsl(171, 66%, 55%)
+    // #3AA89F (exhale/cooler): hsl(166, 51%, 45%)
+    const colorDeoxygenated = { h: 176, s: 49, l: 32 };
+    const colorOxygenated = { h: 171, s: 66, l: 55 };
+    const colorExhale = { h: 166, s: 51, l: 45 };
+
+    // Branch class for the bronchial tree
+    class Branch {
+      constructor(x1, y1, angle, length, depth, maxDepth, side, parent = null) {
+        this.x1 = x1;
+        this.y1 = y1;
+        this.angle = angle;
+        this.length = length;
+        this.depth = depth;
+        this.maxDepth = maxDepth;
+        this.side = side;
+        this.parent = parent;
+
+        const curve = Math.sin(depth * 1.5) * 0.1;
+        this.x2 = x1 + Math.cos(angle + curve) * length;
+        this.y2 = y1 + Math.sin(angle + curve) * length;
+
+        this.thickness = Math.max(1, 7 - depth * 0.85);
+        this.fillProgress = 0;
+        this.targetFillProgress = 0;
+        this.fillDelay = depth * 0.15; // Depth delay per spec
+        this.children = [];
+        this.alveoli = null;
+
+        // For gradient fill along branch
+        this.fillPosition = 0; // 0-1 position of fill "wavefront"
+        this.targetFillPosition = 0;
       }
 
-      update() {
-        const age = (Date.now() - this.birth) / 1000;
-        const lifetime = 2.5; // seconds
-
-        if (age > lifetime) return false;
-
-        this.progress = age / lifetime;
-        return true;
-      }
-
-      draw(ctx) {
-        const eased = easeOutCubic(this.progress);
-
-        let radius, alpha;
-        const isHold = this.phase === 'holdFull' || this.phase === 'holdEmpty';
-
-        if (this.phase === 'inhale') {
-          // Expand outward
-          radius = this.baseRadius + eased * (this.maxRadius - this.baseRadius);
-          alpha = (1 - eased) * 0.4;
-        } else if (this.phase === 'exhale') {
-          // Contract inward
-          radius = this.maxRadius - eased * (this.maxRadius - this.baseRadius);
-          alpha = (1 - eased) * 0.4;
-        } else {
-          // Hold - gentle pulse at current size
-          const holdRadius = this.phase === 'holdFull' ? this.maxRadius * 0.7 : this.baseRadius * 1.2;
-          radius = holdRadius + Math.sin(this.progress * Math.PI * 4) * 15;
-          alpha = (1 - eased) * 0.25;
+      getPathDistance() {
+        let dist = this.length;
+        let current = this.parent;
+        while (current) {
+          dist += current.length;
+          current = current.parent;
         }
+        return dist;
+      }
 
-        const color = isHold ? '255, 215, 100' : '127, 219, 202';
-
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(${color}, ${alpha})`;
-        ctx.lineWidth = 2 - eased * 1.5;
-        ctx.stroke();
+      // Normalized path distance (0-1 based on max)
+      getNormalizedPathDistance(maxDist) {
+        return this.getPathDistance() / maxDist;
       }
     }
 
-    let lastPhase = null;
-    let lastSpawnTime = 0;
+    // Alveoli cluster class
+    class AlveoliCluster {
+      constructor(x, y, depth, side, parentBranch = null) {
+        this.x = x;
+        this.y = y;
+        this.depth = depth;
+        this.side = side;
+        this.parentBranch = parentBranch;
+        this.fillProgress = 0;
+        this.targetFillProgress = 0;
+        this.pulsePhase = Math.random() * Math.PI * 2;
 
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
+        // Bloom effect state
+        this.bloomIntensity = 0;
+        this.bloomScale = 1;
+        this.hasBloomedThisCycle = false;
+        this.bloomStartTime = 0;
 
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Spawn new ripples based on breath phase
-      if (breathSession.isActive) {
-        const now = Date.now();
-        const currentPhase = breathSession.phase;
-        const spawnInterval = currentPhase.includes('hold') ? 600 : 400;
-
-        // Spawn ripple on phase change or at intervals
-        if (currentPhase !== lastPhase || now - lastSpawnTime > spawnInterval) {
-          ripplesRef.current.push(new Ripple(currentPhase, breathSession.phaseProgress));
-          lastSpawnTime = now;
-          lastPhase = currentPhase;
+        this.spheres = [];
+        const count = 4 + Math.floor(Math.random() * 4);
+        for (let i = 0; i < count; i++) {
+          const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+          const dist = 3 + Math.random() * 4;
+          this.spheres.push({
+            offsetX: Math.cos(angle) * dist,
+            offsetY: Math.sin(angle) * dist,
+            radius: 2 + Math.random() * 2.5,
+            phase: Math.random() * Math.PI * 2,
+          });
         }
       }
 
-      // Update and draw ripples
-      ripplesRef.current = ripplesRef.current.filter(ripple => {
-        if (ripple.update()) {
-          ripple.draw(ctx);
-          return true;
+      // Get fill timing based on parent branch path distance
+      getArrivalTiming(maxDist) {
+        if (this.parentBranch) {
+          return this.parentBranch.getNormalizedPathDistance(maxDist);
         }
-        return false;
-      });
+        return this.depth / 8; // Fallback to depth-based
+      }
+    }
 
-      // Limit ripple count
-      if (ripplesRef.current.length > 15) {
-        ripplesRef.current = ripplesRef.current.slice(-15);
+    // Oxygen particle class
+    class OxygenParticle {
+      constructor(startX, startY, branch) {
+        this.x = startX;
+        this.y = startY;
+        this.branch = branch;
+        this.progress = 0;
+        this.speed = 0.018 + Math.random() * 0.012;
+        this.size = 1.2 + Math.random() * 1.2;
+        this.alpha = 0.5 + Math.random() * 0.4;
+        this.alive = true;
+        this.direction = 1;
+      }
+
+      update(isInhaling) {
+        this.direction = isInhaling ? 1 : -1;
+        this.progress += this.speed * this.direction;
+
+        if (this.progress >= 1 && this.direction === 1) {
+          if (this.branch.children.length > 0) {
+            this.branch = this.branch.children[Math.floor(Math.random() * this.branch.children.length)];
+            this.progress = 0;
+          } else {
+            this.alive = false;
+          }
+        } else if (this.progress <= 0 && this.direction === -1) {
+          if (this.branch.parent) {
+            this.branch = this.branch.parent;
+            this.progress = 1;
+          } else {
+            this.alive = false;
+          }
+        }
+
+        const t = Math.max(0, Math.min(1, this.progress));
+        this.x = this.branch.x1 + (this.branch.x2 - this.branch.x1) * t;
+        this.y = this.branch.y1 + (this.branch.y2 - this.branch.y1) * t;
+      }
+    }
+
+    // Generate the bronchial tree
+    const allBranches = [];
+    const allAlveoli = [];
+    const particles = [];
+
+    // Lung shape boundaries for constraining branches
+    const lungScale = Math.min(canvas.width, canvas.height) * 0.007;
+
+    const isInsideLung = (x, y, side) => {
+      const relX = (x - centerX) / lungScale;
+      const relY = (y - startY) / lungScale;
+
+      if (side === 'right') {
+        // Right lung shape (3 lobes, larger)
+        const inUpperLobe = relX > 5 && relX < 110 && relY > 0 && relY < 90 &&
+          relY < 90 - Math.pow(Math.max(0, relX - 80), 2) * 0.03;
+        const inMiddleLobe = relX > 15 && relX < 100 && relY > 70 && relY < 150;
+        const inLowerLobe = relX > 10 && relX < 95 && relY > 130 && relY < 220 &&
+          relY < 220 - Math.pow(Math.max(0, relX - 60), 2) * 0.02;
+        return inUpperLobe || inMiddleLobe || inLowerLobe;
+      } else {
+        // Left lung shape (2 lobes, smaller, with cardiac notch)
+        const inUpperLobe = relX < -5 && relX > -95 && relY > 0 && relY < 100 &&
+          relY < 100 - Math.pow(Math.max(0, -relX - 70), 2) * 0.03;
+        const inLowerLobe = relX < -8 && relX > -85 && relY > 80 && relY < 210 &&
+          !(relX > -50 && relY > 140 && relY < 190); // Cardiac notch
+        return inUpperLobe || inLowerLobe;
       }
     };
 
-    animate();
+    const generateBranch = (x, y, angle, length, depth, maxDepth, side, parent = null) => {
+      if (depth > maxDepth) {
+        const cluster = new AlveoliCluster(x, y, depth, side, parent);
+        allAlveoli.push(cluster);
+        if (parent) parent.alveoli = cluster;
+        return null;
+      }
+
+      const branch = new Branch(x, y, angle, length, depth, maxDepth, side, parent);
+      allBranches.push(branch);
+
+      // More aggressive branching for fuller appearance
+      const nextLength = length * (0.68 + Math.random() * 0.1);
+      const spread = 0.42 - depth * 0.03;
+      const jitter = (Math.random() - 0.5) * 0.2;
+
+      // More children at earlier depths for fuller tree
+      const childCount = depth < 2 ? 3 : (depth < 4 ? (Math.random() > 0.2 ? 3 : 2) : 2);
+
+      const angles = [];
+      if (childCount === 2) {
+        angles.push(angle - spread + jitter, angle + spread + jitter);
+      } else {
+        angles.push(angle - spread + jitter, angle + jitter * 0.3, angle + spread + jitter);
+      }
+
+      angles.forEach((childAngle, i) => {
+        const childLength = nextLength * (i === 1 && childCount === 3 ? 0.85 : 1);
+        const testX = branch.x2 + Math.cos(childAngle) * childLength;
+        const testY = branch.y2 + Math.sin(childAngle) * childLength;
+
+        // Only generate if inside lung boundary or at early depth
+        if (depth < 3 || isInsideLung(testX, testY, side)) {
+          const child = generateBranch(branch.x2, branch.y2, childAngle, childLength, depth + 1, maxDepth, side, branch);
+          if (child) branch.children.push(child);
+        } else if (depth >= 3) {
+          // Create alveoli at boundary
+          const cluster = new AlveoliCluster(branch.x2, branch.y2, depth + 1, side, branch);
+          allAlveoli.push(cluster);
+        }
+      });
+
+      return branch;
+    };
+
+    // Create trachea (windpipe)
+    const tracheaLength = canvas.height * 0.05;
+    const trachea = new Branch(centerX, startY - tracheaLength, Math.PI / 2, tracheaLength, 0, 8, 'center');
+    allBranches.push(trachea);
+
+    // Main bronchi split
+    const mainBronchusLength = 35 * lungScale / 3;
+
+    // === RIGHT LUNG (3 lobes) ===
+    // Right main bronchus
+    const rightMain = generateBranch(centerX, startY, Math.PI / 2 + 0.35, mainBronchusLength, 1, 8, 'right', trachea);
+
+    // Right upper lobe branches
+    generateBranch(centerX + 15 * lungScale / 3, startY + 10 * lungScale / 3, Math.PI / 2 + 0.9, 28 * lungScale / 3, 2, 7, 'right', trachea);
+    generateBranch(centerX + 25 * lungScale / 3, startY + 5 * lungScale / 3, Math.PI * 0.15, 22 * lungScale / 3, 2, 6, 'right', trachea);
+
+    // Right middle lobe branches
+    generateBranch(centerX + 30 * lungScale / 3, startY + 45 * lungScale / 3, Math.PI / 2 + 0.6, 25 * lungScale / 3, 2, 7, 'right', trachea);
+    generateBranch(centerX + 40 * lungScale / 3, startY + 55 * lungScale / 3, Math.PI * 0.35, 20 * lungScale / 3, 3, 6, 'right', trachea);
+
+    // Right lower lobe branches
+    generateBranch(centerX + 20 * lungScale / 3, startY + 80 * lungScale / 3, Math.PI / 2 + 0.4, 30 * lungScale / 3, 2, 8, 'right', trachea);
+    generateBranch(centerX + 35 * lungScale / 3, startY + 95 * lungScale / 3, Math.PI / 2 + 0.7, 25 * lungScale / 3, 3, 7, 'right', trachea);
+    generateBranch(centerX + 25 * lungScale / 3, startY + 110 * lungScale / 3, Math.PI * 0.6, 22 * lungScale / 3, 3, 6, 'right', trachea);
+
+    // === LEFT LUNG (2 lobes with cardiac notch) ===
+    // Left main bronchus
+    const leftMain = generateBranch(centerX, startY, Math.PI / 2 - 0.35, mainBronchusLength * 0.95, 1, 7, 'left', trachea);
+
+    // Left upper lobe branches
+    generateBranch(centerX - 15 * lungScale / 3, startY + 8 * lungScale / 3, Math.PI / 2 - 0.85, 26 * lungScale / 3, 2, 7, 'left', trachea);
+    generateBranch(centerX - 22 * lungScale / 3, startY + 3 * lungScale / 3, Math.PI * 0.85, 20 * lungScale / 3, 2, 6, 'left', trachea);
+    generateBranch(centerX - 28 * lungScale / 3, startY + 40 * lungScale / 3, Math.PI / 2 - 0.5, 22 * lungScale / 3, 2, 6, 'left', trachea);
+
+    // Left lower lobe branches (avoiding cardiac notch area)
+    generateBranch(centerX - 18 * lungScale / 3, startY + 75 * lungScale / 3, Math.PI / 2 - 0.3, 28 * lungScale / 3, 2, 7, 'left', trachea);
+    generateBranch(centerX - 30 * lungScale / 3, startY + 90 * lungScale / 3, Math.PI / 2 - 0.6, 24 * lungScale / 3, 3, 6, 'left', trachea);
+    generateBranch(centerX - 22 * lungScale / 3, startY + 105 * lungScale / 3, Math.PI * 0.55, 20 * lungScale / 3, 3, 6, 'left', trachea);
+
+    // Add extra peripheral alveoli to fill out the lung shape
+    const addPeripheralAlveoli = (side) => {
+      const count = 35;
+      for (let i = 0; i < count; i++) {
+        let x, y, attempts = 0;
+        do {
+          if (side === 'right') {
+            x = centerX + (20 + Math.random() * 90) * lungScale / 3;
+            y = startY + (10 + Math.random() * 180) * lungScale / 3;
+          } else {
+            x = centerX - (20 + Math.random() * 75) * lungScale / 3;
+            y = startY + (10 + Math.random() * 170) * lungScale / 3;
+          }
+          attempts++;
+        } while (!isInsideLung(x, y, side) && attempts < 20);
+
+        if (isInsideLung(x, y, side)) {
+          const cluster = new AlveoliCluster(x, y, 7, side);
+          cluster.spheres.forEach(s => {
+            s.radius *= 0.7; // Smaller peripheral alveoli
+          });
+          allAlveoli.push(cluster);
+        }
+      }
+    };
+
+    addPeripheralAlveoli('right');
+    addPeripheralAlveoli('left');
+
+    // Calculate max path distance
+    let maxPathDist = 0;
+    allBranches.forEach(b => {
+      const dist = b.getPathDistance();
+      if (dist > maxPathDist) maxPathDist = dist;
+    });
+
+    // Store lung data for animation
+    lungDataRef.current = {
+      allBranches,
+      allAlveoli,
+      particles,
+      trachea,
+      maxPathDist,
+      colorDeoxygenated,
+      colorOxygenated,
+      colorExhale,
+      centerX,
+      startY,
+      OxygenParticle,
+      // Trachea entry glow state
+      tracheaGlow: 0,
+      lastPhase: null,
+    };
 
     const handleResize = () => {
       canvas.width = window.innerWidth;
@@ -8567,13 +10373,637 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 
     return () => {
       window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Animation loop for lung capillaries
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !lungDataRef.current) return;
+
+    const ctx = canvas.getContext('2d');
+    const startTime = Date.now();
+
+    const {
+      allBranches,
+      allAlveoli,
+      particles,
+      trachea,
+      maxPathDist,
+      colorDeoxygenated,
+      colorOxygenated,
+      colorExhale,
+      centerX,
+      startY,
+      OxygenParticle,
+    } = lungDataRef.current;
+
+    const MAX_PARTICLES = 120;
+
+    const spawnParticle = () => {
+      if (particles.length < MAX_PARTICLES) {
+        const p = new OxygenParticle(trachea.x1, trachea.y1, trachea);
+        particles.push(p);
+      }
+    };
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = (Date.now() - startTime) / 1000;
+
+      // Get breath phase from session
+      const phase = breathSession.phase; // 'inhale', 'exhale', 'holdFull', 'holdEmpty'
+      const phaseProgress = breathSession.phaseProgress || 0.5;
+      const isInhaling = phase === 'inhale';
+      const isHoldingFull = phase === 'holdFull';
+      const isExhaling = phase === 'exhale';
+      const isHoldingEmpty = phase === 'holdEmpty';
+      const isActive = breathSession.isActive;
+
+      // Dark background
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Vignette
+      const vignette = ctx.createRadialGradient(
+        centerX, canvas.height * 0.4, 0,
+        centerX, canvas.height * 0.4, canvas.width * 0.7
+      );
+      vignette.addColorStop(0, 'transparent');
+      vignette.addColorStop(0.7, 'transparent');
+      vignette.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Calculate breath expansion scale (lungs expand ~15% when full)
+      // Use smooth easing for natural breathing motion
+      const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
+      const easedProgress = easeInOutSine(phaseProgress);
+
+      let targetBreathScale = 0.92; // Default contracted state
+      if (!isActive) {
+        targetBreathScale = 0.96; // Resting state
+      } else if (isInhaling) {
+        targetBreathScale = 0.92 + easedProgress * 0.14; // Expand from 0.92 to 1.06
+      } else if (isHoldingFull) {
+        targetBreathScale = 1.06; // Fully expanded
+      } else if (isExhaling) {
+        targetBreathScale = 1.06 - easedProgress * 0.14; // Contract from 1.06 to 0.92
+      } else if (isHoldingEmpty) {
+        targetBreathScale = 0.92; // Fully contracted
+      }
+
+      // Smooth the breath scale with velocity-based interpolation
+      if (!lungDataRef.current.breathScale) lungDataRef.current.breathScale = targetBreathScale;
+      if (!lungDataRef.current.breathVelocity) lungDataRef.current.breathVelocity = 0;
+
+      // Spring-like smoothing for fluid motion
+      const stiffness = 0.04;
+      const damping = 0.85;
+      const diff = targetBreathScale - lungDataRef.current.breathScale;
+      lungDataRef.current.breathVelocity = lungDataRef.current.breathVelocity * damping + diff * stiffness;
+      lungDataRef.current.breathScale += lungDataRef.current.breathVelocity;
+      const breathScale = lungDataRef.current.breathScale;
+
+      // Calculate lung center for scaling (center of the lung mass)
+      const lungCenterY = startY + canvas.height * 0.25;
+
+      // Detect phase transitions for trachea flash
+      if (lungDataRef.current.lastPhase !== phase) {
+        if (phase === 'inhale' && lungDataRef.current.lastPhase !== 'inhale') {
+          lungDataRef.current.tracheaGlow = 1.5; // Flash on inhale start
+        }
+        if (phase === 'inhale') {
+          // Reset bloom flags for new inhale cycle
+          allAlveoli.forEach(a => { a.hasBloomedThisCycle = false; });
+        }
+        lungDataRef.current.lastPhase = phase;
+      }
+
+      // Decay trachea glow
+      if (lungDataRef.current.tracheaGlow > 0) {
+        lungDataRef.current.tracheaGlow *= 0.92;
+        if (lungDataRef.current.tracheaGlow < 0.01) lungDataRef.current.tracheaGlow = 0;
+      }
+
+      // Calculate fill progress for each branch using PATH DISTANCE (not just depth)
+      // This creates the visible "wave" traveling through the bronchial tree
+      allBranches.forEach(branch => {
+        const pathNorm = branch.getNormalizedPathDistance(maxPathDist);
+
+        // Timing per spec: depthLevel * 0.15 delay, 0.25 window
+        const depthDelay = pathNorm * 0.6; // Stagger based on distance from trachea
+        const depthWindow = 0.25;
+
+        if (!isActive) {
+          branch.targetFillProgress = 0.15; // Subtle ambient glow
+          branch.targetFillPosition = 0.5;
+        } else if (isInhaling) {
+          // Progressive fill: starts at trachea, flows outward
+          const fillStart = depthDelay;
+          const fillEnd = depthDelay + depthWindow;
+          const raw = Math.max(0, Math.min(1, (easedProgress - fillStart) / (fillEnd - fillStart + 0.001)));
+          branch.targetFillProgress = easeInOutSine(raw);
+
+          // Fill position travels along the branch (0=base, 1=tip)
+          branch.targetFillPosition = Math.min(1, raw * 1.5);
+        } else if (isHoldingFull) {
+          branch.targetFillProgress = 1;
+          branch.targetFillPosition = 1;
+        } else if (isExhaling) {
+          // Reverse: alveoli drain first, then branches, then trunk
+          const drainDelay = (1 - pathNorm) * 0.6;
+          const drainWindow = 0.25;
+          const drainStart = drainDelay;
+          const drainEnd = drainDelay + drainWindow;
+          const raw = Math.max(0, Math.min(1, (easedProgress - drainStart) / (drainEnd - drainStart + 0.001)));
+          branch.targetFillProgress = 1 - easeInOutSine(raw);
+
+          // Fill position retreats from tip to base
+          branch.targetFillPosition = 1 - Math.min(1, raw * 1.5);
+        } else if (isHoldingEmpty) {
+          branch.targetFillProgress = 0.05; // Very dim baseline
+          branch.targetFillPosition = 0;
+        }
+
+        // Smooth interpolation
+        branch.fillProgress += (branch.targetFillProgress - branch.fillProgress) * 0.08;
+        branch.fillPosition += (branch.targetFillPosition - branch.fillPosition) * 0.1;
+      });
+
+      // Update alveoli with path-distance timing and BLOOM effect
+      allAlveoli.forEach(alveolus => {
+        // Use parent branch timing or depth-based fallback
+        const arrivalTiming = alveolus.getArrivalTiming(maxPathDist);
+        const arrivalDelay = arrivalTiming * 0.6 + 0.15; // Alveoli fill slightly after their parent branch
+        const arrivalWindow = 0.2;
+
+        let targetFill = 0.1;
+        if (!isActive) {
+          targetFill = 0.1;
+          alveolus.hasBloomedThisCycle = false;
+        } else if (isInhaling) {
+          const fillStart = arrivalDelay;
+          const fillEnd = arrivalDelay + arrivalWindow;
+          const raw = Math.max(0, Math.min(1, (easedProgress - fillStart) / (fillEnd - fillStart + 0.001)));
+          targetFill = easeInOutSine(raw);
+
+          // BLOOM EFFECT: Trigger when oxygen "arrives" (crosses 0.5 threshold)
+          if (targetFill > 0.5 && !alveolus.hasBloomedThisCycle) {
+            alveolus.hasBloomedThisCycle = true;
+            alveolus.bloomStartTime = elapsed;
+            alveolus.bloomIntensity = 1.5; // Brightness spike
+            alveolus.bloomScale = 1.08; // Scale pop
+          }
+        } else if (isHoldingFull) {
+          targetFill = 1;
+        } else if (isExhaling) {
+          // Alveoli drain first (inverted timing)
+          const drainDelay = (1 - arrivalTiming) * 0.5;
+          const drainWindow = 0.3;
+          const drainStart = drainDelay;
+          const drainEnd = drainDelay + drainWindow;
+          const raw = Math.max(0, Math.min(1, (easedProgress - drainStart) / (drainEnd - drainStart + 0.001)));
+          targetFill = 1 - easeInOutSine(raw);
+          alveolus.hasBloomedThisCycle = false;
+        } else {
+          targetFill = 0;
+          alveolus.hasBloomedThisCycle = false;
+        }
+
+        alveolus.targetFillProgress = targetFill;
+
+        // Smooth interpolation for fill
+        alveolus.fillProgress += (alveolus.targetFillProgress - alveolus.fillProgress) * 0.08;
+
+        // Decay bloom effects (300ms duration)
+        const bloomDuration = 0.3;
+        const bloomAge = elapsed - alveolus.bloomStartTime;
+        if (bloomAge < bloomDuration && alveolus.bloomIntensity > 1) {
+          const bloomProgress = bloomAge / bloomDuration;
+          const bloomEase = 1 - Math.pow(bloomProgress, 2); // Fast attack, slow decay
+          alveolus.bloomIntensity = 1 + 0.5 * bloomEase;
+          alveolus.bloomScale = 1 + 0.08 * bloomEase;
+        } else {
+          alveolus.bloomIntensity += (1 - alveolus.bloomIntensity) * 0.15;
+          alveolus.bloomScale += (1 - alveolus.bloomScale) * 0.15;
+        }
+      });
+
+      // Spawn particles during inhale
+      if (isActive && isInhaling && Math.random() < 0.25) {
+        spawnParticle();
+      }
+
+      // Update particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update(isInhaling);
+        if (!particles[i].alive) {
+          particles.splice(i, 1);
+        }
+      }
+
+      // Apply breath expansion transform
+      ctx.save();
+      ctx.translate(centerX, lungCenterY);
+      ctx.scale(breathScale, breathScale);
+      ctx.translate(-centerX, -lungCenterY);
+
+      // Trachea entry glow (flash on inhale start)
+      const tracheaGlow = lungDataRef.current.tracheaGlow || 0;
+      if (tracheaGlow > 0.05 || isInhaling) {
+        const baseGlow = isInhaling ? 0.3 + easedProgress * 0.2 : 0.2;
+        const glowIntensity = baseGlow + tracheaGlow * 0.5;
+        const entryGradient = ctx.createRadialGradient(
+          centerX, startY - 10, 0,
+          centerX, startY - 10, 40
+        );
+        entryGradient.addColorStop(0, `hsla(${colorOxygenated.h}, ${colorOxygenated.s}%, ${colorOxygenated.l + 10}%, ${glowIntensity})`);
+        entryGradient.addColorStop(0.5, `hsla(${colorOxygenated.h}, ${colorOxygenated.s}%, ${colorOxygenated.l}%, ${glowIntensity * 0.4})`);
+        entryGradient.addColorStop(1, 'transparent');
+
+        ctx.beginPath();
+        ctx.arc(centerX, startY - 10, 40, 0, Math.PI * 2);
+        ctx.fillStyle = entryGradient;
+        ctx.fill();
+      }
+
+      // Draw branches with gradient fill along length
+      allBranches.forEach(branch => {
+        const fill = branch.fillProgress;
+        const fillPos = branch.fillPosition || 0;
+
+        // Color interpolation with EXHALE shift toward cooler tone
+        let targetColor = colorOxygenated;
+        if (isExhaling || isHoldingEmpty) {
+          // Shift toward cooler exhale color
+          const exhaleBlend = isExhaling ? easedProgress : 1;
+          targetColor = {
+            h: colorOxygenated.h + (colorExhale.h - colorOxygenated.h) * exhaleBlend * 0.5,
+            s: colorOxygenated.s + (colorExhale.s - colorOxygenated.s) * exhaleBlend * 0.5,
+            l: colorOxygenated.l + (colorExhale.l - colorOxygenated.l) * exhaleBlend * 0.3
+          };
+        }
+
+        const h = colorDeoxygenated.h + (targetColor.h - colorDeoxygenated.h) * fill;
+        const s = colorDeoxygenated.s + (targetColor.s - colorDeoxygenated.s) * fill;
+        const l = colorDeoxygenated.l + (targetColor.l - colorDeoxygenated.l) * fill;
+
+        // Branch glow (softer)
+        if (fill > 0.1) {
+          ctx.strokeStyle = `hsla(${h}, ${s}%, ${l + 5}%, ${0.1 * fill})`;
+          ctx.lineWidth = branch.thickness + 4;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(branch.x1, branch.y1);
+          ctx.lineTo(branch.x2, branch.y2);
+          ctx.stroke();
+        }
+
+        // GRADIENT FILL along branch: creates "traveling" oxygenation effect
+        // Draw branch as gradient from base (dimmer/filled) to tip (brighter/filling)
+        const gradient = ctx.createLinearGradient(branch.x1, branch.y1, branch.x2, branch.y2);
+
+        // Base of branch (already filled)
+        const baseFill = Math.min(1, fill * 1.2);
+        const baseH = colorDeoxygenated.h + (targetColor.h - colorDeoxygenated.h) * baseFill;
+        const baseS = colorDeoxygenated.s + (targetColor.s - colorDeoxygenated.s) * baseFill;
+        const baseL = colorDeoxygenated.l + (targetColor.l - colorDeoxygenated.l) * baseFill;
+        const baseAlpha = 0.3 + baseFill * 0.5;
+
+        // Tip of branch (filling or unfilled)
+        const tipFill = Math.max(0, fill * 0.6);
+        const tipH = colorDeoxygenated.h + (targetColor.h - colorDeoxygenated.h) * tipFill;
+        const tipS = colorDeoxygenated.s + (targetColor.s - colorDeoxygenated.s) * tipFill;
+        const tipL = colorDeoxygenated.l + (targetColor.l - colorDeoxygenated.l) * tipFill;
+        const tipAlpha = 0.2 + tipFill * 0.5;
+
+        gradient.addColorStop(0, `hsla(${baseH}, ${baseS}%, ${baseL}%, ${baseAlpha})`);
+        gradient.addColorStop(Math.min(0.95, fillPos), `hsla(${baseH}, ${baseS}%, ${baseL}%, ${baseAlpha})`);
+        gradient.addColorStop(Math.min(1, fillPos + 0.05), `hsla(${tipH}, ${tipS}%, ${tipL}%, ${tipAlpha})`);
+        gradient.addColorStop(1, `hsla(${tipH}, ${tipS}%, ${tipL}%, ${tipAlpha * 0.7})`);
+
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = branch.thickness;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(branch.x1, branch.y1);
+        ctx.lineTo(branch.x2, branch.y2);
+        ctx.stroke();
+
+        // Bright "wavefront" glow at fill position (the traveling oxygen)
+        if (fill > 0.05 && fill < 0.95 && isActive) {
+          const wavefrontX = branch.x1 + (branch.x2 - branch.x1) * fillPos;
+          const wavefrontY = branch.y1 + (branch.y2 - branch.y1) * fillPos;
+          const glowSize = 6 + branch.thickness;
+
+          const waveGradient = ctx.createRadialGradient(wavefrontX, wavefrontY, 0, wavefrontX, wavefrontY, glowSize);
+          waveGradient.addColorStop(0, `hsla(${targetColor.h}, ${targetColor.s + 10}%, ${targetColor.l + 15}%, ${0.5 * fill})`);
+          waveGradient.addColorStop(0.5, `hsla(${targetColor.h}, ${targetColor.s}%, ${targetColor.l}%, ${0.2 * fill})`);
+          waveGradient.addColorStop(1, 'transparent');
+
+          ctx.beginPath();
+          ctx.arc(wavefrontX, wavefrontY, glowSize, 0, Math.PI * 2);
+          ctx.fillStyle = waveGradient;
+          ctx.fill();
+        }
+      });
+
+      // Draw alveoli with BLOOM effect and hold-in shimmer
+      allAlveoli.forEach(cluster => {
+        const fill = cluster.fillProgress;
+        const bloomIntensity = cluster.bloomIntensity || 1;
+        const bloomScale = cluster.bloomScale || 1;
+
+        // HOLD-IN effects: gentle pulse (scale 1.0 → 1.05 → 1.0) and shimmer
+        const holdPulse = isHoldingFull ? Math.sin(elapsed * 2 + cluster.pulsePhase) * 0.05 : 0;
+        const shimmer = isHoldingFull ? Math.sin(elapsed * 8 + cluster.pulsePhase * 2) * 0.15 : 0;
+
+        // HOLD-OUT: subtle ambient pulse so it still feels alive
+        const restPulse = isHoldingEmpty ? Math.sin(elapsed * 1.5 + cluster.pulsePhase) * 0.03 : 0;
+
+        // Exhale color shift
+        let targetColor = colorOxygenated;
+        if (isExhaling || isHoldingEmpty) {
+          const exhaleBlend = isExhaling ? easedProgress : 1;
+          targetColor = {
+            h: colorOxygenated.h + (colorExhale.h - colorOxygenated.h) * exhaleBlend * 0.6,
+            s: colorOxygenated.s + (colorExhale.s - colorOxygenated.s) * exhaleBlend * 0.5,
+            l: colorOxygenated.l + (colorExhale.l - colorOxygenated.l) * exhaleBlend * 0.4
+          };
+        }
+
+        cluster.spheres.forEach(sphere => {
+          const x = cluster.x + sphere.offsetX;
+          const y = cluster.y + sphere.offsetY;
+
+          // Apply bloom scale, hold pulse, and rest pulse
+          const scaleMultiplier = bloomScale * (1 + holdPulse + restPulse);
+          const r = sphere.radius * (1 + fill * 0.2) * scaleMultiplier;
+
+          // Color with bloom intensity boost
+          const h = colorDeoxygenated.h + (targetColor.h - colorDeoxygenated.h) * fill;
+          const s = colorDeoxygenated.s + (targetColor.s - colorDeoxygenated.s) * fill;
+          const baseLightness = colorDeoxygenated.l + (targetColor.l - colorDeoxygenated.l) * fill;
+          const l = baseLightness + (bloomIntensity - 1) * 20 + shimmer * 8; // Bloom brightens, shimmer adds sparkle
+
+          const glowSize = r * (2 + fill * 1.0);
+
+          // Outer glow (bloom makes this bigger and brighter)
+          const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, glowSize * bloomIntensity);
+          const glowAlpha = (0.25 + fill * 0.35) * bloomIntensity;
+          glowGradient.addColorStop(0, `hsla(${h}, ${s + 10}%, ${l + 10}%, ${glowAlpha})`);
+          glowGradient.addColorStop(0.4, `hsla(${h}, ${s}%, ${l}%, ${glowAlpha * 0.4})`);
+          glowGradient.addColorStop(1, 'transparent');
+
+          ctx.beginPath();
+          ctx.arc(x, y, glowSize * bloomIntensity, 0, Math.PI * 2);
+          ctx.fillStyle = glowGradient;
+          ctx.fill();
+
+          // Core sphere
+          const coreGradient = ctx.createRadialGradient(x - r * 0.25, y - r * 0.25, 0, x, y, r);
+          coreGradient.addColorStop(0, `hsla(${h}, ${s + 5}%, ${l + 8}%, ${(0.45 + fill * 0.35) * bloomIntensity})`);
+          coreGradient.addColorStop(0.6, `hsla(${h}, ${s}%, ${l}%, ${(0.3 + fill * 0.3) * bloomIntensity})`);
+          coreGradient.addColorStop(1, `hsla(${h}, ${s - 5}%, ${l - 8}%, ${0.15 + fill * 0.2})`);
+
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fillStyle = coreGradient;
+          ctx.fill();
+
+          // SHIMMER sparkles during hold-in (oxygen exchange happening)
+          if (isHoldingFull && shimmer > 0.05) {
+            const sparkleAlpha = shimmer * 0.8;
+            ctx.beginPath();
+            ctx.arc(x + Math.cos(elapsed * 5 + sphere.phase) * r * 0.3,
+                   y + Math.sin(elapsed * 5 + sphere.phase) * r * 0.3,
+                   1.5, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${targetColor.h}, 90%, 80%, ${sparkleAlpha})`;
+            ctx.fill();
+          }
+        });
+      });
+
+      // Draw particles
+      particles.forEach(p => {
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+        gradient.addColorStop(0, `hsla(${colorOxygenated.h}, 90%, 70%, ${p.alpha})`);
+        gradient.addColorStop(0.5, `hsla(${colorOxygenated.h}, 80%, 60%, ${p.alpha * 0.5})`);
+        gradient.addColorStop(1, 'transparent');
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      });
+
+      // Draw filled lung tissue (behind everything)
+      // This is drawn in the animate loop to apply breath-based fill color
+
+      // Calculate average fill for lung tissue color
+      const avgFill = isActive ? (isHoldingFull ? 1 : (isHoldingEmpty ? 0.05 : breathSession.phaseProgress * (isInhaling ? 1 : -1) + (isExhaling ? 1 : 0))) : 0.25;
+      const tissueH = colorDeoxygenated.h + (colorOxygenated.h - colorDeoxygenated.h) * Math.max(0, Math.min(1, avgFill));
+
+      // Compute convex hull for lung outlines from alveoli positions
+      const computeConvexHull = (points) => {
+        if (points.length < 3) return points;
+
+        // Find leftmost point
+        let start = 0;
+        for (let i = 1; i < points.length; i++) {
+          if (points[i].x < points[start].x) start = i;
+        }
+
+        const hull = [];
+        let current = start;
+        do {
+          hull.push(points[current]);
+          let next = 0;
+          for (let i = 1; i < points.length; i++) {
+            if (next === current) {
+              next = i;
+              continue;
+            }
+            const cross = (points[i].x - points[current].x) * (points[next].y - points[current].y) -
+                         (points[i].y - points[current].y) * (points[next].x - points[current].x);
+            if (cross > 0) next = i;
+          }
+          current = next;
+        } while (current !== start && hull.length < points.length);
+
+        return hull;
+      };
+
+      // Draw smooth curve through hull points
+      const drawSmoothHull = (hull, padding = 12) => {
+        if (hull.length < 3) return;
+
+        // Expand hull outward by padding
+        const expandedHull = hull.map((p, i) => {
+          const prev = hull[(i - 1 + hull.length) % hull.length];
+          const next = hull[(i + 1) % hull.length];
+          const nx = (next.y - prev.y);
+          const ny = -(next.x - prev.x);
+          const len = Math.sqrt(nx * nx + ny * ny) || 1;
+          return { x: p.x + (nx / len) * padding, y: p.y + (ny / len) * padding };
+        });
+
+        ctx.beginPath();
+        ctx.moveTo(expandedHull[0].x, expandedHull[0].y);
+
+        for (let i = 0; i < expandedHull.length; i++) {
+          const p0 = expandedHull[(i - 1 + expandedHull.length) % expandedHull.length];
+          const p1 = expandedHull[i];
+          const p2 = expandedHull[(i + 1) % expandedHull.length];
+          const p3 = expandedHull[(i + 2) % expandedHull.length];
+
+          // Catmull-Rom to Bezier conversion
+          const cp1x = p1.x + (p2.x - p0.x) / 6;
+          const cp1y = p1.y + (p2.y - p0.y) / 6;
+          const cp2x = p2.x - (p3.x - p1.x) / 6;
+          const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+        }
+        ctx.closePath();
+      };
+
+      // Collect points for each lung
+      const rightPoints = [];
+      const leftPoints = [];
+
+      // Add alveoli positions
+      allAlveoli.forEach(cluster => {
+        cluster.spheres.forEach(sphere => {
+          const point = { x: cluster.x + sphere.offsetX, y: cluster.y + sphere.offsetY };
+          if (cluster.side === 'right') {
+            rightPoints.push(point);
+          } else if (cluster.side === 'left') {
+            leftPoints.push(point);
+          }
+        });
+      });
+
+      // Add branch endpoints
+      allBranches.forEach(branch => {
+        if (branch.side === 'right') {
+          rightPoints.push({ x: branch.x2, y: branch.y2 });
+        } else if (branch.side === 'left') {
+          leftPoints.push({ x: branch.x2, y: branch.y2 });
+        }
+      });
+
+      // Add trachea connection points
+      rightPoints.push({ x: centerX + 5, y: startY });
+      leftPoints.push({ x: centerX - 5, y: startY });
+
+      // Compute and draw right lung
+      if (rightPoints.length > 2) {
+        const rightHull = computeConvexHull(rightPoints);
+        drawSmoothHull(rightHull, 15);
+
+        // Find center for gradient
+        const rcx = rightPoints.reduce((s, p) => s + p.x, 0) / rightPoints.length;
+        const rcy = rightPoints.reduce((s, p) => s + p.y, 0) / rightPoints.length;
+
+        // Subtle lung tissue fill
+        const rightGradient = ctx.createRadialGradient(rcx, rcy, 0, rcx, rcy, 150);
+        rightGradient.addColorStop(0, `hsla(${tissueH}, 50%, 35%, 0.08)`);
+        rightGradient.addColorStop(0.6, `hsla(${tissueH}, 45%, 25%, 0.05)`);
+        rightGradient.addColorStop(1, `hsla(${tissueH}, 40%, 20%, 0.02)`);
+        ctx.fillStyle = rightGradient;
+        ctx.fill();
+
+        // Barely visible outline - let branches define the shape
+        ctx.strokeStyle = `hsla(${tissueH}, 35%, 50%, 0.1)`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Compute and draw left lung
+      if (leftPoints.length > 2) {
+        const leftHull = computeConvexHull(leftPoints);
+        drawSmoothHull(leftHull, 15);
+
+        const lcx = leftPoints.reduce((s, p) => s + p.x, 0) / leftPoints.length;
+        const lcy = leftPoints.reduce((s, p) => s + p.y, 0) / leftPoints.length;
+
+        const leftGradient = ctx.createRadialGradient(lcx, lcy, 0, lcx, lcy, 130);
+        leftGradient.addColorStop(0, `hsla(${tissueH}, 50%, 35%, 0.08)`);
+        leftGradient.addColorStop(0.6, `hsla(${tissueH}, 45%, 25%, 0.05)`);
+        leftGradient.addColorStop(1, `hsla(${tissueH}, 40%, 20%, 0.02)`);
+        ctx.fillStyle = leftGradient;
+        ctx.fill();
+
+        // Barely visible outline
+        ctx.strokeStyle = `hsla(${tissueH}, 35%, 50%, 0.1)`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Trachea tube (subtle)
+      ctx.fillStyle = `hsla(${tissueH}, 35%, 40%, 0.1)`;
+      ctx.beginPath();
+      ctx.moveTo(centerX - 8, startY - 25);
+      ctx.lineTo(centerX + 8, startY - 25);
+      ctx.lineTo(centerX + 6, startY + 5);
+      ctx.lineTo(centerX - 6, startY + 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = `hsla(${tissueH}, 40%, 50%, 0.12)`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Restore transform after lung drawing
+      ctx.restore();
+    };
+
+    animate();
+
+    return () => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [breathSession.isActive, breathSession.phase, breathSession.phaseProgress]);
+  }, [breathSession.isActive, breathSession.phase, breathSession.phaseProgress, primaryHue]);
+
+  // Handle swipe gestures
+  const handleTouchStart = useCallback((e) => {
+    if (showUI) return;
+    const touch = e.touches[0];
+    swipeStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+  }, [showUI]);
+
+  const handleTouchEnd = useCallback((e) => {
+    if (!swipeStartRef.current) return;
+
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - swipeStartRef.current.x;
+    const deltaY = touch.clientY - swipeStartRef.current.y;
+    const deltaTime = Date.now() - swipeStartRef.current.time;
+    const screenHeight = window.innerHeight;
+
+    const minSwipeDistance = 50;
+    const maxSwipeTime = 500;
+
+    // Vertical swipe UP: open technique selector
+    if (deltaY < -minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime) {
+      if (swipeStartRef.current.y > screenHeight * 0.5) {
+        setShowUI(true);
+      }
+    }
+    // Vertical swipe DOWN: close technique selector
+    if (deltaY > minSwipeDistance && showUI) {
+      setShowUI(false);
+    }
+
+    swipeStartRef.current = null;
+  }, [showUI]);
 
   return (
     <main
-      onClick={() => !breathSession.isActive && startBreathSession(breathSession.technique)}
+      onClick={() => !showUI && !breathSession.isActive && startBreathSession(breathSession.technique)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       style={{
         position: 'absolute',
         top: 0,
@@ -8589,7 +11019,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         cursor: 'pointer',
       }}
     >
-      {/* Ripple canvas */}
+      {/* Lung capillaries canvas */}
       <canvas
         ref={canvasRef}
         style={{
@@ -8602,68 +11032,39 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         }}
       />
 
-      {/* Technique selector - horizontal scroll */}
+      {/* Current technique name - smaller, dimmer, top right */}
       <div style={{
         position: 'absolute',
-        top: '5rem',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        maxWidth: '85vw',
-        overflowX: 'auto',
-        overflowY: 'hidden',
-        padding: '0.5rem',
-        WebkitOverflowScrolling: 'touch',
+        top: '2rem',
+        right: '1.5rem',
         zIndex: 1,
       }}>
-        <div style={{ display: 'flex', gap: '0.4rem', whiteSpace: 'nowrap' }}>
-          {Object.entries(breathTechniques).map(([key, tech]) => (
-            <button
-              key={key}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (breathSession.isActive) stopBreathSession();
-                startBreathSession(key);
-              }}
-              style={{
-                background: breathSession.technique === key ? 'rgba(127,219,202,0.15)' : 'transparent',
-                border: breathSession.technique === key ? '1px solid rgba(127,219,202,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                color: breathSession.technique === key ? '#7FDBCA' : 'rgba(255,255,255,0.4)',
-                padding: '0.4rem 0.8rem',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.65rem',
-                fontFamily: '"Jost", sans-serif',
-                flexShrink: 0,
-              }}
-            >
-              {tech.name}
-            </button>
-          ))}
-        </div>
+        <span style={{
+          color: `hsla(${primaryHue}, 45%, 60%, 0.35)`,
+          fontSize: '0.6rem',
+          fontFamily: '"Jost", sans-serif',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+        }}>
+          {breathTechniques[breathSession.technique]?.name || 'Calm'}
+        </span>
       </div>
 
-      {/* Pulsing circle */}
+      {/* Phase label - with fade transition for text changes */}
       <div style={{
-        width: `${140 + (breathSession.isActive ? breathSession.phaseProgress : 0.5) * 100}px`,
-        height: `${140 + (breathSession.isActive ? breathSession.phaseProgress : 0.5) * 100}px`,
-        borderRadius: '50%',
-        background: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
-          ? 'radial-gradient(circle, rgba(255,215,100,0.12) 0%, rgba(255,215,100,0.04) 50%, transparent 70%)'
-          : 'radial-gradient(circle, rgba(127,219,202,0.15) 0%, rgba(127,219,202,0.05) 50%, transparent 70%)',
-        border: `1.5px solid ${breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,215,100,0.35)' : 'rgba(127,219,202,0.3)'}`,
-        transition: 'width 0.15s ease-out, height 0.15s ease-out, background 0.3s ease, border-color 0.3s ease',
-        zIndex: 1,
-      }} />
-
-      {/* Phase label */}
-      <div style={{
-        marginTop: '2.5rem',
-        color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,215,100,0.8)' : 'rgba(127,219,202,0.7)',
-        fontSize: '0.9rem',
+        position: 'absolute',
+        bottom: '8rem',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
+          ? 'rgba(255,215,100,0.7)'
+          : `hsla(${primaryHue}, 52%, 68%, 0.65)`,
+        fontSize: '0.85rem',
         fontFamily: '"Jost", sans-serif',
-        letterSpacing: '0.2em',
+        letterSpacing: '0.25em',
         textTransform: 'uppercase',
-        transition: 'color 0.3s ease',
+        transition: 'color 0.4s ease, opacity 0.3s ease',
+        opacity: breathSession.isActive ? 1 : 0.7,
         zIndex: 1,
       }}>
         {breathSession.isActive
@@ -8671,19 +11072,159 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
           : 'tap to begin'}
       </div>
 
-      {/* Countdown */}
+      {/* Countdown - reduced size and increased transparency */}
       {breathSession.isActive && (
         <div style={{
-          marginTop: '1rem',
+          position: 'absolute',
+          bottom: '5rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
           color: 'rgba(255,255,255,0.25)',
-          fontSize: '1.5rem',
+          fontSize: '1.4rem',
           fontFamily: '"Jost", sans-serif',
           fontWeight: 300,
+          opacity: 0.5,
           zIndex: 1,
         }}>
           {Math.ceil(breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.duration * (1 - breathSession.phaseProgress)) || ''}
         </div>
       )}
+
+      {/* Swipe hint at bottom */}
+      {!showUI && (
+        <div style={{
+          position: 'absolute',
+          bottom: '1.5rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '0.3rem',
+          opacity: 0.25,
+          pointerEvents: 'none',
+          zIndex: 1,
+        }}>
+          <div style={{
+            width: '2px',
+            height: '24px',
+            background: `linear-gradient(to top, hsla(${primaryHue}, 52%, 68%, 0.5), transparent)`,
+            borderRadius: '1px',
+          }} />
+        </div>
+      )}
+
+      {/* Technique selector - bottom drawer */}
+      {showUI && (
+        <>
+          {/* Backdrop - tap to close */}
+          <div
+            onClick={(e) => { e.stopPropagation(); setShowUI(false); }}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              zIndex: 10,
+              animation: 'fadeInBreath 0.5s ease-out',
+            }}
+          />
+          {/* Bottom drawer */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            maxHeight: '50vh',
+            background: 'rgba(10,10,15,0.95)',
+            borderRadius: '20px 20px 0 0',
+            backdropFilter: 'blur(20px)',
+            border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.12)`,
+            borderBottom: 'none',
+            zIndex: 11,
+            animation: 'slideUpBreath 0.5s ease-out',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            {/* Drawer handle */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '0.75rem',
+              cursor: 'pointer',
+            }} onClick={(e) => { e.stopPropagation(); setShowUI(false); }}>
+              <div style={{
+                width: '36px',
+                height: '4px',
+                background: `hsla(${primaryHue}, 52%, 68%, 0.3)`,
+                borderRadius: '2px',
+              }} />
+            </div>
+
+            {/* Title */}
+            <div style={{
+              textAlign: 'center',
+              padding: '0 1rem 0.75rem',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              <span style={{
+                color: `hsla(${primaryHue}, 52%, 68%, 0.7)`,
+                fontSize: '0.6rem',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+              }}>Breathing Techniques</span>
+            </div>
+
+            {/* Scrollable list */}
+            <div style={{
+              overflowY: 'auto',
+              padding: '0.5rem 0',
+              WebkitOverflowScrolling: 'touch',
+            }}>
+              {Object.entries(breathTechniques).map(([key, tech]) => (
+                <button
+                  key={key}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTimeout(() => {
+                      if (breathSession.isActive) stopBreathSession();
+                      startBreathSession(key);
+                      setShowUI(false);
+                    }, 80);
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    background: breathSession.technique === key ? `hsla(${primaryHue}, 52%, 68%, 0.1)` : 'transparent',
+                    border: 'none',
+                    borderLeft: breathSession.technique === key ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
+                    color: breathSession.technique === key ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                    padding: '0.85rem 1.5rem',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontFamily: '"Jost", sans-serif',
+                    textAlign: 'left',
+                    transition: 'all 0.4s ease',
+                  }}
+                >
+                  <div style={{ fontWeight: 500 }}>{tech.name}</div>
+                  <div style={{ fontSize: '0.7rem', opacity: 0.6, marginTop: '0.25rem' }}>{tech.description || ''}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+      <style>{`
+        @keyframes slideUpBreath {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        @keyframes fadeInBreath {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
     </main>
   );
 }
@@ -8692,7 +11233,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 // MAIN COMPONENT
 // ============================================================================
 
-function Philos() {
+function Still() {
   // Core state
   const [currentIndex, setCurrentIndex] = useState(0);
   const [savedQuotes, setSavedQuotes] = useState([]);
@@ -8702,6 +11243,7 @@ function Philos() {
   const [selectedThemes, setSelectedThemes] = useState(new Set());
   const [toast, setToast] = useState(null);
   const [settings, setSettings] = useState(defaultSettings);
+  const [showColorOverlay, setShowColorOverlay] = useState(false);
 
   // ============================================================================
   // SCROLL STATE
@@ -8872,8 +11414,10 @@ function Philos() {
     };
   }, [breathSession.isActive, breathSession.isPaused, breathSession.technique]);
 
-  // Get current theme
+  // Get current theme and color
   const currentTheme = themes[settings.theme] || themes.void;
+  const primaryHue = settings.primaryHue || 162;
+  const primaryColor = `hsl(${primaryHue}, 52%, 68%)`;
 
   // Initialize
   useEffect(() => {
@@ -9165,7 +11709,7 @@ function Philos() {
           zIndex: 100,
         }}>
           <h1
-            onClick={() => { setView('scroll'); physicsRef.current.position = 0; physicsRef.current.velocity = 0; indexRef.current = 0; setCurrentIndex(0); }}
+            onClick={() => setTimeout(() => setShowColorOverlay(true), 80)}
             style={{
               fontSize: 'clamp(1.2rem, 3vw, 1.5rem)',
               fontFamily: '"Jost", sans-serif',
@@ -9175,9 +11719,10 @@ function Philos() {
               cursor: 'pointer',
               color: currentTheme.text,
               opacity: 0.9,
+              transition: 'opacity 0.5s ease',
             }}
           >
-            PHILOS
+            STILL
           </h1>
           <nav style={{ display: 'flex', gap: '0.5rem' }}>
             {[
@@ -9188,19 +11733,19 @@ function Philos() {
             ].map(({ key, icon, label }) => (
               <button
                 key={key}
-                onClick={() => setView(view === key ? 'scroll' : key)}
+                onClick={() => setTimeout(() => setView(view === key ? 'scroll' : key), 80)}
                 style={{
-                  background: view === key ? `${currentTheme.accent}22` : `${currentTheme.text}08`,
+                  background: view === key ? `hsla(${primaryHue}, 52%, 68%, 0.13)` : `${currentTheme.text}08`,
                   border: '1px solid',
-                  borderColor: view === key ? `${currentTheme.accent}44` : currentTheme.border,
-                  color: view === key ? currentTheme.text : currentTheme.textMuted,
+                  borderColor: view === key ? `hsla(${primaryHue}, 52%, 68%, 0.27)` : currentTheme.border,
+                  color: view === key ? primaryColor : currentTheme.textMuted,
                   padding: '0.5rem 0.75rem',
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '0.75rem',
                   fontFamily: '"Jost", sans-serif',
                   letterSpacing: '0.05em',
-                  transition: 'all 0.3s ease',
+                  transition: 'all 0.5s ease',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.4rem',
@@ -9269,22 +11814,22 @@ function Philos() {
                 <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <span style={{
                     padding: '0.3rem 0.8rem',
-                    background: 'rgba(127, 219, 202, 0.15)',
+                    background: `hsla(${primaryHue}, 52%, 68%, 0.15)`,
                     borderRadius: '4px',
-                    color: '#7FDBCA',
+                    color: primaryColor,
                     fontSize: '0.7rem',
                     letterSpacing: '0.1em',
                     textTransform: 'uppercase',
-                    border: '1px solid rgba(127, 219, 202, 0.25)',
+                    border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.25)`,
                   }}>
                     {currentQuote.school}
                   </span>
                   {currentQuote.themes && currentQuote.themes.slice(0, 2).map(theme => (
                     <span key={theme} style={{
                       padding: '0.25rem 0.6rem',
-                      background: 'rgba(127, 219, 202, 0.1)',
+                      background: `hsla(${primaryHue}, 52%, 68%, 0.1)`,
                       borderRadius: '3px',
-                      color: 'rgba(127, 219, 202, 0.7)',
+                      color: `hsla(${primaryHue}, 52%, 68%, 0.7)`,
                       fontSize: '0.65rem',
                       letterSpacing: '0.05em',
                       textTransform: 'lowercase',
@@ -9301,7 +11846,7 @@ function Philos() {
                     style={{
                       background: currentTheme.cardBg,
                       border: `1px solid ${currentTheme.border}`,
-                      color: isQuoteSaved(currentQuote) ? '#7FDBCA' : currentTheme.textMuted,
+                      color: isQuoteSaved(currentQuote) ? primaryColor : currentTheme.textMuted,
                       padding: '0.75rem 1.25rem',
                       borderRadius: '8px',
                       cursor: 'pointer',
@@ -9309,7 +11854,7 @@ function Philos() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem',
-                      transition: 'all 0.3s ease',
+                      transition: 'all 0.5s ease',
                     }}
                   >
                     <span style={{ fontSize: '1.1rem' }}>{isQuoteSaved(currentQuote) ? '♥' : '♡'}</span>Save
@@ -9369,7 +11914,7 @@ function Philos() {
                         padding: '1.25rem 1.5rem',
                         cursor: 'pointer',
                         textAlign: 'left',
-                        transition: 'all 0.3s ease',
+                        transition: 'all 0.5s ease',
                       }}
                     >
                       <div style={{
@@ -9539,7 +12084,15 @@ function Philos() {
 
         {/* Gaze View - Sacred Geometry */}
         {view === 'gaze' && (
-          <GazeMode theme={currentTheme} />
+          <GazeMode
+            theme={currentTheme}
+            primaryHue={settings.primaryHue}
+            onHueChange={(hue) => {
+              const newSettings = { ...settings, primaryHue: hue };
+              setSettings(newSettings);
+              saveSettings(newSettings);
+            }}
+          />
         )}
 
         {/* Breathwork View - Dedicated breathing practice */}
@@ -9549,6 +12102,8 @@ function Philos() {
             breathTechniques={breathTechniques}
             startBreathSession={startBreathSession}
             stopBreathSession={stopBreathSession}
+            primaryHue={primaryHue}
+            primaryColor={primaryColor}
           />
         )}
         {false && view === 'breathwork-old' && (
@@ -9657,12 +12212,12 @@ function Philos() {
               {/* Schools */}
               <h2 style={{ fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: currentTheme.textMuted, marginBottom: '1.5rem', textAlign: 'center' }}>Filter by School of Thought</h2>
               {selectedSchools.size > 0 && (
-                <button onClick={() => setSelectedSchools(new Set())} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: '#7FDBCA', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}>Clear school filters</button>
+                <button onClick={() => setSelectedSchools(new Set())} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: primaryColor, fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}>Clear school filters</button>
               )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', marginBottom: '2.5rem' }}>
                 {allSchools.map(school => {
                   const isSelected = selectedSchools.has(school);
-                  const color = '#7FDBCA';
+                  const color = primaryColor;
                   const count = allQuotes.filter(q => q.school === school).length;
                   return (
                     <button
@@ -9677,7 +12232,7 @@ function Philos() {
                         borderRadius: '6px',
                         cursor: 'pointer',
                         fontSize: '0.8rem',
-                        transition: 'all 0.3s ease',
+                        transition: 'all 0.5s ease',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.5rem',
@@ -9692,12 +12247,12 @@ function Philos() {
               {/* Themes/Categories */}
               <h2 style={{ fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: currentTheme.textMuted, marginBottom: '1.5rem', textAlign: 'center' }}>Filter by Theme</h2>
               {selectedThemes.size > 0 && (
-                <button onClick={() => setSelectedThemes(new Set())} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: '#7FDBCA', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}>Clear theme filters</button>
+                <button onClick={() => setSelectedThemes(new Set())} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: primaryColor, fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}>Clear theme filters</button>
               )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center' }}>
                 {allThemes.map(theme => {
                   const isSelected = selectedThemes.has(theme);
-                  const color = '#7FDBCA';
+                  const color = primaryColor;
                   const count = allQuotes.filter(q => q.themes && q.themes.includes(theme)).length;
                   return (
                     <button
@@ -9712,7 +12267,7 @@ function Philos() {
                         borderRadius: '20px',
                         cursor: 'pointer',
                         fontSize: '0.75rem',
-                        transition: 'all 0.3s ease',
+                        transition: 'all 0.5s ease',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.4rem',
@@ -9765,9 +12320,9 @@ function Philos() {
                     <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
                       <div>
                         <div style={{ fontSize: '0.85rem', color: currentTheme.textMuted, fontWeight: 500 }}>{quote.author}</div>
-                        <span style={{ display: 'inline-block', marginTop: '0.35rem', padding: '0.2rem 0.5rem', background: 'rgba(127, 219, 202, 0.15)', borderRadius: '3px', color: '#7FDBCA', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{quote.school}</span>
+                        <span style={{ display: 'inline-block', marginTop: '0.35rem', padding: '0.2rem 0.5rem', background: `hsla(${primaryHue}, 52%, 68%, 0.15)`, borderRadius: '3px', color: primaryColor, fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{quote.school}</span>
                       </div>
-                      <button onClick={() => toggleSave(quote)} style={{ background: 'none', border: `1px solid ${currentTheme.border}`, color: '#7FDBCA', padding: '0.4rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
+                      <button onClick={() => toggleSave(quote)} style={{ background: 'none', border: `1px solid ${currentTheme.border}`, color: primaryColor, padding: '0.4rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
                     </div>
                   </div>
                 ))}
@@ -9791,9 +12346,60 @@ function Philos() {
             color: currentTheme.text,
             fontSize: '0.85rem',
             zIndex: 200,
-            animation: 'fadeIn 0.3s ease',
+            animation: 'fadeIn 0.5s ease',
           }}>
             {toast}
+          </div>
+        )}
+
+        {/* Color Overlay - triggered by tapping STILL logo */}
+        {showColorOverlay && (
+          <div
+            onClick={() => setShowColorOverlay(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.92)',
+              zIndex: 300,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '2.5rem',
+              animation: 'colorOverlayIn 0.6s ease-out',
+            }}
+          >
+            {COLOR_PRESETS.map((preset, i) => (
+              <button
+                key={preset.hue}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newSettings = { ...settings, primaryHue: preset.hue };
+                  setSettings(newSettings);
+                  saveSettings(newSettings);
+                  setTimeout(() => setShowColorOverlay(false), 300);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: primaryHue === preset.hue
+                    ? `hsl(${preset.hue}, 52%, 68%)`
+                    : 'rgba(255, 255, 255, 0.25)',
+                  fontSize: '1.1rem',
+                  fontFamily: '"Jost", sans-serif',
+                  fontWeight: 300,
+                  letterSpacing: '0.3em',
+                  textTransform: 'lowercase',
+                  cursor: 'pointer',
+                  padding: '0.5rem 1rem',
+                  transition: 'all 0.5s ease',
+                  opacity: 0,
+                  animation: `colorWordIn 0.6s ease-out ${0.1 + i * 0.08}s forwards`,
+                }}
+              >
+                {preset.name}
+              </button>
+            ))}
           </div>
         )}
 
@@ -9806,6 +12412,8 @@ function Philos() {
           @keyframes twinkle { 0%, 100% { opacity: 0.1; } 50% { opacity: 0.5; } }
           @keyframes scrollPulse { 0%, 100% { opacity: 0.4; transform: scaleY(1); } 50% { opacity: 0.8; transform: scaleY(1.2); } }
           @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+          @keyframes colorOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+          @keyframes colorWordIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
           ::-webkit-scrollbar { width: 4px; }
           ::-webkit-scrollbar-track { background: transparent; }
           ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 2px; }
