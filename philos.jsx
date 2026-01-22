@@ -757,6 +757,61 @@ const themes = {
 const ThemeContext = createContext(themes.void);
 
 // ============================================================================
+// BREATHWORK TECHNIQUES
+// ============================================================================
+
+const breathTechniques = {
+  box: {
+    name: 'Box Breathing',
+    description: 'Equal phases for calm focus',
+    phases: [
+      { name: 'inhale', label: 'Inhale', duration: 4 },
+      { name: 'holdFull', label: 'Hold', duration: 4 },
+      { name: 'exhale', label: 'Exhale', duration: 4 },
+      { name: 'holdEmpty', label: 'Hold', duration: 4 },
+    ],
+    color: { inhale: '#1a3a4a', holdFull: '#2a4a3a', exhale: '#2a3a4a', holdEmpty: '#1a2a3a' },
+  },
+  relaxation: {
+    name: '4-7-8 Relaxation',
+    description: 'Calms the nervous system',
+    phases: [
+      { name: 'inhale', label: 'Inhale', duration: 4 },
+      { name: 'holdFull', label: 'Hold', duration: 7 },
+      { name: 'exhale', label: 'Exhale', duration: 8 },
+    ],
+    color: { inhale: '#1a3a5a', holdFull: '#3a4a4a', exhale: '#2a2a4a' },
+  },
+  coherent: {
+    name: 'Coherent Breathing',
+    description: '5.5 breaths per minute for heart coherence',
+    phases: [
+      { name: 'inhale', label: 'Inhale', duration: 5.5 },
+      { name: 'exhale', label: 'Exhale', duration: 5.5 },
+    ],
+    color: { inhale: '#1a4a4a', exhale: '#2a3a5a' },
+  },
+  calm: {
+    name: 'Simple Calm',
+    description: 'Gentle 5-6 breathing',
+    phases: [
+      { name: 'inhale', label: 'Breathe in', duration: 5 },
+      { name: 'exhale', label: 'Breathe out', duration: 6 },
+    ],
+    color: { inhale: '#1a3a4a', exhale: '#2a3a4a' },
+  },
+  energize: {
+    name: 'Energizing Breath',
+    description: 'Quick breaths to increase alertness',
+    phases: [
+      { name: 'inhale', label: 'In', duration: 2 },
+      { name: 'exhale', label: 'Out', duration: 2 },
+    ],
+    color: { inhale: '#3a4a3a', exhale: '#2a3a3a' },
+  },
+};
+
+// ============================================================================
 // SETTINGS
 // ============================================================================
 
@@ -880,7 +935,24 @@ function Philos() {
   const typewriterRef = useRef(null);
 
   // ============================================================================
-  // BREATHING - The heartbeat of the app
+  // BREATH SESSION STATE (for dedicated breathwork view)
+  // ============================================================================
+
+  const [breathSession, setBreathSession] = useState({
+    technique: 'calm',
+    isActive: false,
+    isPaused: false,
+    phase: 'inhale',
+    phaseIndex: 0,
+    phaseProgress: 0,  // 0-1 through current phase
+    cycleCount: 0,
+    sessionTime: 0,
+    totalCycles: 10,
+  });
+  const breathSessionRef = useRef(null);
+
+  // ============================================================================
+  // BREATHING - The heartbeat of the app (ambient background)
   // Inhale: 5s (0→1), Exhale: 6s (1→0), Total cycle: 11s
   // ============================================================================
 
@@ -927,6 +999,93 @@ function Philos() {
     animationFrame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animationFrame);
   }, [settings.breathMode]);
+
+  // ============================================================================
+  // BREATH SESSION CONTROLS (for dedicated breathwork view)
+  // ============================================================================
+
+  const startBreathSession = useCallback((techniqueName) => {
+    const technique = breathTechniques[techniqueName];
+    if (!technique) return;
+
+    setBreathSession({
+      technique: techniqueName,
+      isActive: true,
+      isPaused: false,
+      phase: technique.phases[0].name,
+      phaseIndex: 0,
+      phaseProgress: 0,
+      cycleCount: 0,
+      sessionTime: 0,
+      totalCycles: 10,
+    });
+  }, []);
+
+  const stopBreathSession = useCallback(() => {
+    setBreathSession(prev => ({ ...prev, isActive: false, isPaused: false }));
+    if (breathSessionRef.current) {
+      cancelAnimationFrame(breathSessionRef.current);
+    }
+  }, []);
+
+  const togglePauseBreathSession = useCallback(() => {
+    setBreathSession(prev => ({ ...prev, isPaused: !prev.isPaused }));
+  }, []);
+
+  // Breath session animation loop
+  useEffect(() => {
+    if (!breathSession.isActive || breathSession.isPaused) {
+      if (breathSessionRef.current) cancelAnimationFrame(breathSessionRef.current);
+      return;
+    }
+
+    const technique = breathTechniques[breathSession.technique];
+    if (!technique) return;
+
+    let lastTime = Date.now();
+    let phaseStartTime = Date.now();
+    let currentPhaseIndex = breathSession.phaseIndex;
+    let currentCycleCount = breathSession.cycleCount;
+    let sessionStartTime = Date.now() - (breathSession.sessionTime * 1000);
+
+    const animate = () => {
+      const now = Date.now();
+      const phase = technique.phases[currentPhaseIndex];
+      const phaseDuration = phase.duration * 1000;
+      const phaseElapsed = now - phaseStartTime;
+      const phaseProgress = Math.min(phaseElapsed / phaseDuration, 1);
+
+      // Update session time
+      const sessionTime = (now - sessionStartTime) / 1000;
+
+      // Check if phase complete
+      if (phaseProgress >= 1) {
+        currentPhaseIndex = (currentPhaseIndex + 1) % technique.phases.length;
+        phaseStartTime = now;
+
+        // Count cycle when we return to first phase
+        if (currentPhaseIndex === 0) {
+          currentCycleCount++;
+        }
+      }
+
+      setBreathSession(prev => ({
+        ...prev,
+        phase: technique.phases[currentPhaseIndex].name,
+        phaseIndex: currentPhaseIndex,
+        phaseProgress: phaseProgress,
+        cycleCount: currentCycleCount,
+        sessionTime: Math.floor(sessionTime),
+      }));
+
+      breathSessionRef.current = requestAnimationFrame(animate);
+    };
+
+    breathSessionRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (breathSessionRef.current) cancelAnimationFrame(breathSessionRef.current);
+    };
+  }, [breathSession.isActive, breathSession.isPaused, breathSession.technique]);
 
   // Get current theme
   const currentTheme = themes[settings.theme] || themes.void;
@@ -1364,6 +1523,7 @@ function Philos() {
           </h1>
           <nav style={{ display: 'flex', gap: '0.5rem' }}>
             {[
+              { key: 'breathe', icon: '◯', label: 'Breathe' },
               { key: 'daily', icon: '☀', label: 'Daily' },
               { key: 'filter', icon: '◉', label: 'Filter' },
               { key: 'saved', icon: '♡', label: String(savedQuotes.length) },
@@ -1697,6 +1857,237 @@ function Philos() {
                 />
               ))}
             </div>
+          </main>
+        )}
+
+        {/* Breathe View */}
+        {view === 'breathe' && (
+          <main style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2,
+            background: breathSession.isActive
+              ? breathTechniques[breathSession.technique]?.color?.[breathSession.phase] || currentTheme.bg
+              : currentTheme.bg,
+            transition: 'background 2s ease',
+          }}>
+            {/* Technique Selection (when not in session) */}
+            {!breathSession.isActive && (
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <h2 style={{
+                  fontSize: '0.7rem',
+                  letterSpacing: '0.25em',
+                  textTransform: 'uppercase',
+                  color: currentTheme.textMuted,
+                  marginBottom: '2rem',
+                }}>
+                  Choose Your Breath
+                </h2>
+
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                  maxWidth: '320px',
+                  margin: '0 auto',
+                }}>
+                  {Object.entries(breathTechniques).map(([key, tech]) => (
+                    <button
+                      key={key}
+                      onClick={() => startBreathSession(key)}
+                      style={{
+                        background: currentTheme.cardBg,
+                        border: `1px solid ${currentTheme.border}`,
+                        borderRadius: '12px',
+                        padding: '1.25rem 1.5rem',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.3s ease',
+                      }}
+                    >
+                      <div style={{
+                        fontSize: '1rem',
+                        fontFamily: '"Caveat", cursive',
+                        color: currentTheme.text,
+                        marginBottom: '0.25rem',
+                      }}>
+                        {tech.name}
+                      </div>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        color: currentTheme.textMuted,
+                        fontFamily: '"Jost", sans-serif',
+                      }}>
+                        {tech.description}
+                      </div>
+                      <div style={{
+                        fontSize: '0.65rem',
+                        color: currentTheme.textMuted,
+                        marginTop: '0.5rem',
+                        opacity: 0.7,
+                      }}>
+                        {tech.phases.map(p => `${p.label} ${p.duration}s`).join(' → ')}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Active Breath Session */}
+            {breathSession.isActive && (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                height: '100%',
+                position: 'relative',
+              }}>
+                {/* Central Breath Circle */}
+                <div style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {/* Outer glow */}
+                  <div style={{
+                    position: 'absolute',
+                    width: `${120 + breathSession.phaseProgress * 80}px`,
+                    height: `${120 + breathSession.phaseProgress * 80}px`,
+                    borderRadius: '50%',
+                    background: `radial-gradient(circle, ${currentTheme.accent}15 0%, transparent 70%)`,
+                    transform: breathSession.phase === 'inhale' || breathSession.phase === 'holdFull'
+                      ? `scale(${0.8 + breathSession.phaseProgress * 0.6})`
+                      : `scale(${1.4 - breathSession.phaseProgress * 0.6})`,
+                    transition: 'transform 0.1s linear',
+                  }} />
+
+                  {/* Main circle */}
+                  <div style={{
+                    width: '120px',
+                    height: '120px',
+                    borderRadius: '50%',
+                    border: `2px solid ${currentTheme.accent}`,
+                    opacity: 0.6 + breathSession.phaseProgress * 0.3,
+                    transform: breathSession.phase === 'inhale' || breathSession.phase === 'holdFull'
+                      ? `scale(${0.7 + breathSession.phaseProgress * 0.6})`
+                      : `scale(${1.3 - breathSession.phaseProgress * 0.6})`,
+                    transition: 'transform 0.1s linear, opacity 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    {/* Inner circle */}
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      background: `${currentTheme.accent}30`,
+                      transform: breathSession.phase === 'inhale' || breathSession.phase === 'holdFull'
+                        ? `scale(${0.6 + breathSession.phaseProgress * 0.8})`
+                        : `scale(${1.4 - breathSession.phaseProgress * 0.8})`,
+                      transition: 'transform 0.1s linear',
+                    }} />
+                  </div>
+                </div>
+
+                {/* Phase Label */}
+                <div style={{
+                  marginTop: '3rem',
+                  textAlign: 'center',
+                }}>
+                  <div style={{
+                    fontSize: '1.5rem',
+                    fontFamily: '"Caveat", cursive',
+                    color: currentTheme.text,
+                    opacity: 0.9,
+                    letterSpacing: '0.05em',
+                  }}>
+                    {breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label}
+                  </div>
+
+                  {/* Progress bar for current phase */}
+                  <div style={{
+                    width: '200px',
+                    height: '2px',
+                    background: currentTheme.border,
+                    borderRadius: '1px',
+                    marginTop: '1rem',
+                    overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      width: `${breathSession.phaseProgress * 100}%`,
+                      height: '100%',
+                      background: currentTheme.accent,
+                      transition: 'width 0.1s linear',
+                    }} />
+                  </div>
+                </div>
+
+                {/* Session Info */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '6rem',
+                  display: 'flex',
+                  gap: '2rem',
+                  fontSize: '0.75rem',
+                  color: currentTheme.textMuted,
+                  fontFamily: '"Jost", sans-serif',
+                }}>
+                  <div>Cycle {breathSession.cycleCount + 1}</div>
+                  <div>{Math.floor(breathSession.sessionTime / 60)}:{String(breathSession.sessionTime % 60).padStart(2, '0')}</div>
+                </div>
+
+                {/* Controls */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '2rem',
+                  display: 'flex',
+                  gap: '1rem',
+                }}>
+                  <button
+                    onClick={togglePauseBreathSession}
+                    style={{
+                      background: currentTheme.cardBg,
+                      border: `1px solid ${currentTheme.border}`,
+                      color: currentTheme.text,
+                      padding: '0.75rem 1.5rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontFamily: '"Jost", sans-serif',
+                    }}
+                  >
+                    {breathSession.isPaused ? '▶ Resume' : '⏸ Pause'}
+                  </button>
+                  <button
+                    onClick={stopBreathSession}
+                    style={{
+                      background: 'transparent',
+                      border: `1px solid ${currentTheme.border}`,
+                      color: currentTheme.textMuted,
+                      padding: '0.75rem 1.5rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontFamily: '"Jost", sans-serif',
+                    }}
+                  >
+                    ✕ End
+                  </button>
+                </div>
+              </div>
+            )}
           </main>
         )}
 
