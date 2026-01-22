@@ -13894,6 +13894,39 @@ function Still() {
     }, stepDuration);
   }, []);
 
+  // Autoplay music on app start
+  useEffect(() => {
+    const startMusic = () => {
+      if (audioRef.current && musicTracks.length > 0) {
+        audioRef.current.src = musicTracks[0].file;
+        audioRef.current.volume = 1;
+        audioRef.current.play()
+          .then(() => {
+            setCurrentTrack(0);
+            setIsPlaying(true);
+          })
+          .catch(() => {
+            // Autoplay blocked - wait for user interaction
+            const playOnInteraction = () => {
+              if (audioRef.current && !isPlaying) {
+                audioRef.current.play()
+                  .then(() => {
+                    setCurrentTrack(0);
+                    setIsPlaying(true);
+                  })
+                  .catch(() => {});
+              }
+              document.removeEventListener('touchstart', playOnInteraction);
+              document.removeEventListener('click', playOnInteraction);
+            };
+            document.addEventListener('touchstart', playOnInteraction, { once: true });
+            document.addEventListener('click', playOnInteraction, { once: true });
+          });
+      }
+    };
+    startMusic();
+  }, []);
+
   // ============================================================================
   // SCROLL STATE
   // ============================================================================
