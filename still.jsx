@@ -7229,7 +7229,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     // Draw a single mandala ring
     const drawRing = (radius, segments, breath, time, ringIndex) => {
-      const hue = hue + ringIndex * 8;
+      const ringHue = hue + ringIndex * 8;
       const rotation = time * 0.0001 * (ringIndex % 2 === 0 ? 1 : -1);
 
       ctx.save();
@@ -7260,9 +7260,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
         // Gradient fill
         const gradient = ctx.createRadialGradient(radius, 0, 0, radius, 0, petalLength);
-        gradient.addColorStop(0, `hsla(${hue}, 70%, 60%, ${0.6 + breath * 0.2})`);
-        gradient.addColorStop(0.5, `hsla(${hue + 10}, 65%, 50%, ${0.4 + breath * 0.15})`);
-        gradient.addColorStop(1, `hsla(${hue + 20}, 60%, 40%, 0.1)`);
+        gradient.addColorStop(0, `hsla(${ringHue}, 70%, 60%, ${0.6 + breath * 0.2})`);
+        gradient.addColorStop(0.5, `hsla(${ringHue + 10}, 65%, 50%, ${0.4 + breath * 0.15})`);
+        gradient.addColorStop(1, `hsla(${ringHue + 20}, 60%, 40%, 0.1)`);
 
         ctx.fillStyle = gradient;
         ctx.fill();
@@ -7279,7 +7279,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
         ctx.beginPath();
         ctx.arc(x, y, dotSize, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(${hue}, 80%, 70%, ${0.5 + breath * 0.3})`;
+        ctx.fillStyle = `hsla(${ringHue}, 80%, 70%, ${0.5 + breath * 0.3})`;
         ctx.fill();
       }
 
@@ -7759,8 +7759,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           if (intensity > 0.55) {
             const alpha = (intensity - 0.55) * 2 * (0.3 + breath * 0.15);
             // Steel blue and teal caustics from palette
-            const hue = hue + (intensity > 0.7 ? 10 : -10); // Teal variations
-            ctx.fillStyle = `hsla(${hue}, 45%, 55%, ${alpha})`;
+            const causticHue = hue + (intensity > 0.7 ? 10 : -10); // Teal variations
+            ctx.fillStyle = `hsla(${causticHue}, 45%, 55%, ${alpha})`;
             ctx.fillRect(x, y, cellSize + 1, cellSize + 1);
           }
         }
