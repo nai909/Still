@@ -1223,7 +1223,7 @@ const gazeShapes = [
 const BREATH_CYCLE = 11; // seconds for full cycle
 const BREATH_SPEED = (2 * Math.PI) / BREATH_CYCLE;
 
-function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false }) {
+function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false, currentVisual, onVisualChange }) {
   // Use primaryHue throughout for consistent color scheme
   const hue = primaryHue;
   // Background mode: dimmer, slower, no interaction
@@ -1237,7 +1237,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   const meshRef = React.useRef(null);
   const clockRef = React.useRef(null);
 
-  const [currentMode, setCurrentMode] = React.useState('jellyfish');
+  // Use prop if provided, otherwise use internal state
+  const [internalMode, setInternalMode] = React.useState('jellyfish');
+  const currentMode = currentVisual !== undefined ? currentVisual : internalMode;
+  const setCurrentMode = onVisualChange !== undefined ? onVisualChange : setInternalMode;
   const [currentShape, setCurrentShape] = React.useState('torus');
   const [showUI, setShowUI] = React.useState(false);
   const [selectedTechnique, setSelectedTechnique] = React.useState('relaxation');
@@ -13800,6 +13803,7 @@ function Still() {
   const [toast, setToast] = useState(null);
   const [settings, setSettings] = useState(defaultSettings);
   const [showColorOverlay, setShowColorOverlay] = useState(false);
+  const [gazeVisual, setGazeVisual] = useState('jellyfish');
 
   // Music player state
   const [musicOpen, setMusicOpen] = useState(false);
@@ -14385,6 +14389,7 @@ function Still() {
             theme={currentTheme}
             primaryHue={settings.primaryHue}
             backgroundMode={true}
+            currentVisual={gazeVisual}
           />
         )}
 
@@ -14831,6 +14836,8 @@ function Still() {
               setSettings(newSettings);
               saveSettings(newSettings);
             }}
+            currentVisual={gazeVisual}
+            onVisualChange={setGazeVisual}
           />
         )}
 
