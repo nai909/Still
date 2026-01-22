@@ -14466,38 +14466,32 @@ function Still() {
                 </button>
               );
             })}
-            {/* Quote sub-nav - only when in Read mode */}
+            {/* Saved quotes button - only when in Read mode */}
             {(view === 'scroll' || view === 'filter' || view === 'saved') && (
               <>
                 <div style={{ width: '1px', background: currentTheme.border, margin: '0 0.25rem' }} />
-                {[
-                  { key: 'filter', icon: '◉', label: 'Filter' },
-                  { key: 'saved', icon: '♡', label: String(savedQuotes.length) },
-                ].map(({ key, icon, label }) => (
-                  <button
-                    key={key}
-                    onClick={() => setTimeout(() => setView(view === key ? 'scroll' : key), 80)}
-                    style={{
-                      background: view === key ? `hsla(${primaryHue}, 52%, 68%, 0.13)` : `${currentTheme.text}08`,
-                      border: '1px solid',
-                      borderColor: view === key ? `hsla(${primaryHue}, 52%, 68%, 0.27)` : currentTheme.border,
-                      color: view === key ? primaryColor : currentTheme.textMuted,
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem',
-                      fontFamily: '"Jost", sans-serif',
-                      letterSpacing: '0.05em',
-                      transition: 'all 0.5s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                    }}
-                  >
-                    <span style={{ fontSize: '0.9rem' }}>{icon}</span>
-                    <span className="nav-label">{label}</span>
-                  </button>
-                ))}
+                <button
+                  onClick={() => setTimeout(() => setView(view === 'saved' ? 'scroll' : 'saved'), 80)}
+                  style={{
+                    background: view === 'saved' ? `hsla(${primaryHue}, 52%, 68%, 0.13)` : `${currentTheme.text}08`,
+                    border: '1px solid',
+                    borderColor: view === 'saved' ? `hsla(${primaryHue}, 52%, 68%, 0.27)` : currentTheme.border,
+                    color: view === 'saved' ? primaryColor : currentTheme.textMuted,
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    fontFamily: '"Jost", sans-serif',
+                    letterSpacing: '0.05em',
+                    transition: 'all 0.5s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}
+                >
+                  <span style={{ fontSize: '0.9rem' }}>♡</span>
+                  <span className="nav-label">{savedQuotes.length}</span>
+                </button>
               </>
             )}
           </nav>
@@ -14603,6 +14597,24 @@ function Still() {
                     }}
                   >
                     <span style={{ fontSize: '1.1rem' }}>{isQuoteSaved(currentQuote) ? '♥' : '♡'}</span>Save
+                  </button>
+                  <button
+                    onClick={() => setView('filter')}
+                    style={{
+                      background: currentTheme.cardBg,
+                      border: `1px solid ${currentTheme.border}`,
+                      color: (selectedSchools.size > 0 || selectedThemes.size > 0) ? primaryColor : currentTheme.textMuted,
+                      padding: '0.75rem 1.25rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      transition: 'all 0.5s ease',
+                    }}
+                  >
+                    <span style={{ fontSize: '1.1rem' }}>◉</span>Filter
                   </button>
                 </div>
               </div>
