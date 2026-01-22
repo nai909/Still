@@ -853,7 +853,6 @@ const gazeModes = [
   { key: 'rain', name: 'Rain on Glass' },
   { key: 'jellyfish', name: 'Jellyfish' },
   { key: 'ink', name: 'Ink in Water' },
-  { key: 'zen', name: 'Zen Garden' },
   { key: 'fireflies', name: 'Fireflies' },
 ];
 
@@ -866,7 +865,6 @@ const gazeExperiences = [
   { key: 'night-walk', name: 'Night Walk', visual: 'fireflies', breath: 'resonance', description: 'Evening calm' },
   { key: 'ocean-mind', name: 'Ocean Mind', visual: 'ink', breath: 'ocean', description: 'Fluid meditation' },
   { key: 'focus', name: 'Focus', visual: 'geometry', breath: 'box', description: 'Sharp clarity' },
-  { key: 'garden-zen', name: 'Garden Zen', visual: 'zen', breath: 'coherent', description: 'Deep stillness' },
   { key: 'forest-floor', name: 'Forest Floor', visual: 'mycelium', breath: 'extend', description: 'Grounded presence' },
   { key: 'spring-bloom', name: 'Spring Bloom', visual: 'blossom', breath: 'resonance', description: 'Gentle renewal' },
   { key: 'breathe-deep', name: 'Breathe Deep', visual: 'lungs', breath: 'relaxation', description: 'Guided breath' },
@@ -3176,14 +3174,14 @@ function GazeMode({ theme }) {
       colorB: new Float32Array(GRID_SIZE * GRID_SIZE),
     };
 
-    // Ink colors
+    // Ink colors - luminous on dark background
     const inkColors = [
-      { r: 0.15, g: 0.2, b: 0.85 },   // Indigo
-      { r: 0.85, g: 0.15, b: 0.25 },  // Crimson
-      { r: 0.1, g: 0.75, b: 0.5 },    // Emerald
-      { r: 0.6, g: 0.2, b: 0.8 },     // Violet
-      { r: 0.9, g: 0.6, b: 0.1 },     // Gold
-      { r: 0.1, g: 0.7, b: 0.85 },    // Cyan
+      { r: 0.3, g: 0.5, b: 1.0 },     // Electric Blue
+      { r: 1.0, g: 0.3, b: 0.4 },     // Coral
+      { r: 0.2, g: 0.9, b: 0.6 },     // Mint
+      { r: 0.7, g: 0.4, b: 1.0 },     // Lavender
+      { r: 1.0, g: 0.8, b: 0.2 },     // Gold
+      { r: 0.5, g: 0.86, b: 0.8 },    // Teal (matches app accent)
     ];
     let colorIndex = 0;
 
@@ -3353,6 +3351,9 @@ function GazeMode({ theme }) {
 
           const density = Math.min(1, grid.density[idx]);
 
+          // Dark background (5, 5, 12) - matching app theme
+          const bgR = 5, bgG = 5, bgB = 12;
+
           if (density > 0.005) {
             const totalColor = grid.colorR[idx] + grid.colorG[idx] + grid.colorB[idx];
 
@@ -3361,21 +3362,21 @@ function GazeMode({ theme }) {
               const g = (grid.colorG[idx] / totalColor) * 255;
               const b = (grid.colorB[idx] / totalColor) * 255;
 
-              // Blend with water color
-              imageData.data[pixelIdx + 0] = Math.floor(240 * (1 - density) + r * density);
-              imageData.data[pixelIdx + 1] = Math.floor(248 * (1 - density) + g * density);
-              imageData.data[pixelIdx + 2] = Math.floor(255 * (1 - density) + b * density);
+              // Blend ink with dark background
+              imageData.data[pixelIdx + 0] = Math.floor(bgR * (1 - density) + r * density);
+              imageData.data[pixelIdx + 1] = Math.floor(bgG * (1 - density) + g * density);
+              imageData.data[pixelIdx + 2] = Math.floor(bgB * (1 - density) + b * density);
               imageData.data[pixelIdx + 3] = 255;
             } else {
-              imageData.data[pixelIdx + 0] = 240;
-              imageData.data[pixelIdx + 1] = 248;
-              imageData.data[pixelIdx + 2] = 255;
+              imageData.data[pixelIdx + 0] = bgR;
+              imageData.data[pixelIdx + 1] = bgG;
+              imageData.data[pixelIdx + 2] = bgB;
               imageData.data[pixelIdx + 3] = 255;
             }
           } else {
-            imageData.data[pixelIdx + 0] = 240;
-            imageData.data[pixelIdx + 1] = 248;
-            imageData.data[pixelIdx + 2] = 255;
+            imageData.data[pixelIdx + 0] = bgR;
+            imageData.data[pixelIdx + 1] = bgG;
+            imageData.data[pixelIdx + 2] = bgB;
             imageData.data[pixelIdx + 3] = 255;
           }
         }
@@ -3477,338 +3478,6 @@ function GazeMode({ theme }) {
       ctx.strokeStyle = 'rgba(255,255,255,0.5)';
       ctx.lineWidth = 1;
       ctx.stroke();
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, getInteractionInfluence, drawRipples]);
-
-  // ========== ZEN GARDEN MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'zen' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    // Sand grid (height map + direction)
-    const SAND_RES = 128;
-    const sand = {
-      height: new Float32Array(SAND_RES * SAND_RES),
-      directionX: new Float32Array(SAND_RES * SAND_RES),
-      directionY: new Float32Array(SAND_RES * SAND_RES),
-    };
-
-    // Initialize with slight noise
-    for (let i = 0; i < sand.height.length; i++) {
-      sand.height[i] = (Math.random() - 0.5) * 0.05;
-    }
-
-    // Stone class
-    class Stone {
-      constructor(x, y, scale) {
-        this.x = x;
-        this.y = y;
-        this.scale = scale;
-        this.rotation = Math.random() * Math.PI * 2;
-        this.vertices = this.generateShape();
-        this.selected = false;
-      }
-
-      generateShape() {
-        const points = [];
-        const baseRadius = 25 * this.scale;
-        const segments = 10;
-        for (let i = 0; i < segments; i++) {
-          const angle = (i / segments) * Math.PI * 2;
-          const noise = 0.7 + Math.random() * 0.5;
-          const r = baseRadius * noise;
-          points.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r * 0.7 });
-        }
-        return points;
-      }
-
-      draw(ctx) {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
-
-        // Shadow
-        ctx.beginPath();
-        this.drawPath(ctx, 4, 4);
-        ctx.fillStyle = 'rgba(80, 70, 60, 0.3)';
-        ctx.fill();
-
-        // Stone body
-        ctx.beginPath();
-        this.drawPath(ctx, 0, 0);
-        const gradient = ctx.createRadialGradient(-8, -8, 0, 0, 0, 35 * this.scale);
-        gradient.addColorStop(0, '#888');
-        gradient.addColorStop(0.4, '#666');
-        gradient.addColorStop(1, '#3a3a3a');
-        ctx.fillStyle = gradient;
-        ctx.fill();
-
-        // Selection ring
-        if (this.selected) {
-          ctx.strokeStyle = 'rgba(127, 219, 202, 0.6)';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-        }
-
-        ctx.restore();
-      }
-
-      drawPath(ctx, ox, oy) {
-        ctx.moveTo(this.vertices[0].x + ox, this.vertices[0].y + oy);
-        for (let i = 1; i <= this.vertices.length; i++) {
-          const v = this.vertices[i % this.vertices.length];
-          ctx.lineTo(v.x + ox, v.y + oy);
-        }
-        ctx.closePath();
-      }
-
-      contains(px, py) {
-        const dx = px - this.x;
-        const dy = py - this.y;
-        return Math.sqrt(dx * dx + dy * dy) < 30 * this.scale;
-      }
-
-      affectSand() {
-        const gx = Math.floor((this.x / canvas.width) * SAND_RES);
-        const gy = Math.floor((this.y / canvas.height) * SAND_RES);
-        const radius = Math.floor(18 * this.scale);
-
-        for (let ox = -radius; ox <= radius; ox++) {
-          for (let oy = -radius; oy <= radius; oy++) {
-            const dist = Math.sqrt(ox * ox + oy * oy);
-            if (dist > radius || dist < 4) continue;
-
-            const i = gx + ox;
-            const j = gy + oy;
-            if (i < 0 || i >= SAND_RES || j < 0 || j >= SAND_RES) continue;
-
-            const idx = i + j * SAND_RES;
-            const moundHeight = 0.25 * (1 - (dist - 4) / (radius - 4));
-            sand.height[idx] = Math.max(sand.height[idx], moundHeight);
-          }
-        }
-      }
-    }
-
-    // Rake tool
-    const rake = {
-      width: 35,
-      tines: 4,
-      depth: 0.6,
-
-      carve(x, y, prevX, prevY) {
-        const dx = x - prevX;
-        const dy = y - prevY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < 2) return;
-
-        const perpX = -dy / distance;
-        const perpY = dx / distance;
-        const spacing = this.width / this.tines;
-
-        for (let t = 0; t < this.tines; t++) {
-          const offset = (t - (this.tines - 1) / 2) * spacing;
-          const steps = Math.ceil(distance / 3);
-
-          for (let s = 0; s <= steps; s++) {
-            const progress = s / steps;
-            const sx = prevX + perpX * offset + dx * progress;
-            const sy = prevY + perpY * offset + dy * progress;
-            this.carvePoint(sx, sy, dx / distance, dy / distance);
-          }
-        }
-      },
-
-      carvePoint(x, y, dirX, dirY) {
-        const gx = Math.floor((x / canvas.width) * SAND_RES);
-        const gy = Math.floor((y / canvas.height) * SAND_RES);
-
-        for (let ox = -2; ox <= 2; ox++) {
-          for (let oy = -2; oy <= 2; oy++) {
-            const dist = Math.sqrt(ox * ox + oy * oy);
-            if (dist > 2.5) continue;
-
-            const i = gx + ox;
-            const j = gy + oy;
-            if (i < 0 || i >= SAND_RES || j < 0 || j >= SAND_RES) continue;
-
-            const idx = i + j * SAND_RES;
-            const influence = 1 - dist / 2.5;
-
-            // Groove profile
-            const grooveDepth = dist < 1.2 ? -this.depth : this.depth * 0.25;
-            sand.height[idx] += grooveDepth * influence * 0.08;
-            sand.height[idx] = Math.max(-0.8, Math.min(0.8, sand.height[idx]));
-
-            // Direction
-            sand.directionX[idx] = sand.directionX[idx] * 0.6 + dirX * 0.4;
-            sand.directionY[idx] = sand.directionY[idx] * 0.6 + dirY * 0.4;
-          }
-        }
-      }
-    };
-
-    // Initialize stones
-    const stones = [
-      new Stone(canvas.width * 0.3, canvas.height * 0.4, 1.2),
-      new Stone(canvas.width * 0.65, canvas.height * 0.35, 0.8),
-      new Stone(canvas.width * 0.5, canvas.height * 0.6, 1.0),
-    ];
-    stones.forEach(s => s.affectSand());
-
-    // Sand rendering
-    const renderSand = () => {
-      const imageData = ctx.createImageData(canvas.width, canvas.height);
-      const lightDir = { x: -0.5, y: -0.5, z: 0.7 };
-      const len = Math.sqrt(lightDir.x ** 2 + lightDir.y ** 2 + lightDir.z ** 2);
-      lightDir.x /= len; lightDir.y /= len; lightDir.z /= len;
-
-      for (let x = 0; x < canvas.width; x++) {
-        for (let y = 0; y < canvas.height; y++) {
-          const gx = Math.floor((x / canvas.width) * SAND_RES);
-          const gy = Math.floor((y / canvas.height) * SAND_RES);
-          const idx = gx + gy * SAND_RES;
-
-          // Calculate normal from height
-          const hL = sand.height[Math.max(0, gx - 1) + gy * SAND_RES] || 0;
-          const hR = sand.height[Math.min(SAND_RES - 1, gx + 1) + gy * SAND_RES] || 0;
-          const hU = sand.height[gx + Math.max(0, gy - 1) * SAND_RES] || 0;
-          const hD = sand.height[gx + Math.min(SAND_RES - 1, gy + 1) * SAND_RES] || 0;
-
-          let nx = hL - hR;
-          let ny = hU - hD;
-          let nz = 0.4;
-          const nLen = Math.sqrt(nx * nx + ny * ny + nz * nz);
-          nx /= nLen; ny /= nLen; nz /= nLen;
-
-          // Lighting
-          const diffuse = Math.max(0, nx * lightDir.x + ny * lightDir.y + nz * lightDir.z);
-
-          // Sand colors
-          const base = { r: 210, g: 198, b: 175 };
-          const shadow = { r: 160, g: 148, b: 125 };
-          const highlight = { r: 235, g: 228, b: 210 };
-
-          let r, g, b;
-          if (diffuse > 0.5) {
-            const t = (diffuse - 0.5) * 2;
-            r = base.r + (highlight.r - base.r) * t;
-            g = base.g + (highlight.g - base.g) * t;
-            b = base.b + (highlight.b - base.b) * t;
-          } else {
-            const t = diffuse * 2;
-            r = shadow.r + (base.r - shadow.r) * t;
-            g = shadow.g + (base.g - shadow.g) * t;
-            b = shadow.b + (base.b - shadow.b) * t;
-          }
-
-          // Subtle grain
-          const grain = (Math.random() - 0.5) * 6;
-
-          const pixelIdx = (x + y * canvas.width) * 4;
-          imageData.data[pixelIdx + 0] = Math.max(0, Math.min(255, r + grain));
-          imageData.data[pixelIdx + 1] = Math.max(0, Math.min(255, g + grain));
-          imageData.data[pixelIdx + 2] = Math.max(0, Math.min(255, b + grain));
-          imageData.data[pixelIdx + 3] = 255;
-        }
-      }
-
-      ctx.putImageData(imageData, 0, 0);
-    };
-
-    // Smooth sand over time
-    const smoothSand = () => {
-      for (let i = 0; i < sand.height.length; i++) {
-        sand.height[i] *= 0.9998;
-      }
-    };
-
-    let lastTouchPos = {};
-    let isRaking = false;
-    let selectedStone = null;
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const now = Date.now();
-      const elapsed = (now - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      // Handle touch
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          const lastPos = lastTouchPos[point.id];
-
-          if (!point.touchStarted) {
-            // Check if touching a stone
-            selectedStone = stones.find(s => s.contains(point.x, point.y));
-            if (selectedStone) {
-              stones.forEach(s => s.selected = false);
-              selectedStone.selected = true;
-            } else {
-              isRaking = true;
-            }
-            point.touchStarted = true;
-          }
-
-          if (selectedStone && lastPos) {
-            // Move stone
-            selectedStone.x += point.x - lastPos.x;
-            selectedStone.y += point.y - lastPos.y;
-          } else if (isRaking && lastPos) {
-            // Rake sand
-            rake.carve(point.x, point.y, lastPos.x, lastPos.y);
-          }
-
-          lastTouchPos[point.id] = { x: point.x, y: point.y };
-        } else {
-          if (selectedStone) {
-            selectedStone.affectSand();
-            selectedStone.selected = false;
-            selectedStone = null;
-          }
-          isRaking = false;
-          point.touchStarted = false;
-          delete lastTouchPos[point.id];
-        }
-      });
-
-      smoothSand();
-
-      // Render
-      renderSand();
-
-      // Draw stones
-      stones.forEach(s => s.draw(ctx));
-
-      // Breath indicator
-      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
-      ctx.fillStyle = `rgba(120, 110, 90, ${0.4 + breath * 0.3})`;
-      ctx.font = '14px "Jost", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', canvas.width / 2, canvas.height - 35);
-
-      // Instructions hint
-      ctx.fillStyle = 'rgba(120, 110, 90, 0.5)';
-      ctx.font = '12px "Jost", sans-serif';
-      ctx.fillText('drag to rake • drag stones to move', canvas.width / 2, 25);
     };
 
     animate();
