@@ -13928,15 +13928,21 @@ function Still() {
       // Also try on first user interaction (for browsers that block autoplay)
       const playOnInteraction = () => {
         tryPlay();
-        document.removeEventListener('touchstart', playOnInteraction);
-        document.removeEventListener('click', playOnInteraction);
+        // Remove all listeners once played
+        ['touchstart', 'touchend', 'click', 'pointerdown', 'keydown', 'scroll'].forEach(event => {
+          document.removeEventListener(event, playOnInteraction);
+        });
       };
-      document.addEventListener('touchstart', playOnInteraction);
-      document.addEventListener('click', playOnInteraction);
+
+      // Listen for many types of interaction
+      ['touchstart', 'touchend', 'click', 'pointerdown', 'keydown', 'scroll'].forEach(event => {
+        document.addEventListener(event, playOnInteraction, { passive: true });
+      });
 
       return () => {
-        document.removeEventListener('touchstart', playOnInteraction);
-        document.removeEventListener('click', playOnInteraction);
+        ['touchstart', 'touchend', 'click', 'pointerdown', 'keydown', 'scroll'].forEach(event => {
+          document.removeEventListener(event, playOnInteraction);
+        });
       };
     }
   }, []);
