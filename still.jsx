@@ -15119,17 +15119,15 @@ function Still() {
             {/* Hidden audio elements for crossfade */}
             <audio
               ref={audioRef}
-              loop
               onPlay={() => setIsPlaying(true)}
               onPause={() => { if (activeAudioRef.current === 1 && !crossfadeRef.current) setIsPlaying(false); }}
-              onEnded={() => { if (activeAudioRef.current === 1) setIsPlaying(false); }}
+              onEnded={() => { if (activeAudioRef.current === 1 && currentTrack !== null) crossfadeToTrack((currentTrack + 1) % musicTracks.length); }}
             />
             <audio
               ref={audioRef2}
-              loop
               onPlay={() => setIsPlaying(true)}
               onPause={() => { if (activeAudioRef.current === 2 && !crossfadeRef.current) setIsPlaying(false); }}
-              onEnded={() => { if (activeAudioRef.current === 2) setIsPlaying(false); }}
+              onEnded={() => { if (activeAudioRef.current === 2 && currentTrack !== null) crossfadeToTrack((currentTrack + 1) % musicTracks.length); }}
             />
 
             {/* Music toggle button */}
