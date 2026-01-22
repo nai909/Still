@@ -3142,36 +3142,26 @@ function Philos() {
                   : (showTechniqueMenu ? 'choose technique' : 'tap to breathe')}
               </span>
 
-              {/* Session info and stop button */}
+              {/* Stop button */}
               {breathSession.isActive && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  fontSize: '0.65rem',
-                  color: currentTheme.textMuted,
-                }}>
-                  <span>Cycle {breathSession.cycleCount + 1}</span>
-                  <span>{Math.floor(breathSession.sessionTime / 60)}:{String(breathSession.sessionTime % 60).padStart(2, '0')}</span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      stopBreathSession();
-                    }}
-                    style={{
-                      background: 'transparent',
-                      border: `1px solid ${currentTheme.border}`,
-                      color: currentTheme.textMuted,
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.6rem',
-                      fontFamily: '"Jost", sans-serif',
-                    }}
-                  >
-                    stop
-                  </button>
-                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    stopBreathSession();
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: `1px solid ${currentTheme.border}`,
+                    color: currentTheme.textMuted,
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.6rem',
+                    fontFamily: '"Jost", sans-serif',
+                  }}
+                >
+                  stop
+                </button>
               )}
             </div>
 
@@ -3373,20 +3363,6 @@ function Philos() {
                       transition: 'width 0.1s linear',
                     }} />
                   </div>
-                </div>
-
-                {/* Session Info */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: '6rem',
-                  display: 'flex',
-                  gap: '2rem',
-                  fontSize: '0.75rem',
-                  color: currentTheme.textMuted,
-                  fontFamily: '"Jost", sans-serif',
-                }}>
-                  <div>Cycle {breathSession.cycleCount + 1}</div>
-                  <div>{Math.floor(breathSession.sessionTime / 60)}:{String(breathSession.sessionTime % 60).padStart(2, '0')}</div>
                 </div>
 
                 {/* Controls */}
