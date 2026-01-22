@@ -838,22 +838,18 @@ const breathTechniques = {
 
 // Organized by energy level for nervous system regulation
 const gazeModes = [
-  // Grounding (centered, calming)
-  { key: 'geometry', name: 'Sacred Geometry', icon: '◇', group: 'grounding' },
-  { key: 'tree', name: 'Fractal Tree', icon: '🌳', group: 'grounding' },
-  { key: 'fern', name: 'Fern', icon: '🌿', group: 'grounding' },
-  { key: 'succulent', name: 'Succulent', icon: '❀', group: 'grounding' },
-  { key: 'coral', name: 'Coral', icon: '🪸', group: 'grounding' },
-  { key: 'mycelium', name: 'Mycelium', icon: '◌', group: 'grounding' },
-  // Releasing (letting go)
-  { key: 'dandelion', name: 'Dandelion', icon: '❁', group: 'releasing' },
-  { key: 'blossom', name: 'Cherry Blossom', icon: '🌸', group: 'releasing' },
-  // Breath-specific
-  { key: 'lungs', name: 'Breath Tree', icon: '🫁', group: 'breath' },
-  // Flow states
-  { key: 'bilateral', name: 'Bilateral', icon: '∞', group: 'flow' },
-  { key: 'ripples', name: 'Ripples', icon: '◎', group: 'flow' },
-  { key: 'glow', name: 'Soft Glow', icon: '○', group: 'flow' },
+  { key: 'geometry', name: 'Sacred Geometry' },
+  { key: 'tree', name: 'Fractal Tree' },
+  { key: 'fern', name: 'Fern' },
+  { key: 'succulent', name: 'Succulent' },
+  { key: 'coral', name: 'Coral' },
+  { key: 'mycelium', name: 'Mycelium' },
+  { key: 'dandelion', name: 'Dandelion' },
+  { key: 'blossom', name: 'Cherry Blossom' },
+  { key: 'lungs', name: 'Breath Tree' },
+  { key: 'bilateral', name: 'Bilateral' },
+  { key: 'ripples', name: 'Ripples' },
+  { key: 'glow', name: 'Soft Glow' },
 ];
 
 const gazeShapes = [
@@ -2194,7 +2190,7 @@ function GazeMode({ theme }) {
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       )}
 
-      {/* Mode selector (scrollable grid) */}
+      {/* Mode selector (horizontal scroll) */}
       {showUI && (
         <div style={{
           position: 'absolute',
@@ -2202,125 +2198,35 @@ function GazeMode({ theme }) {
           left: '50%',
           transform: 'translateX(-50%)',
           maxWidth: '90vw',
-          maxHeight: '60vh',
-          overflowY: 'auto',
-          padding: '1rem',
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          padding: '0.75rem 1rem',
           background: 'rgba(0,0,0,0.85)',
-          borderRadius: '16px',
+          borderRadius: '12px',
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.1)',
+          WebkitOverflowScrolling: 'touch',
         }}>
-          {/* Grounding modes */}
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem', fontFamily: '"Cormorant Garamond", serif' }}>Grounding</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-              {gazeModes.filter(m => m.group === 'grounding').map(mode => (
-                <button
-                  key={mode.key}
-                  onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
-                  style={{
-                    background: currentMode === mode.key ? 'rgba(127,219,202,0.25)' : 'rgba(255,255,255,0.05)',
-                    border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.08)',
-                    color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
-                    padding: '0.4rem 0.6rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.6rem',
-                    fontFamily: '"Jost", sans-serif',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                  }}
-                >
-                  <span style={{ fontSize: '0.9rem' }}>{mode.icon}</span>
-                  <span>{mode.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* Releasing modes */}
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem', fontFamily: '"Cormorant Garamond", serif' }}>Releasing</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-              {gazeModes.filter(m => m.group === 'releasing').map(mode => (
-                <button
-                  key={mode.key}
-                  onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
-                  style={{
-                    background: currentMode === mode.key ? 'rgba(127,219,202,0.25)' : 'rgba(255,255,255,0.05)',
-                    border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.08)',
-                    color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
-                    padding: '0.4rem 0.6rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.6rem',
-                    fontFamily: '"Jost", sans-serif',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                  }}
-                >
-                  <span style={{ fontSize: '0.9rem' }}>{mode.icon}</span>
-                  <span>{mode.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* Breath-specific */}
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem', fontFamily: '"Cormorant Garamond", serif' }}>Breath</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-              {gazeModes.filter(m => m.group === 'breath').map(mode => (
-                <button
-                  key={mode.key}
-                  onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
-                  style={{
-                    background: currentMode === mode.key ? 'rgba(127,219,202,0.25)' : 'rgba(255,255,255,0.05)',
-                    border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.08)',
-                    color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
-                    padding: '0.4rem 0.6rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.6rem',
-                    fontFamily: '"Jost", sans-serif',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                  }}
-                >
-                  <span style={{ fontSize: '0.9rem' }}>{mode.icon}</span>
-                  <span>{mode.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* Flow states */}
-          <div>
-            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem', fontFamily: '"Cormorant Garamond", serif' }}>Flow</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-              {gazeModes.filter(m => m.group === 'flow').map(mode => (
-                <button
-                  key={mode.key}
-                  onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
-                  style={{
-                    background: currentMode === mode.key ? 'rgba(127,219,202,0.25)' : 'rgba(255,255,255,0.05)',
-                    border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.08)',
-                    color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
-                    padding: '0.4rem 0.6rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.6rem',
-                    fontFamily: '"Jost", sans-serif',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                  }}
-                >
-                  <span style={{ fontSize: '0.9rem' }}>{mode.icon}</span>
-                  <span>{mode.name}</span>
-                </button>
-              ))}
-            </div>
+          <div style={{ display: 'flex', gap: '0.5rem', whiteSpace: 'nowrap' }}>
+            {gazeModes.map(mode => (
+              <button
+                key={mode.key}
+                onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
+                style={{
+                  background: currentMode === mode.key ? 'rgba(127,219,202,0.25)' : 'transparent',
+                  border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                  color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.7rem',
+                  fontFamily: '"Jost", sans-serif',
+                  flexShrink: 0,
+                }}
+              >
+                {mode.name}
+              </button>
+            ))}
           </div>
         </div>
       )}
