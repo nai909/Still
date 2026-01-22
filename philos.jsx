@@ -2810,7 +2810,7 @@ function GazeMode({ theme }) {
         this.driftVelocity = { x: (Math.random() - 0.5) * 0.3, y: -0.15 - Math.random() * 0.1 };
         this.lastPulse = 0;
 
-        this.hue = Math.random() * 80 + 180; // Blues, cyans, purples
+        this.hue = 169 + (Math.random() - 0.5) * 20; // Teal, matching app accent (#7FDBCA)
         this.glow = 0.5;
         this.following = false;
         this.bellSegments = 24;
@@ -2959,7 +2959,7 @@ function GazeMode({ theme }) {
       draw(ctx) {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(150, 200, 220, ${this.opacity})`;
+        ctx.fillStyle = `rgba(127, 219, 202, ${this.opacity})`; // Teal accent
         ctx.fill();
       }
     }
@@ -3081,23 +3081,23 @@ function GazeMode({ theme }) {
         }
       });
 
-      // Background gradient (deep ocean)
+      // Background gradient (dark, matching app theme)
       const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      bgGradient.addColorStop(0, '#0a1628');
-      bgGradient.addColorStop(0.5, '#061018');
-      bgGradient.addColorStop(1, '#020508');
+      bgGradient.addColorStop(0, '#080a0c');
+      bgGradient.addColorStop(0.5, '#040606');
+      bgGradient.addColorStop(1, '#020303');
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // God rays
+      // God rays (teal-tinted)
       ctx.globalCompositeOperation = 'lighter';
       rays.forEach(ray => {
         ray.x += ray.speed;
         if (ray.x > canvas.width + ray.width) ray.x = -ray.width;
 
         const rayGradient = ctx.createLinearGradient(ray.x, 0, ray.x + ray.width, canvas.height);
-        rayGradient.addColorStop(0, `rgba(100, 150, 180, ${ray.opacity * (0.7 + breath * 0.3)})`);
-        rayGradient.addColorStop(0.3, `rgba(80, 130, 160, ${ray.opacity * 0.5})`);
+        rayGradient.addColorStop(0, `rgba(127, 180, 170, ${ray.opacity * (0.7 + breath * 0.3)})`);
+        rayGradient.addColorStop(0.3, `rgba(80, 140, 130, ${ray.opacity * 0.5})`);
         rayGradient.addColorStop(1, 'transparent');
 
         ctx.beginPath();
