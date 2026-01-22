@@ -2403,7 +2403,6 @@ function Philos() {
   const [selectedThemes, setSelectedThemes] = useState(new Set());
   const [toast, setToast] = useState(null);
   const [settings, setSettings] = useState(defaultSettings);
-  const [showSettings, setShowSettings] = useState(false);
 
   // ============================================================================
   // SCROLL STATE
@@ -2830,11 +2829,6 @@ function Philos() {
     applyTransforms(0);
   };
 
-  const updateSettings = (key, value) => {
-    const newSettings = { ...settings, [key]: value };
-    setSettings(newSettings);
-    saveSettings(newSettings);
-  };
 
   // Visual transforms are now handled directly in applyTransforms via refs
 
@@ -2939,134 +2933,8 @@ function Philos() {
                 <span className="nav-label">{label}</span>
               </button>
             ))}
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              style={{
-                background: showSettings ? `${currentTheme.accent}22` : `${currentTheme.text}08`,
-                border: '1px solid',
-                borderColor: showSettings ? `${currentTheme.accent}44` : currentTheme.border,
-                color: showSettings ? currentTheme.text : currentTheme.textMuted,
-                padding: '0.5rem 0.75rem',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-                transition: 'all 0.3s ease',
-              }}
-            >
-              ⚙
-            </button>
           </nav>
         </header>
-
-        {/* Settings Drawer */}
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          right: showSettings ? 0 : '-320px',
-          width: '300px',
-          height: '100vh',
-          background: currentTheme.bg,
-          borderLeft: `1px solid ${currentTheme.border}`,
-          zIndex: 150,
-          padding: '5rem 1.5rem 2rem',
-          transition: 'right 0.3s ease',
-          overflowY: 'auto',
-        }}>
-          <h3 style={{ fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: currentTheme.textMuted, marginBottom: '1.5rem' }}>Settings</h3>
-
-          {/* Theme Selection */}
-          <div style={{ marginBottom: '2rem' }}>
-            <label style={{ fontSize: '0.8rem', color: currentTheme.textMuted, display: 'block', marginBottom: '0.75rem' }}>Theme</label>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {Object.entries(themes).map(([key, theme]) => (
-                <button
-                  key={key}
-                  onClick={() => updateSettings('theme', key)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    background: settings.theme === key ? `${currentTheme.accent}22` : currentTheme.cardBg,
-                    border: `1px solid ${settings.theme === key ? currentTheme.accent : currentTheme.border}`,
-                    borderRadius: '6px',
-                    color: currentTheme.text,
-                    cursor: 'pointer',
-                    fontSize: '0.8rem',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  {theme.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Scroll Speed */}
-          <div style={{ marginBottom: '2rem' }}>
-            <label style={{ fontSize: '0.8rem', color: currentTheme.textMuted, display: 'block', marginBottom: '0.75rem' }}>
-              Scroll Speed: {settings.scrollSpeed}x
-            </label>
-            <input
-              type="range"
-              min="0.5"
-              max="2"
-              step="0.25"
-              value={settings.scrollSpeed}
-              onChange={(e) => updateSettings('scrollSpeed', parseFloat(e.target.value))}
-              style={{ width: '100%', cursor: 'pointer' }}
-            />
-          </div>
-
-          {/* Toggles */}
-          {[
-            { key: 'breathMode', label: 'Breath Mode', description: 'Quotes flow with your breath' },
-            { key: 'depthEffect', label: 'Depth Effect' },
-            { key: 'reducedMotion', label: 'Reduce Motion' },
-          ].map(({ key, label }) => (
-            <div key={key} style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.85rem', color: currentTheme.text }}>{label}</span>
-              <button
-                onClick={() => updateSettings(key, !settings[key])}
-                style={{
-                  width: '44px',
-                  height: '24px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: settings[key] ? currentTheme.accent : currentTheme.border,
-                  cursor: 'pointer',
-                  position: 'relative',
-                  transition: 'background 0.2s ease',
-                }}
-              >
-                <div style={{
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  background: '#fff',
-                  position: 'absolute',
-                  top: '3px',
-                  left: settings[key] ? '23px' : '3px',
-                  transition: 'left 0.2s ease',
-                }} />
-              </button>
-            </div>
-          ))}
-
-          <div style={{ marginTop: '2rem', fontSize: '0.7rem', color: currentTheme.textMuted, textAlign: 'center' }}>
-            {allQuotes.length} quotes from {allSchools.length} traditions
-          </div>
-        </div>
-
-        {/* Settings Overlay */}
-        {showSettings && (
-          <div
-            onClick={() => setShowSettings(false)}
-            style={{
-              position: 'fixed',
-              top: 0, left: 0, right: 0, bottom: 0,
-              background: 'rgba(0,0,0,0.3)',
-              zIndex: 140,
-            }}
-          />
-        )}
 
         {/* Main Scroll View */}
         {view === 'scroll' && currentQuote && (
