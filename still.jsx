@@ -13766,6 +13766,7 @@ function Still() {
   const [view, setView] = useState('scroll');
   const [selectedSchools, setSelectedSchools] = useState(new Set());
   const [selectedThemes, setSelectedThemes] = useState(new Set());
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [toast, setToast] = useState(null);
   const [settings, setSettings] = useState(defaultSettings);
   const [showColorOverlay, setShowColorOverlay] = useState(false);
@@ -14099,7 +14100,8 @@ function Still() {
   const filteredQuotes = shuffledQuotes.filter(q => {
     const schoolMatch = selectedSchools.size === 0 || selectedSchools.has(q.school);
     const themeMatch = selectedThemes.size === 0 || (q.themes && q.themes.some(t => selectedThemes.has(t)));
-    return schoolMatch && themeMatch;
+    const savedMatch = !showSavedOnly || savedQuotes.some(s => s.author + '-' + s.text.substring(0, 30) === q.author + '-' + q.text.substring(0, 30));
+    return schoolMatch && themeMatch && savedMatch;
   });
 
   const currentQuote = filteredQuotes[currentIndex % Math.max(filteredQuotes.length, 1)];
@@ -14357,7 +14359,7 @@ function Still() {
         }}
       >
         {/* Background visual for scroll mode - very dim, slow */}
-        {(view === 'scroll' || view === 'filter' || view === 'saved') && (
+        {(view === 'scroll' || view === 'filter') && (
           <GazeMode
             theme={currentTheme}
             primaryHue={settings.primaryHue}
@@ -14410,7 +14412,7 @@ function Still() {
               { key: 'breathwork', icon: '◎', label: 'Breathe' },
             ].map(({ key, icon, label }) => {
               const isActive = key === 'scroll'
-                ? (view === 'scroll' || view === 'filter' || view === 'saved')
+                ? (view === 'scroll' || view === 'filter')
                 : view === key;
               return (
                 <button
@@ -14438,34 +14440,6 @@ function Still() {
                 </button>
               );
             })}
-            {/* Saved quotes button - only when in Read mode */}
-            {(view === 'scroll' || view === 'filter' || view === 'saved') && (
-              <>
-                <div style={{ width: '1px', background: currentTheme.border, margin: '0 0.25rem' }} />
-                <button
-                  onClick={() => setTimeout(() => setView(view === 'saved' ? 'scroll' : 'saved'), 80)}
-                  style={{
-                    background: view === 'saved' ? `hsla(${primaryHue}, 52%, 68%, 0.13)` : `${currentTheme.text}08`,
-                    border: '1px solid',
-                    borderColor: view === 'saved' ? `hsla(${primaryHue}, 52%, 68%, 0.27)` : currentTheme.border,
-                    color: view === 'saved' ? primaryColor : currentTheme.textMuted,
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    fontFamily: '"Jost", sans-serif',
-                    letterSpacing: '0.05em',
-                    transition: 'all 0.5s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                  }}
-                >
-                  <span style={{ fontSize: '0.9rem' }}>♡</span>
-                  <span className="nav-label">saved</span>
-                </button>
-              </>
-            )}
           </nav>
         </header>
 
@@ -14940,6 +14914,26 @@ function Still() {
         {view === 'filter' && (
           <main style={{ position: 'absolute', top: '80px', left: 0, right: 0, bottom: 0, zIndex: 2, padding: '2rem', overflowY: 'auto' }}>
             <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+              {/* Saved toggle */}
+              <button
+                onClick={() => setTimeout(() => setShowSavedOnly(!showSavedOnly), 80)}
+                style={{
+                  display: 'block',
+                  margin: '0 auto 3rem',
+                  background: 'transparent',
+                  border: 'none',
+                  color: showSavedOnly ? primaryColor : currentTheme.textMuted,
+                  padding: '0.5rem 1rem',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  transition: 'all 0.5s ease',
+                  opacity: showSavedOnly ? 1 : 0.6,
+                  letterSpacing: '0.1em',
+                }}
+              >
+                ♡ saved only
+              </button>
+
               {/* Schools */}
               <h2 style={{ fontSize: '0.7rem', letterSpacing: '0.25em', color: currentTheme.textMuted, marginBottom: '1.5rem', textAlign: 'center', fontWeight: 400 }}>schools of thought</h2>
               {selectedSchools.size > 0 && (
@@ -15017,34 +15011,6 @@ function Still() {
               >
                 return
               </button>
-            </div>
-          </main>
-        )}
-
-        {/* Saved View */}
-        {view === 'saved' && (
-          <main style={{ position: 'absolute', top: '80px', left: 0, right: 0, bottom: 0, zIndex: 2, padding: '2rem', overflowY: 'auto' }}>
-            <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-              <h2 style={{ fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: currentTheme.textMuted, marginBottom: '2rem', textAlign: 'center' }}>
-                {savedQuotes.length === 0 ? 'No saved quotes yet' : savedQuotes.length + ' Saved Quote' + (savedQuotes.length === 1 ? '' : 's')}
-              </h2>
-              {savedQuotes.length === 0 && (
-                <p style={{ textAlign: 'center', color: currentTheme.textMuted, fontSize: '0.9rem' }}>Tap the heart on any quote to save it here.</p>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {savedQuotes.map((quote, i) => (
-                  <div key={i} style={{ padding: '1.5rem', background: currentTheme.cardBg, borderRadius: '12px', border: `1px solid ${currentTheme.border}` }}>
-                    <blockquote style={{ fontSize: '1.1rem', fontFamily: '"Jost", sans-serif', fontStyle: 'italic', lineHeight: 1.6, color: currentTheme.text, margin: 0 }}>"{quote.text}"</blockquote>
-                    <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-                      <div>
-                        <div style={{ fontSize: '0.85rem', color: currentTheme.textMuted, fontWeight: 500 }}>{quote.author}</div>
-                        <span style={{ display: 'inline-block', marginTop: '0.35rem', padding: '0.2rem 0.5rem', background: `hsla(${primaryHue}, 52%, 68%, 0.15)`, borderRadius: '3px', color: primaryColor, fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{quote.school}</span>
-                      </div>
-                      <button onClick={() => toggleSave(quote)} style={{ background: 'none', border: `1px solid ${currentTheme.border}`, color: primaryColor, padding: '0.4rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </main>
         )}
