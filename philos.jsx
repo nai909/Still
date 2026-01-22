@@ -2220,7 +2220,7 @@ function GazeMode({ theme }) {
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '0.7rem',
-                  fontFamily: '"Jost", sans-serif',
+                  fontFamily: '"Cormorant Garamond", Georgia, serif',
                   flexShrink: 0,
                 }}
               >
@@ -2258,7 +2258,7 @@ function GazeMode({ theme }) {
                 borderRadius: '6px',
                 cursor: 'pointer',
                 fontSize: '0.65rem',
-                fontFamily: '"Jost", sans-serif',
+                fontFamily: '"Cormorant Garamond", Georgia, serif',
               }}
             >
               {shape.name}
@@ -2276,7 +2276,7 @@ function GazeMode({ theme }) {
           transform: 'translateX(-50%)',
           color: 'rgba(255,255,255,0.2)',
           fontSize: '0.6rem',
-          fontFamily: '"Jost", sans-serif',
+          fontFamily: '"Cormorant Garamond", Georgia, serif',
           letterSpacing: '0.15em',
           textTransform: 'uppercase',
         }}>
@@ -2858,7 +2858,7 @@ function Philos() {
           overflow: 'hidden',
           background: currentTheme.bg,
           color: currentTheme.text,
-          fontFamily: '"Jost", sans-serif',
+          fontFamily: '"Cormorant Garamond", Georgia, serif',
           position: 'relative',
           touchAction: view === 'scroll' ? 'none' : 'auto',
           transition: 'background 0.5s ease',
@@ -2921,7 +2921,7 @@ function Philos() {
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '0.75rem',
-                  fontFamily: '"Jost", sans-serif',
+                  fontFamily: '"Cormorant Garamond", Georgia, serif',
                   letterSpacing: '0.05em',
                   transition: 'all 0.3s ease',
                   display: 'flex',
@@ -2956,7 +2956,7 @@ function Philos() {
             >
               <blockquote style={{
                 fontSize: 'clamp(1.6rem, 6vw, 3rem)',
-                fontFamily: '"Caveat", cursive',
+                fontFamily: '"Cormorant Garamond", Georgia, serif',
                 fontWeight: 500,
                 lineHeight: 1.6,
                 color: currentTheme.text,
@@ -2976,7 +2976,7 @@ function Philos() {
               }}>
                 <div style={{
                   fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
-                  fontFamily: '"Jost", sans-serif',
+                  fontFamily: '"Cormorant Garamond", Georgia, serif',
                   fontWeight: 500,
                   color: currentTheme.textMuted,
                   letterSpacing: '0.1em',
@@ -3090,7 +3090,7 @@ function Philos() {
                         cursor: 'pointer',
                         textAlign: 'left',
                         fontSize: '0.8rem',
-                        fontFamily: '"Jost", sans-serif',
+                        fontFamily: '"Cormorant Garamond", Georgia, serif',
                         transition: 'background 0.2s ease',
                       }}
                       onMouseEnter={(e) => e.target.style.background = currentTheme.border}
@@ -3169,7 +3169,7 @@ function Philos() {
               {/* Phase label */}
               <span style={{
                 fontSize: breathSession.isActive ? '0.9rem' : '0.6rem',
-                fontFamily: breathSession.isActive ? '"Caveat", cursive' : '"Jost", sans-serif',
+                fontFamily: '"Cormorant Garamond", Georgia, serif',
                 letterSpacing: breathSession.isActive ? '0.05em' : '0.2em',
                 textTransform: breathSession.isActive ? 'none' : 'uppercase',
                 opacity: breathSession.isActive ? 0.8 : 0.3,
@@ -3205,7 +3205,7 @@ function Philos() {
                       borderRadius: '4px',
                       cursor: 'pointer',
                       fontSize: '0.6rem',
-                      fontFamily: '"Jost", sans-serif',
+                      fontFamily: '"Cormorant Garamond", Georgia, serif',
                     }}
                   >
                     stop
@@ -3294,7 +3294,7 @@ function Philos() {
                     >
                       <div style={{
                         fontSize: '1rem',
-                        fontFamily: '"Caveat", cursive',
+                        fontFamily: '"Cormorant Garamond", Georgia, serif',
                         color: currentTheme.text,
                         marginBottom: '0.25rem',
                       }}>
@@ -3303,7 +3303,7 @@ function Philos() {
                       <div style={{
                         fontSize: '0.75rem',
                         color: currentTheme.textMuted,
-                        fontFamily: '"Jost", sans-serif',
+                        fontFamily: '"Cormorant Garamond", Georgia, serif',
                       }}>
                         {tech.description}
                       </div>
@@ -3388,7 +3388,7 @@ function Philos() {
                 }}>
                   <div style={{
                     fontSize: '1.5rem',
-                    fontFamily: '"Caveat", cursive',
+                    fontFamily: '"Cormorant Garamond", Georgia, serif',
                     color: currentTheme.text,
                     opacity: 0.9,
                     letterSpacing: '0.05em',
@@ -3422,7 +3422,7 @@ function Philos() {
                   gap: '2rem',
                   fontSize: '0.75rem',
                   color: currentTheme.textMuted,
-                  fontFamily: '"Jost", sans-serif',
+                  fontFamily: '"Cormorant Garamond", Georgia, serif',
                 }}>
                   <div>Cycle {breathSession.cycleCount + 1}</div>
                   <div>{Math.floor(breathSession.sessionTime / 60)}:{String(breathSession.sessionTime % 60).padStart(2, '0')}</div>
@@ -3445,7 +3445,7 @@ function Philos() {
                       borderRadius: '8px',
                       cursor: 'pointer',
                       fontSize: '0.85rem',
-                      fontFamily: '"Jost", sans-serif',
+                      fontFamily: '"Cormorant Garamond", Georgia, serif',
                     }}
                   >
                     {breathSession.isPaused ? '▶ Resume' : '⏸ Pause'}
@@ -3460,7 +3460,7 @@ function Philos() {
                       borderRadius: '8px',
                       cursor: 'pointer',
                       fontSize: '0.85rem',
-                      fontFamily: '"Jost", sans-serif',
+                      fontFamily: '"Cormorant Garamond", Georgia, serif',
                     }}
                   >
                     ✕ End
