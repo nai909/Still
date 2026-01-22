@@ -45,11 +45,20 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <script type="text/babel" src="philos.jsx"></script>
-
-  <script type="text/babel">
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<Philos />);
+  <script>
+    // Fetch and compile JSX since Babel standalone doesn't reliably handle external src
+    fetch('philos.jsx')
+      .then(res => res.text())
+      .then(jsx => {
+        const compiled = Babel.transform(jsx + '\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(React.createElement(Philos));', {
+          presets: ['react']
+        }).code;
+        eval(compiled);
+      })
+      .catch(err => {
+        console.error('Failed to load app:', err);
+        document.getElementById('root').innerHTML = '<div style="color:red;padding:2rem;">Error loading app: ' + err.message + '</div>';
+      });
   </script>
 </body>
 </html>
