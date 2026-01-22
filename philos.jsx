@@ -2945,22 +2945,22 @@ function Philos() {
                 <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <span style={{
                     padding: '0.3rem 0.8rem',
-                    background: getSchoolColor(currentQuote.school) + '20',
+                    background: 'rgba(127, 219, 202, 0.15)',
                     borderRadius: '4px',
-                    color: getSchoolColor(currentQuote.school),
+                    color: '#7FDBCA',
                     fontSize: '0.7rem',
                     letterSpacing: '0.1em',
                     textTransform: 'uppercase',
-                    border: '1px solid ' + getSchoolColor(currentQuote.school) + '40',
+                    border: '1px solid rgba(127, 219, 202, 0.25)',
                   }}>
                     {currentQuote.school}
                   </span>
                   {currentQuote.themes && currentQuote.themes.slice(0, 2).map(theme => (
                     <span key={theme} style={{
                       padding: '0.25rem 0.6rem',
-                      background: getThemeColor(theme) + '15',
+                      background: 'rgba(127, 219, 202, 0.1)',
                       borderRadius: '3px',
-                      color: getThemeColor(theme),
+                      color: 'rgba(127, 219, 202, 0.7)',
                       fontSize: '0.65rem',
                       letterSpacing: '0.05em',
                       textTransform: 'lowercase',
@@ -3421,7 +3421,7 @@ function Philos() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', marginBottom: '2.5rem' }}>
                 {allSchools.map(school => {
                   const isSelected = selectedSchools.has(school);
-                  const color = getSchoolColor(school);
+                  const color = '#7FDBCA';
                   const count = allQuotes.filter(q => q.school === school).length;
                   return (
                     <button
@@ -3524,7 +3524,7 @@ function Philos() {
                     <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
                       <div>
                         <div style={{ fontSize: '0.85rem', color: currentTheme.textMuted, fontWeight: 500 }}>{quote.author}</div>
-                        <span style={{ display: 'inline-block', marginTop: '0.35rem', padding: '0.2rem 0.5rem', background: getSchoolColor(quote.school) + '15', borderRadius: '3px', color: getSchoolColor(quote.school), fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{quote.school}</span>
+                        <span style={{ display: 'inline-block', marginTop: '0.35rem', padding: '0.2rem 0.5rem', background: 'rgba(127, 219, 202, 0.15)', borderRadius: '3px', color: '#7FDBCA', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{quote.school}</span>
                       </div>
                       <button onClick={() => toggleSave(quote)} style={{ background: 'none', border: `1px solid ${currentTheme.border}`, color: '#E8B4B8', padding: '0.4rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
                     </div>
