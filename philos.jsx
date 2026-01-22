@@ -850,6 +850,11 @@ const gazeModes = [
   { key: 'bilateral', name: 'Bilateral' },
   { key: 'ripples', name: 'Ripples' },
   { key: 'glow', name: 'Soft Glow' },
+  { key: 'rain', name: 'Rain on Glass' },
+  { key: 'jellyfish', name: 'Jellyfish' },
+  { key: 'ink', name: 'Ink in Water' },
+  { key: 'zen', name: 'Zen Garden' },
+  { key: 'fireflies', name: 'Fireflies' },
 ];
 
 const gazeShapes = [
@@ -2152,6 +2157,1850 @@ function GazeMode({ theme }) {
     const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, [currentMode, getInteractionInfluence, drawRipples]);
+
+  // ========== RAIN ON GLASS MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'rain' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Raindrop class
+    class RainDrop {
+      constructor(x, y, radius) {
+        this.x = x ?? Math.random() * canvas.width;
+        this.y = y ?? -20;
+        this.radius = radius ?? (Math.random() * 10 + 3);
+        this.velocity = { x: 0, y: Math.random() * 2 + 1 };
+        this.mass = this.radius * 0.5;
+        this.stuck = Math.random() < 0.3;
+        this.stuckTime = 0;
+        this.trail = [];
+        this.wobble = Math.random() * Math.PI * 2;
+        this.wobbleSpeed = Math.random() * 0.08 + 0.03;
+        this.alive = true;
+        this.opacity = 1;
+      }
+
+      update(dt, breath, tiltX) {
+        if (this.stuck) {
+          this.stuckTime += dt;
+          const tensionBreakTime = 80 / this.mass;
+          if (this.stuckTime > tensionBreakTime) {
+            this.stuck = false;
+          }
+          this.recordTrail();
+          return;
+        }
+
+        // Gravity affected by breath (slower on inhale)
+        const gravity = 0.12 * (0.7 + breath * 0.6);
+        this.velocity.y += gravity * this.mass * dt * 0.08;
+
+        // Tilt influence
+        this.velocity.x += tiltX * 0.03 * dt * 0.1;
+
+        // Wobble
+        this.wobble += this.wobbleSpeed * dt * 0.1;
+        this.velocity.x += Math.sin(this.wobble) * 0.02;
+
+        // Terminal velocity
+        this.velocity.y = Math.min(this.velocity.y, 6);
+        this.velocity.x *= 0.98;
+
+        // Update position
+        this.x += this.velocity.x * dt * 0.1;
+        this.y += this.velocity.y * dt * 0.1;
+
+        this.recordTrail();
+
+        // Random sticking
+        if (Math.random() < 0.0008 * dt) {
+          this.stuck = true;
+          this.stuckTime = 0;
+          this.velocity.y *= 0.1;
+        }
+
+        // Remove if off screen
+        if (this.y > canvas.height + 50 || this.x < -50 || this.x > canvas.width + 50) {
+          this.alive = false;
+        }
+      }
+
+      recordTrail() {
+        const last = this.trail[this.trail.length - 1];
+        if (!last || Math.hypot(this.x - last.x, this.y - last.y) > 2) {
+          this.trail.push({ x: this.x, y: this.y, radius: this.radius * 0.3 });
+        }
+        if (this.trail.length > 40) this.trail.shift();
+      }
+
+      draw(ctx, breath) {
+        const r = this.radius;
+
+        // Outer glow
+        const glowGradient = ctx.createRadialGradient(this.x, this.y, r * 0.3, this.x, this.y, r * 1.8);
+        glowGradient.addColorStop(0, `rgba(127, 219, 202, ${0.15 * this.opacity * breath})`);
+        glowGradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, r * 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Elongate when moving fast
+        const stretch = Math.min(1 + Math.abs(this.velocity.y) * 0.08, 1.4);
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.scale(1, stretch);
+
+        // Drop gradient
+        const dropGradient = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 0, 0, 0, r);
+        dropGradient.addColorStop(0, `rgba(200, 240, 255, ${0.5 * this.opacity})`);
+        dropGradient.addColorStop(0.3, `rgba(127, 219, 202, ${0.35 * this.opacity})`);
+        dropGradient.addColorStop(0.7, `rgba(100, 180, 170, ${0.2 * this.opacity})`);
+        dropGradient.addColorStop(1, `rgba(80, 150, 140, ${0.1 * this.opacity})`);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fillStyle = dropGradient;
+        ctx.fill();
+
+        // Highlight
+        ctx.beginPath();
+        ctx.arc(-r * 0.25, -r * 0.25, r * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.6 * this.opacity})`;
+        ctx.fill();
+
+        // Edge
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(200, 240, 255, ${0.25 * this.opacity})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      absorb(other) {
+        this.radius = Math.sqrt(this.radius ** 2 + other.radius ** 2);
+        this.mass = this.radius * 0.5;
+        const totalMass = this.mass + other.mass;
+        this.velocity.x = (this.velocity.x * this.mass + other.velocity.x * other.mass) / totalMass;
+        this.velocity.y = (this.velocity.y * this.mass + other.velocity.y * other.mass) / totalMass;
+        this.stuck = false;
+        this.stuckTime = 0;
+      }
+    }
+
+    // Bokeh light class
+    class BokehLight {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.baseX = this.x;
+        this.baseY = this.y;
+        this.radius = Math.random() * 50 + 20;
+        this.hue = [170, 180, 190, 160][Math.floor(Math.random() * 4)]; // Teal hues
+        this.saturation = Math.random() * 30 + 40;
+        this.lightness = Math.random() * 25 + 45;
+        this.opacity = Math.random() * 0.3 + 0.1;
+        this.phase = Math.random() * Math.PI * 2;
+        this.pulseSpeed = Math.random() * 0.0008 + 0.0004;
+      }
+
+      update(time, tiltX, tiltY) {
+        this.x = this.baseX + tiltX * (this.radius * 0.4);
+        this.y = this.baseY + tiltY * (this.radius * 0.25);
+        this.currentOpacity = this.opacity * (0.7 + Math.sin(time * this.pulseSpeed + this.phase) * 0.3);
+      }
+
+      draw(ctx) {
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+        gradient.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${this.currentOpacity})`);
+        gradient.addColorStop(0.5, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, ${this.currentOpacity * 0.3})`);
+        gradient.addColorStop(1, `hsla(${this.hue}, ${this.saturation}%, ${this.lightness}%, 0)`);
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      }
+    }
+
+    // Initialize
+    const drops = [];
+    const bokehLights = [];
+    const bokehCount = Math.floor((canvas.width * canvas.height) / 20000);
+    for (let i = 0; i < bokehCount; i++) {
+      bokehLights.push(new BokehLight());
+    }
+
+    // Fog state (drawn to offscreen canvas)
+    const fogCanvas = document.createElement('canvas');
+    fogCanvas.width = canvas.width;
+    fogCanvas.height = canvas.height;
+    const fogCtx = fogCanvas.getContext('2d');
+
+    // Initialize fog
+    fogCtx.fillStyle = 'rgba(180, 200, 210, 0.25)';
+    fogCtx.fillRect(0, 0, fogCanvas.width, fogCanvas.height);
+    for (let i = 0; i < 500; i++) {
+      const x = Math.random() * fogCanvas.width;
+      const y = Math.random() * fogCanvas.height;
+      const size = Math.random() * 40 + 15;
+      fogCtx.beginPath();
+      fogCtx.arc(x, y, size, 0, Math.PI * 2);
+      fogCtx.fillStyle = `rgba(180, 200, 210, ${Math.random() * 0.08})`;
+      fogCtx.fill();
+    }
+
+    // Trail canvas
+    const trailCanvas = document.createElement('canvas');
+    trailCanvas.width = canvas.width;
+    trailCanvas.height = canvas.height;
+    const trailCtx = trailCanvas.getContext('2d');
+
+    let tiltX = 0;
+    let tiltY = 0;
+    let lastFrameTime = Date.now();
+
+    // Touch influence on tilt
+    const updateTiltFromTouch = () => {
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / canvas.width - 0.5) * 2;
+          tiltX = tiltX * 0.9 + normalizedX * 1.5 * 0.1;
+        }
+      } else {
+        tiltX *= 0.98;
+        tiltY *= 0.98;
+      }
+    };
+
+    // Draw in fog (clear fog where touched)
+    const drawInFog = (x, y, size = 35) => {
+      fogCtx.save();
+      fogCtx.globalCompositeOperation = 'destination-out';
+      const gradient = fogCtx.createRadialGradient(x, y, 0, x, y, size);
+      gradient.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.5)');
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      fogCtx.fillStyle = gradient;
+      fogCtx.beginPath();
+      fogCtx.arc(x, y, size, 0, Math.PI * 2);
+      fogCtx.fill();
+      fogCtx.restore();
+    };
+
+    // Spawn drops based on breath
+    const spawnDrop = (breath) => {
+      const rate = 0.04 + breath * 0.06; // More drops on exhale
+      if (Math.random() < rate) {
+        drops.push(new RainDrop());
+      }
+    };
+
+    // Check for drop merges
+    const checkMerges = () => {
+      for (let i = 0; i < drops.length; i++) {
+        if (!drops[i].alive) continue;
+        for (let j = i + 1; j < drops.length; j++) {
+          if (!drops[j].alive) continue;
+          const d = Math.hypot(drops[i].x - drops[j].x, drops[i].y - drops[j].y);
+          const touchDist = (drops[i].radius + drops[j].radius) * 0.75;
+          if (d < touchDist) {
+            if (drops[i].radius >= drops[j].radius) {
+              drops[i].absorb(drops[j]);
+              drops[j].alive = false;
+            } else {
+              drops[j].absorb(drops[i]);
+              drops[i].alive = false;
+            }
+          }
+        }
+      }
+      // Clean up and enforce max
+      for (let i = drops.length - 1; i >= 0; i--) {
+        if (!drops[i].alive) drops.splice(i, 1);
+      }
+      if (drops.length > 150) drops.splice(0, drops.length - 150);
+    };
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const dt = Math.min(now - lastFrameTime, 50);
+      lastFrameTime = now;
+
+      const breath = getBreathPhase(elapsed);
+      updateTiltFromTouch();
+
+      // Clear main canvas
+      ctx.fillStyle = '#050508';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw bokeh (background)
+      ctx.globalCompositeOperation = 'lighter';
+      bokehLights.forEach(light => {
+        light.update(now, tiltX, tiltY);
+        light.draw(ctx);
+      });
+      ctx.globalCompositeOperation = 'source-over';
+
+      // Apply blur to background
+      ctx.filter = 'blur(12px)';
+      ctx.drawImage(canvas, 0, 0);
+      ctx.filter = 'none';
+
+      // Spawn and update drops
+      spawnDrop(breath);
+      drops.forEach(drop => drop.update(dt, breath, tiltX));
+      checkMerges();
+
+      // Draw trails (fade existing)
+      trailCtx.fillStyle = 'rgba(5, 5, 8, 0.03)';
+      trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
+      drops.forEach(drop => {
+        if (drop.trail.length < 2) return;
+        trailCtx.beginPath();
+        trailCtx.moveTo(drop.trail[0].x, drop.trail[0].y);
+        for (let i = 1; i < drop.trail.length; i++) {
+          trailCtx.lineTo(drop.trail[i].x, drop.trail[i].y);
+        }
+        trailCtx.strokeStyle = `rgba(127, 219, 202, 0.12)`;
+        trailCtx.lineWidth = drop.radius * 0.35;
+        trailCtx.lineCap = 'round';
+        trailCtx.stroke();
+      });
+      ctx.drawImage(trailCanvas, 0, 0);
+
+      // Draw drops
+      drops.forEach(drop => drop.draw(ctx, breath));
+
+      // Regrow fog slowly
+      fogCtx.fillStyle = `rgba(180, 200, 210, 0.002)`;
+      fogCtx.fillRect(0, 0, fogCanvas.width, fogCanvas.height);
+
+      // Handle touch - draw in fog and spawn drops
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          drawInFog(point.x, point.y, 40);
+          // Occasionally spawn drop at touch
+          if (Math.random() < 0.1) {
+            const drop = new RainDrop(point.x + (Math.random() - 0.5) * 20, point.y, Math.random() * 6 + 4);
+            drop.stuck = true;
+            drops.push(drop);
+          }
+        }
+      });
+
+      // Draw fog layer
+      ctx.globalAlpha = 0.7 + breath * 0.2;
+      ctx.drawImage(fogCanvas, 0, 0);
+      ctx.globalAlpha = 1;
+
+      // Draw touch ripples
+      drawRipples(ctx);
+
+      // Breath indicator
+      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
+      ctx.fillStyle = `rgba(127, 219, 202, ${0.25 + breath * 0.25})`;
+      ctx.font = '14px "Jost", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', canvas.width / 2, canvas.height - 35);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      fogCanvas.width = canvas.width;
+      fogCanvas.height = canvas.height;
+      trailCanvas.width = canvas.width;
+      trailCanvas.height = canvas.height;
+      // Reinitialize fog
+      fogCtx.fillStyle = 'rgba(180, 200, 210, 0.25)';
+      fogCtx.fillRect(0, 0, fogCanvas.width, fogCanvas.height);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, getInteractionInfluence, drawRipples]);
+
+  // ========== JELLYFISH MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'jellyfish' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Tentacle class with verlet physics
+    class Tentacle {
+      constructor(parent, index, segments, segmentLength, isOralArm = false) {
+        this.parent = parent;
+        this.index = index;
+        this.segments = segments;
+        this.segmentLength = segmentLength;
+        this.isOralArm = isOralArm;
+        this.points = [];
+        this.oldPoints = [];
+
+        const angleOffset = (index / (isOralArm ? 4 : 8)) * Math.PI * 2;
+        const startX = Math.cos(angleOffset) * parent.size * (isOralArm ? 0.15 : 0.35);
+
+        for (let i = 0; i < segments; i++) {
+          this.points.push({
+            x: parent.position.x + startX,
+            y: parent.position.y + parent.bellHeight * 0.8 + i * segmentLength
+          });
+          this.oldPoints.push({ x: this.points[i].x, y: this.points[i].y });
+        }
+      }
+
+      update(pulse, elapsed) {
+        const angleOffset = (this.index / (this.isOralArm ? 4 : 8)) * Math.PI * 2;
+        const expansion = 1 + pulse * 0.15;
+        const attachRadius = this.isOralArm ? 0.15 : 0.4;
+
+        // First point follows bell edge
+        this.points[0].x = this.parent.position.x + Math.cos(angleOffset) * this.parent.size * attachRadius * expansion;
+        this.points[0].y = this.parent.position.y + this.parent.bellHeight * 0.85;
+
+        // Verlet integration
+        for (let i = 1; i < this.segments; i++) {
+          const p = this.points[i];
+          const old = this.oldPoints[i];
+
+          const vx = (p.x - old.x) * 0.96;
+          const vy = (p.y - old.y) * 0.96;
+
+          old.x = p.x;
+          old.y = p.y;
+
+          p.x += vx;
+          p.y += vy + 0.03;
+
+          // Sway
+          const swayAmp = this.isOralArm ? 0.15 : 0.08;
+          p.x += Math.sin(elapsed * 0.8 + i * 0.4 + this.index * 0.7) * swayAmp;
+        }
+
+        // Constraint iterations
+        for (let j = 0; j < 3; j++) {
+          for (let i = 1; i < this.segments; i++) {
+            const p1 = this.points[i - 1];
+            const p2 = this.points[i];
+
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist === 0) continue;
+
+            const diff = this.segmentLength - dist;
+            const percent = diff / dist / 2;
+
+            const offsetX = dx * percent;
+            const offsetY = dy * percent;
+
+            if (i > 1) {
+              p1.x -= offsetX;
+              p1.y -= offsetY;
+            }
+            p2.x += offsetX;
+            p2.y += offsetY;
+          }
+        }
+      }
+
+      draw(ctx, hue, glow) {
+        if (this.points.length < 2) return;
+
+        ctx.beginPath();
+        ctx.moveTo(this.points[0].x, this.points[0].y);
+
+        // Smooth curve through points
+        for (let i = 1; i < this.points.length - 1; i++) {
+          const xc = (this.points[i].x + this.points[i + 1].x) / 2;
+          const yc = (this.points[i].y + this.points[i + 1].y) / 2;
+          ctx.quadraticCurveTo(this.points[i].x, this.points[i].y, xc, yc);
+        }
+        ctx.lineTo(this.points[this.points.length - 1].x, this.points[this.points.length - 1].y);
+
+        const baseWidth = this.isOralArm ? 4 : 2.5;
+        ctx.strokeStyle = `hsla(${hue}, 70%, 65%, ${0.4 + glow * 0.3})`;
+        ctx.lineWidth = baseWidth;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Glow effect
+        ctx.strokeStyle = `hsla(${hue}, 80%, 75%, ${0.15 + glow * 0.2})`;
+        ctx.lineWidth = baseWidth + 4;
+        ctx.stroke();
+      }
+
+      applyForce(fx, fy, strength) {
+        for (let i = 1; i < this.points.length; i++) {
+          this.points[i].x += fx * strength * (i / this.points.length);
+          this.points[i].y += fy * strength * (i / this.points.length);
+        }
+      }
+    }
+
+    // Jellyfish class
+    class Jellyfish {
+      constructor(x, y, size) {
+        this.position = { x, y };
+        this.size = size;
+        this.bellHeight = size * 0.6;
+        this.pulsePhase = Math.random() * Math.PI * 2;
+        this.pulseSpeed = 0.018 + Math.random() * 0.008;
+        this.driftVelocity = { x: (Math.random() - 0.5) * 0.3, y: -0.15 - Math.random() * 0.1 };
+        this.lastPulse = 0;
+
+        this.hue = Math.random() * 80 + 180; // Blues, cyans, purples
+        this.glow = 0.5;
+        this.following = false;
+        this.bellSegments = 24;
+
+        // Create tentacles
+        this.tentacles = [];
+        for (let i = 0; i < 8; i++) {
+          this.tentacles.push(new Tentacle(this, i, 18, 7, false));
+        }
+
+        // Create oral arms (frillier, center)
+        this.oralArms = [];
+        for (let i = 0; i < 4; i++) {
+          this.oralArms.push(new Tentacle(this, i, 12, 5, true));
+        }
+      }
+
+      update(elapsed, breathPhase) {
+        // Sync pulse with breath in breath mode
+        const targetPhase = breathPhase * Math.PI;
+        this.pulsePhase += (targetPhase - this.pulsePhase) * 0.02 + this.pulseSpeed * 0.3;
+
+        const pulse = Math.sin(this.pulsePhase);
+
+        // Propulsion on contraction
+        if (pulse > 0.85 && this.lastPulse <= 0.85) {
+          this.driftVelocity.y -= 0.4 + Math.random() * 0.2;
+          this.driftVelocity.x += (Math.random() - 0.5) * 0.2;
+        }
+        this.lastPulse = pulse;
+
+        // Apply physics
+        this.position.x += this.driftVelocity.x;
+        this.position.y += this.driftVelocity.y;
+
+        // Friction and sink
+        this.driftVelocity.x *= 0.992;
+        this.driftVelocity.y *= 0.994;
+        this.driftVelocity.y += 0.008;
+
+        // Boundaries - wrap around
+        if (this.position.y < -this.size * 2) this.position.y = canvas.height + this.size;
+        if (this.position.y > canvas.height + this.size * 2) this.position.y = -this.size;
+        if (this.position.x < -this.size) this.position.x = canvas.width + this.size;
+        if (this.position.x > canvas.width + this.size) this.position.x = -this.size;
+
+        // Decay glow
+        if (!this.following) this.glow = this.glow * 0.98 + 0.5 * 0.02;
+
+        // Update tentacles
+        this.tentacles.forEach(t => t.update(pulse, elapsed));
+        this.oralArms.forEach(o => o.update(pulse, elapsed));
+      }
+
+      draw(ctx) {
+        const pulse = Math.sin(this.pulsePhase);
+        const expansion = 1 + pulse * 0.15;
+
+        ctx.save();
+        ctx.translate(this.position.x, this.position.y);
+
+        // Bell glow (outer)
+        const glowGradient = ctx.createRadialGradient(0, this.bellHeight * 0.3, 0, 0, this.bellHeight * 0.3, this.size * 2);
+        glowGradient.addColorStop(0, `hsla(${this.hue}, 80%, 70%, ${0.2 * this.glow})`);
+        glowGradient.addColorStop(0.5, `hsla(${this.hue}, 70%, 50%, ${0.08 * this.glow})`);
+        glowGradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(0, this.bellHeight * 0.3, this.size * 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Bell shape
+        ctx.beginPath();
+        for (let i = 0; i <= this.bellSegments; i++) {
+          const angle = (i / this.bellSegments) * Math.PI;
+          const x = Math.cos(angle) * this.size * expansion;
+          const y = Math.sin(angle) * this.bellHeight * (1 - pulse * 0.12);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+
+        // Bell gradient
+        const bellGradient = ctx.createRadialGradient(0, -this.size * 0.2, 0, 0, this.bellHeight * 0.5, this.size * 1.2);
+        bellGradient.addColorStop(0, `hsla(${this.hue}, 85%, 80%, ${0.5 + this.glow * 0.3})`);
+        bellGradient.addColorStop(0.3, `hsla(${this.hue}, 75%, 60%, ${0.35 + this.glow * 0.2})`);
+        bellGradient.addColorStop(0.7, `hsla(${this.hue}, 65%, 45%, ${0.2 + this.glow * 0.15})`);
+        bellGradient.addColorStop(1, `hsla(${this.hue}, 55%, 35%, 0.1)`);
+        ctx.fillStyle = bellGradient;
+        ctx.fill();
+
+        // Bell edge highlight
+        ctx.strokeStyle = `hsla(${this.hue}, 90%, 85%, ${0.4 + this.glow * 0.4})`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Inner bell details (gonads pattern)
+        for (let i = 0; i < 4; i++) {
+          const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+          const r = this.size * 0.35;
+          const cx = Math.cos(angle) * r * 0.5;
+          const cy = this.bellHeight * 0.35 + Math.sin(angle) * r * 0.2;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r * 0.25, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${this.hue + 20}, 70%, 70%, ${0.25 + this.glow * 0.2})`;
+          ctx.fill();
+        }
+
+        ctx.restore();
+
+        // Draw tentacles and oral arms
+        this.tentacles.forEach(t => t.draw(ctx, this.hue, this.glow));
+        this.oralArms.forEach(o => o.draw(ctx, this.hue + 15, this.glow));
+      }
+
+      applyForce(fx, fy) {
+        this.driftVelocity.x += fx;
+        this.driftVelocity.y += fy;
+        this.tentacles.forEach(t => t.applyForce(fx, fy, 2));
+        this.oralArms.forEach(o => o.applyForce(fx, fy, 1.5));
+      }
+    }
+
+    // Plankton particle class
+    class Plankton {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2 + 0.5;
+        this.speed = Math.random() * 0.3 + 0.1;
+        this.angle = Math.random() * Math.PI * 2;
+        this.wobble = Math.random() * Math.PI * 2;
+        this.opacity = Math.random() * 0.4 + 0.1;
+      }
+
+      update(elapsed) {
+        this.wobble += 0.02;
+        this.x += Math.cos(this.angle + Math.sin(this.wobble) * 0.5) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed * 0.5 - 0.1;
+
+        if (this.y < -10) { this.y = canvas.height + 10; this.x = Math.random() * canvas.width; }
+        if (this.x < -10) this.x = canvas.width + 10;
+        if (this.x > canvas.width + 10) this.x = -10;
+      }
+
+      draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(150, 200, 220, ${this.opacity})`;
+        ctx.fill();
+      }
+    }
+
+    // Initialize
+    const jellies = [];
+    const jellyCount = Math.min(Math.floor(canvas.width / 300) + 2, 5);
+    for (let i = 0; i < jellyCount; i++) {
+      jellies.push(new Jellyfish(
+        Math.random() * canvas.width,
+        Math.random() * canvas.height,
+        60 + Math.random() * 50
+      ));
+    }
+
+    const plankton = [];
+    for (let i = 0; i < 60; i++) {
+      plankton.push(new Plankton());
+    }
+
+    // Water currents from touch
+    const currents = [];
+
+    // God rays
+    const rays = [];
+    for (let i = 0; i < 5; i++) {
+      rays.push({
+        x: Math.random() * canvas.width,
+        width: Math.random() * 100 + 50,
+        opacity: Math.random() * 0.06 + 0.02,
+        speed: Math.random() * 0.2 + 0.1
+      });
+    }
+
+    let lastTouchPos = null;
+
+    // Touch handlers for jellyfish
+    const handleJellyTouch = (x, y) => {
+      jellies.forEach(jelly => {
+        const dist = Math.hypot(x - jelly.position.x, y - jelly.position.y);
+
+        if (dist < jelly.size * 1.2) {
+          // Touched the jellyfish - glow and follow
+          jelly.following = true;
+          jelly.glow = 1.0;
+        } else if (dist < jelly.size * 4) {
+          // Near - startle and move away
+          const angle = Math.atan2(jelly.position.y - y, jelly.position.x - x);
+          jelly.applyForce(Math.cos(angle) * 0.4, Math.sin(angle) * 0.4);
+          jelly.pulseSpeed = 0.035;
+        }
+      });
+
+      // Create current
+      currents.push({ x, y, radius: 0, strength: 1, direction: { x: 0, y: 0 } });
+    };
+
+    const handleJellyMove = (x, y) => {
+      // Following jellyfish move toward finger
+      jellies.filter(j => j.following).forEach(jelly => {
+        const dx = x - jelly.position.x;
+        const dy = y - jelly.position.y;
+        jelly.driftVelocity.x += dx * 0.008;
+        jelly.driftVelocity.y += dy * 0.008;
+      });
+
+      // Update current direction
+      if (currents.length > 0 && lastTouchPos) {
+        const current = currents[currents.length - 1];
+        current.direction.x = (x - lastTouchPos.x) * 0.3;
+        current.direction.y = (y - lastTouchPos.y) * 0.3;
+      }
+      lastTouchPos = { x, y };
+    };
+
+    const handleJellyEnd = () => {
+      jellies.forEach(jelly => {
+        jelly.following = false;
+        jelly.pulseSpeed = 0.018 + Math.random() * 0.008;
+      });
+      lastTouchPos = null;
+    };
+
+    // Apply currents to jellies
+    const applyCurrent = () => {
+      currents.forEach((current, idx) => {
+        current.radius += 3;
+        current.strength *= 0.97;
+
+        jellies.forEach(jelly => {
+          const dist = Math.hypot(current.x - jelly.position.x, current.y - jelly.position.y);
+          if (dist < current.radius && dist > current.radius - 60) {
+            const influence = current.strength * (1 - dist / Math.max(current.radius, 1)) * 0.5;
+            jelly.applyForce(current.direction.x * influence, current.direction.y * influence);
+          }
+        });
+
+        if (current.strength < 0.02) currents.splice(idx, 1);
+      });
+    };
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Check for touch interactions
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          if (!point.jellyTouched) {
+            handleJellyTouch(point.x, point.y);
+            point.jellyTouched = true;
+          }
+          handleJellyMove(point.x, point.y);
+        } else if (point.jellyTouched) {
+          handleJellyEnd();
+          point.jellyTouched = false;
+        }
+      });
+
+      // Background gradient (deep ocean)
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      bgGradient.addColorStop(0, '#0a1628');
+      bgGradient.addColorStop(0.5, '#061018');
+      bgGradient.addColorStop(1, '#020508');
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // God rays
+      ctx.globalCompositeOperation = 'lighter';
+      rays.forEach(ray => {
+        ray.x += ray.speed;
+        if (ray.x > canvas.width + ray.width) ray.x = -ray.width;
+
+        const rayGradient = ctx.createLinearGradient(ray.x, 0, ray.x + ray.width, canvas.height);
+        rayGradient.addColorStop(0, `rgba(100, 150, 180, ${ray.opacity * (0.7 + breath * 0.3)})`);
+        rayGradient.addColorStop(0.3, `rgba(80, 130, 160, ${ray.opacity * 0.5})`);
+        rayGradient.addColorStop(1, 'transparent');
+
+        ctx.beginPath();
+        ctx.moveTo(ray.x, 0);
+        ctx.lineTo(ray.x + ray.width, 0);
+        ctx.lineTo(ray.x + ray.width * 1.5, canvas.height);
+        ctx.lineTo(ray.x - ray.width * 0.5, canvas.height);
+        ctx.closePath();
+        ctx.fillStyle = rayGradient;
+        ctx.fill();
+      });
+      ctx.globalCompositeOperation = 'source-over';
+
+      // Plankton
+      plankton.forEach(p => {
+        p.update(elapsed);
+        p.draw(ctx);
+      });
+
+      // Apply currents
+      applyCurrent();
+
+      // Update and draw jellyfish
+      jellies.forEach(jelly => {
+        jelly.update(elapsed, breath);
+        jelly.draw(ctx);
+      });
+
+      // Touch ripples
+      drawRipples(ctx);
+
+      // Breath indicator
+      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
+      ctx.fillStyle = `rgba(100, 180, 200, ${0.2 + breath * 0.25})`;
+      ctx.font = '14px "Jost", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', canvas.width / 2, canvas.height - 35);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, getInteractionInfluence, drawRipples]);
+
+  // ========== INK IN WATER MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'ink' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Grid-based fluid simulation
+    const GRID_SIZE = 96; // Balance between quality and performance
+    const grid = {
+      density: new Float32Array(GRID_SIZE * GRID_SIZE),
+      velocityX: new Float32Array(GRID_SIZE * GRID_SIZE),
+      velocityY: new Float32Array(GRID_SIZE * GRID_SIZE),
+      colorR: new Float32Array(GRID_SIZE * GRID_SIZE),
+      colorG: new Float32Array(GRID_SIZE * GRID_SIZE),
+      colorB: new Float32Array(GRID_SIZE * GRID_SIZE),
+    };
+
+    // Ink colors
+    const inkColors = [
+      { r: 0.15, g: 0.2, b: 0.85 },   // Indigo
+      { r: 0.85, g: 0.15, b: 0.25 },  // Crimson
+      { r: 0.1, g: 0.75, b: 0.5 },    // Emerald
+      { r: 0.6, g: 0.2, b: 0.8 },     // Violet
+      { r: 0.9, g: 0.6, b: 0.1 },     // Gold
+      { r: 0.1, g: 0.7, b: 0.85 },    // Cyan
+    ];
+    let colorIndex = 0;
+
+    // Diffusion helper
+    const diffuse = (field, rate) => {
+      const a = rate * GRID_SIZE * GRID_SIZE * 0.01;
+      const temp = new Float32Array(field.length);
+      temp.set(field);
+
+      for (let k = 0; k < 4; k++) {
+        for (let i = 1; i < GRID_SIZE - 1; i++) {
+          for (let j = 1; j < GRID_SIZE - 1; j++) {
+            const idx = i + j * GRID_SIZE;
+            field[idx] = (temp[idx] + a * (
+              field[idx - 1] + field[idx + 1] +
+              field[idx - GRID_SIZE] + field[idx + GRID_SIZE]
+            )) / (1 + 4 * a);
+          }
+        }
+      }
+    };
+
+    // Advection helper
+    const advect = (field, velX, velY, dt) => {
+      const newField = new Float32Array(field.length);
+      const scale = dt * GRID_SIZE * 0.5;
+
+      for (let i = 1; i < GRID_SIZE - 1; i++) {
+        for (let j = 1; j < GRID_SIZE - 1; j++) {
+          const idx = i + j * GRID_SIZE;
+
+          let x = i - scale * velX[idx];
+          let y = j - scale * velY[idx];
+
+          x = Math.max(0.5, Math.min(GRID_SIZE - 1.5, x));
+          y = Math.max(0.5, Math.min(GRID_SIZE - 1.5, y));
+
+          const i0 = Math.floor(x), i1 = i0 + 1;
+          const j0 = Math.floor(y), j1 = j0 + 1;
+          const s1 = x - i0, s0 = 1 - s1;
+          const t1 = y - j0, t0 = 1 - t1;
+
+          newField[idx] =
+            s0 * (t0 * field[i0 + j0 * GRID_SIZE] + t1 * field[i0 + j1 * GRID_SIZE]) +
+            s1 * (t0 * field[i1 + j0 * GRID_SIZE] + t1 * field[i1 + j1 * GRID_SIZE]);
+        }
+      }
+      field.set(newField);
+    };
+
+    // Fluid simulation step
+    const fluidStep = (dt) => {
+      // Diffuse velocity (viscosity)
+      diffuse(grid.velocityX, 0.00005);
+      diffuse(grid.velocityY, 0.00005);
+
+      // Advect velocity
+      advect(grid.velocityX, grid.velocityX, grid.velocityY, dt);
+      advect(grid.velocityY, grid.velocityX, grid.velocityY, dt);
+
+      // Diffuse density
+      diffuse(grid.density, 0.0002);
+      diffuse(grid.colorR, 0.0002);
+      diffuse(grid.colorG, 0.0002);
+      diffuse(grid.colorB, 0.0002);
+
+      // Advect density and color
+      advect(grid.density, grid.velocityX, grid.velocityY, dt);
+      advect(grid.colorR, grid.velocityX, grid.velocityY, dt);
+      advect(grid.colorG, grid.velocityX, grid.velocityY, dt);
+      advect(grid.colorB, grid.velocityX, grid.velocityY, dt);
+
+      // Decay
+      for (let i = 0; i < grid.density.length; i++) {
+        grid.density[i] *= 0.998;
+        grid.velocityX[i] *= 0.995;
+        grid.velocityY[i] *= 0.995;
+      }
+    };
+
+    // Add ink at position
+    const addInk = (x, y, color, radius = 6) => {
+      const gx = Math.floor((x / canvas.width) * GRID_SIZE);
+      const gy = Math.floor((y / canvas.height) * GRID_SIZE);
+
+      for (let ox = -radius; ox <= radius; ox++) {
+        for (let oy = -radius; oy <= radius; oy++) {
+          const dist = Math.sqrt(ox * ox + oy * oy);
+          if (dist > radius) continue;
+
+          const i = gx + ox;
+          const j = gy + oy;
+          if (i < 0 || i >= GRID_SIZE || j < 0 || j >= GRID_SIZE) continue;
+
+          const idx = i + j * GRID_SIZE;
+          const influence = (1 - dist / radius) * 0.4;
+
+          grid.density[idx] += influence;
+          grid.colorR[idx] += color.r * influence;
+          grid.colorG[idx] += color.g * influence;
+          grid.colorB[idx] += color.b * influence;
+
+          // Slight downward velocity (ink sinks)
+          grid.velocityY[idx] += influence * 0.02;
+        }
+      }
+    };
+
+    // Add velocity at position (for drag)
+    const addVelocity = (x, y, vx, vy, radius = 8) => {
+      const gx = Math.floor((x / canvas.width) * GRID_SIZE);
+      const gy = Math.floor((y / canvas.height) * GRID_SIZE);
+
+      for (let ox = -radius; ox <= radius; ox++) {
+        for (let oy = -radius; oy <= radius; oy++) {
+          const dist = Math.sqrt(ox * ox + oy * oy);
+          if (dist > radius) continue;
+
+          const i = gx + ox;
+          const j = gy + oy;
+          if (i < 0 || i >= GRID_SIZE || j < 0 || j >= GRID_SIZE) continue;
+
+          const idx = i + j * GRID_SIZE;
+          const influence = 1 - dist / radius;
+
+          grid.velocityX[idx] += vx * influence * 0.15;
+          grid.velocityY[idx] += vy * influence * 0.15;
+        }
+      }
+    };
+
+    // Apply radial force (for breath sync)
+    const applyRadialForce = (cx, cy, strength) => {
+      const gcx = (cx / canvas.width) * GRID_SIZE;
+      const gcy = (cy / canvas.height) * GRID_SIZE;
+
+      for (let i = 0; i < GRID_SIZE; i++) {
+        for (let j = 0; j < GRID_SIZE; j++) {
+          const dx = i - gcx;
+          const dy = j - gcy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist > 0 && dist < GRID_SIZE * 0.4) {
+            const idx = i + j * GRID_SIZE;
+            const influence = (1 - dist / (GRID_SIZE * 0.4)) * strength;
+
+            grid.velocityX[idx] += (dx / dist) * influence;
+            grid.velocityY[idx] += (dy / dist) * influence;
+          }
+        }
+      }
+    };
+
+    // Render offscreen then draw
+    const offscreenCanvas = document.createElement('canvas');
+    offscreenCanvas.width = GRID_SIZE;
+    offscreenCanvas.height = GRID_SIZE;
+    const offCtx = offscreenCanvas.getContext('2d');
+
+    const render = () => {
+      const imageData = offCtx.createImageData(GRID_SIZE, GRID_SIZE);
+
+      for (let i = 0; i < GRID_SIZE; i++) {
+        for (let j = 0; j < GRID_SIZE; j++) {
+          const idx = i + j * GRID_SIZE;
+          const pixelIdx = (i + j * GRID_SIZE) * 4;
+
+          const density = Math.min(1, grid.density[idx]);
+
+          if (density > 0.005) {
+            const totalColor = grid.colorR[idx] + grid.colorG[idx] + grid.colorB[idx];
+
+            if (totalColor > 0.001) {
+              const r = (grid.colorR[idx] / totalColor) * 255;
+              const g = (grid.colorG[idx] / totalColor) * 255;
+              const b = (grid.colorB[idx] / totalColor) * 255;
+
+              // Blend with water color
+              imageData.data[pixelIdx + 0] = Math.floor(240 * (1 - density) + r * density);
+              imageData.data[pixelIdx + 1] = Math.floor(248 * (1 - density) + g * density);
+              imageData.data[pixelIdx + 2] = Math.floor(255 * (1 - density) + b * density);
+              imageData.data[pixelIdx + 3] = 255;
+            } else {
+              imageData.data[pixelIdx + 0] = 240;
+              imageData.data[pixelIdx + 1] = 248;
+              imageData.data[pixelIdx + 2] = 255;
+              imageData.data[pixelIdx + 3] = 255;
+            }
+          } else {
+            imageData.data[pixelIdx + 0] = 240;
+            imageData.data[pixelIdx + 1] = 248;
+            imageData.data[pixelIdx + 2] = 255;
+            imageData.data[pixelIdx + 3] = 255;
+          }
+        }
+      }
+
+      offCtx.putImageData(imageData, 0, 0);
+
+      // Scale up to canvas with smoothing
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(offscreenCanvas, 0, 0, canvas.width, canvas.height);
+    };
+
+    let lastTouchPos = {};
+    let holdingTouch = false;
+    let lastInkTime = 0;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
+
+      // Breath sync - ink gathers on inhale, expands on exhale
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      if (isInhaling) {
+        applyRadialForce(centerX, centerY, -0.003 * breath);
+      } else {
+        applyRadialForce(centerX, centerY, 0.004 * (1 - breath));
+      }
+
+      // Auto-drop ink on breath cycle peak
+      if (breath > 0.95 && now - lastInkTime > 3000) {
+        const color = inkColors[colorIndex];
+        addInk(centerX + (Math.random() - 0.5) * 100, centerY + (Math.random() - 0.5) * 100, color, 8);
+        colorIndex = (colorIndex + 1) % inkColors.length;
+        lastInkTime = now;
+      }
+
+      // Handle touch interactions
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          const lastPos = lastTouchPos[point.id] || { x: point.x, y: point.y };
+          const dx = point.x - lastPos.x;
+          const dy = point.y - lastPos.y;
+
+          // Add velocity from drag
+          if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+            addVelocity(point.x, point.y, dx, dy, 10);
+          }
+
+          // Continuous ink stream if holding
+          if (!point.inkDropped) {
+            const color = inkColors[colorIndex];
+            addInk(point.x, point.y, color, 7);
+            colorIndex = (colorIndex + 1) % inkColors.length;
+            point.inkDropped = true;
+          } else if (holdingTouch && now % 80 < 20) {
+            const color = inkColors[colorIndex];
+            addInk(point.x + (Math.random() - 0.5) * 15, point.y + (Math.random() - 0.5) * 15, color, 4);
+          }
+
+          lastTouchPos[point.id] = { x: point.x, y: point.y };
+
+          // Set holding after 300ms
+          if (!point.holdStart) point.holdStart = now;
+          if (now - point.holdStart > 300) holdingTouch = true;
+        } else {
+          delete lastTouchPos[point.id];
+          point.inkDropped = false;
+          point.holdStart = null;
+          holdingTouch = false;
+        }
+      });
+
+      // Fluid simulation step
+      fluidStep(0.016);
+
+      // Render
+      render();
+
+      // Draw touch ripples
+      drawRipples(ctx);
+
+      // Breath indicator
+      ctx.fillStyle = `rgba(100, 120, 150, ${0.3 + breath * 0.3})`;
+      ctx.font = '14px "Jost", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', canvas.width / 2, canvas.height - 35);
+
+      // Color indicator
+      const currentColor = inkColors[colorIndex];
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, 30, 8, 0, Math.PI * 2);
+      ctx.fillStyle = `rgb(${currentColor.r * 255}, ${currentColor.g * 255}, ${currentColor.b * 255})`;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, getInteractionInfluence, drawRipples]);
+
+  // ========== ZEN GARDEN MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'zen' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Sand grid (height map + direction)
+    const SAND_RES = 128;
+    const sand = {
+      height: new Float32Array(SAND_RES * SAND_RES),
+      directionX: new Float32Array(SAND_RES * SAND_RES),
+      directionY: new Float32Array(SAND_RES * SAND_RES),
+    };
+
+    // Initialize with slight noise
+    for (let i = 0; i < sand.height.length; i++) {
+      sand.height[i] = (Math.random() - 0.5) * 0.05;
+    }
+
+    // Stone class
+    class Stone {
+      constructor(x, y, scale) {
+        this.x = x;
+        this.y = y;
+        this.scale = scale;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.vertices = this.generateShape();
+        this.selected = false;
+      }
+
+      generateShape() {
+        const points = [];
+        const baseRadius = 25 * this.scale;
+        const segments = 10;
+        for (let i = 0; i < segments; i++) {
+          const angle = (i / segments) * Math.PI * 2;
+          const noise = 0.7 + Math.random() * 0.5;
+          const r = baseRadius * noise;
+          points.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r * 0.7 });
+        }
+        return points;
+      }
+
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        // Shadow
+        ctx.beginPath();
+        this.drawPath(ctx, 4, 4);
+        ctx.fillStyle = 'rgba(80, 70, 60, 0.3)';
+        ctx.fill();
+
+        // Stone body
+        ctx.beginPath();
+        this.drawPath(ctx, 0, 0);
+        const gradient = ctx.createRadialGradient(-8, -8, 0, 0, 0, 35 * this.scale);
+        gradient.addColorStop(0, '#888');
+        gradient.addColorStop(0.4, '#666');
+        gradient.addColorStop(1, '#3a3a3a');
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // Selection ring
+        if (this.selected) {
+          ctx.strokeStyle = 'rgba(127, 219, 202, 0.6)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      drawPath(ctx, ox, oy) {
+        ctx.moveTo(this.vertices[0].x + ox, this.vertices[0].y + oy);
+        for (let i = 1; i <= this.vertices.length; i++) {
+          const v = this.vertices[i % this.vertices.length];
+          ctx.lineTo(v.x + ox, v.y + oy);
+        }
+        ctx.closePath();
+      }
+
+      contains(px, py) {
+        const dx = px - this.x;
+        const dy = py - this.y;
+        return Math.sqrt(dx * dx + dy * dy) < 30 * this.scale;
+      }
+
+      affectSand() {
+        const gx = Math.floor((this.x / canvas.width) * SAND_RES);
+        const gy = Math.floor((this.y / canvas.height) * SAND_RES);
+        const radius = Math.floor(18 * this.scale);
+
+        for (let ox = -radius; ox <= radius; ox++) {
+          for (let oy = -radius; oy <= radius; oy++) {
+            const dist = Math.sqrt(ox * ox + oy * oy);
+            if (dist > radius || dist < 4) continue;
+
+            const i = gx + ox;
+            const j = gy + oy;
+            if (i < 0 || i >= SAND_RES || j < 0 || j >= SAND_RES) continue;
+
+            const idx = i + j * SAND_RES;
+            const moundHeight = 0.25 * (1 - (dist - 4) / (radius - 4));
+            sand.height[idx] = Math.max(sand.height[idx], moundHeight);
+          }
+        }
+      }
+    }
+
+    // Rake tool
+    const rake = {
+      width: 35,
+      tines: 4,
+      depth: 0.6,
+
+      carve(x, y, prevX, prevY) {
+        const dx = x - prevX;
+        const dy = y - prevY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < 2) return;
+
+        const perpX = -dy / distance;
+        const perpY = dx / distance;
+        const spacing = this.width / this.tines;
+
+        for (let t = 0; t < this.tines; t++) {
+          const offset = (t - (this.tines - 1) / 2) * spacing;
+          const steps = Math.ceil(distance / 3);
+
+          for (let s = 0; s <= steps; s++) {
+            const progress = s / steps;
+            const sx = prevX + perpX * offset + dx * progress;
+            const sy = prevY + perpY * offset + dy * progress;
+            this.carvePoint(sx, sy, dx / distance, dy / distance);
+          }
+        }
+      },
+
+      carvePoint(x, y, dirX, dirY) {
+        const gx = Math.floor((x / canvas.width) * SAND_RES);
+        const gy = Math.floor((y / canvas.height) * SAND_RES);
+
+        for (let ox = -2; ox <= 2; ox++) {
+          for (let oy = -2; oy <= 2; oy++) {
+            const dist = Math.sqrt(ox * ox + oy * oy);
+            if (dist > 2.5) continue;
+
+            const i = gx + ox;
+            const j = gy + oy;
+            if (i < 0 || i >= SAND_RES || j < 0 || j >= SAND_RES) continue;
+
+            const idx = i + j * SAND_RES;
+            const influence = 1 - dist / 2.5;
+
+            // Groove profile
+            const grooveDepth = dist < 1.2 ? -this.depth : this.depth * 0.25;
+            sand.height[idx] += grooveDepth * influence * 0.08;
+            sand.height[idx] = Math.max(-0.8, Math.min(0.8, sand.height[idx]));
+
+            // Direction
+            sand.directionX[idx] = sand.directionX[idx] * 0.6 + dirX * 0.4;
+            sand.directionY[idx] = sand.directionY[idx] * 0.6 + dirY * 0.4;
+          }
+        }
+      }
+    };
+
+    // Initialize stones
+    const stones = [
+      new Stone(canvas.width * 0.3, canvas.height * 0.4, 1.2),
+      new Stone(canvas.width * 0.65, canvas.height * 0.35, 0.8),
+      new Stone(canvas.width * 0.5, canvas.height * 0.6, 1.0),
+    ];
+    stones.forEach(s => s.affectSand());
+
+    // Sand rendering
+    const renderSand = () => {
+      const imageData = ctx.createImageData(canvas.width, canvas.height);
+      const lightDir = { x: -0.5, y: -0.5, z: 0.7 };
+      const len = Math.sqrt(lightDir.x ** 2 + lightDir.y ** 2 + lightDir.z ** 2);
+      lightDir.x /= len; lightDir.y /= len; lightDir.z /= len;
+
+      for (let x = 0; x < canvas.width; x++) {
+        for (let y = 0; y < canvas.height; y++) {
+          const gx = Math.floor((x / canvas.width) * SAND_RES);
+          const gy = Math.floor((y / canvas.height) * SAND_RES);
+          const idx = gx + gy * SAND_RES;
+
+          // Calculate normal from height
+          const hL = sand.height[Math.max(0, gx - 1) + gy * SAND_RES] || 0;
+          const hR = sand.height[Math.min(SAND_RES - 1, gx + 1) + gy * SAND_RES] || 0;
+          const hU = sand.height[gx + Math.max(0, gy - 1) * SAND_RES] || 0;
+          const hD = sand.height[gx + Math.min(SAND_RES - 1, gy + 1) * SAND_RES] || 0;
+
+          let nx = hL - hR;
+          let ny = hU - hD;
+          let nz = 0.4;
+          const nLen = Math.sqrt(nx * nx + ny * ny + nz * nz);
+          nx /= nLen; ny /= nLen; nz /= nLen;
+
+          // Lighting
+          const diffuse = Math.max(0, nx * lightDir.x + ny * lightDir.y + nz * lightDir.z);
+
+          // Sand colors
+          const base = { r: 210, g: 198, b: 175 };
+          const shadow = { r: 160, g: 148, b: 125 };
+          const highlight = { r: 235, g: 228, b: 210 };
+
+          let r, g, b;
+          if (diffuse > 0.5) {
+            const t = (diffuse - 0.5) * 2;
+            r = base.r + (highlight.r - base.r) * t;
+            g = base.g + (highlight.g - base.g) * t;
+            b = base.b + (highlight.b - base.b) * t;
+          } else {
+            const t = diffuse * 2;
+            r = shadow.r + (base.r - shadow.r) * t;
+            g = shadow.g + (base.g - shadow.g) * t;
+            b = shadow.b + (base.b - shadow.b) * t;
+          }
+
+          // Subtle grain
+          const grain = (Math.random() - 0.5) * 6;
+
+          const pixelIdx = (x + y * canvas.width) * 4;
+          imageData.data[pixelIdx + 0] = Math.max(0, Math.min(255, r + grain));
+          imageData.data[pixelIdx + 1] = Math.max(0, Math.min(255, g + grain));
+          imageData.data[pixelIdx + 2] = Math.max(0, Math.min(255, b + grain));
+          imageData.data[pixelIdx + 3] = 255;
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+    };
+
+    // Smooth sand over time
+    const smoothSand = () => {
+      for (let i = 0; i < sand.height.length; i++) {
+        sand.height[i] *= 0.9998;
+      }
+    };
+
+    let lastTouchPos = {};
+    let isRaking = false;
+    let selectedStone = null;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Handle touch
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          const lastPos = lastTouchPos[point.id];
+
+          if (!point.touchStarted) {
+            // Check if touching a stone
+            selectedStone = stones.find(s => s.contains(point.x, point.y));
+            if (selectedStone) {
+              stones.forEach(s => s.selected = false);
+              selectedStone.selected = true;
+            } else {
+              isRaking = true;
+            }
+            point.touchStarted = true;
+          }
+
+          if (selectedStone && lastPos) {
+            // Move stone
+            selectedStone.x += point.x - lastPos.x;
+            selectedStone.y += point.y - lastPos.y;
+          } else if (isRaking && lastPos) {
+            // Rake sand
+            rake.carve(point.x, point.y, lastPos.x, lastPos.y);
+          }
+
+          lastTouchPos[point.id] = { x: point.x, y: point.y };
+        } else {
+          if (selectedStone) {
+            selectedStone.affectSand();
+            selectedStone.selected = false;
+            selectedStone = null;
+          }
+          isRaking = false;
+          point.touchStarted = false;
+          delete lastTouchPos[point.id];
+        }
+      });
+
+      smoothSand();
+
+      // Render
+      renderSand();
+
+      // Draw stones
+      stones.forEach(s => s.draw(ctx));
+
+      // Breath indicator
+      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
+      ctx.fillStyle = `rgba(120, 110, 90, ${0.4 + breath * 0.3})`;
+      ctx.font = '14px "Jost", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', canvas.width / 2, canvas.height - 35);
+
+      // Instructions hint
+      ctx.fillStyle = 'rgba(120, 110, 90, 0.5)';
+      ctx.font = '12px "Jost", sans-serif';
+      ctx.fillText('drag to rake • drag stones to move', canvas.width / 2, 25);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode, getInteractionInfluence, drawRipples]);
+
+  // ========== FIREFLIES MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'fireflies' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Firefly class
+    class Firefly {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height * 0.7 + canvas.height * 0.15;
+        this.z = Math.random(); // Depth
+
+        this.vx = 0;
+        this.vy = 0;
+        this.targetX = this.x;
+        this.targetY = this.y;
+        this.wanderAngle = Math.random() * Math.PI * 2;
+
+        // Glow pattern
+        this.glowPhase = Math.random() * Math.PI * 2;
+        this.glowSpeed = 0.015 + Math.random() * 0.02;
+        this.pattern = this.generatePattern();
+        this.patternTime = Math.random() * 10;
+
+        this.size = 2 + this.z * 3;
+        this.hue = 55 + Math.random() * 25; // Yellow-green
+      }
+
+      generatePattern() {
+        const patterns = [
+          [0.4, 2.5],
+          [0.25, 0.25, 0.25, 2.2],
+          [0.15, 0.15, 0.15, 0.15, 0.15, 2.8],
+          [0.8, 1.8],
+        ];
+        return patterns[Math.floor(Math.random() * patterns.length)];
+      }
+
+      update(dt) {
+        // Wander
+        this.wanderAngle += (Math.random() - 0.5) * 0.25;
+        this.targetX += Math.cos(this.wanderAngle) * 0.4;
+        this.targetY += Math.sin(this.wanderAngle) * 0.3;
+
+        // Boundaries
+        const margin = 60;
+        if (this.targetX < margin) this.wanderAngle = Math.random() * 0.5;
+        if (this.targetX > canvas.width - margin) this.wanderAngle = Math.PI + Math.random() * 0.5;
+        if (this.targetY < canvas.height * 0.15) this.wanderAngle = Math.PI * 0.5;
+        if (this.targetY > canvas.height * 0.85) this.wanderAngle = -Math.PI * 0.5;
+
+        // Move toward target
+        this.vx += (this.targetX - this.x) * 0.008;
+        this.vy += (this.targetY - this.y) * 0.008;
+
+        // Damping
+        this.vx *= 0.96;
+        this.vy *= 0.96;
+
+        // Apply velocity
+        const speed = 0.4 + this.z * 0.4;
+        this.x += this.vx * speed;
+        this.y += this.vy * speed;
+
+        // Update glow
+        this.patternTime += dt * 0.001;
+      }
+
+      getGlow() {
+        let totalTime = 0;
+        for (let i = 0; i < this.pattern.length; i++) {
+          totalTime += this.pattern[i];
+        }
+
+        const cycleTime = this.patternTime % totalTime;
+        let elapsed = 0;
+        let isOn = true;
+
+        for (let i = 0; i < this.pattern.length; i++) {
+          elapsed += this.pattern[i];
+          if (cycleTime < elapsed) {
+            const segmentStart = elapsed - this.pattern[i];
+            const segmentProgress = (cycleTime - segmentStart) / this.pattern[i];
+            if (isOn) {
+              if (segmentProgress < 0.15) return segmentProgress / 0.15;
+              if (segmentProgress > 0.75) return 1 - (segmentProgress - 0.75) / 0.25;
+              return 1;
+            }
+            return 0;
+          }
+          isOn = !isOn;
+        }
+        return 0;
+      }
+
+      draw(ctx) {
+        const glow = this.getGlow();
+        if (glow < 0.02) return;
+
+        const alpha = glow * (0.4 + this.z * 0.5);
+
+        // Outer glow
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 10);
+        gradient.addColorStop(0, `hsla(${this.hue}, 100%, 75%, ${alpha})`);
+        gradient.addColorStop(0.25, `hsla(${this.hue}, 100%, 55%, ${alpha * 0.5})`);
+        gradient.addColorStop(1, `hsla(${this.hue}, 100%, 40%, 0)`);
+
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 10, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        // Bright core
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${this.hue}, 100%, 92%, ${alpha})`;
+        ctx.fill();
+      }
+
+      attract(px, py, strength) {
+        const dx = px - this.x;
+        const dy = py - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 180 && dist > 15) {
+          const force = strength * (1 - dist / 180) * 0.4;
+          this.vx += (dx / dist) * force;
+          this.vy += (dy / dist) * force;
+        } else if (dist <= 15) {
+          // Orbit
+          this.vx += (-dy / dist) * 0.15;
+          this.vy += (dx / dist) * 0.15;
+        }
+      }
+    }
+
+    // Star class
+    class Star {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height * 0.5;
+        this.size = Math.random() * 1.5 + 0.5;
+        this.brightness = Math.random() * 0.5 + 0.3;
+        this.phase = Math.random() * Math.PI * 2;
+        this.twinkleSpeed = Math.random() * 0.002 + 0.001;
+      }
+
+      draw(ctx, time) {
+        const twinkle = 0.5 + Math.sin(time * this.twinkleSpeed + this.phase) * 0.5;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${twinkle * this.brightness})`;
+        ctx.fill();
+      }
+    }
+
+    // Initialize
+    const fireflies = [];
+    const fireflyCount = Math.min(Math.floor((canvas.width * canvas.height) / 12000), 60);
+    for (let i = 0; i < fireflyCount; i++) {
+      fireflies.push(new Firefly());
+    }
+
+    const stars = [];
+    for (let i = 0; i < 100; i++) {
+      stars.push(new Star());
+    }
+
+    // Pre-generate treeline
+    const treelinePoints = [];
+    for (let x = 0; x <= canvas.width + 20; x += 15) {
+      const height = 80 + Math.sin(x * 0.012) * 35 + Math.sin(x * 0.028) * 20 + Math.random() * 15;
+      treelinePoints.push({ x, y: canvas.height - height });
+    }
+
+    // Draw environment
+    const drawEnvironment = (time, breath) => {
+      // Night sky
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      skyGradient.addColorStop(0, '#05050f');
+      skyGradient.addColorStop(0.4, '#0a0a1a');
+      skyGradient.addColorStop(0.7, '#0f0f28');
+      skyGradient.addColorStop(1, '#151530');
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Stars
+      stars.forEach(star => star.draw(ctx, time));
+
+      // Moon glow (subtle)
+      const moonX = canvas.width * 0.8;
+      const moonY = canvas.height * 0.15;
+      const moonGlow = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, 120);
+      moonGlow.addColorStop(0, `rgba(200, 210, 230, ${0.15 + breath * 0.05})`);
+      moonGlow.addColorStop(0.3, 'rgba(150, 160, 180, 0.05)');
+      moonGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = moonGlow;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, 120, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Treeline silhouette
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      treelinePoints.forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.closePath();
+      ctx.fillStyle = '#030308';
+      ctx.fill();
+
+      // Grass at bottom
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      for (let x = 0; x <= canvas.width; x += 4) {
+        const sway = Math.sin(x * 0.08 + time * 0.0008) * 3;
+        const grassHeight = 18 + Math.sin(x * 0.15) * 6 + sway;
+        ctx.lineTo(x, canvas.height - grassHeight);
+      }
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.closePath();
+      ctx.fillStyle = '#060610';
+      ctx.fill();
+    };
+
+    // Attraction points
+    const attractionPoints = [];
+
+    let lastTime = Date.now();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const now = Date.now();
+      const dt = Math.min(now - lastTime, 50);
+      lastTime = now;
+
+      const elapsed = (now - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
+
+      // Breath sync - gather on inhale, sync glow on exhale
+      if (isInhaling) {
+        fireflies.forEach(fly => {
+          fly.targetX += (canvas.width / 2 - fly.targetX) * 0.002 * breath;
+          fly.targetY += (canvas.height / 2 - fly.targetY) * 0.002 * breath;
+        });
+      } else {
+        // Sync flash phases slightly on exhale
+        fireflies.forEach(fly => {
+          fly.patternTime += (breath - 0.5) * 0.01;
+        });
+      }
+
+      // Handle touch interactions
+      touchPointsRef.current.forEach(point => {
+        if (point.active) {
+          if (!point.attracting) {
+            attractionPoints.push({ x: point.x, y: point.y, strength: 1, active: true, id: point.id });
+            point.attracting = true;
+          }
+          const ap = attractionPoints.find(a => a.id === point.id);
+          if (ap) {
+            ap.x = point.x;
+            ap.y = point.y;
+          }
+        } else if (point.attracting) {
+          const ap = attractionPoints.find(a => a.id === point.id);
+          if (ap) ap.active = false;
+          point.attracting = false;
+        }
+      });
+
+      // Update attraction points
+      for (let i = attractionPoints.length - 1; i >= 0; i--) {
+        const ap = attractionPoints[i];
+        if (!ap.active) {
+          ap.strength *= 0.92;
+          if (ap.strength < 0.02) {
+            attractionPoints.splice(i, 1);
+            continue;
+          }
+        }
+        fireflies.forEach(fly => fly.attract(ap.x, ap.y, ap.strength));
+      }
+
+      // Draw environment
+      drawEnvironment(now, breath);
+
+      // Update and draw fireflies (sorted by depth for proper layering)
+      fireflies.sort((a, b) => a.z - b.z);
+      fireflies.forEach(fly => {
+        fly.update(dt);
+        fly.draw(ctx);
+      });
+
+      // Touch ripples
+      drawRipples(ctx);
+
+      // Breath indicator
+      ctx.fillStyle = `rgba(180, 200, 150, ${0.25 + breath * 0.2})`;
+      ctx.font = '14px "Jost", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', canvas.width / 2, canvas.height - 35);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
   }, [currentMode, getInteractionInfluence, drawRipples]);
 
   return (
