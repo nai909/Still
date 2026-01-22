@@ -718,39 +718,39 @@ const allSchools = [...new Set(allQuotes.map(q => q.school))].sort();
 const themes = {
   void: {
     name: 'Void',
-    bg: 'radial-gradient(ellipse at center, #1a1a2e 0%, #0d0d14 50%, #000 100%)',
-    text: '#E8E6E3',
-    textMuted: '#888',
-    accent: '#E8E6E3',
-    cardBg: 'rgba(255,255,255,0.03)',
-    border: 'rgba(255,255,255,0.1)',
+    bg: 'radial-gradient(ellipse at center, #1a1a28 0%, #0f0f18 50%, #050508 100%)',
+    text: '#E8E4DC',       // Warmer white
+    textMuted: '#7a7570',  // Warmer gray
+    accent: '#D4CFC4',     // Soft warm accent
+    cardBg: 'rgba(255,248,240,0.02)',
+    border: 'rgba(255,248,240,0.08)',
   },
   cosmos: {
     name: 'Cosmos',
-    bg: 'radial-gradient(ellipse at center, #1a1a3e 0%, #0d0d1a 50%, #050508 100%)',
-    text: '#E0E0F0',
-    textMuted: '#8888AA',
-    accent: '#A0A0D0',
-    cardBg: 'rgba(160,160,208,0.05)',
-    border: 'rgba(160,160,208,0.15)',
+    bg: 'radial-gradient(ellipse at center, #181828 0%, #0c0c14 50%, #040406 100%)',
+    text: '#E4E0E8',       // Soft lavender white
+    textMuted: '#8080A0',
+    accent: '#B8B0C8',
+    cardBg: 'rgba(180,170,200,0.03)',
+    border: 'rgba(180,170,200,0.1)',
   },
   dawn: {
     name: 'Dawn',
-    bg: 'radial-gradient(ellipse at center, #f5f0e8 0%, #e8e0d4 50%, #d4c8b8 100%)',
-    text: '#2a2520',
-    textMuted: '#6a6560',
-    accent: '#8B7355',
-    cardBg: 'rgba(139,115,85,0.08)',
-    border: 'rgba(139,115,85,0.2)',
+    bg: 'radial-gradient(ellipse at center, #F8F4EC 0%, #EDE5D8 50%, #E0D4C4 100%)',
+    text: '#3a3530',       // Softer brown
+    textMuted: '#7a756d',
+    accent: '#9A8B78',
+    cardBg: 'rgba(150,130,110,0.06)',
+    border: 'rgba(150,130,110,0.15)',
   },
   ink: {
     name: 'Ink',
-    bg: '#000',
-    text: '#F0F0F0',
-    textMuted: '#666',
-    accent: '#FFFFFF',
-    cardBg: 'rgba(255,255,255,0.02)',
-    border: 'rgba(255,255,255,0.08)',
+    bg: '#080808',         // Not pure black (softer)
+    text: '#E8E4E0',       // Warm off-white
+    textMuted: '#5a5854',
+    accent: '#D0CCC4',
+    cardBg: 'rgba(255,248,240,0.02)',
+    border: 'rgba(255,248,240,0.06)',
   },
 };
 
@@ -766,6 +766,9 @@ const defaultSettings = {
   depthEffect: true,
   particles: true,
   reducedMotion: false,
+  breathMode: false,      // Quotes advance with breath
+  autoAdvance: false,     // Auto-advance quotes
+  autoAdvanceInterval: 20, // Seconds between quotes
 };
 
 const STORAGE_KEYS = {
@@ -876,6 +879,55 @@ function Philos() {
   const [revealedChars, setRevealedChars] = useState(0);
   const typewriterRef = useRef(null);
 
+  // ============================================================================
+  // BREATHING - The heartbeat of the app
+  // Inhale: 5s (0→1), Exhale: 6s (1→0), Total cycle: 11s
+  // ============================================================================
+
+  const [breathPhase, setBreathPhase] = useState(0); // 0-1, where 1 is full inhale
+  const [isInhaling, setIsInhaling] = useState(true);
+  const breathCycleCount = useRef(0);
+
+  useEffect(() => {
+    const INHALE_DURATION = 5000;
+    const EXHALE_DURATION = 6000;
+
+    let animationFrame;
+    let startTime = Date.now();
+    let inhaling = true;
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const duration = inhaling ? INHALE_DURATION : EXHALE_DURATION;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Smooth easing
+      const eased = inhaling
+        ? 1 - Math.pow(1 - progress, 3)  // ease-out for inhale
+        : Math.pow(1 - progress, 3);      // ease-in for exhale (reverse)
+
+      const phase = inhaling ? eased : 1 - eased;
+      setBreathPhase(phase);
+      setIsInhaling(inhaling);
+
+      if (progress >= 1) {
+        // Switch breath direction
+        inhaling = !inhaling;
+        startTime = Date.now();
+
+        // Count complete cycles (after full exhale)
+        if (inhaling) {
+          breathCycleCount.current++;
+        }
+      }
+
+      animationFrame = requestAnimationFrame(animate);
+    };
+
+    animationFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [settings.breathMode]);
+
   // Get current theme
   const currentTheme = themes[settings.theme] || themes.void;
 
@@ -914,12 +966,13 @@ function Philos() {
     const text = currentQuote.text;
     let charIndex = 0;
 
-    // Variable speed: faster for spaces, slower for punctuation
+    // Slower, more meditative timing - like handwriting
     const getDelay = (char) => {
-      if (char === ' ') return 20;
-      if (['.', ',', ';', ':', '—', '–'].includes(char)) return 120;
-      if (['?', '!'].includes(char)) return 150;
-      return 35 + Math.random() * 25; // 35-60ms, slight variation for natural feel
+      if (char === ' ') return 50;
+      if (['.', '—', '–'].includes(char)) return 400;  // Long pause for periods
+      if ([',', ';', ':'].includes(char)) return 250;  // Medium pause
+      if (['?', '!'].includes(char)) return 500;       // Longest pause
+      return 55 + Math.random() * 35; // 55-90ms base speed
     };
 
     const revealNext = () => {
@@ -963,6 +1016,21 @@ function Philos() {
       isAnimating.current = false;
     }, 800); // Slower, like smoke clearing
   }, [currentIndex, filteredQuotes.length]);
+
+  // Breath mode: advance quote every 2 breath cycles (~22s)
+  const lastBreathAdvance = useRef(0);
+  useEffect(() => {
+    if (!settings.breathMode || view !== 'scroll') return;
+
+    const checkBreathAdvance = setInterval(() => {
+      if (breathCycleCount.current >= lastBreathAdvance.current + 2) {
+        lastBreathAdvance.current = breathCycleCount.current;
+        goToQuote(1);
+      }
+    }, 1000);
+
+    return () => clearInterval(checkBreathAdvance);
+  }, [settings.breathMode, view, goToQuote]);
 
   // Accumulated scroll for threshold detection
   const scrollAccum = useRef(0);
@@ -1158,10 +1226,10 @@ function Philos() {
           transition: 'background 0.5s ease',
         }}
       >
-        {/* Stars */}
+        {/* Ambient dust - sparse, slow, calming */}
         {settings.particles && (
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-            {[...Array(60)].map((_, i) => (
+            {[...Array(25)].map((_, i) => (
               <div
                 key={i}
                 style={{
@@ -1172,9 +1240,9 @@ function Philos() {
                   borderRadius: '50%',
                   left: Math.random() * 100 + '%',
                   top: Math.random() * 100 + '%',
-                  opacity: Math.random() * 0.4 + 0.1,
-                  animation: settings.reducedMotion ? 'none' : `twinkle ${Math.random() * 4 + 3}s ease-in-out infinite`,
-                  animationDelay: Math.random() * 2 + 's',
+                  opacity: Math.random() * 0.2 + 0.05,
+                  animation: settings.reducedMotion ? 'none' : `twinkle ${Math.random() * 8 + 8}s ease-in-out infinite`,
+                  animationDelay: Math.random() * 5 + 's',
                 }}
               />
             ))}
@@ -1402,8 +1470,9 @@ function Philos() {
 
           {/* Toggles */}
           {[
+            { key: 'breathMode', label: 'Breath Mode', description: 'Quotes flow with your breath' },
             { key: 'depthEffect', label: 'Depth Effect' },
-            { key: 'particles', label: 'Star Particles' },
+            { key: 'particles', label: 'Ambient Dust' },
             { key: 'reducedMotion', label: 'Reduce Motion' },
           ].map(({ key, label }) => (
             <div key={key} style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1483,12 +1552,6 @@ function Philos() {
                 textShadow: settings.theme === 'dawn' ? 'none' : '0 2px 20px rgba(0,0,0,0.5)',
               }}>
                 "{currentQuote.text.slice(0, revealedChars)}"
-                {revealedChars < currentQuote.text.length && (
-                  <span style={{
-                    opacity: 0.7,
-                    animation: 'pulse 1s ease-in-out infinite',
-                  }}>|</span>
-                )}
               </blockquote>
 
               <div className="quote-meta" style={{
@@ -1580,24 +1643,36 @@ function Philos() {
             </div>
 
             {/* Scroll hint */}
+            {/* Breathing Guide */}
             <div style={{
               position: 'absolute',
-              bottom: '2rem',
+              bottom: '3rem',
               left: '50%',
               transform: 'translateX(-50%)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '0.5rem',
-              opacity: 0.4,
+              gap: '1rem',
             }}>
-              <span style={{ fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Scroll to discover</span>
+              {/* Breath circle */}
               <div style={{
-                width: '1px',
-                height: '30px',
-                background: `linear-gradient(to bottom, ${currentTheme.text}, transparent)`,
-                animation: settings.reducedMotion ? 'none' : 'scrollPulse 2s ease-in-out infinite',
+                width: `${40 + breathPhase * 20}px`,
+                height: `${40 + breathPhase * 20}px`,
+                borderRadius: '50%',
+                border: `1px solid ${currentTheme.text}`,
+                opacity: 0.15 + breathPhase * 0.15,
+                transition: 'none', // Smooth animation from RAF
               }} />
+              {/* Breath label */}
+              <span style={{
+                fontSize: '0.6rem',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                opacity: 0.3,
+                color: currentTheme.textMuted,
+              }}>
+                {isInhaling ? 'breathe in' : 'breathe out'}
+              </span>
             </div>
 
             {/* Progress indicator */}
@@ -1610,16 +1685,15 @@ function Philos() {
               flexDirection: 'column',
               gap: '4px',
             }}>
-              {[...Array(5)].map((_, i) => (
+              {[...Array(3)].map((_, i) => (
                 <div
                   key={i}
                   style={{
-                    width: '3px',
-                    height: '20px',
-                    background: i === 2 ? currentTheme.text : currentTheme.border,
-                    opacity: i === 2 ? 0.6 : 0.2,
-                    borderRadius: '2px',
-                    transition: 'background 0.3s ease',
+                    width: '2px',
+                    height: '12px',
+                    background: currentTheme.text,
+                    opacity: i === 1 ? 0.15 : 0.05,
+                    borderRadius: '1px',
                   }}
                 />
               ))}
