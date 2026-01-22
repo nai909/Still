@@ -4975,169 +4975,101 @@ function Philos() {
 
         {/* Breathwork View - Dedicated breathing practice */}
         {view === 'breathwork' && (
-          <main style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 2,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#000',
-          }}>
-            {/* Technique selector */}
+          <main
+            onClick={() => !breathSession.isActive && startBreathSession(breathSession.technique)}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#000',
+              cursor: 'pointer',
+            }}
+          >
+            {/* Technique selector - horizontal scroll */}
             <div style={{
               position: 'absolute',
               top: '5rem',
               left: '50%',
               transform: 'translateX(-50%)',
-              display: 'flex',
-              gap: '0.5rem',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              maxWidth: '90vw',
+              maxWidth: '85vw',
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              padding: '0.5rem',
+              WebkitOverflowScrolling: 'touch',
             }}>
-              {Object.entries(breathTechniques).map(([key, tech]) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    if (breathSession.isActive) stopBreathSession();
-                    startBreathSession(key);
-                  }}
-                  style={{
-                    background: breathSession.technique === key && breathSession.isActive ? 'rgba(127,219,202,0.2)' : 'transparent',
-                    border: breathSession.technique === key && breathSession.isActive ? '1px solid rgba(127,219,202,0.4)' : '1px solid rgba(255,255,255,0.1)',
-                    color: breathSession.technique === key && breathSession.isActive ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    fontFamily: '"Jost", sans-serif',
-                  }}
-                >
-                  {tech.name}
-                </button>
-              ))}
+              <div style={{ display: 'flex', gap: '0.4rem', whiteSpace: 'nowrap' }}>
+                {Object.entries(breathTechniques).map(([key, tech]) => (
+                  <button
+                    key={key}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (breathSession.isActive) stopBreathSession();
+                      startBreathSession(key);
+                    }}
+                    style={{
+                      background: breathSession.technique === key ? 'rgba(127,219,202,0.15)' : 'transparent',
+                      border: breathSession.technique === key ? '1px solid rgba(127,219,202,0.3)' : '1px solid rgba(255,255,255,0.08)',
+                      color: breathSession.technique === key ? '#7FDBCA' : 'rgba(255,255,255,0.4)',
+                      padding: '0.4rem 0.8rem',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.65rem',
+                      fontFamily: '"Jost", sans-serif',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {tech.name}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Main breathing circle */}
+            {/* Pulsing circle */}
             <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2rem',
+              width: `${140 + (breathSession.isActive ? breathSession.phaseProgress : 0.5) * 100}px`,
+              height: `${140 + (breathSession.isActive ? breathSession.phaseProgress : 0.5) * 100}px`,
+              borderRadius: '50%',
+              background: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
+                ? 'radial-gradient(circle, rgba(255,215,100,0.12) 0%, rgba(255,215,100,0.04) 50%, transparent 70%)'
+                : 'radial-gradient(circle, rgba(127,219,202,0.15) 0%, rgba(127,219,202,0.05) 50%, transparent 70%)',
+              border: `1.5px solid ${breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,215,100,0.35)' : 'rgba(127,219,202,0.3)'}`,
+              transition: 'width 0.15s ease-out, height 0.15s ease-out, background 0.3s ease, border-color 0.3s ease',
+            }} />
+
+            {/* Phase label */}
+            <div style={{
+              marginTop: '2.5rem',
+              color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,215,100,0.8)' : 'rgba(127,219,202,0.7)',
+              fontSize: '0.9rem',
+              fontFamily: '"Jost", sans-serif',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              transition: 'color 0.3s ease',
             }}>
-              {/* Pulsing circle */}
-              <div style={{
-                width: `${120 + breathSession.phaseProgress * 80}px`,
-                height: `${120 + breathSession.phaseProgress * 80}px`,
-                borderRadius: '50%',
-                background: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
-                  ? 'radial-gradient(circle, rgba(255,215,100,0.15) 0%, rgba(255,215,100,0.05) 50%, transparent 70%)'
-                  : 'radial-gradient(circle, rgba(127,219,202,0.2) 0%, rgba(127,219,202,0.08) 50%, transparent 70%)',
-                border: `2px solid ${breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,215,100,0.4)' : 'rgba(127,219,202,0.4)'}`,
-                transition: 'all 0.15s ease-out',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                {/* Inner circle */}
-                <div style={{
-                  width: '60%',
-                  height: '60%',
-                  borderRadius: '50%',
-                  background: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
-                    ? 'radial-gradient(circle, rgba(255,215,100,0.2) 0%, transparent 70%)'
-                    : 'radial-gradient(circle, rgba(127,219,202,0.25) 0%, transparent 70%)',
-                }} />
-              </div>
-
-              {/* Phase label */}
-              <div style={{
-                color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,215,100,0.9)' : 'rgba(127,219,202,0.9)',
-                fontSize: '1.2rem',
-                fontFamily: '"Jost", sans-serif',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                transition: 'color 0.3s ease',
-              }}>
-                {breathSession.isActive
-                  ? breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label || 'Breathe'
-                  : 'Select a technique'}
-              </div>
-
-              {/* Session stats */}
-              {breathSession.isActive && (
-                <div style={{
-                  display: 'flex',
-                  gap: '2rem',
-                  color: 'rgba(255,255,255,0.4)',
-                  fontSize: '0.75rem',
-                  fontFamily: '"Jost", sans-serif',
-                  letterSpacing: '0.1em',
-                }}>
-                  <span>Cycle {breathSession.cycleCount + 1}</span>
-                  <span>{Math.floor(breathSession.sessionTime / 60)}:{String(Math.floor(breathSession.sessionTime % 60)).padStart(2, '0')}</span>
-                </div>
-              )}
-
-              {/* Controls */}
-              {breathSession.isActive && (
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                  <button
-                    onClick={togglePauseBreathSession}
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid rgba(127,219,202,0.3)',
-                      color: '#7FDBCA',
-                      padding: '0.6rem 1.5rem',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem',
-                      fontFamily: '"Jost", sans-serif',
-                    }}
-                  >
-                    {breathSession.isPaused ? 'Resume' : 'Pause'}
-                  </button>
-                  <button
-                    onClick={stopBreathSession}
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid rgba(255,255,255,0.15)',
-                      color: 'rgba(255,255,255,0.5)',
-                      padding: '0.6rem 1.5rem',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem',
-                      fontFamily: '"Jost", sans-serif',
-                    }}
-                  >
-                    Stop
-                  </button>
-                </div>
-              )}
+              {breathSession.isActive
+                ? breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label || ''
+                : 'tap to begin'}
             </div>
 
-            {/* Back button */}
-            <button
-              onClick={() => { stopBreathSession(); setView('scroll'); }}
-              style={{
-                position: 'absolute',
-                bottom: '2rem',
-                background: 'transparent',
-                border: 'none',
-                color: 'rgba(255,255,255,0.3)',
-                fontSize: '0.7rem',
+            {/* Countdown */}
+            {breathSession.isActive && (
+              <div style={{
+                marginTop: '1rem',
+                color: 'rgba(255,255,255,0.25)',
+                fontSize: '1.5rem',
                 fontFamily: '"Jost", sans-serif',
-                cursor: 'pointer',
-                letterSpacing: '0.1em',
-              }}
-            >
-              tap to return
-            </button>
+                fontWeight: 300,
+              }}>
+                {Math.ceil(breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.duration * (1 - breathSession.phaseProgress)) || ''}
+              </div>
+            )}
           </main>
         )}
 
