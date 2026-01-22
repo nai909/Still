@@ -718,34 +718,34 @@ const allSchools = [...new Set(allQuotes.map(q => q.school))].sort();
 const themes = {
   void: {
     name: 'Void',
-    bg: 'radial-gradient(ellipse at center, #1a1a28 0%, #0f0f18 50%, #050508 100%)',
-    text: '#E8E4DC',       // Warmer white
-    textMuted: '#7a7570',  // Warmer gray
-    accent: '#D4CFC4',     // Soft warm accent
-    cardBg: 'rgba(255,248,240,0.02)',
-    border: 'rgba(255,248,240,0.08)',
+    bg: '#000',
+    text: '#E8E4DC',
+    textMuted: '#7a7570',
+    accent: '#7FDBCA',
+    cardBg: 'rgba(255,255,255,0.03)',
+    border: 'rgba(255,255,255,0.1)',
   },
   cosmos: {
     name: 'Cosmos',
-    bg: 'radial-gradient(ellipse at center, #181828 0%, #0c0c14 50%, #040406 100%)',
-    text: '#E4E0E8',       // Soft lavender white
+    bg: '#000',
+    text: '#E4E0E8',
     textMuted: '#8080A0',
-    accent: '#B8B0C8',
-    cardBg: 'rgba(180,170,200,0.03)',
-    border: 'rgba(180,170,200,0.1)',
+    accent: '#7FDBCA',
+    cardBg: 'rgba(255,255,255,0.03)',
+    border: 'rgba(255,255,255,0.1)',
   },
   dawn: {
     name: 'Dawn',
-    bg: 'radial-gradient(ellipse at center, #F8F4EC 0%, #EDE5D8 50%, #E0D4C4 100%)',
-    text: '#3a3530',       // Softer brown
-    textMuted: '#7a756d',
-    accent: '#9A8B78',
-    cardBg: 'rgba(150,130,110,0.06)',
-    border: 'rgba(150,130,110,0.15)',
+    bg: '#000',
+    text: '#E8E4DC',
+    textMuted: '#7a7570',
+    accent: '#7FDBCA',
+    cardBg: 'rgba(255,255,255,0.03)',
+    border: 'rgba(255,255,255,0.1)',
   },
   ink: {
     name: 'Ink',
-    bg: '#080808',         // Not pure black (softer)
+    bg: '#000',
     text: '#E8E4E0',       // Warm off-white
     textMuted: '#5a5854',
     accent: '#D0CCC4',
@@ -2829,9 +2829,7 @@ function Philos() {
         <div style={{
           position: 'absolute',
           top: 0, left: 0, right: 0, bottom: 0,
-          background: settings.theme === 'dawn'
-            ? 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.1) 100%)'
-            : 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%)',
+          background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%)',
           pointerEvents: 'none',
           zIndex: 1,
         }} />
@@ -2844,9 +2842,7 @@ function Philos() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          background: settings.theme === 'dawn'
-            ? 'linear-gradient(to bottom, rgba(245,240,232,0.9) 0%, transparent 100%)'
-            : 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)',
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)',
           zIndex: 100,
         }}>
           <h1
@@ -2923,7 +2919,7 @@ function Philos() {
                 color: currentTheme.text,
                 margin: 0,
                 letterSpacing: '0.02em',
-                textShadow: settings.theme === 'dawn' ? 'none' : '0 2px 15px rgba(0,0,0,0.4)',
+                textShadow: '0 2px 15px rgba(0,0,0,0.4)',
               }}>
                 {currentQuote.text.slice(0, revealedChars)}
               </blockquote>
