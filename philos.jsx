@@ -1533,7 +1533,7 @@ function Philos() {
                 "{currentQuote.text}"
               </blockquote>
 
-              <div ref={metaRef} className="quote-meta" style={{
+              <div className="quote-meta" style={{
                 marginTop: '2rem',
                 opacity: Math.max(0, 1 - Math.abs(displayProgress) * 2.5),
               }}>
