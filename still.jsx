@@ -14281,6 +14281,10 @@ function Still() {
     if (isCurrentlySaved) {
       newSaved = savedQuotes.filter(q => q.author + '-' + q.text.substring(0, 30) !== quoteId);
       showToast('Removed from saved');
+      // Turn off "saved only" filter if no more saved quotes
+      if (newSaved.length === 0 && showSavedOnly) {
+        setShowSavedOnly(false);
+      }
     } else {
       newSaved = [...savedQuotes, quote];
       showToast('Saved to collection');
