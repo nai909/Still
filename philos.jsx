@@ -2283,12 +2283,6 @@ function GazeMode({ theme }) {
 
       // Draw touch ripples
       drawRipples(ctx);
-
-      // Breath indicator text
-      ctx.fillStyle = `rgba(200, 240, 255, ${0.3 + breath * 0.3})`;
-      ctx.font = '16px "Jost", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', centerX, canvas.height - 40);
     };
 
     ctx.fillStyle = '#000';
@@ -2647,13 +2641,6 @@ function GazeMode({ theme }) {
 
       // Draw touch ripples
       drawRipples(ctx);
-
-      // Breath indicator
-      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
-      ctx.fillStyle = `rgba(127, 219, 202, ${0.25 + breath * 0.25})`;
-      ctx.font = '14px "Jost", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', canvas.width / 2, canvas.height - 35);
     };
 
     animate();
@@ -3128,13 +3115,6 @@ function GazeMode({ theme }) {
 
       // Touch ripples
       drawRipples(ctx);
-
-      // Breath indicator
-      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
-      ctx.fillStyle = `rgba(100, 180, 200, ${0.2 + breath * 0.25})`;
-      ctx.font = '14px "Jost", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', canvas.width / 2, canvas.height - 35);
     };
 
     animate();
@@ -3460,12 +3440,6 @@ function GazeMode({ theme }) {
 
       // Draw touch ripples
       drawRipples(ctx);
-
-      // Breath indicator
-      ctx.fillStyle = `rgba(100, 120, 150, ${0.3 + breath * 0.3})`;
-      ctx.font = '14px "Jost", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', canvas.width / 2, canvas.height - 35);
 
       // Color indicator
       const currentColor = inkColors[colorIndex];
@@ -3793,12 +3767,6 @@ function GazeMode({ theme }) {
 
       // Touch ripples
       drawRipples(ctx);
-
-      // Breath indicator
-      ctx.fillStyle = `rgba(180, 200, 150, ${0.25 + breath * 0.2})`;
-      ctx.font = '14px "Jost", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', canvas.width / 2, canvas.height - 35);
     };
 
     animate();
