@@ -861,7 +861,6 @@ const gazeModes = [
 const gazeExperiences = [
   { key: 'deep-sleep', name: 'Deep Sleep', visual: 'jellyfish', breath: 'relaxation', description: 'Drift off peacefully' },
   { key: 'storm-watch', name: 'Storm Watch', visual: 'rain', breath: 'extend', description: 'Release anxiety' },
-  { key: 'night-walk', name: 'Night Walk', visual: 'fireflies', breath: 'resonance', description: 'Evening calm' },
   { key: 'ocean-mind', name: 'Ocean Mind', visual: 'ink', breath: 'ocean', description: 'Fluid meditation' },
   { key: 'focus', name: 'Focus', visual: 'geometry', breath: 'box', description: 'Sharp clarity' },
   { key: 'forest-floor', name: 'Forest Floor', visual: 'mycelium', breath: 'extend', description: 'Grounded presence' },
