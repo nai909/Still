@@ -2977,7 +2977,7 @@ function Philos() {
                     style={{
                       background: currentTheme.cardBg,
                       border: `1px solid ${currentTheme.border}`,
-                      color: isQuoteSaved(currentQuote) ? '#E8B4B8' : currentTheme.textMuted,
+                      color: isQuoteSaved(currentQuote) ? '#7FDBCA' : currentTheme.textMuted,
                       padding: '0.75rem 1.25rem',
                       borderRadius: '8px',
                       cursor: 'pointer',
@@ -3417,7 +3417,7 @@ function Philos() {
               {/* Schools */}
               <h2 style={{ fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: currentTheme.textMuted, marginBottom: '1.5rem', textAlign: 'center' }}>Filter by School of Thought</h2>
               {selectedSchools.size > 0 && (
-                <button onClick={() => setSelectedSchools(new Set())} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: '#E8B4B8', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}>Clear school filters</button>
+                <button onClick={() => setSelectedSchools(new Set())} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: '#7FDBCA', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}>Clear school filters</button>
               )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', marginBottom: '2.5rem' }}>
                 {allSchools.map(school => {
@@ -3452,12 +3452,12 @@ function Philos() {
               {/* Themes/Categories */}
               <h2 style={{ fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: currentTheme.textMuted, marginBottom: '1.5rem', textAlign: 'center' }}>Filter by Theme</h2>
               {selectedThemes.size > 0 && (
-                <button onClick={() => setSelectedThemes(new Set())} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: '#E8B4B8', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}>Clear theme filters</button>
+                <button onClick={() => setSelectedThemes(new Set())} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: '#7FDBCA', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}>Clear theme filters</button>
               )}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center' }}>
                 {allThemes.map(theme => {
                   const isSelected = selectedThemes.has(theme);
-                  const color = getThemeColor(theme);
+                  const color = '#7FDBCA';
                   const count = allQuotes.filter(q => q.themes && q.themes.includes(theme)).length;
                   return (
                     <button
@@ -3527,7 +3527,7 @@ function Philos() {
                         <div style={{ fontSize: '0.85rem', color: currentTheme.textMuted, fontWeight: 500 }}>{quote.author}</div>
                         <span style={{ display: 'inline-block', marginTop: '0.35rem', padding: '0.2rem 0.5rem', background: 'rgba(127, 219, 202, 0.15)', borderRadius: '3px', color: '#7FDBCA', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{quote.school}</span>
                       </div>
-                      <button onClick={() => toggleSave(quote)} style={{ background: 'none', border: `1px solid ${currentTheme.border}`, color: '#E8B4B8', padding: '0.4rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
+                      <button onClick={() => toggleSave(quote)} style={{ background: 'none', border: `1px solid ${currentTheme.border}`, color: '#7FDBCA', padding: '0.4rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
                     </div>
                   </div>
                 ))}
