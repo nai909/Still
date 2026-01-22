@@ -3038,16 +3038,16 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         cluster.spheres.forEach(sphere => {
           const x = cluster.x + sphere.offsetX + influence.x * 0.15;
           const y = cluster.y + sphere.offsetY + influence.y * 0.15;
-          const r = sphere.radius * (1 + fill * 0.3 + pulse) + influence.strength * 2;
+          const r = sphere.radius * (1 + fill * 0.12 + pulse * 0.5) + influence.strength * 1;
 
           // Interpolate color
           const h = colorDeoxygenated.h + (colorOxygenated.h - colorDeoxygenated.h) * fill;
-          const glowSize = r * (2 + fill * 1.5);
+          const glowSize = r * (1.5 + fill * 0.4);
 
-          // Outer glow
+          // Outer glow - more subtle
           const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, glowSize);
-          glowGradient.addColorStop(0, `hsla(${h}, 80%, 65%, ${0.4 * fill + influence.strength * 0.3})`);
-          glowGradient.addColorStop(0.5, `hsla(${h}, 70%, 55%, ${0.15 * fill})`);
+          glowGradient.addColorStop(0, `hsla(${h}, 70%, 60%, ${0.25 * fill + influence.strength * 0.2})`);
+          glowGradient.addColorStop(0.5, `hsla(${h}, 60%, 50%, ${0.1 * fill})`);
           glowGradient.addColorStop(1, 'transparent');
 
           ctx.beginPath();
@@ -12582,13 +12582,10 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
     const centerX = canvas.width / 2;
     const startY = canvas.height * 0.25;
 
-    // Colors - exact values from spec
-    // #2A7A75 (dim/deoxygenated): hsl(176, 49%, 32%)
-    // #4ECDC4 (bright/oxygenated): hsl(171, 66%, 55%)
-    // #3AA89F (exhale/cooler): hsl(166, 51%, 45%)
-    const colorDeoxygenated = { h: 176, s: 49, l: 32 };
-    const colorOxygenated = { h: 171, s: 66, l: 55 };
-    const colorExhale = { h: 166, s: 51, l: 45 };
+    // Colors - based on primaryHue
+    const colorDeoxygenated = { h: primaryHue, s: 40, l: 32 };
+    const colorOxygenated = { h: primaryHue, s: 66, l: 55 };
+    const colorExhale = { h: primaryHue, s: 51, l: 45 };
 
     // Branch class for the bronchial tree
     class Branch {
@@ -12721,7 +12718,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
     const particles = [];
 
     // Lung shape boundaries for constraining branches
-    const lungScale = Math.min(canvas.width, canvas.height) * 0.007;
+    const lungScale = Math.min(canvas.width, canvas.height) * 0.01;
 
     const isInsideLung = (x, y, side) => {
       const relX = (x - centerX) / lungScale;
@@ -12892,7 +12889,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [primaryHue]);
 
   // Animation loop for lung capillaries
   useEffect(() => {
@@ -13257,7 +13254,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 
           // Apply bloom scale, hold pulse, and rest pulse
           const scaleMultiplier = bloomScale * (1 + holdPulse + restPulse);
-          const r = sphere.radius * (1 + fill * 0.2) * scaleMultiplier;
+          const r = sphere.radius * (1 + fill * 0.1) * scaleMultiplier;
 
           // Color with bloom intensity boost
           const h = colorDeoxygenated.h + (targetColor.h - colorDeoxygenated.h) * fill;
@@ -13265,7 +13262,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
           const baseLightness = colorDeoxygenated.l + (targetColor.l - colorDeoxygenated.l) * fill;
           const l = baseLightness + (bloomIntensity - 1) * 20 + shimmer * 8; // Bloom brightens, shimmer adds sparkle
 
-          const glowSize = r * (2 + fill * 1.0);
+          const glowSize = r * (1.5 + fill * 0.4);
 
           // Outer glow (bloom makes this bigger and brighter)
           const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, glowSize * bloomIntensity);
