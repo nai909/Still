@@ -872,6 +872,10 @@ function Philos() {
   const lastTouchY = useRef(0);
   const containerRef = useRef(null);
 
+  // Typewriter effect state
+  const [revealedChars, setRevealedChars] = useState(0);
+  const typewriterRef = useRef(null);
+
   // Get current theme
   const currentTheme = themes[settings.theme] || themes.void;
 
@@ -892,6 +896,49 @@ function Philos() {
 
   const currentQuote = filteredQuotes[currentIndex % Math.max(filteredQuotes.length, 1)];
   const nextQuote = filteredQuotes[(currentIndex + 1) % Math.max(filteredQuotes.length, 1)];
+
+  // ============================================================================
+  // TYPEWRITER EFFECT - Letters appear like handwriting
+  // ============================================================================
+
+  useEffect(() => {
+    if (!currentQuote) return;
+
+    // Clear any existing animation
+    if (typewriterRef.current) {
+      clearInterval(typewriterRef.current);
+    }
+
+    // Reset to 0 and start revealing
+    setRevealedChars(0);
+    const text = currentQuote.text;
+    let charIndex = 0;
+
+    // Variable speed: faster for spaces, slower for punctuation
+    const getDelay = (char) => {
+      if (char === ' ') return 20;
+      if (['.', ',', ';', ':', '—', '–'].includes(char)) return 120;
+      if (['?', '!'].includes(char)) return 150;
+      return 35 + Math.random() * 25; // 35-60ms, slight variation for natural feel
+    };
+
+    const revealNext = () => {
+      if (charIndex < text.length) {
+        charIndex++;
+        setRevealedChars(charIndex);
+        typewriterRef.current = setTimeout(revealNext, getDelay(text[charIndex]));
+      }
+    };
+
+    // Small delay before starting (let the smoke clear)
+    typewriterRef.current = setTimeout(revealNext, 400);
+
+    return () => {
+      if (typewriterRef.current) {
+        clearTimeout(typewriterRef.current);
+      }
+    };
+  }, [currentIndex, currentQuote]);
 
   // ============================================================================
   // SIMPLE SCROLL SYSTEM - Direct, responsive, no fighting physics
@@ -1435,13 +1482,21 @@ function Philos() {
                 letterSpacing: '0.01em',
                 textShadow: settings.theme === 'dawn' ? 'none' : '0 2px 20px rgba(0,0,0,0.5)',
               }}>
-                "{currentQuote.text}"
+                "{currentQuote.text.slice(0, revealedChars)}"
+                {revealedChars < currentQuote.text.length && (
+                  <span style={{
+                    opacity: 0.7,
+                    animation: 'pulse 1s ease-in-out infinite',
+                  }}>|</span>
+                )}
               </blockquote>
 
               <div className="quote-meta" style={{
                 marginTop: '2rem',
                 transition: 'opacity 0.8s ease-out',
-                opacity: Math.max(0, 1 - Math.abs(displayProgress) * 3),
+                opacity: revealedChars >= currentQuote.text.length
+                  ? Math.max(0, 1 - Math.abs(displayProgress) * 3)
+                  : 0,
               }}>
                 <div style={{
                   fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
