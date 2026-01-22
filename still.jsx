@@ -12580,7 +12580,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
     canvas.height = window.innerHeight;
 
     const centerX = canvas.width / 2;
-    const startY = canvas.height * 0.25;
+    const startY = canvas.height * 0.18;
 
     // Colors - based on primaryHue
     const colorDeoxygenated = { h: primaryHue, s: 40, l: 32 };
@@ -13598,7 +13598,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       {/* Phase label - with fade transition for text changes */}
       <div style={{
         position: 'absolute',
-        bottom: '8rem',
+        bottom: '4rem',
         left: '50%',
         transform: 'translateX(-50%)',
         color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
@@ -13621,7 +13621,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       {breathSession.isActive && (
         <div style={{
           position: 'absolute',
-          bottom: '5rem',
+          bottom: '1.5rem',
           left: '50%',
           transform: 'translateX(-50%)',
           color: `hsla(${primaryHue}, 40%, 70%, 0.6)`,
