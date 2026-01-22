@@ -857,6 +857,28 @@ const gazeModes = [
   { key: 'fireflies', name: 'Fireflies' },
 ];
 
+// Curated experiences - one decision instead of two
+// Each pairs a visual with an ideal breathing pattern
+const gazeExperiences = [
+  { key: 'deep-sleep', name: 'Deep Sleep', visual: 'jellyfish', breath: 'relaxation', description: 'Drift off peacefully' },
+  { key: 'morning-light', name: 'Morning Light', visual: 'glow', breath: 'calm', description: 'Gentle awakening' },
+  { key: 'storm-watch', name: 'Storm Watch', visual: 'rain', breath: 'extend', description: 'Release anxiety' },
+  { key: 'night-walk', name: 'Night Walk', visual: 'fireflies', breath: 'resonance', description: 'Evening calm' },
+  { key: 'ocean-mind', name: 'Ocean Mind', visual: 'ink', breath: 'ocean', description: 'Fluid meditation' },
+  { key: 'focus', name: 'Focus', visual: 'geometry', breath: 'box', description: 'Sharp clarity' },
+  { key: 'garden-zen', name: 'Garden Zen', visual: 'zen', breath: 'coherent', description: 'Deep stillness' },
+  { key: 'forest-floor', name: 'Forest Floor', visual: 'mycelium', breath: 'extend', description: 'Grounded presence' },
+  { key: 'spring-bloom', name: 'Spring Bloom', visual: 'blossom', breath: 'resonance', description: 'Gentle renewal' },
+  { key: 'breathe-deep', name: 'Breathe Deep', visual: 'lungs', breath: 'relaxation', description: 'Guided breath' },
+  { key: 'coral-reef', name: 'Coral Reef', visual: 'coral', breath: 'ocean', description: 'Underwater peace' },
+  { key: 'ripple-effect', name: 'Ripple Effect', visual: 'ripples', breath: 'resonance', description: 'Radiating calm' },
+  { key: 'slow-unfurl', name: 'Slow Unfurl', visual: 'fern', breath: 'extend', description: 'Patient growth' },
+  { key: 'desert-calm', name: 'Desert Calm', visual: 'succulent', breath: 'coherent', description: 'Quiet resilience' },
+  { key: 'make-a-wish', name: 'Make a Wish', visual: 'dandelion', breath: 'calm', description: 'Lightness of being' },
+  { key: 'growing', name: 'Growing', visual: 'tree', breath: 'calm', description: 'Organic expansion' },
+  { key: 'balance', name: 'Balance', visual: 'bilateral', breath: 'box', description: 'Centered focus' },
+];
+
 const gazeShapes = [
   { key: 'torus', name: 'Torus', create: () => new THREE.TorusGeometry(1, 0.4, 16, 100) },
   { key: 'torusKnot', name: 'Knot', create: () => new THREE.TorusKnotGeometry(0.7, 0.25, 100, 16) },
@@ -875,10 +897,32 @@ function GazeMode({ theme }) {
   const meshRef = React.useRef(null);
   const clockRef = React.useRef(null);
 
-  const [currentMode, setCurrentMode] = React.useState('geometry');
+  const [currentMode, setCurrentMode] = React.useState('jellyfish');
   const [currentShape, setCurrentShape] = React.useState('torus');
   const [showUI, setShowUI] = React.useState(false);
-  const [selectedTechnique, setSelectedTechnique] = React.useState('calm');
+  const [selectedTechnique, setSelectedTechnique] = React.useState('relaxation');
+  const [selectedExperience, setSelectedExperience] = React.useState('deep-sleep');
+  const [customMode, setCustomMode] = React.useState(false);
+  const [showExperienceToast, setShowExperienceToast] = React.useState(false);
+  const toastTimeoutRef = React.useRef(null);
+
+  // When experience changes, update visual and breath
+  const selectExperience = React.useCallback((expKey, showToast = false) => {
+    const exp = gazeExperiences.find(e => e.key === expKey);
+    if (exp) {
+      setSelectedExperience(expKey);
+      setCurrentMode(exp.visual);
+      setSelectedTechnique(exp.breath);
+      setCustomMode(false);
+
+      // Show toast when swiping
+      if (showToast) {
+        setShowExperienceToast(true);
+        if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+        toastTimeoutRef.current = setTimeout(() => setShowExperienceToast(false), 1500);
+      }
+    }
+  }, []);
 
   // Breath session state for technique-based breathing
   const breathSessionRef = React.useRef({
@@ -893,12 +937,32 @@ function GazeMode({ theme }) {
   // ========== TOUCH INTERACTION SYSTEM ==========
   const touchPointsRef = React.useRef([]);
   const ripplesRef = React.useRef([]);
+  const swipeStartRef = React.useRef(null);
+
+  // Cycle to next/previous experience
+  const cycleExperience = React.useCallback((direction) => {
+    if (customMode) return;
+    const currentIndex = gazeExperiences.findIndex(e => e.key === selectedExperience);
+    let newIndex;
+    if (direction > 0) {
+      newIndex = (currentIndex + 1) % gazeExperiences.length;
+    } else {
+      newIndex = (currentIndex - 1 + gazeExperiences.length) % gazeExperiences.length;
+    }
+    selectExperience(gazeExperiences[newIndex].key, true); // Show toast on swipe
+  }, [customMode, selectedExperience, selectExperience]);
 
   // Track touch/mouse positions with spring physics
   const handleInteractionStart = React.useCallback((e) => {
     if (showUI) return;
     e.preventDefault();
     const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY, identifier: 'mouse' }];
+
+    // Track swipe start for first touch
+    if (touches.length === 1) {
+      swipeStartRef.current = { x: touches[0].clientX, y: touches[0].clientY, time: Date.now() };
+    }
+
     touches.forEach(touch => {
       const existing = touchPointsRef.current.find(p => p.id === touch.identifier);
       if (!existing) {
@@ -939,7 +1003,25 @@ function GazeMode({ theme }) {
   }, [showUI]);
 
   const handleInteractionEnd = React.useCallback((e) => {
-    const touches = e.changedTouches ? Array.from(e.changedTouches) : [{ identifier: 'mouse' }];
+    const touches = e.changedTouches ? Array.from(e.changedTouches) : [{ identifier: 'mouse', clientX: e.clientX, clientY: e.clientY }];
+
+    // Check for swipe gesture
+    if (swipeStartRef.current && touches.length === 1) {
+      const endX = touches[0].clientX;
+      const endY = touches[0].clientY;
+      const deltaX = endX - swipeStartRef.current.x;
+      const deltaY = endY - swipeStartRef.current.y;
+      const deltaTime = Date.now() - swipeStartRef.current.time;
+
+      // Detect horizontal swipe: fast enough, long enough, more horizontal than vertical
+      const minSwipeDistance = 60;
+      const maxSwipeTime = 400;
+      if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5 && deltaTime < maxSwipeTime) {
+        cycleExperience(deltaX > 0 ? -1 : 1); // Swipe left = next, swipe right = previous
+      }
+      swipeStartRef.current = null;
+    }
+
     touches.forEach(touch => {
       const point = touchPointsRef.current.find(p => p.id === touch.identifier);
       if (point) {
@@ -951,7 +1033,7 @@ function GazeMode({ theme }) {
     setTimeout(() => {
       touchPointsRef.current = touchPointsRef.current.filter(p => p.active || Date.now() - p.endTime < 2000);
     }, 2000);
-  }, []);
+  }, [cycleExperience]);
 
   // Helper: Calculate influence of touch points on a position
   const getInteractionInfluence = React.useCallback((x, y, maxRadius = 200) => {
@@ -4098,145 +4180,233 @@ function GazeMode({ theme }) {
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       )}
 
-      {/* Mode selector (horizontal scroll) */}
+      {/* Experience name toast - shows on swipe */}
+      {showExperienceToast && !showUI && (
+        <div style={{
+          position: 'absolute',
+          top: '2rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(10px)',
+          padding: '0.5rem 1rem',
+          borderRadius: '20px',
+          border: '1px solid rgba(127,219,202,0.2)',
+          pointerEvents: 'none',
+          animation: 'fadeInOut 1.5s ease-in-out',
+        }}>
+          <span style={{
+            color: '#7FDBCA',
+            fontSize: '0.75rem',
+            fontFamily: '"Jost", sans-serif',
+            letterSpacing: '0.1em',
+          }}>
+            {gazeExperiences.find(e => e.key === selectedExperience)?.name || ''}
+          </span>
+        </div>
+      )}
+      <style>{`
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+          15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+          85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+          100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        }
+      `}</style>
+
+      {/* Experience selector */}
       {showUI && (
         <div style={{
           position: 'absolute',
-          top: '4rem',
+          top: '3rem',
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.75rem',
           alignItems: 'center',
+          maxWidth: '95vw',
         }}>
-          {/* Visual modes */}
-          <div style={{
-            maxWidth: '90vw',
-            overflowX: 'auto',
-            overflowY: 'hidden',
-            padding: '0.75rem 1rem',
-            background: 'rgba(0,0,0,0.85)',
-            borderRadius: '12px',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            WebkitOverflowScrolling: 'touch',
-          }}>
-            <div style={{ display: 'flex', gap: '0.5rem', whiteSpace: 'nowrap' }}>
-              {gazeModes.map(mode => (
+          {/* Curated experiences - single row */}
+          {!customMode && (
+            <div style={{
+              maxWidth: '90vw',
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              padding: '0.75rem 1rem',
+              background: 'rgba(0,0,0,0.85)',
+              borderRadius: '16px',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              WebkitOverflowScrolling: 'touch',
+            }}>
+              <div style={{ display: 'flex', gap: '0.5rem', whiteSpace: 'nowrap' }}>
+                {gazeExperiences.map(exp => (
+                  <button
+                    key={exp.key}
+                    onClick={(e) => { e.stopPropagation(); selectExperience(exp.key); }}
+                    style={{
+                      background: selectedExperience === exp.key && !customMode ? 'rgba(127,219,202,0.2)' : 'transparent',
+                      border: selectedExperience === exp.key && !customMode ? '1px solid rgba(127,219,202,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                      color: selectedExperience === exp.key && !customMode ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
+                      padding: '0.5rem 0.9rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.7rem',
+                      fontFamily: '"Jost", sans-serif',
+                      flexShrink: 0,
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {exp.name}
+                  </button>
+                ))}
+                {/* Custom toggle */}
                 <button
-                  key={mode.key}
-                  onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
+                  onClick={(e) => { e.stopPropagation(); setCustomMode(true); }}
                   style={{
-                    background: currentMode === mode.key ? 'rgba(127,219,202,0.25)' : 'transparent',
-                    border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.1)',
-                    color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
-                    padding: '0.4rem 0.75rem',
-                    borderRadius: '6px',
+                    background: 'transparent',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: 'rgba(255,255,255,0.4)',
+                    padding: '0.5rem 0.9rem',
+                    borderRadius: '8px',
                     cursor: 'pointer',
-                    fontSize: '0.7rem',
+                    fontSize: '0.65rem',
                     fontFamily: '"Jost", sans-serif',
                     flexShrink: 0,
+                    fontStyle: 'italic',
                   }}
                 >
-                  {mode.name}
+                  Custom...
                 </button>
-              ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Breath technique selector */}
-          <div style={{
-            maxWidth: '90vw',
-            overflowX: 'auto',
-            overflowY: 'hidden',
-            padding: '0.5rem 0.75rem',
-            background: 'rgba(0,0,0,0.75)',
-            borderRadius: '10px',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(127,219,202,0.15)',
-            WebkitOverflowScrolling: 'touch',
-          }}>
-            <div style={{ display: 'flex', gap: '0.4rem', whiteSpace: 'nowrap', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.55rem', color: 'rgba(127,219,202,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase', marginRight: '0.25rem' }}>Breath</span>
-              {Object.entries(breathTechniques).map(([key, tech]) => (
-                <button
-                  key={key}
-                  onClick={(e) => { e.stopPropagation(); setSelectedTechnique(key); }}
-                  style={{
-                    background: selectedTechnique === key ? 'rgba(127,219,202,0.2)' : 'transparent',
-                    border: selectedTechnique === key ? '1px solid rgba(127,219,202,0.4)' : '1px solid rgba(255,255,255,0.08)',
-                    color: selectedTechnique === key ? '#7FDBCA' : 'rgba(255,255,255,0.4)',
-                    padding: '0.3rem 0.6rem',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    fontSize: '0.6rem',
-                    fontFamily: '"Jost", sans-serif',
-                    flexShrink: 0,
-                  }}
-                >
-                  {tech.name}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Custom mode - visual + breath selectors */}
+          {customMode && (
+            <>
+              <div style={{
+                maxWidth: '90vw',
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                padding: '0.6rem 0.8rem',
+                background: 'rgba(0,0,0,0.85)',
+                borderRadius: '12px',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                WebkitOverflowScrolling: 'touch',
+              }}>
+                <div style={{ display: 'flex', gap: '0.4rem', whiteSpace: 'nowrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.5rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginRight: '0.25rem' }}>Visual</span>
+                  {gazeModes.map(mode => (
+                    <button
+                      key={mode.key}
+                      onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
+                      style={{
+                        background: currentMode === mode.key ? 'rgba(127,219,202,0.2)' : 'transparent',
+                        border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.4)' : '1px solid rgba(255,255,255,0.06)',
+                        color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.4)',
+                        padding: '0.35rem 0.6rem',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        fontSize: '0.6rem',
+                        fontFamily: '"Jost", sans-serif',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {mode.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{
+                maxWidth: '90vw',
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                padding: '0.5rem 0.7rem',
+                background: 'rgba(0,0,0,0.75)',
+                borderRadius: '10px',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(127,219,202,0.1)',
+                WebkitOverflowScrolling: 'touch',
+              }}>
+                <div style={{ display: 'flex', gap: '0.35rem', whiteSpace: 'nowrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.5rem', color: 'rgba(127,219,202,0.4)', letterSpacing: '0.1em', textTransform: 'uppercase', marginRight: '0.25rem' }}>Breath</span>
+                  {Object.entries(breathTechniques).map(([key, tech]) => (
+                    <button
+                      key={key}
+                      onClick={(e) => { e.stopPropagation(); setSelectedTechnique(key); }}
+                      style={{
+                        background: selectedTechnique === key ? 'rgba(127,219,202,0.15)' : 'transparent',
+                        border: selectedTechnique === key ? '1px solid rgba(127,219,202,0.3)' : '1px solid rgba(255,255,255,0.05)',
+                        color: selectedTechnique === key ? '#7FDBCA' : 'rgba(255,255,255,0.35)',
+                        padding: '0.3rem 0.55rem',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.55rem',
+                        fontFamily: '"Jost", sans-serif',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {tech.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Back to experiences */}
+              <button
+                onClick={(e) => { e.stopPropagation(); setCustomMode(false); }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.3)',
+                  fontSize: '0.55rem',
+                  fontFamily: '"Jost", sans-serif',
+                  cursor: 'pointer',
+                  padding: '0.3rem',
+                }}
+              >
+                back to experiences
+              </button>
+            </>
+          )}
         </div>
       )}
 
 
-      {/* Hint text */}
-      {!showUI && (
-        <div style={{
-          position: 'absolute',
-          bottom: '2rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          color: 'rgba(255,255,255,0.2)',
-          fontSize: '0.6rem',
-          fontFamily: '"Jost", sans-serif',
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-        }}>
-          tap to change
-        </div>
-      )}
-
-      {/* Breath indicator */}
+      {/* Minimal breath indicator - bottom right corner */}
       <div style={{
         position: 'absolute',
-        bottom: '1.5rem',
-        left: '50%',
-        transform: 'translateX(-50%)',
+        bottom: '1.25rem',
+        right: '1.25rem',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         gap: '0.5rem',
-        opacity: showUI ? 0 : 1,
-        transition: 'opacity 0.3s ease',
+        opacity: showUI ? 0 : 0.6,
+        transition: 'opacity 0.4s ease',
         pointerEvents: 'none',
       }}>
-        {/* Phase label */}
+        {/* Subtle pulse ring */}
         <div style={{
-          color: breathDisplay.isHolding ? 'rgba(255, 215, 100, 0.8)' : 'rgba(127, 219, 202, 0.7)',
-          fontSize: '0.75rem',
-          fontFamily: '"Jost", sans-serif',
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-          textShadow: '0 2px 10px rgba(0,0,0,0.5)',
-        }}>
-          {breathDisplay.phaseLabel}
-        </div>
-        {/* Visual pulse circle */}
-        <div style={{
-          width: `${20 + breathDisplay.phase * 30}px`,
-          height: `${20 + breathDisplay.phase * 30}px`,
+          width: `${12 + breathDisplay.phase * 16}px`,
+          height: `${12 + breathDisplay.phase * 16}px`,
           borderRadius: '50%',
-          background: breathDisplay.isHolding
-            ? 'radial-gradient(circle, rgba(255,215,100,0.3) 0%, rgba(255,215,100,0.1) 50%, transparent 70%)'
-            : 'radial-gradient(circle, rgba(127,219,202,0.3) 0%, rgba(127,219,202,0.1) 50%, transparent 70%)',
-          border: `1px solid ${breathDisplay.isHolding ? 'rgba(255,215,100,0.3)' : 'rgba(127,219,202,0.3)'}`,
-          transition: 'width 0.1s ease-out, height 0.1s ease-out, background 0.3s ease',
+          background: 'transparent',
+          border: `1.5px solid ${breathDisplay.isHolding ? 'rgba(255,215,100,0.5)' : 'rgba(127,219,202,0.4)'}`,
+          transition: 'width 0.15s ease-out, height 0.15s ease-out, border-color 0.3s ease',
         }} />
+        {/* Phase label - very subtle */}
+        <div style={{
+          color: breathDisplay.isHolding ? 'rgba(255, 215, 100, 0.6)' : 'rgba(127, 219, 202, 0.5)',
+          fontSize: '0.55rem',
+          fontFamily: '"Jost", sans-serif',
+          letterSpacing: '0.1em',
+          textTransform: 'lowercase',
+          minWidth: '4rem',
+        }}>
+          {breathDisplay.phaseLabel.toLowerCase()}
+        </div>
       </div>
     </div>
   );
