@@ -838,7 +838,7 @@ const breathTechniques = {
 
 // Organized by energy level for nervous system regulation
 const gazeModes = [
-  { key: 'geometry', name: 'Sacred Geometry' },
+  { key: 'geometry', name: 'Torus' },
   { key: 'tree', name: 'Fractal Tree' },
   { key: 'fern', name: 'Fern' },
   { key: 'succulent', name: 'Succulent' },
