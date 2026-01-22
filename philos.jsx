@@ -862,25 +862,14 @@ function Philos() {
   const [showSettings, setShowSettings] = useState(false);
 
   // ============================================================================
-  // PHYSICS-BASED SCROLL SYSTEM (RAF + Velocity + Spring)
+  // SCROLL STATE
   // ============================================================================
 
-  // Physics state - position is 0-1 within current quote, velocity for momentum
-  const physics = useRef({
-    position: 0,      // Visual progress 0-1 (can overshoot during transitions)
-    velocity: 0,      // Current momentum
-    target: 0,        // Where we're heading (0 = stay, 1 = next, -1 = prev)
-  });
-  const [displayProgress, setDisplayProgress] = useState(0); // Triggers re-render
+  const [displayProgress, setDisplayProgress] = useState(0);
   const isAnimating = useRef(false);
-  const frameRef = useRef(null);
-
-  // Velocity tracking - store last positions/times for momentum calculation
-  const touchHistory = useRef([]);  // [{y, time}, ...]
+  const touchHistory = useRef([]);
   const touchStartY = useRef(0);
   const lastTouchY = useRef(0);
-
-  // Refs for DOM
   const containerRef = useRef(null);
 
   // Get current theme
@@ -905,204 +894,122 @@ function Philos() {
   const nextQuote = filteredQuotes[(currentIndex + 1) % Math.max(filteredQuotes.length, 1)];
 
   // ============================================================================
-  // RAF-BASED PHYSICS SCROLL SYSTEM
-  // Smooth 60fps animation with velocity tracking and spring physics
+  // SIMPLE SCROLL SYSTEM - Direct, responsive, no fighting physics
   // ============================================================================
 
-  const SCROLL_SENSITIVITY = 0.003;  // How much scroll affects position
-  const FRICTION = 0.92;             // Momentum decay (0.9-0.95 feels natural)
-  const SNAP_THRESHOLD = 0.35;       // Position beyond which we snap to next
-  const SNAP_STRENGTH = 0.12;        // Spring force toward snap target
-  const MIN_VELOCITY = 0.001;        // Stop animating when velocity is negligible
+  // Go to next/previous quote with smooth CSS transition
+  const goToQuote = useCallback((direction) => {
+    if (isAnimating.current) return;
 
-  // Calculate velocity from touch history (last 100ms)
-  const calculateTouchVelocity = useCallback(() => {
-    const now = Date.now();
-    const recent = touchHistory.current.filter(p => now - p.time < 100);
-    if (recent.length < 2) return 0;
+    const newIndex = direction > 0
+      ? (currentIndex + 1) % filteredQuotes.length
+      : Math.max(0, currentIndex - 1);
 
-    const first = recent[0];
-    const last = recent[recent.length - 1];
-    const dt = last.time - first.time;
-    if (dt === 0) return 0;
+    if (newIndex === currentIndex) return;
 
-    return (first.y - last.y) / dt * 0.015; // Pixels/ms to position delta
-  }, []);
+    isAnimating.current = true;
+    setDisplayProgress(direction > 0 ? 1 : -1);
 
-  // Main animation loop - runs at 60fps
-  const animationLoop = useCallback(() => {
-    const p = physics.current;
-
-    // Apply friction to velocity
-    p.velocity *= FRICTION;
-
-    // Apply spring force toward target (snap behavior)
-    const springForce = (p.target - p.position) * SNAP_STRENGTH;
-    p.velocity += springForce;
-
-    // Update position
-    p.position += p.velocity;
-
-    // Check for quote transition
-    if (p.position >= 1) {
-      // Crossed threshold to next quote
-      setCurrentIndex(i => (i + 1) % filteredQuotes.length);
-      p.position = 0;
-      p.velocity = 0;
-      p.target = 0;
-    } else if (p.position <= -1) {
-      // Crossed threshold to previous quote
-      setCurrentIndex(i => Math.max(0, i - 1));
-      p.position = 0;
-      p.velocity = 0;
-      p.target = 0;
-    }
-
-    // Update display (clamp for visual smoothness)
-    const displayVal = Math.max(-1, Math.min(1, p.position));
-    setDisplayProgress(displayVal);
-
-    // Continue animation if still moving
-    if (Math.abs(p.velocity) > MIN_VELOCITY || Math.abs(p.target - p.position) > MIN_VELOCITY) {
-      frameRef.current = requestAnimationFrame(animationLoop);
-    } else {
+    setTimeout(() => {
+      setCurrentIndex(newIndex);
+      setDisplayProgress(0);
       isAnimating.current = false;
-      // Final snap to target
-      p.position = p.target;
-      p.velocity = 0;
-      setDisplayProgress(p.target);
-    }
-  }, [filteredQuotes.length]);
+    }, 300);
+  }, [currentIndex, filteredQuotes.length]);
 
-  // Start animation loop if not already running
-  const startAnimation = useCallback(() => {
-    if (!isAnimating.current) {
-      isAnimating.current = true;
-      frameRef.current = requestAnimationFrame(animationLoop);
-    }
-  }, [animationLoop]);
-
-  // Clean up RAF on unmount
-  useEffect(() => {
-    return () => {
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-      }
-    };
-  }, []);
-
-  // Update snap target based on position
-  const updateSnapTarget = useCallback(() => {
-    const p = physics.current;
-    if (p.position > SNAP_THRESHOLD) {
-      p.target = 1; // Snap to next
-    } else if (p.position < -SNAP_THRESHOLD) {
-      p.target = -1; // Snap to previous
-    } else {
-      p.target = 0; // Snap back to current
-    }
-  }, []);
+  // Accumulated scroll for threshold detection
+  const scrollAccum = useRef(0);
+  const SCROLL_THRESHOLD = 80; // Pixels needed to trigger next quote
 
   // ============================================================================
-  // INPUT HANDLERS - Feed into physics system
+  // INPUT HANDLERS - Simple and direct
   // ============================================================================
 
   const handleWheel = useCallback((e) => {
-    if (view !== 'scroll') return;
+    if (view !== 'scroll' || isAnimating.current) return;
     e.preventDefault();
 
-    // Add scroll velocity directly to physics
-    const delta = e.deltaY * SCROLL_SENSITIVITY * settings.scrollSpeed;
-    physics.current.velocity += delta;
+    scrollAccum.current += e.deltaY * settings.scrollSpeed;
 
-    // Update snap target and start animation
-    updateSnapTarget();
-    startAnimation();
-  }, [view, settings.scrollSpeed, updateSnapTarget, startAnimation]);
+    if (scrollAccum.current > SCROLL_THRESHOLD) {
+      scrollAccum.current = 0;
+      goToQuote(1);
+    } else if (scrollAccum.current < -SCROLL_THRESHOLD) {
+      scrollAccum.current = 0;
+      goToQuote(-1);
+    }
+  }, [view, settings.scrollSpeed, goToQuote]);
 
   const handleTouchStart = useCallback((e) => {
     if (view !== 'scroll') return;
-
-    // Clear touch history and start tracking
-    touchHistory.current = [];
-    const y = e.touches[0].clientY;
-    touchStartY.current = y;
-    lastTouchY.current = y;
-    touchHistory.current.push({ y, time: Date.now() });
-
-    // Stop any ongoing animation - user is taking control
-    physics.current.velocity = 0;
+    touchStartY.current = e.touches[0].clientY;
+    lastTouchY.current = e.touches[0].clientY;
+    touchHistory.current = [{ y: e.touches[0].clientY, time: Date.now() }];
   }, [view]);
 
   const handleTouchMove = useCallback((e) => {
-    if (view !== 'scroll') return;
+    if (view !== 'scroll' || isAnimating.current) return;
     e.preventDefault();
 
     const touchY = e.touches[0].clientY;
-    const now = Date.now();
+    const totalDelta = touchStartY.current - touchY;
 
-    // Track position for velocity calculation
-    touchHistory.current.push({ y: touchY, time: now });
-    // Keep only last 100ms of history
-    touchHistory.current = touchHistory.current.filter(p => now - p.time < 150);
+    // Track for velocity
+    touchHistory.current.push({ y: touchY, time: Date.now() });
+    touchHistory.current = touchHistory.current.slice(-5);
 
-    // Direct position control while touching
-    const delta = (lastTouchY.current - touchY) * 0.005 * settings.scrollSpeed;
-    physics.current.position += delta;
-
-    // Clamp position during drag
-    physics.current.position = Math.max(-0.99, Math.min(0.99, physics.current.position));
-
-    // Update display immediately (no RAF needed for direct control)
-    setDisplayProgress(physics.current.position);
+    // Show visual feedback (subtle parallax)
+    const progress = Math.max(-0.5, Math.min(0.5, totalDelta / 300));
+    setDisplayProgress(progress);
 
     lastTouchY.current = touchY;
-  }, [view, settings.scrollSpeed]);
+  }, [view]);
 
   const handleTouchEnd = useCallback(() => {
-    if (view !== 'scroll') return;
+    if (view !== 'scroll' || isAnimating.current) return;
 
-    // Calculate momentum from touch history
-    const velocity = calculateTouchVelocity();
-    physics.current.velocity = velocity * settings.scrollSpeed;
+    const totalDelta = touchStartY.current - lastTouchY.current;
 
-    // Determine snap target based on position + momentum
-    const projectedPosition = physics.current.position + velocity * 5; // Look ahead
-    if (projectedPosition > SNAP_THRESHOLD) {
-      physics.current.target = 1;
-    } else if (projectedPosition < -SNAP_THRESHOLD) {
-      physics.current.target = -1;
-    } else {
-      physics.current.target = 0;
+    // Calculate velocity from recent touches
+    const recent = touchHistory.current;
+    let velocity = 0;
+    if (recent.length >= 2) {
+      const first = recent[0];
+      const last = recent[recent.length - 1];
+      const dt = last.time - first.time;
+      if (dt > 0) velocity = (first.y - last.y) / dt;
     }
 
-    // Start physics animation
-    startAnimation();
-  }, [view, calculateTouchVelocity, settings.scrollSpeed, startAnimation]);
+    // Decide based on distance + velocity
+    const dominated = Math.abs(totalDelta) > 50 || Math.abs(velocity) > 0.5;
 
-  // Keyboard navigation - impulse-based for natural feel
+    if (dominated && (totalDelta > 30 || velocity > 0.3)) {
+      goToQuote(1);
+    } else if (dominated && (totalDelta < -30 || velocity < -0.3)) {
+      goToQuote(-1);
+    } else {
+      // Snap back
+      setDisplayProgress(0);
+    }
+  }, [view, goToQuote]);
+
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (view !== 'scroll') return;
 
       if (e.key === 'ArrowDown' || e.key === ' ') {
         e.preventDefault();
-        // Add impulse toward next quote
-        physics.current.velocity += 0.08;
-        physics.current.target = 1;
-        startAnimation();
+        goToQuote(1);
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        // Add impulse toward previous quote
-        physics.current.velocity -= 0.08;
-        physics.current.target = -1;
-        startAnimation();
+        goToQuote(-1);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [view, startAnimation]);
+  }, [view, goToQuote]);
 
   // ============================================================================
   // QUOTE MANAGEMENT
@@ -1502,7 +1409,7 @@ function Philos() {
         {/* Main Scroll View */}
         {view === 'scroll' && currentQuote && (
           <main style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
-            {/* Quote Card - Physics-driven transforms with GPU acceleration */}
+            {/* Quote Card */}
             <div
               style={{
                 position: 'absolute',
@@ -1511,12 +1418,9 @@ function Philos() {
                 padding: '0 2rem',
                 textAlign: 'center',
                 willChange: 'transform, opacity',
-                // No CSS transition - RAF handles smooth 60fps updates
-                opacity: Math.max(0.1, 1 - Math.abs(displayProgress) * 0.6),
-                // GPU-composited transforms with translate3d
-                transform: settings.depthEffect
-                  ? `translate3d(0, ${displayProgress * -30}px, ${displayProgress * -100}px) scale(${1 - Math.abs(displayProgress) * 0.1})`
-                  : `translate3d(0, ${displayProgress * -40}px, 0)`,
+                transition: 'transform 0.3s ease-out, opacity 0.3s ease-out',
+                opacity: Math.abs(displayProgress) > 0.5 ? 0 : 1 - Math.abs(displayProgress),
+                transform: `translate3d(0, ${displayProgress * -60}px, 0)`,
               }}
             >
               <blockquote style={{
