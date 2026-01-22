@@ -3020,42 +3020,43 @@ function Philos() {
                   position: 'absolute',
                   bottom: '100%',
                   marginBottom: '1rem',
-                  background: currentTheme.cardBg,
-                  backdropFilter: 'blur(20px)',
-                  border: `1px solid ${currentTheme.border}`,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  maxWidth: '90vw',
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
+                  padding: '0.75rem 1rem',
+                  background: 'rgba(0,0,0,0.85)',
                   borderRadius: '12px',
-                  padding: '0.5rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.25rem',
-                  minWidth: '180px',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  WebkitOverflowScrolling: 'touch',
                 }}>
-                  {Object.entries(breathTechniques).map(([key, tech]) => (
-                    <button
-                      key={key}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startBreathSession(key);
-                        setShowTechniqueMenu(false);
-                      }}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: currentTheme.text,
-                        padding: '0.6rem 0.8rem',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        fontSize: '0.8rem',
-                        fontFamily: '"Jost", sans-serif',
-                        transition: 'background 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => e.target.style.background = currentTheme.border}
-                      onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                    >
-                      {tech.name}
-                    </button>
-                  ))}
+                  <div style={{ display: 'flex', gap: '0.5rem', whiteSpace: 'nowrap' }}>
+                    {Object.entries(breathTechniques).map(([key, tech]) => (
+                      <button
+                        key={key}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startBreathSession(key);
+                          setShowTechniqueMenu(false);
+                        }}
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          color: 'rgba(255,255,255,0.5)',
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '0.7rem',
+                          fontFamily: '"Jost", sans-serif',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {tech.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
