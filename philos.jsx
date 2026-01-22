@@ -761,20 +761,18 @@ const ThemeContext = createContext(themes.void);
 // ============================================================================
 
 const breathTechniques = {
-  box: {
-    name: 'Box Breathing',
-    description: 'Equal phases for calm focus',
+  calm: {
+    name: 'Gentle Calm',
+    description: 'Simple, soothing rhythm',
     phases: [
-      { name: 'inhale', label: 'Inhale', duration: 4 },
-      { name: 'holdFull', label: 'Hold', duration: 4 },
-      { name: 'exhale', label: 'Exhale', duration: 4 },
-      { name: 'holdEmpty', label: 'Hold', duration: 4 },
+      { name: 'inhale', label: 'Breathe in', duration: 5 },
+      { name: 'exhale', label: 'Breathe out', duration: 6 },
     ],
-    color: { inhale: '#1a3a4a', holdFull: '#2a4a3a', exhale: '#2a3a4a', holdEmpty: '#1a2a3a' },
+    color: { inhale: '#1a3a4a', exhale: '#2a3a4a' },
   },
   relaxation: {
-    name: '4-7-8 Relaxation',
-    description: 'Calms the nervous system',
+    name: '4-7-8 Sleep',
+    description: 'Deep relaxation for sleep',
     phases: [
       { name: 'inhale', label: 'Inhale', duration: 4 },
       { name: 'holdFull', label: 'Hold', duration: 7 },
@@ -783,33 +781,607 @@ const breathTechniques = {
     color: { inhale: '#1a3a5a', holdFull: '#3a4a4a', exhale: '#2a2a4a' },
   },
   coherent: {
-    name: 'Coherent Breathing',
-    description: '5.5 breaths per minute for heart coherence',
+    name: 'Heart Coherence',
+    description: '5 breaths per minute',
     phases: [
-      { name: 'inhale', label: 'Inhale', duration: 5.5 },
-      { name: 'exhale', label: 'Exhale', duration: 5.5 },
+      { name: 'inhale', label: 'Inhale', duration: 6 },
+      { name: 'exhale', label: 'Exhale', duration: 6 },
     ],
     color: { inhale: '#1a4a4a', exhale: '#2a3a5a' },
   },
-  calm: {
-    name: 'Simple Calm',
-    description: 'Gentle 5-6 breathing',
+  box: {
+    name: 'Box Breathing',
+    description: 'Navy SEAL calm focus',
     phases: [
-      { name: 'inhale', label: 'Breathe in', duration: 5 },
-      { name: 'exhale', label: 'Breathe out', duration: 6 },
+      { name: 'inhale', label: 'Inhale', duration: 4 },
+      { name: 'holdFull', label: 'Hold', duration: 4 },
+      { name: 'exhale', label: 'Exhale', duration: 4 },
+      { name: 'holdEmpty', label: 'Hold', duration: 4 },
     ],
-    color: { inhale: '#1a3a4a', exhale: '#2a3a4a' },
+    color: { inhale: '#1a3a4a', holdFull: '#2a4a3a', exhale: '#2a3a4a', holdEmpty: '#1a2a3a' },
   },
-  energize: {
-    name: 'Energizing Breath',
-    description: 'Quick breaths to increase alertness',
+  extended: {
+    name: 'Extended Exhale',
+    description: 'Long exhale activates rest',
     phases: [
-      { name: 'inhale', label: 'In', duration: 2 },
-      { name: 'exhale', label: 'Out', duration: 2 },
+      { name: 'inhale', label: 'Inhale', duration: 4 },
+      { name: 'exhale', label: 'Exhale slowly', duration: 8 },
     ],
-    color: { inhale: '#3a4a3a', exhale: '#2a3a3a' },
+    color: { inhale: '#1a3a4a', exhale: '#2a2a4a' },
+  },
+  ocean: {
+    name: 'Ocean Breath',
+    description: 'Slow, wave-like rhythm',
+    phases: [
+      { name: 'inhale', label: 'Inhale', duration: 6 },
+      { name: 'holdFull', label: 'Pause', duration: 2 },
+      { name: 'exhale', label: 'Exhale', duration: 8 },
+      { name: 'holdEmpty', label: 'Rest', duration: 2 },
+    ],
+    color: { inhale: '#1a3a5a', holdFull: '#2a4a5a', exhale: '#1a2a4a', holdEmpty: '#1a2a3a' },
+  },
+  resonance: {
+    name: 'Resonance',
+    description: 'Syncs heart and breath',
+    phases: [
+      { name: 'inhale', label: 'Inhale', duration: 5 },
+      { name: 'exhale', label: 'Exhale', duration: 5 },
+    ],
+    color: { inhale: '#2a3a4a', exhale: '#1a3a4a' },
   },
 };
+
+// ============================================================================
+// GAZE MODE - Nervous System Regulation Tool
+// Based on scientific research: fractals, bilateral stimulation, breath sync
+// ============================================================================
+
+const gazeModes = [
+  { key: 'geometry', name: 'Sacred Geometry', icon: '◇' },
+  { key: 'tree', name: 'Fractal Tree', icon: '❋' },
+  { key: 'bilateral', name: 'Bilateral Flow', icon: '∞' },
+  { key: 'ripples', name: 'Ripples', icon: '◎' },
+  { key: 'glow', name: 'Soft Glow', icon: '○' },
+];
+
+const gazeShapes = [
+  { key: 'icosahedron', name: 'Icosahedron', create: () => new THREE.IcosahedronGeometry(1, 0) },
+  { key: 'dodecahedron', name: 'Dodecahedron', create: () => new THREE.DodecahedronGeometry(1, 0) },
+  { key: 'octahedron', name: 'Octahedron', create: () => new THREE.OctahedronGeometry(1, 0) },
+  { key: 'tetrahedron', name: 'Tetrahedron', create: () => new THREE.TetrahedronGeometry(1, 0) },
+  { key: 'torus', name: 'Torus', create: () => new THREE.TorusGeometry(1, 0.4, 16, 100) },
+  { key: 'torusKnot', name: 'Knot', create: () => new THREE.TorusKnotGeometry(0.7, 0.25, 100, 16) },
+];
+
+// Breath cycle: 5s inhale, 6s exhale = ~5.5 breaths/min (parasympathetic optimal)
+const BREATH_CYCLE = 11; // seconds for full cycle
+const BREATH_SPEED = (2 * Math.PI) / BREATH_CYCLE;
+
+function GazeMode({ theme }) {
+  const containerRef = React.useRef(null);
+  const canvasRef = React.useRef(null);
+  const frameRef = React.useRef(null);
+  const sceneRef = React.useRef(null);
+  const rendererRef = React.useRef(null);
+  const meshRef = React.useRef(null);
+  const clockRef = React.useRef(null);
+
+  const [currentMode, setCurrentMode] = React.useState('geometry');
+  const [currentShape, setCurrentShape] = React.useState('icosahedron');
+  const [showUI, setShowUI] = React.useState(false);
+
+  // Get breath phase (0 to 1, where 0-0.45 is inhale, 0.45-1 is exhale)
+  const getBreathPhase = (elapsed) => {
+    const cycle = (elapsed % BREATH_CYCLE) / BREATH_CYCLE;
+    return Math.sin(elapsed * BREATH_SPEED) * 0.5 + 0.5;
+  };
+
+  // ========== SACRED GEOMETRY MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'geometry' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 4;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    const shapeConfig = gazeShapes.find(s => s.key === currentShape) || gazeShapes[0];
+    const geometry = shapeConfig.create();
+    const material = new THREE.MeshBasicMaterial({ color: 0x7FDBCA, wireframe: true, transparent: true, opacity: 0.8 });
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+    meshRef.current = mesh;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clockRef.current.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      if (meshRef.current) {
+        meshRef.current.rotation.y += 0.001;
+        meshRef.current.rotation.x += 0.0005;
+        meshRef.current.scale.setScalar(0.8 + breath * 0.4);
+        meshRef.current.material.opacity = 0.5 + breath * 0.3;
+      }
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      geometry.dispose();
+      material.dispose();
+      renderer.dispose();
+    };
+  }, [currentMode, currentShape]);
+
+  // ========== FRACTAL TREE MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'tree' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const drawBranch = (x, y, len, angle, depth, breath, time) => {
+      if (depth === 0 || len < 4) return;
+
+      // Sway with breath and time
+      const sway = Math.sin(time * 0.5 + depth * 0.5) * 0.05 * breath;
+      const newAngle = angle + sway;
+
+      const x2 = x + Math.cos(newAngle) * len;
+      const y2 = y + Math.sin(newAngle) * len;
+
+      // Color gradient: warm brown at base to teal at tips
+      const t = 1 - depth / 8;
+      const r = Math.floor(80 + t * 47);
+      const g = Math.floor(60 + t * 159);
+      const b = Math.floor(50 + t * 152);
+
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.4 + breath * 0.4})`;
+      ctx.lineWidth = depth * 0.8;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+
+      // Branch factor varies with breath
+      const branchAngle = 0.4 + breath * 0.2;
+      const lenFactor = 0.67 + breath * 0.08;
+
+      drawBranch(x2, y2, len * lenFactor, newAngle - branchAngle, depth - 1, breath, time);
+      drawBranch(x2, y2, len * lenFactor, newAngle + branchAngle, depth - 1, breath, time);
+    };
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = (Date.now() - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const centerX = canvas.width / 2;
+      const baseY = canvas.height * 0.85;
+      const trunkLen = canvas.height * 0.18;
+
+      drawBranch(centerX, baseY, trunkLen, -Math.PI / 2, 8, breath, elapsed);
+    };
+
+    // Initial clear
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode]);
+
+  // ========== BILATERAL FLOW MODE (EMDR-style) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'bilateral' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = (Date.now() - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Clear with fade for trails
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const centerY = canvas.height / 2;
+      const amplitude = canvas.width * 0.35;
+
+      // Slow left-right oscillation (4 second cycle for EMDR)
+      const x = canvas.width / 2 + Math.sin(elapsed * 0.8) * amplitude;
+
+      // Main orb
+      const radius = 30 + breath * 20;
+      const gradient = ctx.createRadialGradient(x, centerY, 0, x, centerY, radius * 2);
+      gradient.addColorStop(0, `rgba(127, 219, 202, ${0.6 + breath * 0.3})`);
+      gradient.addColorStop(0.5, `rgba(127, 219, 202, ${0.2 + breath * 0.2})`);
+      gradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
+
+      ctx.beginPath();
+      ctx.arc(x, centerY, radius * 2, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Inner bright core
+      ctx.beginPath();
+      ctx.arc(x, centerY, radius * 0.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200, 240, 230, ${0.5 + breath * 0.4})`;
+      ctx.fill();
+
+      // Trailing glow points
+      for (let i = 1; i <= 5; i++) {
+        const trailX = canvas.width / 2 + Math.sin(elapsed * 0.8 - i * 0.15) * amplitude;
+        const trailRadius = (radius * 0.3) / i;
+        ctx.beginPath();
+        ctx.arc(trailX, centerY, trailRadius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(127, 219, 202, ${0.15 / i})`;
+        ctx.fill();
+      }
+    };
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode]);
+
+  // ========== RIPPLES MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'ripples' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+    const ripples = [];
+
+    // Create new ripple on breath cycle
+    let lastBreathPeak = 0;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = (Date.now() - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Spawn ripple at breath peak
+      if (breath > 0.95 && elapsed - lastBreathPeak > BREATH_CYCLE * 0.8) {
+        ripples.push({ born: elapsed, x: canvas.width / 2, y: canvas.height / 2 });
+        lastBreathPeak = elapsed;
+      }
+
+      // Clear
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      // Draw expanding ripples
+      ripples.forEach((ripple, i) => {
+        const age = elapsed - ripple.born;
+        const maxAge = 15;
+        if (age > maxAge) {
+          ripples.splice(i, 1);
+          return;
+        }
+
+        const progress = age / maxAge;
+        const radius = progress * Math.min(canvas.width, canvas.height) * 0.6;
+        const opacity = (1 - progress) * 0.5;
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(127, 219, 202, ${opacity})`;
+        ctx.lineWidth = 2 - progress;
+        ctx.stroke();
+      });
+
+      // Central breathing orb
+      const coreRadius = 20 + breath * 30;
+      const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreRadius * 2);
+      coreGradient.addColorStop(0, `rgba(127, 219, 202, ${0.4 + breath * 0.3})`);
+      coreGradient.addColorStop(0.5, `rgba(100, 180, 170, ${0.2 + breath * 0.1})`);
+      coreGradient.addColorStop(1, 'rgba(80, 150, 140, 0)');
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, coreRadius * 2, 0, Math.PI * 2);
+      ctx.fillStyle = coreGradient;
+      ctx.fill();
+    };
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ripples.push({ born: 0, x: canvas.width / 2, y: canvas.height / 2 });
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode]);
+
+  // ========== SOFT GLOW MODE (Peripheral Vision) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'glow' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const orbs = [
+      { x: 0.3, y: 0.4, phase: 0 },
+      { x: 0.7, y: 0.4, phase: Math.PI },
+      { x: 0.5, y: 0.6, phase: Math.PI / 2 },
+    ];
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = (Date.now() - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      // Soft fade clear
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.02)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      orbs.forEach(orb => {
+        const orbBreath = getBreathPhase(elapsed + orb.phase);
+        const x = orb.x * canvas.width + Math.sin(elapsed * 0.1 + orb.phase) * 30;
+        const y = orb.y * canvas.height + Math.cos(elapsed * 0.08 + orb.phase) * 20;
+        const radius = 80 + orbBreath * 60;
+
+        // Very soft, defocused glow
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius * 3);
+        gradient.addColorStop(0, `rgba(127, 219, 202, ${0.15 + orbBreath * 0.1})`);
+        gradient.addColorStop(0.3, `rgba(100, 180, 170, ${0.08 + orbBreath * 0.05})`);
+        gradient.addColorStop(0.6, `rgba(80, 150, 140, ${0.03})`);
+        gradient.addColorStop(1, 'rgba(60, 120, 110, 0)');
+
+        ctx.beginPath();
+        ctx.arc(x, y, radius * 3, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      });
+
+      // Central gentle pulse
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const centerRadius = 40 + breath * 30;
+      const centerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, centerRadius * 2);
+      centerGradient.addColorStop(0, `rgba(200, 240, 230, ${0.1 + breath * 0.08})`);
+      centerGradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, centerRadius * 2, 0, Math.PI * 2);
+      ctx.fillStyle = centerGradient;
+      ctx.fill();
+    };
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    };
+  }, [currentMode]);
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 2,
+        cursor: 'pointer',
+        background: '#000',
+      }}
+      onClick={() => setShowUI(!showUI)}
+    >
+      {/* Three.js container for geometry mode */}
+      {currentMode === 'geometry' && (
+        <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      )}
+
+      {/* Canvas for 2D modes */}
+      {currentMode !== 'geometry' && (
+        <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+      )}
+
+      {/* Mode selector (top) */}
+      {showUI && (
+        <div style={{
+          position: 'absolute',
+          top: '5rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          gap: '0.5rem',
+          padding: '0.75rem',
+          background: 'rgba(0,0,0,0.7)',
+          borderRadius: '12px',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+        }}>
+          {gazeModes.map(mode => (
+            <button
+              key={mode.key}
+              onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
+              style={{
+                background: currentMode === mode.key ? 'rgba(127,219,202,0.25)' : 'rgba(255,255,255,0.05)',
+                border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
+                padding: '0.5rem 0.75rem',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.65rem',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.05em',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.25rem',
+                minWidth: '60px',
+              }}
+            >
+              <span style={{ fontSize: '1rem' }}>{mode.icon}</span>
+              <span>{mode.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Shape selector for geometry mode */}
+      {showUI && currentMode === 'geometry' && (
+        <div style={{
+          position: 'absolute',
+          bottom: '2rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          gap: '0.5rem',
+          padding: '0.75rem',
+          background: 'rgba(0,0,0,0.7)',
+          borderRadius: '12px',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+        }}>
+          {gazeShapes.map(shape => (
+            <button
+              key={shape.key}
+              onClick={(e) => { e.stopPropagation(); setCurrentShape(shape.key); }}
+              style={{
+                background: currentShape === shape.key ? 'rgba(127,219,202,0.25)' : 'rgba(255,255,255,0.05)',
+                border: currentShape === shape.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                color: currentShape === shape.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
+                padding: '0.4rem 0.6rem',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.65rem',
+                fontFamily: '"Jost", sans-serif',
+              }}
+            >
+              {shape.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Hint text */}
+      {!showUI && (
+        <div style={{
+          position: 'absolute',
+          bottom: '2rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          color: 'rgba(255,255,255,0.2)',
+          fontSize: '0.6rem',
+          fontFamily: '"Jost", sans-serif',
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+        }}>
+          tap to change
+        </div>
+      )}
+
+      {/* Breath indicator */}
+      <div style={{
+        position: 'absolute',
+        bottom: '1rem',
+        right: '1rem',
+        width: '4px',
+        height: '40px',
+        background: 'rgba(255,255,255,0.1)',
+        borderRadius: '2px',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          width: '100%',
+          background: 'rgba(127, 219, 202, 0.5)',
+          borderRadius: '2px',
+          animation: `breathIndicator ${BREATH_CYCLE}s ease-in-out infinite`,
+        }} />
+      </div>
+      <style>{`
+        @keyframes breathIndicator {
+          0%, 100% { height: 20%; }
+          45% { height: 100%; }
+        }
+      `}</style>
+    </div>
+  );
+}
 
 // ============================================================================
 // SETTINGS
@@ -819,7 +1391,7 @@ const defaultSettings = {
   theme: 'void',
   scrollSpeed: 1,
   depthEffect: true,
-  particles: true,
+  particles: false,
   reducedMotion: false,
   breathMode: false,      // Quotes advance with breath
   autoAdvance: false,     // Auto-advance quotes
@@ -828,8 +1400,6 @@ const defaultSettings = {
 
 const STORAGE_KEYS = {
   SAVED_QUOTES: 'philos_saved_quotes',
-  DAILY_QUOTE: 'philos_daily_quote',
-  DAILY_QUOTE_DATE: 'philos_daily_quote_date',
   SETTINGS: 'philos_settings',
 };
 
@@ -871,21 +1441,6 @@ const loadSettings = () => {
 
 const saveSettings = (settings) => {
   try { localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings)); } catch {}
-};
-
-const getDailyQuote = () => {
-  try {
-    const today = new Date().toDateString();
-    const savedDate = localStorage.getItem(STORAGE_KEYS.DAILY_QUOTE_DATE);
-    if (savedDate === today) {
-      const savedQuote = localStorage.getItem(STORAGE_KEYS.DAILY_QUOTE);
-      if (savedQuote) return JSON.parse(savedQuote);
-    }
-    const randomQuote = allQuotes[Math.floor(Math.random() * allQuotes.length)];
-    localStorage.setItem(STORAGE_KEYS.DAILY_QUOTE, JSON.stringify(randomQuote));
-    localStorage.setItem(STORAGE_KEYS.DAILY_QUOTE_DATE, today);
-    return randomQuote;
-  } catch { return allQuotes[0]; }
 };
 
 const shareQuote = async (quote) => {
@@ -950,6 +1505,7 @@ function Philos() {
     totalCycles: 10,
   });
   const breathSessionRef = useRef(null);
+  const [showTechniqueMenu, setShowTechniqueMenu] = useState(false);
 
   // ============================================================================
   // BREATHING - The heartbeat of the app (ambient background)
@@ -1351,8 +1907,6 @@ function Philos() {
 
   // Visual transforms are now handled directly in applyTransforms via refs
 
-  const dailyQuote = getDailyQuote();
-
   if (!currentQuote) {
     return (
       <div style={{ background: currentTheme.bg, color: currentTheme.text, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1385,103 +1939,6 @@ function Philos() {
           transition: 'background 0.5s ease',
         }}
       >
-        {/* Ambient dust - sparse, slow, calming */}
-        {settings.particles && (
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-            {[...Array(25)].map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  position: 'absolute',
-                  width: Math.random() * 2 + 1 + 'px',
-                  height: Math.random() * 2 + 1 + 'px',
-                  background: currentTheme.text,
-                  borderRadius: '50%',
-                  left: Math.random() * 100 + '%',
-                  top: Math.random() * 100 + '%',
-                  opacity: Math.random() * 0.2 + 0.05,
-                  animation: settings.reducedMotion ? 'none' : `twinkle ${Math.random() * 8 + 8}s ease-in-out infinite`,
-                  animationDelay: Math.random() * 5 + 's',
-                }}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Aurora Borealis Effect */}
-        {settings.particles && settings.theme !== 'dawn' && (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '60%',
-            overflow: 'hidden',
-            pointerEvents: 'none',
-            opacity: 0.15,
-          }}>
-            <div style={{
-              position: 'absolute',
-              top: '-20%',
-              left: '-10%',
-              right: '-10%',
-              height: '80%',
-              background: settings.theme === 'cosmos'
-                ? 'linear-gradient(180deg, transparent 0%, rgba(100, 60, 180, 0.4) 30%, rgba(60, 120, 180, 0.3) 50%, rgba(40, 180, 140, 0.2) 70%, transparent 100%)'
-                : 'linear-gradient(180deg, transparent 0%, rgba(40, 80, 120, 0.3) 30%, rgba(60, 140, 120, 0.2) 50%, rgba(80, 60, 140, 0.15) 70%, transparent 100%)',
-              filter: 'blur(40px)',
-              animation: settings.reducedMotion ? 'none' : 'aurora 15s ease-in-out infinite',
-              transformOrigin: 'center top',
-            }} />
-            <div style={{
-              position: 'absolute',
-              top: '-10%',
-              left: '20%',
-              right: '-20%',
-              height: '70%',
-              background: settings.theme === 'cosmos'
-                ? 'linear-gradient(180deg, transparent 0%, rgba(80, 140, 200, 0.3) 40%, rgba(120, 80, 160, 0.2) 60%, transparent 100%)'
-                : 'linear-gradient(180deg, transparent 0%, rgba(60, 160, 140, 0.25) 40%, rgba(40, 100, 140, 0.15) 60%, transparent 100%)',
-              filter: 'blur(50px)',
-              animation: settings.reducedMotion ? 'none' : 'aurora 20s ease-in-out infinite reverse',
-              animationDelay: '-5s',
-              transformOrigin: 'center top',
-            }} />
-          </div>
-        )}
-
-        {/* Minimal Mountain Silhouette */}
-        {settings.particles && settings.theme !== 'dawn' && (
-          <svg
-            viewBox="0 0 1440 320"
-            preserveAspectRatio="xMidYMax slice"
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              width: '100%',
-              height: '35vh',
-              minHeight: '180px',
-              maxHeight: '320px',
-              pointerEvents: 'none',
-              opacity: 0.06,
-            }}
-          >
-            {/* Far mountains */}
-            <path
-              d="M0,320 L0,220 L80,180 L160,200 L280,140 L380,170 L500,100 L620,150 L740,80 L880,130 L1020,60 L1160,110 L1300,70 L1440,120 L1440,320 Z"
-              fill={currentTheme.text}
-              opacity="0.4"
-            />
-            {/* Near mountains */}
-            <path
-              d="M0,320 L0,260 L120,220 L240,250 L400,180 L540,220 L680,160 L820,200 L980,140 L1140,190 L1300,150 L1440,180 L1440,320 Z"
-              fill={currentTheme.text}
-              opacity="0.7"
-            />
-          </svg>
-        )}
-
         {/* Vignette */}
         <div style={{
           position: 'absolute',
@@ -1523,8 +1980,7 @@ function Philos() {
           </h1>
           <nav style={{ display: 'flex', gap: '0.5rem' }}>
             {[
-              { key: 'breathe', icon: '◯', label: 'Breathe' },
-              { key: 'daily', icon: '☀', label: 'Daily' },
+              { key: 'gaze', icon: '◯', label: 'Gaze' },
               { key: 'filter', icon: '◉', label: 'Filter' },
               { key: 'saved', icon: '♡', label: String(savedQuotes.length) },
             ].map(({ key, icon, label }) => (
@@ -1632,7 +2088,6 @@ function Philos() {
           {[
             { key: 'breathMode', label: 'Breath Mode', description: 'Quotes flow with your breath' },
             { key: 'depthEffect', label: 'Depth Effect' },
-            { key: 'particles', label: 'Ambient Dust' },
             { key: 'reducedMotion', label: 'Reduce Motion' },
           ].map(({ key, label }) => (
             <div key={key} style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1685,7 +2140,7 @@ function Philos() {
         {/* Main Scroll View */}
         {view === 'scroll' && currentQuote && (
           <main style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
-            {/* Quote Card - emerges like smoke */}
+            {/* Quote Card - emerges like smoke, fades during breath focus */}
             <div
               style={{
                 position: 'absolute',
@@ -1779,59 +2234,185 @@ function Philos() {
                   >
                     <span style={{ fontSize: '1.1rem' }}>{isQuoteSaved(currentQuote) ? '♥' : '♡'}</span>Save
                   </button>
-                  <button
-                    onClick={() => shareQuote(currentQuote)}
-                    style={{
-                      background: currentTheme.cardBg,
-                      border: `1px solid ${currentTheme.border}`,
-                      color: currentTheme.textMuted,
-                      padding: '0.75rem 1.25rem',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      transition: 'all 0.3s ease',
-                    }}
-                  >
-                    <span style={{ fontSize: '1rem' }}>↗</span>Share
-                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Scroll hint */}
-            {/* Breathing Guide */}
-            <div style={{
-              position: 'absolute',
-              bottom: '3rem',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '1rem',
-            }}>
-              {/* Breath circle */}
+            {/* Integrated Breathing Guide */}
+            <div
+              onClick={() => {
+                if (!breathSession.isActive) {
+                  setShowTechniqueMenu(!showTechniqueMenu);
+                }
+              }}
+              style={{
+                position: 'absolute',
+                bottom: '1rem',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.3rem',
+                cursor: 'pointer',
+                zIndex: 5,
+              }}
+            >
+              {/* Technique Menu (when not in session) */}
+              {showTechniqueMenu && !breathSession.isActive && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  marginBottom: '1rem',
+                  background: currentTheme.cardBg,
+                  backdropFilter: 'blur(20px)',
+                  border: `1px solid ${currentTheme.border}`,
+                  borderRadius: '12px',
+                  padding: '0.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.25rem',
+                  minWidth: '180px',
+                }}>
+                  {Object.entries(breathTechniques).map(([key, tech]) => (
+                    <button
+                      key={key}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startBreathSession(key);
+                        setShowTechniqueMenu(false);
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: currentTheme.text,
+                        padding: '0.6rem 0.8rem',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        fontSize: '0.8rem',
+                        fontFamily: '"Jost", sans-serif',
+                        transition: 'background 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = currentTheme.border}
+                      onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                    >
+                      {tech.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Outer glow (when session active) */}
+              {breathSession.isActive && (
+                <div style={{
+                  position: 'absolute',
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle, ${currentTheme.accent}10 0%, transparent 70%)`,
+                  transform: breathSession.phase === 'inhale'
+                    ? `scale(${0.6 + breathSession.phaseProgress * 0.8})`
+                    : breathSession.phase === 'holdFull'
+                    ? `scale(1.4)`
+                    : breathSession.phase === 'exhale'
+                    ? `scale(${1.4 - breathSession.phaseProgress * 0.8})`
+                    : `scale(0.6)`, // holdEmpty
+                  transition: 'width 0.5s ease, height 0.5s ease',
+                  pointerEvents: 'none',
+                }} />
+              )}
+
+              {/* Main breath circle */}
               <div style={{
-                width: `${40 + breathPhase * 20}px`,
-                height: `${40 + breathPhase * 20}px`,
+                width: breathSession.isActive ? '80px' : '50px',
+                height: breathSession.isActive ? '80px' : '50px',
                 borderRadius: '50%',
                 border: `1px solid ${currentTheme.text}`,
-                opacity: 0.15 + breathPhase * 0.15,
-                transition: 'none', // Smooth animation from RAF
-              }} />
-              {/* Breath label */}
-              <span style={{
-                fontSize: '0.6rem',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                opacity: 0.3,
-                color: currentTheme.textMuted,
+                opacity: breathSession.isActive
+                  ? (breathSession.phase === 'inhale' ? 0.4 + breathSession.phaseProgress * 0.4
+                    : breathSession.phase === 'holdFull' ? 0.8
+                    : breathSession.phase === 'exhale' ? 0.8 - breathSession.phaseProgress * 0.4
+                    : 0.4)
+                  : 0.15 + breathPhase * 0.15,
+                transform: breathSession.isActive
+                  ? (breathSession.phase === 'inhale'
+                    ? `scale(${0.7 + breathSession.phaseProgress * 0.5})`
+                    : breathSession.phase === 'holdFull'
+                    ? `scale(1.2)`
+                    : breathSession.phase === 'exhale'
+                    ? `scale(${1.2 - breathSession.phaseProgress * 0.5})`
+                    : `scale(0.7)`) // holdEmpty
+                  : `scale(${0.9 + breathPhase * 0.2})`,
+                transition: 'width 0.3s ease, height 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}>
-                {isInhaling ? 'breathe in' : 'breathe out'}
+                {/* Inner circle */}
+                {breathSession.isActive && (
+                  <div style={{
+                    width: '25px',
+                    height: '25px',
+                    borderRadius: '50%',
+                    background: `${currentTheme.accent}30`,
+                    transform: breathSession.phase === 'inhale'
+                      ? `scale(${0.5 + breathSession.phaseProgress * 1})`
+                      : breathSession.phase === 'holdFull'
+                      ? `scale(1.5)`
+                      : breathSession.phase === 'exhale'
+                      ? `scale(${1.5 - breathSession.phaseProgress * 1})`
+                      : `scale(0.5)`, // holdEmpty
+                  }} />
+                )}
+              </div>
+
+              {/* Phase label */}
+              <span style={{
+                fontSize: breathSession.isActive ? '0.9rem' : '0.6rem',
+                fontFamily: breathSession.isActive ? '"Caveat", cursive' : '"Jost", sans-serif',
+                letterSpacing: breathSession.isActive ? '0.05em' : '0.2em',
+                textTransform: breathSession.isActive ? 'none' : 'uppercase',
+                opacity: breathSession.isActive ? 0.8 : 0.3,
+                color: currentTheme.text,
+                transition: 'all 0.3s ease',
+              }}>
+                {breathSession.isActive
+                  ? breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label
+                  : (showTechniqueMenu ? 'choose technique' : 'tap to breathe')}
               </span>
+
+              {/* Session info and stop button */}
+              {breathSession.isActive && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  fontSize: '0.65rem',
+                  color: currentTheme.textMuted,
+                }}>
+                  <span>Cycle {breathSession.cycleCount + 1}</span>
+                  <span>{Math.floor(breathSession.sessionTime / 60)}:{String(breathSession.sessionTime % 60).padStart(2, '0')}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      stopBreathSession();
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: `1px solid ${currentTheme.border}`,
+                      color: currentTheme.textMuted,
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.6rem',
+                      fontFamily: '"Jost", sans-serif',
+                    }}
+                  >
+                    stop
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Progress indicator */}
@@ -2091,34 +2672,9 @@ function Philos() {
           </main>
         )}
 
-        {/* Daily View */}
-        {view === 'daily' && (
-          <main style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2, padding: '2rem' }}>
-            <div style={{ fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: currentTheme.textMuted, marginBottom: '2rem' }}>☀ Today's Wisdom</div>
-            <blockquote style={{
-              fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
-              fontFamily: '"Cormorant Garamond", Georgia, serif',
-              fontWeight: 400,
-              lineHeight: 1.5,
-              color: currentTheme.text,
-              margin: 0,
-              fontStyle: 'italic',
-              textAlign: 'center',
-              maxWidth: '700px',
-            }}>
-              "{dailyQuote.text}"
-            </blockquote>
-            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.1rem', fontFamily: '"Jost", sans-serif', fontWeight: 500, color: currentTheme.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{dailyQuote.author}</div>
-              <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-                <span style={{ padding: '0.3rem 0.8rem', background: getSchoolColor(dailyQuote.school) + '20', borderRadius: '4px', color: getSchoolColor(dailyQuote.school), fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{dailyQuote.school}</span>
-              </div>
-            </div>
-            <div style={{ marginTop: '3rem', display: 'flex', gap: '1rem' }}>
-              <button onClick={() => toggleSave(dailyQuote)} style={{ background: currentTheme.cardBg, border: `1px solid ${currentTheme.border}`, color: isQuoteSaved(dailyQuote) ? '#E8B4B8' : currentTheme.textMuted, padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>{isQuoteSaved(dailyQuote) ? '♥ Saved' : '♡ Save'}</button>
-              <button onClick={() => shareQuote(dailyQuote)} style={{ background: currentTheme.cardBg, border: `1px solid ${currentTheme.border}`, color: currentTheme.textMuted, padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>↗ Share</button>
-            </div>
-          </main>
+        {/* Gaze View - Sacred Geometry */}
+        {view === 'gaze' && (
+          <GazeMode theme={currentTheme} />
         )}
 
         {/* Filter View */}
@@ -2238,10 +2794,7 @@ function Philos() {
                         <div style={{ fontSize: '0.85rem', color: currentTheme.textMuted, fontWeight: 500 }}>{quote.author}</div>
                         <span style={{ display: 'inline-block', marginTop: '0.35rem', padding: '0.2rem 0.5rem', background: getSchoolColor(quote.school) + '15', borderRadius: '3px', color: getSchoolColor(quote.school), fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{quote.school}</span>
                       </div>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button onClick={() => shareQuote(quote)} style={{ background: 'none', border: `1px solid ${currentTheme.border}`, color: currentTheme.textMuted, padding: '0.4rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>↗</button>
-                        <button onClick={() => toggleSave(quote)} style={{ background: 'none', border: `1px solid ${currentTheme.border}`, color: '#E8B4B8', padding: '0.4rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
-                      </div>
+                      <button onClick={() => toggleSave(quote)} style={{ background: 'none', border: `1px solid ${currentTheme.border}`, color: '#E8B4B8', padding: '0.4rem 0.75rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem' }}>✕</button>
                     </div>
                   </div>
                 ))}
