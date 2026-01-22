@@ -836,12 +836,24 @@ const breathTechniques = {
 // Based on scientific research: fractals, bilateral stimulation, breath sync
 // ============================================================================
 
+// Organized by energy level for nervous system regulation
 const gazeModes = [
-  { key: 'geometry', name: 'Sacred Geometry', icon: '◇' },
-  { key: 'tree', name: 'Fractal Tree', icon: '❋' },
-  { key: 'bilateral', name: 'Bilateral Flow', icon: '∞' },
-  { key: 'ripples', name: 'Ripples', icon: '◎' },
-  { key: 'glow', name: 'Soft Glow', icon: '○' },
+  // Grounding (centered, calming)
+  { key: 'geometry', name: 'Sacred Geometry', icon: '◇', group: 'grounding' },
+  { key: 'tree', name: 'Fractal Tree', icon: '🌳', group: 'grounding' },
+  { key: 'fern', name: 'Fern', icon: '🌿', group: 'grounding' },
+  { key: 'succulent', name: 'Succulent', icon: '❀', group: 'grounding' },
+  { key: 'coral', name: 'Coral', icon: '🪸', group: 'grounding' },
+  { key: 'mycelium', name: 'Mycelium', icon: '◌', group: 'grounding' },
+  // Releasing (letting go)
+  { key: 'dandelion', name: 'Dandelion', icon: '❁', group: 'releasing' },
+  { key: 'blossom', name: 'Cherry Blossom', icon: '🌸', group: 'releasing' },
+  // Breath-specific
+  { key: 'lungs', name: 'Breath Tree', icon: '🫁', group: 'breath' },
+  // Flow states
+  { key: 'bilateral', name: 'Bilateral', icon: '∞', group: 'flow' },
+  { key: 'ripples', name: 'Ripples', icon: '◎', group: 'flow' },
+  { key: 'glow', name: 'Soft Glow', icon: '○', group: 'flow' },
 ];
 
 const gazeShapes = [
@@ -1233,6 +1245,701 @@ function GazeMode({ theme }) {
     };
   }, [currentMode]);
 
+  // ========== FERN MODE (Barnsley Fern) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'fern' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Barnsley fern transformation matrices
+    const transforms = [
+      { a: 0, b: 0, c: 0, d: 0.16, e: 0, f: 0, p: 0.01 },
+      { a: 0.85, b: 0.04, c: -0.04, d: 0.85, e: 0, f: 1.6, p: 0.85 },
+      { a: 0.2, b: -0.26, c: 0.23, d: 0.22, e: 0, f: 1.6, p: 0.07 },
+      { a: -0.15, b: 0.28, c: 0.26, d: 0.24, e: 0, f: 0.44, p: 0.07 },
+    ];
+
+    const fernPoints = [];
+    let x = 0, y = 0;
+
+    // Pre-calculate fern points
+    for (let i = 0; i < 50000; i++) {
+      const r = Math.random();
+      let t;
+      if (r < transforms[0].p) t = transforms[0];
+      else if (r < transforms[0].p + transforms[1].p) t = transforms[1];
+      else if (r < transforms[0].p + transforms[1].p + transforms[2].p) t = transforms[2];
+      else t = transforms[3];
+
+      const nx = t.a * x + t.b * y + t.e;
+      const ny = t.c * x + t.d * y + t.f;
+      x = nx; y = ny;
+      fernPoints.push({ x, y });
+    }
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = (Date.now() - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const scale = canvas.height / 12;
+      const offsetX = canvas.width / 2;
+      const offsetY = canvas.height * 0.95;
+
+      // Sway with breath
+      const sway = Math.sin(elapsed * 0.3) * 15 * breath;
+
+      // Draw fern points with gradient
+      const pointsToDraw = Math.floor(fernPoints.length * (0.3 + breath * 0.7));
+      for (let i = 0; i < pointsToDraw; i++) {
+        const p = fernPoints[i];
+        const px = offsetX + p.x * scale + sway * (p.y / 10);
+        const py = offsetY - p.y * scale;
+
+        // Color gradient from stem to tips
+        const t = p.y / 10;
+        const r = Math.floor(60 + t * 67);
+        const g = Math.floor(100 + t * 119);
+        const b = Math.floor(80 + t * 122);
+
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + breath * 0.4})`;
+        ctx.fillRect(px, py, 1.5, 1.5);
+      }
+    };
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animate();
+
+    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    window.addEventListener('resize', handleResize);
+    return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, [currentMode]);
+
+  // ========== DANDELION MODE (Breath-synced seed release) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'dandelion' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Seeds still attached
+    const seedCount = 60;
+    const seeds = [];
+    for (let i = 0; i < seedCount; i++) {
+      const angle = (i / seedCount) * Math.PI * 2;
+      const layer = Math.floor(i / 20);
+      seeds.push({
+        angle,
+        layer,
+        length: 40 + layer * 15,
+        attached: true,
+        x: 0, y: 0, vx: 0, vy: 0,
+      });
+    }
+
+    // Floating seeds (detached)
+    const floatingSeeds = [];
+    let lastExhale = 0;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = (Date.now() - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+      const isExhaling = breath < 0.5 && elapsed > 1;
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const coreRadius = 15;
+
+      // Release seeds on exhale
+      if (isExhaling && elapsed - lastExhale > 2 && seeds.some(s => s.attached)) {
+        const toRelease = seeds.filter(s => s.attached).slice(0, 3);
+        toRelease.forEach(seed => {
+          seed.attached = false;
+          const angle = seed.angle + Math.sin(elapsed) * 0.2;
+          seed.x = centerX + Math.cos(angle) * seed.length;
+          seed.y = centerY + Math.sin(angle) * seed.length;
+          seed.vx = (Math.random() - 0.5) * 0.5;
+          seed.vy = -Math.random() * 0.8 - 0.3;
+          floatingSeeds.push(seed);
+        });
+        lastExhale = elapsed;
+      }
+
+      // Draw stem
+      ctx.strokeStyle = 'rgba(100, 140, 100, 0.6)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX, canvas.height);
+      ctx.stroke();
+
+      // Draw core (seed head)
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, coreRadius, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(180, 160, 120, 0.8)';
+      ctx.fill();
+
+      // Draw attached seeds
+      seeds.filter(s => s.attached).forEach(seed => {
+        const sway = Math.sin(elapsed * 0.5 + seed.angle) * 0.1;
+        const angle = seed.angle + sway;
+        const x = centerX + Math.cos(angle) * seed.length;
+        const y = centerY + Math.sin(angle) * seed.length;
+
+        // Pappus (fluffy part)
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 + breath * 0.3})`;
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i < 8; i++) {
+          const fAngle = (i / 8) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + Math.cos(fAngle) * 8, y + Math.sin(fAngle) * 8);
+          ctx.stroke();
+        }
+
+        // Stem to seed
+        ctx.strokeStyle = 'rgba(200, 200, 180, 0.4)';
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      });
+
+      // Update and draw floating seeds
+      floatingSeeds.forEach((seed, i) => {
+        seed.x += seed.vx + Math.sin(elapsed + i) * 0.2;
+        seed.y += seed.vy;
+        seed.vy -= 0.002; // Gentle upward drift
+
+        // Draw floating seed
+        ctx.strokeStyle = `rgba(255, 255, 255, ${Math.max(0, 0.5 - Math.abs(seed.y - centerY) / canvas.height)})`;
+        ctx.lineWidth = 0.5;
+        for (let j = 0; j < 6; j++) {
+          const fAngle = (j / 6) * Math.PI * 2 + elapsed * 0.5;
+          ctx.beginPath();
+          ctx.moveTo(seed.x, seed.y);
+          ctx.lineTo(seed.x + Math.cos(fAngle) * 6, seed.y + Math.sin(fAngle) * 6);
+          ctx.stroke();
+        }
+      });
+
+      // Remove seeds that float off screen
+      for (let i = floatingSeeds.length - 1; i >= 0; i--) {
+        if (floatingSeeds[i].y < -50) floatingSeeds.splice(i, 1);
+      }
+    };
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animate();
+
+    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    window.addEventListener('resize', handleResize);
+    return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, [currentMode]);
+
+  // ========== SUCCULENT SPIRAL (Fibonacci) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'succulent' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // 137.5 degrees
+    const leafCount = 80;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = (Date.now() - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const rotation = elapsed * 0.02;
+
+      for (let i = leafCount; i > 0; i--) {
+        const angle = i * goldenAngle + rotation;
+        const radius = Math.sqrt(i) * 18 * (0.9 + breath * 0.1);
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+
+        const leafSize = 8 + (leafCount - i) * 0.3;
+
+        // Leaf gradient from center (lighter) to edge (darker teal)
+        const t = i / leafCount;
+        const r = Math.floor(80 + (1-t) * 47);
+        const g = Math.floor(160 + (1-t) * 59);
+        const b = Math.floor(140 + (1-t) * 62);
+
+        // Draw leaf shape
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle + Math.PI / 2);
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, leafSize * 0.6, leafSize, 0, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.6 + breath * 0.3})`;
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${r + 30}, ${g + 30}, ${b + 30}, 0.3)`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // Center dot
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(200, 220, 200, 0.8)';
+      ctx.fill();
+    };
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animate();
+
+    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    window.addEventListener('resize', handleResize);
+    return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, [currentMode]);
+
+  // ========== CORAL MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'coral' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Generate coral branches
+    const branches = [];
+    const generateCoral = (x, y, angle, depth, maxDepth) => {
+      if (depth > maxDepth) return;
+
+      const length = 40 - depth * 5 + Math.random() * 20;
+      const endX = x + Math.cos(angle) * length;
+      const endY = y + Math.sin(angle) * length;
+
+      branches.push({ x1: x, y1: y, x2: endX, y2: endY, depth, maxDepth });
+
+      const branchCount = depth < 2 ? 3 : 2;
+      for (let i = 0; i < branchCount; i++) {
+        const newAngle = angle + (Math.random() - 0.5) * 1.2;
+        generateCoral(endX, endY, newAngle, depth + 1, maxDepth);
+      }
+    };
+
+    // Create multiple coral structures
+    const coralBases = [
+      { x: canvas.width * 0.3, maxDepth: 6 },
+      { x: canvas.width * 0.5, maxDepth: 7 },
+      { x: canvas.width * 0.7, maxDepth: 6 },
+    ];
+
+    coralBases.forEach(base => {
+      generateCoral(base.x, canvas.height, -Math.PI / 2 + (Math.random() - 0.5) * 0.3, 0, base.maxDepth);
+    });
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = (Date.now() - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      ctx.fillStyle = 'rgba(0, 0, 10, 0.08)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      branches.forEach(branch => {
+        // Sway like in water
+        const sway = Math.sin(elapsed * 0.5 + branch.x1 * 0.01) * (branch.depth * 2) * breath;
+
+        const x1 = branch.x1 + sway * 0.5;
+        const y1 = branch.y1;
+        const x2 = branch.x2 + sway;
+        const y2 = branch.y2;
+
+        // Color: deep purple to teal gradient based on depth
+        const t = branch.depth / branch.maxDepth;
+        const r = Math.floor(80 + t * 47);
+        const g = Math.floor(100 + t * 119);
+        const b = Math.floor(120 + t * 82);
+
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.4 + breath * 0.4})`;
+        ctx.lineWidth = Math.max(1, 4 - branch.depth * 0.5);
+        ctx.lineCap = 'round';
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.quadraticCurveTo(
+          (x1 + x2) / 2 + sway * 0.3,
+          (y1 + y2) / 2,
+          x2, y2
+        );
+        ctx.stroke();
+
+        // Bioluminescent tips
+        if (branch.depth === branch.maxDepth) {
+          ctx.beginPath();
+          ctx.arc(x2, y2, 2 + breath * 2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(127, 219, 202, ${0.3 + breath * 0.5})`;
+          ctx.fill();
+        }
+      });
+    };
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animate();
+
+    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    window.addEventListener('resize', handleResize);
+    return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, [currentMode]);
+
+  // ========== CHERRY BLOSSOM MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'blossom' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Generate tree branches
+    const branches = [];
+    const blossoms = [];
+
+    const generateTree = (x, y, angle, depth, maxDepth) => {
+      if (depth > maxDepth) return;
+
+      const length = 80 - depth * 12;
+      const endX = x + Math.cos(angle) * length;
+      const endY = y + Math.sin(angle) * length;
+
+      branches.push({ x1: x, y1: y, x2: endX, y2: endY, depth });
+
+      // Add blossoms at branch tips
+      if (depth >= maxDepth - 2) {
+        for (let i = 0; i < 3; i++) {
+          blossoms.push({
+            x: endX + (Math.random() - 0.5) * 20,
+            y: endY + (Math.random() - 0.5) * 20,
+            size: 4 + Math.random() * 4,
+            phase: Math.random() * Math.PI * 2,
+          });
+        }
+      }
+
+      generateTree(endX, endY, angle - 0.4 - Math.random() * 0.3, depth + 1, maxDepth);
+      generateTree(endX, endY, angle + 0.4 + Math.random() * 0.3, depth + 1, maxDepth);
+    };
+
+    generateTree(canvas.width / 2, canvas.height, -Math.PI / 2, 0, 6);
+
+    // Falling petals
+    const petals = [];
+    for (let i = 0; i < 30; i++) {
+      petals.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: 3 + Math.random() * 3,
+        speed: 0.3 + Math.random() * 0.4,
+        wobble: Math.random() * Math.PI * 2,
+      });
+    }
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = (Date.now() - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw branches
+      branches.forEach(branch => {
+        ctx.strokeStyle = `rgba(60, 40, 30, ${0.6 + breath * 0.2})`;
+        ctx.lineWidth = Math.max(1, 8 - branch.depth * 1.2);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(branch.x1, branch.y1);
+        ctx.lineTo(branch.x2, branch.y2);
+        ctx.stroke();
+      });
+
+      // Draw blossoms
+      blossoms.forEach(blossom => {
+        const pulse = Math.sin(elapsed * 2 + blossom.phase) * 0.2;
+        const size = blossom.size * (1 + pulse) * (0.8 + breath * 0.2);
+
+        // Pink petals
+        for (let i = 0; i < 5; i++) {
+          const angle = (i / 5) * Math.PI * 2 + elapsed * 0.1;
+          const px = blossom.x + Math.cos(angle) * size * 0.5;
+          const py = blossom.y + Math.sin(angle) * size * 0.5;
+
+          ctx.beginPath();
+          ctx.ellipse(px, py, size * 0.4, size * 0.6, angle, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 200, 210, ${0.5 + breath * 0.3})`;
+          ctx.fill();
+        }
+
+        // Center
+        ctx.beginPath();
+        ctx.arc(blossom.x, blossom.y, size * 0.2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 220, 180, 0.8)';
+        ctx.fill();
+      });
+
+      // Update and draw falling petals
+      petals.forEach(petal => {
+        petal.y += petal.speed;
+        petal.x += Math.sin(elapsed + petal.wobble) * 0.5;
+
+        if (petal.y > canvas.height + 10) {
+          petal.y = -10;
+          petal.x = Math.random() * canvas.width;
+        }
+
+        ctx.beginPath();
+        ctx.ellipse(petal.x, petal.y, petal.size * 0.5, petal.size, elapsed + petal.wobble, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 200, 210, ${0.3 + breath * 0.2})`;
+        ctx.fill();
+      });
+    };
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animate();
+
+    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    window.addEventListener('resize', handleResize);
+    return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, [currentMode]);
+
+  // ========== MYCELIUM NETWORK MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'mycelium' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Generate network nodes
+    const nodes = [];
+    const connections = [];
+    const nodeCount = 40;
+
+    for (let i = 0; i < nodeCount; i++) {
+      nodes.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: 3 + Math.random() * 4,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+
+    // Create connections between nearby nodes
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dist = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+        if (dist < 200) {
+          connections.push({ from: i, to: j, pulseOffset: Math.random() });
+        }
+      }
+    }
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = (Date.now() - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw connections with traveling pulses
+      connections.forEach(conn => {
+        const from = nodes[conn.from];
+        const to = nodes[conn.to];
+
+        ctx.strokeStyle = `rgba(127, 219, 202, ${0.1 + breath * 0.1})`;
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.stroke();
+
+        // Traveling pulse
+        const pulsePos = ((elapsed * 0.3 + conn.pulseOffset) % 1);
+        const px = from.x + (to.x - from.x) * pulsePos;
+        const py = from.y + (to.y - from.y) * pulsePos;
+
+        ctx.beginPath();
+        ctx.arc(px, py, 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(127, 219, 202, ${0.5 + breath * 0.3})`;
+        ctx.fill();
+      });
+
+      // Draw nodes
+      nodes.forEach(node => {
+        const pulse = Math.sin(elapsed * 2 + node.phase) * 0.3;
+        const radius = node.radius * (1 + pulse) * (0.8 + breath * 0.2);
+
+        const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, radius * 2);
+        gradient.addColorStop(0, `rgba(127, 219, 202, ${0.6 + breath * 0.3})`);
+        gradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
+
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, radius * 2, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      });
+    };
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animate();
+
+    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    window.addEventListener('resize', handleResize);
+    return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, [currentMode]);
+
+  // ========== BREATH TREE (LUNGS) MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'lungs' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let startTime = Date.now();
+
+    // Generate bronchial tree
+    const branches = [];
+
+    const generateLung = (x, y, angle, depth, maxDepth, side) => {
+      if (depth > maxDepth) return;
+
+      const length = 60 - depth * 8;
+      const endX = x + Math.cos(angle) * length;
+      const endY = y + Math.sin(angle) * length;
+
+      branches.push({ x1: x, y1: y, x2: endX, y2: endY, depth, maxDepth, side });
+
+      const spread = 0.4 - depth * 0.03;
+      generateLung(endX, endY, angle - spread, depth + 1, maxDepth, side);
+      generateLung(endX, endY, angle + spread, depth + 1, maxDepth, side);
+    };
+
+    const centerX = canvas.width / 2;
+    const startY = canvas.height * 0.2;
+
+    // Trachea
+    branches.push({ x1: centerX, y1: startY - 40, x2: centerX, y2: startY, depth: 0, maxDepth: 6, side: 'center' });
+
+    // Left and right lungs
+    generateLung(centerX, startY, Math.PI / 2 - 0.5, 1, 6, 'left');
+    generateLung(centerX, startY, Math.PI / 2 + 0.5, 1, 6, 'right');
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = (Date.now() - startTime) / 1000;
+      const breath = getBreathPhase(elapsed);
+      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw branches with breath-synced light flow
+      branches.forEach(branch => {
+        const t = branch.depth / branch.maxDepth;
+
+        // Base branch color
+        const baseOpacity = 0.3 + breath * 0.3;
+        ctx.strokeStyle = `rgba(127, 180, 180, ${baseOpacity})`;
+        ctx.lineWidth = Math.max(1, 6 - branch.depth * 0.8);
+        ctx.lineCap = 'round';
+
+        ctx.beginPath();
+        ctx.moveTo(branch.x1, branch.y1);
+        ctx.lineTo(branch.x2, branch.y2);
+        ctx.stroke();
+
+        // Breath light flowing through branches
+        const flowProgress = isInhaling
+          ? (breath * (1 - t)) // Light flows in during inhale
+          : ((1 - breath) * t); // Light flows out during exhale
+
+        if (flowProgress > 0.1) {
+          const glowX = branch.x1 + (branch.x2 - branch.x1) * (isInhaling ? breath : 1 - breath);
+          const glowY = branch.y1 + (branch.y2 - branch.y1) * (isInhaling ? breath : 1 - breath);
+
+          const gradient = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, 15);
+          gradient.addColorStop(0, `rgba(200, 240, 255, ${flowProgress * 0.6})`);
+          gradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
+
+          ctx.beginPath();
+          ctx.arc(glowX, glowY, 15, 0, Math.PI * 2);
+          ctx.fillStyle = gradient;
+          ctx.fill();
+        }
+
+        // Alveoli glow at branch tips
+        if (branch.depth === branch.maxDepth) {
+          const glowSize = 8 + breath * 8;
+          const gradient = ctx.createRadialGradient(branch.x2, branch.y2, 0, branch.x2, branch.y2, glowSize);
+          gradient.addColorStop(0, `rgba(200, 240, 255, ${0.3 + breath * 0.4})`);
+          gradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
+
+          ctx.beginPath();
+          ctx.arc(branch.x2, branch.y2, glowSize, 0, Math.PI * 2);
+          ctx.fillStyle = gradient;
+          ctx.fill();
+        }
+      });
+
+      // Breath indicator text
+      ctx.fillStyle = `rgba(200, 240, 255, ${0.3 + breath * 0.3})`;
+      ctx.font = '16px "Cormorant Garamond", Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isInhaling ? 'breathe in' : 'breathe out', centerX, canvas.height - 40);
+    };
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animate();
+
+    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    window.addEventListener('resize', handleResize);
+    return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, [currentMode]);
+
   return (
     <div
       style={{
@@ -1257,46 +1964,134 @@ function GazeMode({ theme }) {
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       )}
 
-      {/* Mode selector (top) */}
+      {/* Mode selector (scrollable grid) */}
       {showUI && (
         <div style={{
           position: 'absolute',
           top: '5rem',
           left: '50%',
           transform: 'translateX(-50%)',
-          display: 'flex',
-          gap: '0.5rem',
-          padding: '0.75rem',
-          background: 'rgba(0,0,0,0.7)',
-          borderRadius: '12px',
+          maxWidth: '90vw',
+          maxHeight: '60vh',
+          overflowY: 'auto',
+          padding: '1rem',
+          background: 'rgba(0,0,0,0.85)',
+          borderRadius: '16px',
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.1)',
         }}>
-          {gazeModes.map(mode => (
-            <button
-              key={mode.key}
-              onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
-              style={{
-                background: currentMode === mode.key ? 'rgba(127,219,202,0.25)' : 'rgba(255,255,255,0.05)',
-                border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.1)',
-                color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.65rem',
-                fontFamily: '"Jost", sans-serif',
-                letterSpacing: '0.05em',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '0.25rem',
-                minWidth: '60px',
-              }}
-            >
-              <span style={{ fontSize: '1rem' }}>{mode.icon}</span>
-              <span>{mode.name}</span>
-            </button>
-          ))}
+          {/* Grounding modes */}
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem', fontFamily: '"Cormorant Garamond", serif' }}>Grounding</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+              {gazeModes.filter(m => m.group === 'grounding').map(mode => (
+                <button
+                  key={mode.key}
+                  onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
+                  style={{
+                    background: currentMode === mode.key ? 'rgba(127,219,202,0.25)' : 'rgba(255,255,255,0.05)',
+                    border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                    color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
+                    padding: '0.4rem 0.6rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.6rem',
+                    fontFamily: '"Jost", sans-serif',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                >
+                  <span style={{ fontSize: '0.9rem' }}>{mode.icon}</span>
+                  <span>{mode.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Releasing modes */}
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem', fontFamily: '"Cormorant Garamond", serif' }}>Releasing</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+              {gazeModes.filter(m => m.group === 'releasing').map(mode => (
+                <button
+                  key={mode.key}
+                  onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
+                  style={{
+                    background: currentMode === mode.key ? 'rgba(127,219,202,0.25)' : 'rgba(255,255,255,0.05)',
+                    border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                    color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
+                    padding: '0.4rem 0.6rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.6rem',
+                    fontFamily: '"Jost", sans-serif',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                >
+                  <span style={{ fontSize: '0.9rem' }}>{mode.icon}</span>
+                  <span>{mode.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Breath-specific */}
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem', fontFamily: '"Cormorant Garamond", serif' }}>Breath</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+              {gazeModes.filter(m => m.group === 'breath').map(mode => (
+                <button
+                  key={mode.key}
+                  onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
+                  style={{
+                    background: currentMode === mode.key ? 'rgba(127,219,202,0.25)' : 'rgba(255,255,255,0.05)',
+                    border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                    color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
+                    padding: '0.4rem 0.6rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.6rem',
+                    fontFamily: '"Jost", sans-serif',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                >
+                  <span style={{ fontSize: '0.9rem' }}>{mode.icon}</span>
+                  <span>{mode.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Flow states */}
+          <div>
+            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.5rem', fontFamily: '"Cormorant Garamond", serif' }}>Flow</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+              {gazeModes.filter(m => m.group === 'flow').map(mode => (
+                <button
+                  key={mode.key}
+                  onClick={(e) => { e.stopPropagation(); setCurrentMode(mode.key); }}
+                  style={{
+                    background: currentMode === mode.key ? 'rgba(127,219,202,0.25)' : 'rgba(255,255,255,0.05)',
+                    border: currentMode === mode.key ? '1px solid rgba(127,219,202,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                    color: currentMode === mode.key ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
+                    padding: '0.4rem 0.6rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.6rem',
+                    fontFamily: '"Jost", sans-serif',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                >
+                  <span style={{ fontSize: '0.9rem' }}>{mode.icon}</span>
+                  <span>{mode.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
