@@ -882,6 +882,118 @@ function GazeMode({ theme }) {
   const [currentShape, setCurrentShape] = React.useState('icosahedron');
   const [showUI, setShowUI] = React.useState(false);
 
+  // ========== TOUCH INTERACTION SYSTEM ==========
+  const touchPointsRef = React.useRef([]);
+  const ripplesRef = React.useRef([]);
+
+  // Track touch/mouse positions with spring physics
+  const handleInteractionStart = React.useCallback((e) => {
+    if (showUI) return;
+    e.preventDefault();
+    const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY, identifier: 'mouse' }];
+    touches.forEach(touch => {
+      const existing = touchPointsRef.current.find(p => p.id === touch.identifier);
+      if (!existing) {
+        touchPointsRef.current.push({
+          id: touch.identifier,
+          x: touch.clientX,
+          y: touch.clientY,
+          startX: touch.clientX,
+          startY: touch.clientY,
+          velocity: { x: 0, y: 0 },
+          active: true,
+          startTime: Date.now(),
+        });
+        // Create ripple
+        ripplesRef.current.push({
+          x: touch.clientX,
+          y: touch.clientY,
+          startTime: Date.now(),
+          maxRadius: 150,
+          duration: 1000,
+        });
+      }
+    });
+  }, [showUI]);
+
+  const handleInteractionMove = React.useCallback((e) => {
+    if (showUI) return;
+    const touches = e.touches ? Array.from(e.touches) : [{ clientX: e.clientX, clientY: e.clientY, identifier: 'mouse' }];
+    touches.forEach(touch => {
+      const point = touchPointsRef.current.find(p => p.id === touch.identifier);
+      if (point) {
+        point.velocity.x = touch.clientX - point.x;
+        point.velocity.y = touch.clientY - point.y;
+        point.x = touch.clientX;
+        point.y = touch.clientY;
+      }
+    });
+  }, [showUI]);
+
+  const handleInteractionEnd = React.useCallback((e) => {
+    const touches = e.changedTouches ? Array.from(e.changedTouches) : [{ identifier: 'mouse' }];
+    touches.forEach(touch => {
+      const point = touchPointsRef.current.find(p => p.id === touch.identifier);
+      if (point) {
+        point.active = false;
+        point.endTime = Date.now();
+      }
+    });
+    // Clean up old inactive points after decay
+    setTimeout(() => {
+      touchPointsRef.current = touchPointsRef.current.filter(p => p.active || Date.now() - p.endTime < 2000);
+    }, 2000);
+  }, []);
+
+  // Helper: Calculate influence of touch points on a position
+  const getInteractionInfluence = React.useCallback((x, y, maxRadius = 200) => {
+    let totalInfluence = { x: 0, y: 0, strength: 0 };
+    const now = Date.now();
+
+    touchPointsRef.current.forEach(point => {
+      const dx = x - point.x;
+      const dy = y - point.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < maxRadius) {
+        // Decay strength over time after release
+        let strength = 1 - dist / maxRadius;
+        if (!point.active) {
+          const decay = Math.max(0, 1 - (now - point.endTime) / 1500);
+          strength *= decay;
+        }
+        // Spring-like influence (push away slightly, then pull)
+        const angle = Math.atan2(dy, dx);
+        totalInfluence.x += Math.cos(angle) * strength * 30;
+        totalInfluence.y += Math.sin(angle) * strength * 30;
+        totalInfluence.strength = Math.max(totalInfluence.strength, strength);
+      }
+    });
+
+    return totalInfluence;
+  }, []);
+
+  // Helper: Draw ripples on canvas
+  const drawRipples = React.useCallback((ctx) => {
+    const now = Date.now();
+    ripplesRef.current = ripplesRef.current.filter(ripple => {
+      const age = now - ripple.startTime;
+      if (age > ripple.duration) return false;
+
+      const progress = age / ripple.duration;
+      const radius = ripple.maxRadius * progress;
+      const opacity = (1 - progress) * 0.4;
+
+      ctx.beginPath();
+      ctx.arc(ripple.x, ripple.y, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(127, 219, 202, ${opacity})`;
+      ctx.lineWidth = 2 * (1 - progress);
+      ctx.stroke();
+
+      return true;
+    });
+  }, []);
+
   // Get breath phase (0 to 1, where 0-0.45 is inhale, 0.45-1 is exhale)
   const getBreathPhase = (elapsed) => {
     const cycle = (elapsed % BREATH_CYCLE) / BREATH_CYCLE;
@@ -918,8 +1030,21 @@ function GazeMode({ theme }) {
       const breath = getBreathPhase(elapsed);
 
       if (meshRef.current) {
+        // Base rotation
         meshRef.current.rotation.y += 0.001;
         meshRef.current.rotation.x += 0.0005;
+
+        // Touch influence - rotate toward touch points
+        if (touchPointsRef.current.length > 0) {
+          const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+          if (activeTouch) {
+            const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+            const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+            meshRef.current.rotation.y += normalizedX * 0.02;
+            meshRef.current.rotation.x += normalizedY * 0.02;
+          }
+        }
+
         meshRef.current.scale.setScalar(0.8 + breath * 0.4);
         meshRef.current.material.opacity = 0.5 + breath * 0.3;
       }
@@ -956,12 +1081,16 @@ function GazeMode({ theme }) {
     canvas.height = window.innerHeight;
     let startTime = Date.now();
 
-    const drawBranch = (x, y, len, angle, depth, breath, time) => {
+    const drawBranch = (x, y, len, angle, depth, breath, time, getInfluence) => {
       if (depth === 0 || len < 4) return;
 
       // Sway with breath and time
       const sway = Math.sin(time * 0.5 + depth * 0.5) * 0.05 * breath;
-      const newAngle = angle + sway;
+
+      // Touch influence - branches bend away from touch
+      const influence = getInfluence(x, y, 250);
+      const touchSway = influence.strength > 0 ? Math.atan2(influence.y, influence.x) * influence.strength * 0.3 : 0;
+      const newAngle = angle + sway + touchSway;
 
       const x2 = x + Math.cos(newAngle) * len;
       const y2 = y + Math.sin(newAngle) * len;
@@ -983,8 +1112,8 @@ function GazeMode({ theme }) {
       const branchAngle = 0.4 + breath * 0.2;
       const lenFactor = 0.67 + breath * 0.08;
 
-      drawBranch(x2, y2, len * lenFactor, newAngle - branchAngle, depth - 1, breath, time);
-      drawBranch(x2, y2, len * lenFactor, newAngle + branchAngle, depth - 1, breath, time);
+      drawBranch(x2, y2, len * lenFactor, newAngle - branchAngle, depth - 1, breath, time, getInfluence);
+      drawBranch(x2, y2, len * lenFactor, newAngle + branchAngle, depth - 1, breath, time, getInfluence);
     };
 
     const animate = () => {
@@ -999,7 +1128,10 @@ function GazeMode({ theme }) {
       const baseY = canvas.height * 0.85;
       const trunkLen = canvas.height * 0.18;
 
-      drawBranch(centerX, baseY, trunkLen, -Math.PI / 2, 8, breath, elapsed);
+      drawBranch(centerX, baseY, trunkLen, -Math.PI / 2, 8, breath, elapsed, getInteractionInfluence);
+
+      // Draw touch ripples
+      drawRipples(ctx);
     };
 
     // Initial clear
@@ -1017,7 +1149,7 @@ function GazeMode({ theme }) {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [currentMode]);
+  }, [currentMode, getInteractionInfluence, drawRipples]);
 
   // ========== BILATERAL FLOW MODE (EMDR-style) ==========
   React.useEffect(() => {
@@ -1071,6 +1203,9 @@ function GazeMode({ theme }) {
         ctx.fillStyle = `rgba(127, 219, 202, ${0.15 / i})`;
         ctx.fill();
       }
+
+      // Draw touch ripples
+      drawRipples(ctx);
     };
 
     ctx.fillStyle = '#000';
@@ -1087,7 +1222,7 @@ function GazeMode({ theme }) {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [currentMode]);
+  }, [currentMode, drawRipples]);
 
   // ========== RIPPLES MODE ==========
   React.useEffect(() => {
@@ -1113,6 +1248,14 @@ function GazeMode({ theme }) {
         ripples.push({ born: elapsed, x: canvas.width / 2, y: canvas.height / 2 });
         lastBreathPeak = elapsed;
       }
+
+      // Spawn ripples at touch points
+      touchPointsRef.current.forEach(point => {
+        if (point.active && !point.rippleSpawned) {
+          ripples.push({ born: elapsed, x: point.x, y: point.y });
+          point.rippleSpawned = true;
+        }
+      });
 
       // Clear
       ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
@@ -1141,17 +1284,21 @@ function GazeMode({ theme }) {
         ctx.stroke();
       });
 
-      // Central breathing orb
-      const coreRadius = 20 + breath * 30;
+      // Central breathing orb - responds to touch
+      const centerInfluence = getInteractionInfluence(centerX, centerY, 200);
+      const coreRadius = 20 + breath * 30 + centerInfluence.strength * 20;
       const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreRadius * 2);
-      coreGradient.addColorStop(0, `rgba(127, 219, 202, ${0.4 + breath * 0.3})`);
+      coreGradient.addColorStop(0, `rgba(127, 219, 202, ${0.4 + breath * 0.3 + centerInfluence.strength * 0.3})`);
       coreGradient.addColorStop(0.5, `rgba(100, 180, 170, ${0.2 + breath * 0.1})`);
       coreGradient.addColorStop(1, 'rgba(80, 150, 140, 0)');
 
       ctx.beginPath();
-      ctx.arc(centerX, centerY, coreRadius * 2, 0, Math.PI * 2);
+      ctx.arc(centerX + centerInfluence.x * 0.2, centerY + centerInfluence.y * 0.2, coreRadius * 2, 0, Math.PI * 2);
       ctx.fillStyle = coreGradient;
       ctx.fill();
+
+      // Draw touch ripples
+      drawRipples(ctx);
     };
 
     ctx.fillStyle = '#000';
@@ -1169,7 +1316,7 @@ function GazeMode({ theme }) {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [currentMode]);
+  }, [currentMode, getInteractionInfluence, drawRipples]);
 
   // ========== SOFT GLOW MODE (Peripheral Vision) ==========
   React.useEffect(() => {
@@ -1198,15 +1345,21 @@ function GazeMode({ theme }) {
 
       orbs.forEach(orb => {
         const orbBreath = getBreathPhase(elapsed + orb.phase);
-        const x = orb.x * canvas.width + Math.sin(elapsed * 0.1 + orb.phase) * 30;
-        const y = orb.y * canvas.height + Math.cos(elapsed * 0.08 + orb.phase) * 20;
-        const radius = 80 + orbBreath * 60;
+        let x = orb.x * canvas.width + Math.sin(elapsed * 0.1 + orb.phase) * 30;
+        let y = orb.y * canvas.height + Math.cos(elapsed * 0.08 + orb.phase) * 20;
 
-        // Very soft, defocused glow
+        // Touch influence - orbs are attracted/repelled
+        const influence = getInteractionInfluence(x, y, 250);
+        x += influence.x * 0.3;
+        y += influence.y * 0.3;
+
+        const radius = 80 + orbBreath * 60 + influence.strength * 30;
+
+        // Very soft, defocused glow - brighter when touched
         const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius * 3);
-        gradient.addColorStop(0, `rgba(127, 219, 202, ${0.15 + orbBreath * 0.1})`);
-        gradient.addColorStop(0.3, `rgba(100, 180, 170, ${0.08 + orbBreath * 0.05})`);
-        gradient.addColorStop(0.6, `rgba(80, 150, 140, ${0.03})`);
+        gradient.addColorStop(0, `rgba(127, 219, 202, ${0.15 + orbBreath * 0.1 + influence.strength * 0.2})`);
+        gradient.addColorStop(0.3, `rgba(100, 180, 170, ${0.08 + orbBreath * 0.05 + influence.strength * 0.1})`);
+        gradient.addColorStop(0.6, `rgba(80, 150, 140, ${0.03 + influence.strength * 0.05})`);
         gradient.addColorStop(1, 'rgba(60, 120, 110, 0)');
 
         ctx.beginPath();
@@ -1215,18 +1368,22 @@ function GazeMode({ theme }) {
         ctx.fill();
       });
 
-      // Central gentle pulse
+      // Central gentle pulse with touch response
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
-      const centerRadius = 40 + breath * 30;
+      const centerInfluence = getInteractionInfluence(centerX, centerY, 200);
+      const centerRadius = 40 + breath * 30 + centerInfluence.strength * 20;
       const centerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, centerRadius * 2);
-      centerGradient.addColorStop(0, `rgba(200, 240, 230, ${0.1 + breath * 0.08})`);
+      centerGradient.addColorStop(0, `rgba(200, 240, 230, ${0.1 + breath * 0.08 + centerInfluence.strength * 0.15})`);
       centerGradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
 
       ctx.beginPath();
-      ctx.arc(centerX, centerY, centerRadius * 2, 0, Math.PI * 2);
+      ctx.arc(centerX + centerInfluence.x * 0.1, centerY + centerInfluence.y * 0.1, centerRadius * 2, 0, Math.PI * 2);
       ctx.fillStyle = centerGradient;
       ctx.fill();
+
+      // Draw touch ripples
+      drawRipples(ctx);
     };
 
     ctx.fillStyle = '#000';
@@ -1243,7 +1400,7 @@ function GazeMode({ theme }) {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [currentMode]);
+  }, [currentMode, getInteractionInfluence, drawRipples]);
 
   // ========== FERN MODE (Barnsley Fern) ==========
   React.useEffect(() => {
@@ -1300,8 +1457,15 @@ function GazeMode({ theme }) {
       const pointsToDraw = Math.floor(fernPoints.length * (0.3 + breath * 0.7));
       for (let i = 0; i < pointsToDraw; i++) {
         const p = fernPoints[i];
-        const px = offsetX + p.x * scale + sway * (p.y / 10);
-        const py = offsetY - p.y * scale;
+        let px = offsetX + p.x * scale + sway * (p.y / 10);
+        let py = offsetY - p.y * scale;
+
+        // Touch influence - fronds curl inward toward touch
+        const influence = getInteractionInfluence(px, py, 200);
+        if (influence.strength > 0) {
+          px += influence.x * 0.5;
+          py += influence.y * 0.5;
+        }
 
         // Color gradient from stem to tips
         const t = p.y / 10;
@@ -1309,9 +1473,13 @@ function GazeMode({ theme }) {
         const g = Math.floor(100 + t * 119);
         const b = Math.floor(80 + t * 122);
 
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + breath * 0.4})`;
-        ctx.fillRect(px, py, 1.5, 1.5);
+        const glowBoost = influence.strength * 0.3;
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.3 + breath * 0.4 + glowBoost})`;
+        ctx.fillRect(px, py, 1.5 + influence.strength, 1.5 + influence.strength);
       }
+
+      // Draw touch ripples
+      drawRipples(ctx);
     };
 
     ctx.fillStyle = '#000';
@@ -1321,7 +1489,7 @@ function GazeMode({ theme }) {
     const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode]);
+  }, [currentMode, getInteractionInfluence, drawRipples]);
 
   // ========== DANDELION MODE (Breath-synced seed release) ==========
   React.useEffect(() => {
@@ -1394,15 +1562,28 @@ function GazeMode({ theme }) {
       ctx.fillStyle = 'rgba(180, 160, 120, 0.8)';
       ctx.fill();
 
-      // Draw attached seeds
+      // Draw attached seeds and check for touch release
       seeds.filter(s => s.attached).forEach(seed => {
         const sway = Math.sin(elapsed * 0.5 + seed.angle) * 0.1;
         const angle = seed.angle + sway;
         const x = centerX + Math.cos(angle) * seed.length;
         const y = centerY + Math.sin(angle) * seed.length;
 
+        // Touch influence - release seeds when touched
+        const influence = getInteractionInfluence(x, y, 80);
+        if (influence.strength > 0.5 && seed.attached) {
+          seed.attached = false;
+          seed.x = x;
+          seed.y = y;
+          // Launch in direction away from touch
+          seed.vx = (influence.x / 30) + (Math.random() - 0.5) * 0.5;
+          seed.vy = -Math.random() * 1.5 - 0.5 + (influence.y / 30);
+          floatingSeeds.push(seed);
+        }
+
         // Pappus (fluffy part)
-        ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 + breath * 0.3})`;
+        const glowBoost = influence.strength * 0.4;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 + breath * 0.3 + glowBoost})`;
         ctx.lineWidth = 0.5;
         for (let i = 0; i < 8; i++) {
           const fAngle = (i / 8) * Math.PI * 2;
@@ -1442,6 +1623,9 @@ function GazeMode({ theme }) {
       for (let i = floatingSeeds.length - 1; i >= 0; i--) {
         if (floatingSeeds[i].y < -50) floatingSeeds.splice(i, 1);
       }
+
+      // Draw touch ripples
+      drawRipples(ctx);
     };
 
     ctx.fillStyle = '#000';
@@ -1451,7 +1635,7 @@ function GazeMode({ theme }) {
     const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode]);
+  }, [currentMode, getInteractionInfluence, drawRipples]);
 
   // ========== SUCCULENT SPIRAL (Fibonacci) ==========
   React.useEffect(() => {
@@ -1484,25 +1668,27 @@ function GazeMode({ theme }) {
         const x = centerX + Math.cos(angle) * radius;
         const y = centerY + Math.sin(angle) * radius;
 
-        const leafSize = 8 + (leafCount - i) * 0.3;
+        // Touch influence - leaves pulse/glow when touched
+        const influence = getInteractionInfluence(x, y, 150);
+        const leafSize = (8 + (leafCount - i) * 0.3) * (1 + influence.strength * 0.3);
 
         // Leaf gradient from center (lighter) to edge (darker teal)
         const t = i / leafCount;
-        const r = Math.floor(80 + (1-t) * 47);
-        const g = Math.floor(160 + (1-t) * 59);
-        const b = Math.floor(140 + (1-t) * 62);
+        const r = Math.floor(80 + (1-t) * 47 + influence.strength * 40);
+        const g = Math.floor(160 + (1-t) * 59 + influence.strength * 30);
+        const b = Math.floor(140 + (1-t) * 62 + influence.strength * 30);
 
-        // Draw leaf shape
+        // Draw leaf shape with touch displacement
         ctx.save();
-        ctx.translate(x, y);
+        ctx.translate(x + influence.x * 0.2, y + influence.y * 0.2);
         ctx.rotate(angle + Math.PI / 2);
 
         ctx.beginPath();
         ctx.ellipse(0, 0, leafSize * 0.6, leafSize, 0, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.6 + breath * 0.3})`;
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.6 + breath * 0.3 + influence.strength * 0.2})`;
         ctx.fill();
-        ctx.strokeStyle = `rgba(${r + 30}, ${g + 30}, ${b + 30}, 0.3)`;
-        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = `rgba(${r + 30}, ${g + 30}, ${b + 30}, ${0.3 + influence.strength * 0.3})`;
+        ctx.lineWidth = 0.5 + influence.strength;
         ctx.stroke();
 
         ctx.restore();
@@ -1513,6 +1699,9 @@ function GazeMode({ theme }) {
       ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(200, 220, 200, 0.8)';
       ctx.fill();
+
+      // Draw touch ripples
+      drawRipples(ctx);
     };
 
     ctx.fillStyle = '#000';
@@ -1522,7 +1711,7 @@ function GazeMode({ theme }) {
     const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode]);
+  }, [currentMode, getInteractionInfluence, drawRipples]);
 
   // ========== CORAL MODE ==========
   React.useEffect(() => {
@@ -1572,21 +1761,24 @@ function GazeMode({ theme }) {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       branches.forEach(branch => {
-        // Sway like in water
-        const sway = Math.sin(elapsed * 0.5 + branch.x1 * 0.01) * (branch.depth * 2) * breath;
+        // Touch influence - coral bends like water current
+        const influence = getInteractionInfluence(branch.x2, branch.y2, 200);
+
+        // Sway like in water + touch influence
+        const sway = Math.sin(elapsed * 0.5 + branch.x1 * 0.01) * (branch.depth * 2) * breath + influence.x * 0.5;
 
         const x1 = branch.x1 + sway * 0.5;
         const y1 = branch.y1;
-        const x2 = branch.x2 + sway;
-        const y2 = branch.y2;
+        const x2 = branch.x2 + sway + influence.x * 0.3;
+        const y2 = branch.y2 + influence.y * 0.2;
 
-        // Color: deep purple to teal gradient based on depth
+        // Color: deep purple to teal gradient based on depth, brighter near touch
         const t = branch.depth / branch.maxDepth;
-        const r = Math.floor(80 + t * 47);
-        const g = Math.floor(100 + t * 119);
-        const b = Math.floor(120 + t * 82);
+        const r = Math.floor(80 + t * 47 + influence.strength * 30);
+        const g = Math.floor(100 + t * 119 + influence.strength * 20);
+        const b = Math.floor(120 + t * 82 + influence.strength * 20);
 
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.4 + breath * 0.4})`;
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.4 + breath * 0.4 + influence.strength * 0.2})`;
         ctx.lineWidth = Math.max(1, 4 - branch.depth * 0.5);
         ctx.lineCap = 'round';
 
@@ -1599,14 +1791,18 @@ function GazeMode({ theme }) {
         );
         ctx.stroke();
 
-        // Bioluminescent tips
+        // Bioluminescent tips - glow brighter when touched
         if (branch.depth === branch.maxDepth) {
+          const tipGlow = influence.strength * 0.5;
           ctx.beginPath();
-          ctx.arc(x2, y2, 2 + breath * 2, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(127, 219, 202, ${0.3 + breath * 0.5})`;
+          ctx.arc(x2, y2, 2 + breath * 2 + influence.strength * 3, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(127, 219, 202, ${0.3 + breath * 0.5 + tipGlow})`;
           ctx.fill();
         }
       });
+
+      // Draw touch ripples
+      drawRipples(ctx);
     };
 
     ctx.fillStyle = '#000';
@@ -1616,7 +1812,7 @@ function GazeMode({ theme }) {
     const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode]);
+  }, [currentMode, getInteractionInfluence, drawRipples]);
 
   // ========== CHERRY BLOSSOM MODE ==========
   React.useEffect(() => {
@@ -1690,34 +1886,39 @@ function GazeMode({ theme }) {
         ctx.stroke();
       });
 
-      // Draw blossoms
+      // Draw blossoms with touch interaction
       blossoms.forEach(blossom => {
+        const influence = getInteractionInfluence(blossom.x, blossom.y, 120);
         const pulse = Math.sin(elapsed * 2 + blossom.phase) * 0.2;
-        const size = blossom.size * (1 + pulse) * (0.8 + breath * 0.2);
+        const size = blossom.size * (1 + pulse) * (0.8 + breath * 0.2) * (1 + influence.strength * 0.3);
 
-        // Pink petals
+        // Pink petals - scatter slightly when touched
         for (let i = 0; i < 5; i++) {
           const angle = (i / 5) * Math.PI * 2 + elapsed * 0.1;
-          const px = blossom.x + Math.cos(angle) * size * 0.5;
-          const py = blossom.y + Math.sin(angle) * size * 0.5;
+          const scatterDist = influence.strength * 8;
+          const px = blossom.x + Math.cos(angle) * (size * 0.5 + scatterDist) + influence.x * 0.2;
+          const py = blossom.y + Math.sin(angle) * (size * 0.5 + scatterDist) + influence.y * 0.2;
 
           ctx.beginPath();
           ctx.ellipse(px, py, size * 0.4, size * 0.6, angle, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 200, 210, ${0.5 + breath * 0.3})`;
+          ctx.fillStyle = `rgba(255, ${200 + influence.strength * 30}, ${210 + influence.strength * 20}, ${0.5 + breath * 0.3 + influence.strength * 0.2})`;
           ctx.fill();
         }
 
         // Center
         ctx.beginPath();
-        ctx.arc(blossom.x, blossom.y, size * 0.2, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 220, 180, 0.8)';
+        ctx.arc(blossom.x + influence.x * 0.1, blossom.y + influence.y * 0.1, size * 0.2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 220, 180, ${0.8 + influence.strength * 0.2})`;
         ctx.fill();
       });
 
-      // Update and draw falling petals
+      // Update and draw falling petals with touch interaction
       petals.forEach(petal => {
-        petal.y += petal.speed;
-        petal.x += Math.sin(elapsed + petal.wobble) * 0.5;
+        const influence = getInteractionInfluence(petal.x, petal.y, 100);
+
+        // Touch makes petals swirl/flutter
+        petal.y += petal.speed + influence.y * 0.1;
+        petal.x += Math.sin(elapsed + petal.wobble) * 0.5 + influence.x * 0.15;
 
         if (petal.y > canvas.height + 10) {
           petal.y = -10;
@@ -1726,9 +1927,12 @@ function GazeMode({ theme }) {
 
         ctx.beginPath();
         ctx.ellipse(petal.x, petal.y, petal.size * 0.5, petal.size, elapsed + petal.wobble, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 200, 210, ${0.3 + breath * 0.2})`;
+        ctx.fillStyle = `rgba(255, ${200 + influence.strength * 30}, ${210 + influence.strength * 20}, ${0.3 + breath * 0.2 + influence.strength * 0.3})`;
         ctx.fill();
       });
+
+      // Draw touch ripples
+      drawRipples(ctx);
     };
 
     ctx.fillStyle = '#000';
@@ -1738,7 +1942,7 @@ function GazeMode({ theme }) {
     const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode]);
+  }, [currentMode, getInteractionInfluence, drawRipples]);
 
   // ========== MYCELIUM NETWORK MODE ==========
   React.useEffect(() => {
@@ -1787,38 +1991,48 @@ function GazeMode({ theme }) {
         const from = nodes[conn.from];
         const to = nodes[conn.to];
 
-        ctx.strokeStyle = `rgba(127, 219, 202, ${0.1 + breath * 0.1})`;
-        ctx.lineWidth = 0.5;
+        // Check touch influence on connection midpoint
+        const midX = (from.x + to.x) / 2;
+        const midY = (from.y + to.y) / 2;
+        const influence = getInteractionInfluence(midX, midY, 150);
+
+        ctx.strokeStyle = `rgba(127, 219, 202, ${0.1 + breath * 0.1 + influence.strength * 0.3})`;
+        ctx.lineWidth = 0.5 + influence.strength * 1.5;
         ctx.beginPath();
         ctx.moveTo(from.x, from.y);
         ctx.lineTo(to.x, to.y);
         ctx.stroke();
 
-        // Traveling pulse
-        const pulsePos = ((elapsed * 0.3 + conn.pulseOffset) % 1);
+        // Traveling pulse - faster when touched
+        const pulseSpeed = 0.3 + influence.strength * 0.5;
+        const pulsePos = ((elapsed * pulseSpeed + conn.pulseOffset) % 1);
         const px = from.x + (to.x - from.x) * pulsePos;
         const py = from.y + (to.y - from.y) * pulsePos;
 
         ctx.beginPath();
-        ctx.arc(px, py, 2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(127, 219, 202, ${0.5 + breath * 0.3})`;
+        ctx.arc(px, py, 2 + influence.strength * 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(127, 219, 202, ${0.5 + breath * 0.3 + influence.strength * 0.3})`;
         ctx.fill();
       });
 
-      // Draw nodes
+      // Draw nodes with touch glow
       nodes.forEach(node => {
+        const influence = getInteractionInfluence(node.x, node.y, 120);
         const pulse = Math.sin(elapsed * 2 + node.phase) * 0.3;
-        const radius = node.radius * (1 + pulse) * (0.8 + breath * 0.2);
+        const radius = node.radius * (1 + pulse) * (0.8 + breath * 0.2) * (1 + influence.strength * 0.5);
 
         const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, radius * 2);
-        gradient.addColorStop(0, `rgba(127, 219, 202, ${0.6 + breath * 0.3})`);
+        gradient.addColorStop(0, `rgba(127, 219, 202, ${0.6 + breath * 0.3 + influence.strength * 0.4})`);
         gradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
 
         ctx.beginPath();
-        ctx.arc(node.x, node.y, radius * 2, 0, Math.PI * 2);
+        ctx.arc(node.x + influence.x * 0.1, node.y + influence.y * 0.1, radius * 2, 0, Math.PI * 2);
         ctx.fillStyle = gradient;
         ctx.fill();
       });
+
+      // Draw touch ripples
+      drawRipples(ctx);
     };
 
     ctx.fillStyle = '#000';
@@ -1828,7 +2042,7 @@ function GazeMode({ theme }) {
     const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode]);
+  }, [currentMode, getInteractionInfluence, drawRipples]);
 
   // ========== BREATH TREE (LUNGS) MODE ==========
   React.useEffect(() => {
@@ -1880,15 +2094,18 @@ function GazeMode({ theme }) {
       branches.forEach(branch => {
         const t = branch.depth / branch.maxDepth;
 
-        // Base branch color
-        const baseOpacity = 0.3 + breath * 0.3;
-        ctx.strokeStyle = `rgba(127, 180, 180, ${baseOpacity})`;
-        ctx.lineWidth = Math.max(1, 6 - branch.depth * 0.8);
+        // Touch influence - bronchial tree responds to touch
+        const influence = getInteractionInfluence(branch.x2, branch.y2, 150);
+
+        // Base branch color - brighter when touched
+        const baseOpacity = 0.3 + breath * 0.3 + influence.strength * 0.3;
+        ctx.strokeStyle = `rgba(127, ${180 + influence.strength * 40}, ${180 + influence.strength * 40}, ${baseOpacity})`;
+        ctx.lineWidth = Math.max(1, 6 - branch.depth * 0.8) + influence.strength * 2;
         ctx.lineCap = 'round';
 
         ctx.beginPath();
         ctx.moveTo(branch.x1, branch.y1);
-        ctx.lineTo(branch.x2, branch.y2);
+        ctx.lineTo(branch.x2 + influence.x * 0.15, branch.y2 + influence.y * 0.15);
         ctx.stroke();
 
         // Breath light flowing through branches
@@ -1910,19 +2127,24 @@ function GazeMode({ theme }) {
           ctx.fill();
         }
 
-        // Alveoli glow at branch tips
+        // Alveoli glow at branch tips - brighter when touched
         if (branch.depth === branch.maxDepth) {
-          const glowSize = 8 + breath * 8;
-          const gradient = ctx.createRadialGradient(branch.x2, branch.y2, 0, branch.x2, branch.y2, glowSize);
-          gradient.addColorStop(0, `rgba(200, 240, 255, ${0.3 + breath * 0.4})`);
+          const glowSize = 8 + breath * 8 + influence.strength * 10;
+          const tipX = branch.x2 + influence.x * 0.15;
+          const tipY = branch.y2 + influence.y * 0.15;
+          const gradient = ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, glowSize);
+          gradient.addColorStop(0, `rgba(200, 240, 255, ${0.3 + breath * 0.4 + influence.strength * 0.4})`);
           gradient.addColorStop(1, 'rgba(127, 219, 202, 0)');
 
           ctx.beginPath();
-          ctx.arc(branch.x2, branch.y2, glowSize, 0, Math.PI * 2);
+          ctx.arc(tipX, tipY, glowSize, 0, Math.PI * 2);
           ctx.fillStyle = gradient;
           ctx.fill();
         }
       });
+
+      // Draw touch ripples
+      drawRipples(ctx);
 
       // Breath indicator text
       ctx.fillStyle = `rgba(200, 240, 255, ${0.3 + breath * 0.3})`;
@@ -1938,7 +2160,7 @@ function GazeMode({ theme }) {
     const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode]);
+  }, [currentMode, getInteractionInfluence, drawRipples]);
 
   return (
     <div
@@ -1951,8 +2173,16 @@ function GazeMode({ theme }) {
         zIndex: 2,
         cursor: 'pointer',
         background: '#000',
+        touchAction: 'none',
       }}
       onClick={() => setShowUI(!showUI)}
+      onMouseDown={handleInteractionStart}
+      onMouseMove={handleInteractionMove}
+      onMouseUp={handleInteractionEnd}
+      onMouseLeave={handleInteractionEnd}
+      onTouchStart={handleInteractionStart}
+      onTouchMove={handleInteractionMove}
+      onTouchEnd={handleInteractionEnd}
     >
       {/* Three.js container for geometry mode */}
       {currentMode === 'geometry' && (
