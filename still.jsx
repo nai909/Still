@@ -918,8 +918,8 @@ const breathTechniques = {
     name: 'Gentle Calm',
     description: 'Simple, soothing rhythm',
     phases: [
-      { name: 'inhale', label: 'Breathe in', duration: 5 },
-      { name: 'exhale', label: 'Breathe out', duration: 6 },
+      { name: 'inhale', label: 'breathe in', duration: 5 },
+      { name: 'exhale', label: 'breathe out', duration: 6 },
     ],
     color: { inhale: '#1a3a4a', exhale: '#2a3a4a' },
   },
@@ -927,9 +927,9 @@ const breathTechniques = {
     name: '4-7-8 Sleep',
     description: 'Deep relaxation for sleep',
     phases: [
-      { name: 'inhale', label: 'Inhale', duration: 4 },
-      { name: 'holdFull', label: 'Hold', duration: 7 },
-      { name: 'exhale', label: 'Exhale', duration: 8 },
+      { name: 'inhale', label: 'inhale', duration: 4 },
+      { name: 'holdFull', label: 'hold', duration: 7 },
+      { name: 'exhale', label: 'exhale', duration: 8 },
     ],
     color: { inhale: '#1a3a5a', holdFull: '#3a4a4a', exhale: '#2a2a4a' },
   },
@@ -937,8 +937,8 @@ const breathTechniques = {
     name: 'Heart Coherence',
     description: '5 breaths per minute',
     phases: [
-      { name: 'inhale', label: 'Inhale', duration: 6 },
-      { name: 'exhale', label: 'Exhale', duration: 6 },
+      { name: 'inhale', label: 'inhale', duration: 6 },
+      { name: 'exhale', label: 'exhale', duration: 6 },
     ],
     color: { inhale: '#1a4a4a', exhale: '#2a3a5a' },
   },
@@ -946,10 +946,10 @@ const breathTechniques = {
     name: 'Box Breathing',
     description: 'Navy SEAL calm focus',
     phases: [
-      { name: 'inhale', label: 'Inhale', duration: 4 },
-      { name: 'holdFull', label: 'Hold', duration: 4 },
-      { name: 'exhale', label: 'Exhale', duration: 4 },
-      { name: 'holdEmpty', label: 'Hold', duration: 4 },
+      { name: 'inhale', label: 'inhale', duration: 4 },
+      { name: 'holdFull', label: 'hold', duration: 4 },
+      { name: 'exhale', label: 'exhale', duration: 4 },
+      { name: 'holdEmpty', label: 'hold', duration: 4 },
     ],
     color: { inhale: '#1a3a4a', holdFull: '#2a4a3a', exhale: '#2a3a4a', holdEmpty: '#1a2a3a' },
   },
@@ -957,8 +957,8 @@ const breathTechniques = {
     name: 'Extended Exhale',
     description: 'Long exhale activates rest',
     phases: [
-      { name: 'inhale', label: 'Inhale', duration: 4 },
-      { name: 'exhale', label: 'Exhale slowly', duration: 8 },
+      { name: 'inhale', label: 'inhale', duration: 4 },
+      { name: 'exhale', label: 'exhale slowly', duration: 8 },
     ],
     color: { inhale: '#1a3a4a', exhale: '#2a2a4a' },
   },
@@ -1255,7 +1255,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   });
 
   // State for breath indicator display
-  const [breathDisplay, setBreathDisplay] = React.useState({ phase: 0.5, phaseLabel: 'Breathe in', isHolding: false });
+  const [breathDisplay, setBreathDisplay] = React.useState({ phase: 0.5, phaseLabel: 'breathe in', isHolding: false });
 
   // ========== TOUCH INTERACTION SYSTEM ==========
   const touchPointsRef = React.useRef([]);
@@ -1472,7 +1472,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const technique = breathTechniques[selectedTechnique];
     if (!technique) {
       const phase = Math.sin(elapsed * BREATH_SPEED) * 0.5 + 0.5;
-      return { phase, phaseName: phase > 0.5 ? 'inhale' : 'exhale', phaseLabel: phase > 0.5 ? 'Breathe in' : 'Breathe out', isInhaling: phase > 0.5 };
+      return { phase, phaseName: phase > 0.5 ? 'inhale' : 'exhale', phaseLabel: phase > 0.5 ? 'breathe in' : 'breathe out', isInhaling: phase > 0.5 };
     }
 
     const phases = technique.phases;
@@ -1503,7 +1503,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
       accumulatedTime += p.duration;
     }
-    return { phase: 0.5, phaseName: 'inhale', phaseLabel: 'Breathe in', isInhaling: true };
+    return { phase: 0.5, phaseName: 'inhale', phaseLabel: 'breathe in', isInhaling: true };
   }, [selectedTechnique]);
 
   // Simple phase getter for visuals (returns 0-1)
@@ -3108,11 +3108,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Phase indicator at bottom
       const phaseText = {
-        'inhale': 'Inhale...',
-        'holdFull': 'Hold...',
-        'exhale': 'Exhale...',
-        'holdEmpty': 'Rest...'
-      }[phaseName] || 'Breathe...';
+        'inhale': 'inhale',
+        'holdFull': 'hold',
+        'exhale': 'exhale',
+        'holdEmpty': 'rest'
+      }[phaseName] || 'breathe';
 
       ctx.fillStyle = `hsla(${hue}, 50%, 70%, 0.6)`;
       ctx.font = '14px -apple-system, BlinkMacSystemFont, sans-serif';
@@ -12301,42 +12301,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       )}
 
-      {/* Visual name toast - shows on swipe */}
-      {showVisualToast && !showUI && !backgroundMode && (
-        <div style={{
-          position: 'absolute',
-          bottom: '2rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(10px)',
-          padding: '0.5rem 1rem',
-          borderRadius: '20px',
-          border: `1px solid hsla(${hue}, 52%, 68%, 0.2)`,
-          pointerEvents: 'none',
-          animation: 'fadeInOut 1.5s ease-in-out',
-        }}>
-          <span style={{
-            color: `hsl(${hue}, 52%, 68%)`,
-            fontSize: '0.75rem',
-            fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.1em',
-          }}>
-            {gazeModes.find(m => m.key === currentMode)?.name || ''}
-          </span>
-        </div>
-      )}
-      <style>{`
-        @keyframes fadeInOut {
-          0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
-          15% { opacity: 1; transform: translateX(-50%) translateY(0); }
-          85% { opacity: 1; transform: translateX(-50%) translateY(0); }
-          100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-        }
-      `}</style>
-
       {/* Swipe hint at bottom - only show briefly on first load or after inactivity */}
-      {!showUI && !showVisualToast && (
+      {!showUI && (
         <div style={{
           position: 'absolute',
           bottom: '1.5rem',
@@ -14496,7 +14462,7 @@ function Still() {
                   }}
                 >
                   <span style={{ fontSize: '0.9rem' }}>♡</span>
-                  <span className="nav-label">{savedQuotes.length}</span>
+                  <span className="nav-label">saved</span>
                 </button>
               </>
             )}
@@ -14587,7 +14553,7 @@ function Still() {
 
                 <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
                   <button
-                    onClick={() => toggleSave(currentQuote)}
+                    onClick={() => setTimeout(() => toggleSave(currentQuote), 80)}
                     style={{
                       background: currentTheme.cardBg,
                       border: `1px solid ${currentTheme.border}`,
@@ -14602,10 +14568,10 @@ function Still() {
                       transition: 'all 0.5s ease',
                     }}
                   >
-                    <span style={{ fontSize: '1.1rem' }}>{isQuoteSaved(currentQuote) ? '♥' : '♡'}</span>Save
+                    <span style={{ fontSize: '1.1rem' }}>{isQuoteSaved(currentQuote) ? '♥' : '♡'}</span>save
                   </button>
                   <button
-                    onClick={() => setView('filter')}
+                    onClick={() => setTimeout(() => setView('filter'), 80)}
                     style={{
                       background: currentTheme.cardBg,
                       border: `1px solid ${currentTheme.border}`,
@@ -14620,7 +14586,7 @@ function Still() {
                       transition: 'all 0.5s ease',
                     }}
                   >
-                    <span style={{ fontSize: '1.1rem' }}>◉</span>Filter
+                    <span style={{ fontSize: '1.1rem' }}>◉</span>filter
                   </button>
                 </div>
               </div>
@@ -14975,94 +14941,81 @@ function Still() {
           <main style={{ position: 'absolute', top: '80px', left: 0, right: 0, bottom: 0, zIndex: 2, padding: '2rem', overflowY: 'auto' }}>
             <div style={{ maxWidth: '700px', margin: '0 auto' }}>
               {/* Schools */}
-              <h2 style={{ fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: currentTheme.textMuted, marginBottom: '1.5rem', textAlign: 'center' }}>Filter by School of Thought</h2>
+              <h2 style={{ fontSize: '0.7rem', letterSpacing: '0.25em', color: currentTheme.textMuted, marginBottom: '1.5rem', textAlign: 'center', fontWeight: 400 }}>schools of thought</h2>
               {selectedSchools.size > 0 && (
-                <button onClick={() => setSelectedSchools(new Set())} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: primaryColor, fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}>Clear school filters</button>
+                <button onClick={() => setTimeout(() => setSelectedSchools(new Set()), 80)} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: `${primaryColor}80`, fontSize: '0.7rem', cursor: 'pointer', letterSpacing: '0.1em' }}>clear</button>
               )}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', marginBottom: '2.5rem' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', marginBottom: '3rem' }}>
                 {allSchools.map(school => {
                   const isSelected = selectedSchools.has(school);
-                  const color = primaryColor;
-                  const count = allQuotes.filter(q => q.school === school).length;
                   return (
                     <button
                       key={school}
-                      onClick={() => toggleSchool(school)}
+                      onClick={() => setTimeout(() => toggleSchool(school), 80)}
                       style={{
-                        background: isSelected ? color + '30' : currentTheme.cardBg,
-                        border: '1px solid',
-                        borderColor: isSelected ? color : currentTheme.border,
-                        color: isSelected ? color : currentTheme.textMuted,
-                        padding: '0.6rem 1rem',
-                        borderRadius: '6px',
+                        background: 'transparent',
+                        border: 'none',
+                        color: isSelected ? primaryColor : currentTheme.textMuted,
+                        padding: '0.5rem 0.75rem',
                         cursor: 'pointer',
                         fontSize: '0.8rem',
                         transition: 'all 0.5s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
+                        opacity: isSelected ? 1 : 0.6,
+                        letterSpacing: '0.05em',
                       }}
                     >
-                      {school}<span style={{ fontSize: '0.65rem', opacity: 0.6 }}>{count}</span>
+                      {school}
                     </button>
                   );
                 })}
               </div>
 
-              {/* Themes/Categories */}
-              <h2 style={{ fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: currentTheme.textMuted, marginBottom: '1.5rem', textAlign: 'center' }}>Filter by Theme</h2>
+              {/* Themes */}
+              <h2 style={{ fontSize: '0.7rem', letterSpacing: '0.25em', color: currentTheme.textMuted, marginBottom: '1.5rem', textAlign: 'center', fontWeight: 400 }}>themes</h2>
               {selectedThemes.size > 0 && (
-                <button onClick={() => setSelectedThemes(new Set())} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: primaryColor, fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}>Clear theme filters</button>
+                <button onClick={() => setTimeout(() => setSelectedThemes(new Set()), 80)} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: `${primaryColor}80`, fontSize: '0.7rem', cursor: 'pointer', letterSpacing: '0.1em' }}>clear</button>
               )}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', justifyContent: 'center' }}>
                 {allThemes.map(theme => {
                   const isSelected = selectedThemes.has(theme);
-                  const color = primaryColor;
-                  const count = allQuotes.filter(q => q.themes && q.themes.includes(theme)).length;
                   return (
                     <button
                       key={theme}
-                      onClick={() => toggleTheme(theme)}
+                      onClick={() => setTimeout(() => toggleTheme(theme), 80)}
                       style={{
-                        background: isSelected ? color + '25' : currentTheme.cardBg,
-                        border: '1px solid',
-                        borderColor: isSelected ? color : currentTheme.border,
-                        color: isSelected ? color : currentTheme.textMuted,
-                        padding: '0.5rem 0.9rem',
-                        borderRadius: '20px',
+                        background: 'transparent',
+                        border: 'none',
+                        color: isSelected ? primaryColor : currentTheme.textMuted,
+                        padding: '0.4rem 0.6rem',
                         cursor: 'pointer',
                         fontSize: '0.75rem',
                         transition: 'all 0.5s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        textTransform: 'lowercase',
+                        opacity: isSelected ? 1 : 0.5,
+                        letterSpacing: '0.03em',
                       }}
                     >
-                      {theme}<span style={{ fontSize: '0.6rem', opacity: 0.6 }}>{count}</span>
+                      {theme}
                     </button>
                   );
                 })}
               </div>
 
-              <div style={{ marginTop: '2rem', textAlign: 'center', color: currentTheme.textMuted, fontSize: '0.8rem' }}>
-                {filteredQuotes.length} quotes match your filters
-              </div>
               <button
-                onClick={() => setView('scroll')}
+                onClick={() => setTimeout(() => setView('scroll'), 80)}
                 style={{
                   display: 'block',
-                  margin: '2rem auto 0',
-                  background: `${currentTheme.text}15`,
-                  border: `1px solid ${currentTheme.border}`,
-                  color: currentTheme.text,
-                  padding: '0.85rem 2rem',
-                  borderRadius: '8px',
+                  margin: '3rem auto 0',
+                  background: 'transparent',
+                  border: 'none',
+                  color: currentTheme.textMuted,
+                  padding: '1rem 2rem',
                   cursor: 'pointer',
-                  fontSize: '0.85rem',
+                  fontSize: '0.75rem',
+                  letterSpacing: '0.15em',
+                  transition: 'all 0.5s ease',
                 }}
               >
-                Start Scrolling →
+                return
               </button>
             </div>
           </main>
@@ -15138,7 +15091,7 @@ function Still() {
 
             {/* Music toggle button */}
             <button
-              onClick={() => setMusicOpen(!musicOpen)}
+              onClick={() => setTimeout(() => setMusicOpen(!musicOpen), 80)}
               style={{
                 position: 'fixed',
                 bottom: '1.5rem',
@@ -15173,7 +15126,7 @@ function Still() {
                 padding: '0.5rem',
                 zIndex: 150,
                 minWidth: '140px',
-                animation: 'fadeIn 0.3s ease',
+                animation: 'fadeIn 0.5s ease',
               }}>
                 {/* Stop button */}
                 {isPlaying && (
@@ -15216,7 +15169,7 @@ function Still() {
                       marginBottom: '0.25rem',
                     }}
                   >
-                    {isMuted ? '🔇 Unmute' : '🔊 Mute'}
+                    {isMuted ? '◦ unmute' : '• mute'}
                   </button>
                 )}
                 {musicTracks.map((track, i) => (
@@ -15274,7 +15227,7 @@ function Still() {
                   const newSettings = { ...settings, primaryHue: preset.hue };
                   setSettings(newSettings);
                   saveSettings(newSettings);
-                  setTimeout(() => setShowColorOverlay(false), 300);
+                  setTimeout(() => setShowColorOverlay(false), 500);
                 }}
                 style={{
                   background: 'none',
