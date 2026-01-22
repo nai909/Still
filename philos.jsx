@@ -4040,41 +4040,6 @@ function GazeMode({ theme }) {
           )}
         </div>
       )}
-
-
-      {/* Minimal breath indicator - bottom right corner */}
-      <div style={{
-        position: 'absolute',
-        bottom: '1.25rem',
-        right: '1.25rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        opacity: showUI ? 0 : 0.6,
-        transition: 'opacity 0.4s ease',
-        pointerEvents: 'none',
-      }}>
-        {/* Subtle pulse ring */}
-        <div style={{
-          width: `${12 + breathDisplay.phase * 16}px`,
-          height: `${12 + breathDisplay.phase * 16}px`,
-          borderRadius: '50%',
-          background: 'transparent',
-          border: `1.5px solid ${breathDisplay.isHolding ? 'rgba(255,215,100,0.5)' : 'rgba(127,219,202,0.4)'}`,
-          transition: 'width 0.15s ease-out, height 0.15s ease-out, border-color 0.3s ease',
-        }} />
-        {/* Phase label - very subtle */}
-        <div style={{
-          color: breathDisplay.isHolding ? 'rgba(255, 215, 100, 0.6)' : 'rgba(127, 219, 202, 0.5)',
-          fontSize: '0.55rem',
-          fontFamily: '"Jost", sans-serif',
-          letterSpacing: '0.1em',
-          textTransform: 'lowercase',
-          minWidth: '4rem',
-        }}>
-          {breathDisplay.phaseLabel.toLowerCase()}
-        </div>
-      </div>
     </div>
   );
 }
@@ -4648,6 +4613,7 @@ function Philos() {
           <nav style={{ display: 'flex', gap: '0.5rem' }}>
             {[
               { key: 'gaze', icon: '◯', label: 'Gaze' },
+              { key: 'breathwork', icon: '◎', label: 'Breathe' },
               { key: 'filter', icon: '◉', label: 'Filter' },
               { key: 'saved', icon: '♡', label: String(savedQuotes.length) },
             ].map(({ key, icon, label }) => (
@@ -5005,6 +4971,174 @@ function Philos() {
         {/* Gaze View - Sacred Geometry */}
         {view === 'gaze' && (
           <GazeMode theme={currentTheme} />
+        )}
+
+        {/* Breathwork View - Dedicated breathing practice */}
+        {view === 'breathwork' && (
+          <main style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#000',
+          }}>
+            {/* Technique selector */}
+            <div style={{
+              position: 'absolute',
+              top: '5rem',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              maxWidth: '90vw',
+            }}>
+              {Object.entries(breathTechniques).map(([key, tech]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    if (breathSession.isActive) stopBreathSession();
+                    startBreathSession(key);
+                  }}
+                  style={{
+                    background: breathSession.technique === key && breathSession.isActive ? 'rgba(127,219,202,0.2)' : 'transparent',
+                    border: breathSession.technique === key && breathSession.isActive ? '1px solid rgba(127,219,202,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                    color: breathSession.technique === key && breathSession.isActive ? '#7FDBCA' : 'rgba(255,255,255,0.5)',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    fontFamily: '"Jost", sans-serif',
+                  }}
+                >
+                  {tech.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Main breathing circle */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '2rem',
+            }}>
+              {/* Pulsing circle */}
+              <div style={{
+                width: `${120 + breathSession.phaseProgress * 80}px`,
+                height: `${120 + breathSession.phaseProgress * 80}px`,
+                borderRadius: '50%',
+                background: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
+                  ? 'radial-gradient(circle, rgba(255,215,100,0.15) 0%, rgba(255,215,100,0.05) 50%, transparent 70%)'
+                  : 'radial-gradient(circle, rgba(127,219,202,0.2) 0%, rgba(127,219,202,0.08) 50%, transparent 70%)',
+                border: `2px solid ${breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,215,100,0.4)' : 'rgba(127,219,202,0.4)'}`,
+                transition: 'all 0.15s ease-out',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                {/* Inner circle */}
+                <div style={{
+                  width: '60%',
+                  height: '60%',
+                  borderRadius: '50%',
+                  background: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
+                    ? 'radial-gradient(circle, rgba(255,215,100,0.2) 0%, transparent 70%)'
+                    : 'radial-gradient(circle, rgba(127,219,202,0.25) 0%, transparent 70%)',
+                }} />
+              </div>
+
+              {/* Phase label */}
+              <div style={{
+                color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,215,100,0.9)' : 'rgba(127,219,202,0.9)',
+                fontSize: '1.2rem',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                transition: 'color 0.3s ease',
+              }}>
+                {breathSession.isActive
+                  ? breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label || 'Breathe'
+                  : 'Select a technique'}
+              </div>
+
+              {/* Session stats */}
+              {breathSession.isActive && (
+                <div style={{
+                  display: 'flex',
+                  gap: '2rem',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontSize: '0.75rem',
+                  fontFamily: '"Jost", sans-serif',
+                  letterSpacing: '0.1em',
+                }}>
+                  <span>Cycle {breathSession.cycleCount + 1}</span>
+                  <span>{Math.floor(breathSession.sessionTime / 60)}:{String(Math.floor(breathSession.sessionTime % 60)).padStart(2, '0')}</span>
+                </div>
+              )}
+
+              {/* Controls */}
+              {breathSession.isActive && (
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                  <button
+                    onClick={togglePauseBreathSession}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid rgba(127,219,202,0.3)',
+                      color: '#7FDBCA',
+                      padding: '0.6rem 1.5rem',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      fontFamily: '"Jost", sans-serif',
+                    }}
+                  >
+                    {breathSession.isPaused ? 'Resume' : 'Pause'}
+                  </button>
+                  <button
+                    onClick={stopBreathSession}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      color: 'rgba(255,255,255,0.5)',
+                      padding: '0.6rem 1.5rem',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      fontFamily: '"Jost", sans-serif',
+                    }}
+                  >
+                    Stop
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Back button */}
+            <button
+              onClick={() => { stopBreathSession(); setView('scroll'); }}
+              style={{
+                position: 'absolute',
+                bottom: '2rem',
+                background: 'transparent',
+                border: 'none',
+                color: 'rgba(255,255,255,0.3)',
+                fontSize: '0.7rem',
+                fontFamily: '"Jost", sans-serif',
+                cursor: 'pointer',
+                letterSpacing: '0.1em',
+              }}
+            >
+              tap to return
+            </button>
+          </main>
         )}
 
         {/* Filter View */}
