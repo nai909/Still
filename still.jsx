@@ -3677,7 +3677,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
 
         const x = Math.sin(phi) * Math.cos(theta) * radius;
-        const y = -Math.cos(phi);
+        const y = Math.cos(phi); // Dome on top, opening at bottom
         const z = Math.sin(phi) * Math.sin(theta) * radius;
 
         bellVertices.push(x, y, z);
@@ -3874,6 +3874,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       bell.scale.set(bellScaleXZ, bellScaleY, bellScaleXZ);
       innerBell.scale.set(bellScaleXZ * 0.85, bellScaleY * 0.85, bellScaleXZ * 0.85);
       jellyfishGroup.position.y = bellY;
+
+      // Constant gentle rotation for ambient life
+      jellyfishGroup.rotation.y = Math.sin(elapsed * 0.2) * 0.1;
+      jellyfishGroup.rotation.x = Math.sin(elapsed * 0.15) * 0.05;
 
       // Color transition
       const currentColor = new THREE.Color().lerpColors(COLORS.dim, COLORS.bell, colorLerp);
@@ -4149,7 +4153,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         containerRef.current.removeChild(renderer.domElement);
       }
     };
-  }, [currentMode]);
+  }, [currentMode, getBreathPhase]);
 
   // ========== DEEP SEA MODE (2D Jellyfish) ==========
   React.useEffect(() => {
