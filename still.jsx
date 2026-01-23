@@ -9572,45 +9572,49 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         </span>
       </div>
 
-      {/* Phase label - with fade transition for text changes */}
+      {/* Centered breath UI - inside torus hole */}
       <div style={{
         position: 'absolute',
-        bottom: '4rem',
+        top: '50%',
         left: '50%',
-        transform: 'translateX(-50%)',
-        color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
-          ? 'rgba(255,215,100,0.7)'
-          : `hsla(${primaryHue}, 52%, 68%, 0.65)`,
-        fontSize: '0.85rem',
-        fontFamily: '"Jost", sans-serif',
-        letterSpacing: '0.25em',
-        textTransform: 'uppercase',
-        transition: 'color 0.4s ease, opacity 0.3s ease',
-        opacity: breathSession.isActive ? 1 : 0.7,
+        transform: 'translate(-50%, -50%)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.5rem',
         zIndex: 1,
+        pointerEvents: 'none',
       }}>
-        {breathSession.isActive
-          ? breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label || ''
-          : 'tap to begin'}
-      </div>
-
-      {/* Countdown - reduced size and increased transparency */}
-      {breathSession.isActive && (
+        {/* Phase label */}
         <div style={{
-          position: 'absolute',
-          bottom: '1.5rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          color: `hsla(${primaryHue}, 40%, 70%, 0.6)`,
-          fontSize: '1.6rem',
+          color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
+            ? 'rgba(255,215,100,0.7)'
+            : `hsla(${primaryHue}, 52%, 68%, 0.65)`,
+          fontSize: '0.85rem',
           fontFamily: '"Jost", sans-serif',
-          fontWeight: 300,
-          letterSpacing: '0.05em',
-          zIndex: 1,
+          letterSpacing: '0.25em',
+          textTransform: 'uppercase',
+          transition: 'color 0.4s ease, opacity 0.3s ease',
+          opacity: breathSession.isActive ? 1 : 0.7,
         }}>
-          {Math.ceil(breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.duration * (1 - breathSession.phaseProgress)) || ''}
+          {breathSession.isActive
+            ? breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label || ''
+            : 'tap to begin'}
         </div>
-      )}
+
+        {/* Countdown */}
+        {breathSession.isActive && (
+          <div style={{
+            color: `hsla(${primaryHue}, 40%, 70%, 0.5)`,
+            fontSize: '2rem',
+            fontFamily: '"Jost", sans-serif',
+            fontWeight: 300,
+            letterSpacing: '0.05em',
+          }}>
+            {Math.ceil(breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.duration * (1 - breathSession.phaseProgress)) || ''}
+          </div>
+        )}
+      </div>
 
       {/* Swipe hint at bottom */}
       {!showUI && (
