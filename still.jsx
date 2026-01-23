@@ -1762,99 +1762,160 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
-  // ========== RIPPLES MODE ==========
+  // ========== RIPPLES MODE (3D) ==========
   React.useEffect(() => {
-    if (currentMode !== 'ripples' || !canvasRef.current) return;
+    if (currentMode !== 'ripples' || !containerRef.current || typeof THREE === 'undefined') return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 4, 6);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const rippleGroup = new THREE.Group();
+    scene.add(rippleGroup);
+
+    // Central breathing sphere
+    const coreGeom = new THREE.SphereGeometry(0.3, 32, 32);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 55, 55),
+      transparent: true,
+      opacity: 0.6,
+      wireframe: true
+    });
+    const core = new THREE.Mesh(coreGeom, coreMat);
+    rippleGroup.add(core);
+
+    // Ripple rings (torus shapes)
     const ripples = [];
-
-    // Create new ripple on breath cycle
+    const maxRipples = 8;
     let lastBreathPeak = 0;
+
+    const createRipple = () => {
+      const rippleGeom = new THREE.TorusGeometry(0.1, 0.02, 8, 64);
+      const rippleMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 50, 60),
+        transparent: true,
+        opacity: 0.6,
+        wireframe: true
+      });
+      const ripple = new THREE.Mesh(rippleGeom, rippleMat);
+      ripple.rotation.x = Math.PI / 2;
+      ripple.userData = { born: clockRef.current.getElapsedTime(), maxAge: 12 };
+      rippleGroup.add(ripple);
+      ripples.push(ripple);
+
+      if (ripples.length > maxRipples) {
+        const old = ripples.shift();
+        rippleGroup.remove(old);
+        old.geometry.dispose();
+        old.material.dispose();
+      }
+    };
+
+    createRipple();
+
+    let targetRotationY = 0;
+    let currentRotationY = 0;
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
+      const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
       // Spawn ripple at breath peak
-      if (breath > 0.95 && elapsed - lastBreathPeak > BREATH_CYCLE * 0.8) {
-        ripples.push({ born: elapsed, x: canvas.width / 2, y: canvas.height / 2 });
+      if (breath > 0.95 && elapsed - lastBreathPeak > 8) {
+        createRipple();
         lastBreathPeak = elapsed;
       }
 
-      // Spawn ripples at touch points
+      // Touch creates ripples
       touchPointsRef.current.forEach(point => {
         if (point.active && !point.rippleSpawned) {
-          ripples.push({ born: elapsed, x: point.x, y: point.y });
+          createRipple();
           point.rippleSpawned = true;
         }
       });
 
-      // Clear
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-
-      // Draw expanding ripples
-      ripples.forEach((ripple, i) => {
-        const age = elapsed - ripple.born;
-        const maxAge = 15;
-        if (age > maxAge) {
-          ripples.splice(i, 1);
-          return;
+      // Slow touch rotation
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 0.5;
         }
+      } else {
+        targetRotationY = Math.sin(elapsed * 0.05) * 0.1;
+      }
 
-        const progress = age / maxAge;
-        const radius = progress * Math.min(canvas.width, canvas.height) * 0.6;
-        const opacity = (1 - progress) * 0.5;
+      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
+      rippleGroup.rotation.y = currentRotationY;
 
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        ctx.strokeStyle = `hsla(${hue}, 52%, 68%, ${opacity})`;
-        ctx.lineWidth = 2 - progress;
-        ctx.stroke();
+      // Breathing core
+      const coreScale = 0.8 + breath * 0.4;
+      core.scale.setScalar(coreScale);
+      coreMat.opacity = 0.4 + breath * 0.4;
+
+      // Animate ripples expanding outward
+      ripples.forEach(ripple => {
+        const age = elapsed - ripple.userData.born;
+        const progress = age / ripple.userData.maxAge;
+
+        if (progress < 1) {
+          const radius = 0.3 + progress * 4;
+          ripple.scale.set(radius / 0.1, radius / 0.1, 1);
+          ripple.material.opacity = (1 - progress) * 0.5;
+          ripple.position.y = Math.sin(progress * Math.PI) * 0.3;
+        }
       });
 
-      // Central breathing orb - responds to touch
-      const centerInfluence = getInteractionInfluence(centerX, centerY, 200);
-      const coreRadius = 20 + breath * 30 + centerInfluence.strength * 20;
-      const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreRadius * 2);
-      coreGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.4 + breath * 0.3 + centerInfluence.strength * 0.3})`);
-      coreGradient.addColorStop(0.5, `hsla(${hue}, 45%, 55%, ${0.2 + breath * 0.1})`);
-      coreGradient.addColorStop(1, `hsla(${hue}, 40%, 45%, 0)`);
+      // Clean up old ripples
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const age = elapsed - ripples[i].userData.born;
+        if (age > ripples[i].userData.maxAge) {
+          rippleGroup.remove(ripples[i]);
+          ripples[i].geometry.dispose();
+          ripples[i].material.dispose();
+          ripples.splice(i, 1);
+        }
+      }
 
-      ctx.beginPath();
-      ctx.arc(centerX + centerInfluence.x * 0.2, centerY + centerInfluence.y * 0.2, coreRadius * 2, 0, Math.PI * 2);
-      ctx.fillStyle = coreGradient;
-      ctx.fill();
-
-      // Draw touch ripples
-      drawRipples(ctx);
+      renderer.render(scene, camera);
     };
-
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ripples.push({ born: 0, x: canvas.width / 2, y: canvas.height / 2 });
     animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      coreGeom.dispose(); coreMat.dispose();
+      ripples.forEach(r => { r.geometry.dispose(); r.material.dispose(); });
+      renderer.dispose();
     };
-  }, [currentMode, getInteractionInfluence, drawRipples, hue]);
+  }, [currentMode, hue, getBreathPhase]);
 
   // ========== FERN MODE (3D Barnsley Fern) ==========
   React.useEffect(() => {
@@ -2370,119 +2431,176 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
-  // ========== BREATH TREE (LUNGS) MODE ==========
+  // ========== BREATH TREE (LUNGS) MODE (3D) ==========
   React.useEffect(() => {
-    if (currentMode !== 'lungs' || !canvasRef.current) return;
+    if (currentMode !== 'lungs' || !containerRef.current || typeof THREE === 'undefined') return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 6);
+    camera.lookAt(0, 0, 0);
 
-    // Generate bronchial tree - smaller on mobile
-    const branches = [];
-    const mobileScale = isMobile ? 0.5 : 1;
-    const maxBranchDepth = isMobile ? 5 : 7;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
 
-    const generateLung = (x, y, angle, depth, maxDepth, side) => {
-      if (depth > maxDepth) return;
-
-      const length = (120 - depth * 12) * mobileScale;
-      const endX = x + Math.cos(angle) * length;
-      const endY = y + Math.sin(angle) * length;
-
-      branches.push({ x1: x, y1: y, x2: endX, y2: endY, depth, maxDepth, side });
-
-      const spread = 0.45 - depth * 0.03;
-      generateLung(endX, endY, angle - spread, depth + 1, maxDepth, side);
-      generateLung(endX, endY, angle + spread, depth + 1, maxDepth, side);
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
     };
 
-    const centerX = canvas.width / 2;
-    const startY = canvas.height * (isMobile ? 0.25 : 0.08);
+    const lungsGroup = new THREE.Group();
+    scene.add(lungsGroup);
+
+    const branches = [];
+    const alveoli = [];
+
+    // Recursive bronchial tree generation
+    const createBranch = (startPos, direction, length, depth, maxDepth, side) => {
+      if (depth > maxDepth) return;
+
+      const endPos = startPos.clone().add(direction.clone().multiplyScalar(length));
+
+      // Branch tube
+      const branchGeom = new THREE.CylinderGeometry(
+        0.015 * (maxDepth - depth + 1),
+        0.02 * (maxDepth - depth + 1),
+        length,
+        6
+      );
+      const branchMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 45, 45),
+        transparent: true,
+        opacity: 0.5,
+        wireframe: true
+      });
+      const branch = new THREE.Mesh(branchGeom, branchMat);
+
+      const midPoint = startPos.clone().add(endPos).multiplyScalar(0.5);
+      branch.position.copy(midPoint);
+      branch.lookAt(endPos);
+      branch.rotateX(Math.PI / 2);
+      branch.userData = { depth, side };
+      lungsGroup.add(branch);
+      branches.push(branch);
+
+      // Alveoli at tips
+      if (depth === maxDepth) {
+        const alveolusGeom = new THREE.SphereGeometry(0.04, 8, 8);
+        const alveolusMat = new THREE.MeshBasicMaterial({
+          color: hslToHex(hue, 55, 60),
+          transparent: true,
+          opacity: 0.4
+        });
+        const alveolus = new THREE.Mesh(alveolusGeom, alveolusMat);
+        alveolus.position.copy(endPos);
+        alveolus.userData = { phase: Math.random() * Math.PI * 2 };
+        lungsGroup.add(alveolus);
+        alveoli.push(alveolus);
+      }
+
+      // Create child branches
+      const spread = 0.5 - depth * 0.05;
+      const newLength = length * 0.7;
+
+      // Left branch
+      const leftDir = direction.clone();
+      leftDir.applyAxisAngle(new THREE.Vector3(0, 0, 1), spread * (side === 'left' ? 1 : -1));
+      leftDir.applyAxisAngle(new THREE.Vector3(1, 0, 0), (Math.random() - 0.5) * 0.3);
+      createBranch(endPos.clone(), leftDir, newLength, depth + 1, maxDepth, side);
+
+      // Right branch
+      const rightDir = direction.clone();
+      rightDir.applyAxisAngle(new THREE.Vector3(0, 0, 1), -spread * (side === 'left' ? 1 : -1));
+      rightDir.applyAxisAngle(new THREE.Vector3(1, 0, 0), (Math.random() - 0.5) * 0.3);
+      createBranch(endPos.clone(), rightDir, newLength, depth + 1, maxDepth, side);
+    };
 
     // Trachea
-    branches.push({ x1: centerX, y1: startY - 60 * mobileScale, x2: centerX, y2: startY, depth: 0, maxDepth: maxBranchDepth, side: 'center' });
+    const tracheaGeom = new THREE.CylinderGeometry(0.06, 0.05, 0.8, 8);
+    const tracheaMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 35, 40),
+      transparent: true,
+      opacity: 0.5,
+      wireframe: true
+    });
+    const trachea = new THREE.Mesh(tracheaGeom, tracheaMat);
+    trachea.position.y = 2;
+    lungsGroup.add(trachea);
 
     // Left and right lungs
-    generateLung(centerX, startY, Math.PI / 2 - 0.55, 1, maxBranchDepth, 'left');
-    generateLung(centerX, startY, Math.PI / 2 + 0.55, 1, maxBranchDepth, 'right');
+    const startY = 1.6;
+    createBranch(new THREE.Vector3(-0.3, startY, 0), new THREE.Vector3(-0.3, -1, 0).normalize(), 0.5, 0, 5, 'left');
+    createBranch(new THREE.Vector3(0.3, startY, 0), new THREE.Vector3(0.3, -1, 0).normalize(), 0.5, 0, 5, 'right');
+
+    let targetRotationY = 0;
+    let currentRotationY = 0;
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
+      const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
-      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Slow touch interaction
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 0.8;
+        }
+      } else {
+        targetRotationY = Math.sin(elapsed * 0.08) * 0.15;
+      }
 
-      // Draw branches with breath-synced light flow
+      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
+      lungsGroup.rotation.y = currentRotationY;
+
+      // Breathing animation - lungs expand
+      const breathScale = 0.9 + breath * 0.2;
+      lungsGroup.scale.x = breathScale;
+      lungsGroup.scale.z = breathScale * 0.8;
+
+      // Branches pulse with breath
       branches.forEach(branch => {
-        const t = branch.depth / branch.maxDepth;
-
-        // Touch influence - bronchial tree responds to touch
-        const influence = getInteractionInfluence(branch.x2, branch.y2, 150);
-
-        // Base branch color - brighter when touched
-        const baseOpacity = 0.3 + breath * 0.3 + influence.strength * 0.3;
-        ctx.strokeStyle = `rgba(127, ${180 + influence.strength * 40}, ${180 + influence.strength * 40}, ${baseOpacity})`;
-        ctx.lineWidth = Math.max(1, 6 - branch.depth * 0.8) + influence.strength * 2;
-        ctx.lineCap = 'round';
-
-        ctx.beginPath();
-        ctx.moveTo(branch.x1, branch.y1);
-        ctx.lineTo(branch.x2 + influence.x * 0.15, branch.y2 + influence.y * 0.15);
-        ctx.stroke();
-
-        // Breath light flowing through branches
-        const flowProgress = isInhaling
-          ? (breath * (1 - t)) // Light flows in during inhale
-          : ((1 - breath) * t); // Light flows out during exhale
-
-        if (flowProgress > 0.1) {
-          const glowX = branch.x1 + (branch.x2 - branch.x1) * (isInhaling ? breath : 1 - breath);
-          const glowY = branch.y1 + (branch.y2 - branch.y1) * (isInhaling ? breath : 1 - breath);
-
-          const gradient = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, 15);
-          gradient.addColorStop(0, `rgba(200, 240, 255, ${flowProgress * 0.6})`);
-          gradient.addColorStop(1, `hsla(${hue}, 52%, 68%, 0)`);
-
-          ctx.beginPath();
-          ctx.arc(glowX, glowY, 15, 0, Math.PI * 2);
-          ctx.fillStyle = gradient;
-          ctx.fill();
-        }
-
-        // Alveoli glow at branch tips - brighter when touched
-        if (branch.depth === branch.maxDepth) {
-          const glowSize = 8 + breath * 8 + influence.strength * 10;
-          const tipX = branch.x2 + influence.x * 0.15;
-          const tipY = branch.y2 + influence.y * 0.15;
-          const gradient = ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, glowSize);
-          gradient.addColorStop(0, `rgba(200, 240, 255, ${0.3 + breath * 0.4 + influence.strength * 0.4})`);
-          gradient.addColorStop(1, `hsla(${hue}, 52%, 68%, 0)`);
-
-          ctx.beginPath();
-          ctx.arc(tipX, tipY, glowSize, 0, Math.PI * 2);
-          ctx.fillStyle = gradient;
-          ctx.fill();
-        }
+        branch.material.opacity = 0.3 + breath * 0.4;
       });
 
-      // Draw touch ripples
-      drawRipples(ctx);
-    };
+      // Alveoli glow brighter during inhale
+      alveoli.forEach(alveolus => {
+        const pulse = 0.8 + Math.sin(elapsed * 0.8 + alveolus.userData.phase) * 0.2;
+        alveolus.scale.setScalar(pulse + breath * 0.3);
+        alveolus.material.opacity = 0.3 + breath * 0.5;
+      });
 
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+      renderer.render(scene, camera);
+    };
     animate();
 
-    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
     window.addEventListener('resize', handleResize);
-    return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode, getInteractionInfluence, drawRipples, hue]);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      branches.forEach(b => { b.geometry.dispose(); b.material.dispose(); });
+      alveoli.forEach(a => { a.geometry.dispose(); a.material.dispose(); });
+      tracheaGeom.dispose(); tracheaMat.dispose();
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
 
   // ========== JELLYFISH MODE (THREE.JS 3D) ==========
   React.useEffect(() => {
@@ -3766,330 +3884,220 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, getInteractionInfluence, drawRipples]);
 
-  // ========== INK IN WATER MODE ==========
+  // ========== INK IN WATER MODE (3D) ==========
   React.useEffect(() => {
-    if (currentMode !== 'ink' || !canvasRef.current) return;
+    if (currentMode !== 'ink' || !containerRef.current || typeof THREE === 'undefined') return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
+    camera.lookAt(0, 0, 0);
 
-    // Grid-based fluid simulation
-    const GRID_SIZE = 96; // Balance between quality and performance
-    const grid = {
-      density: new Float32Array(GRID_SIZE * GRID_SIZE),
-      velocityX: new Float32Array(GRID_SIZE * GRID_SIZE),
-      velocityY: new Float32Array(GRID_SIZE * GRID_SIZE),
-      colorR: new Float32Array(GRID_SIZE * GRID_SIZE),
-      colorG: new Float32Array(GRID_SIZE * GRID_SIZE),
-      colorB: new Float32Array(GRID_SIZE * GRID_SIZE),
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
     };
 
-    // Ink colors - using palette colors
-    const inkColors = [
-      { r: 0.5, g: 0.86, b: 0.79 },   // Teal (palette)
-      { r: 0.48, g: 0.41, b: 0.93 },  // Purple (palette)
-      { r: 0.29, g: 0.56, b: 0.64 },  // Steel Blue (palette)
-      { r: 0.42, g: 0.56, b: 0.42 },  // Sage (palette)
-      { r: 0.88, g: 0.48, b: 0.33 },  // Orange (palette)
-      { r: 0.83, g: 0.65, b: 0.45 },  // Sand (palette)
-    ];
-    let colorIndex = 0;
+    const inkGroup = new THREE.Group();
+    scene.add(inkGroup);
 
-    // Diffusion helper
-    const diffuse = (field, rate) => {
-      const a = rate * GRID_SIZE * GRID_SIZE * 0.01;
-      const temp = new Float32Array(field.length);
-      temp.set(field);
+    // Ink cloud particles
+    const particleCount = 3000;
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+    const velocities = new Float32Array(particleCount * 3);
+    const sizes = new Float32Array(particleCount);
+    const lifetimes = new Float32Array(particleCount);
 
-      for (let k = 0; k < 4; k++) {
-        for (let i = 1; i < GRID_SIZE - 1; i++) {
-          for (let j = 1; j < GRID_SIZE - 1; j++) {
-            const idx = i + j * GRID_SIZE;
-            field[idx] = (temp[idx] + a * (
-              field[idx - 1] + field[idx + 1] +
-              field[idx - GRID_SIZE] + field[idx + GRID_SIZE]
-            )) / (1 + 4 * a);
-          }
-        }
+    // Initialize particles as inactive
+    for (let i = 0; i < particleCount; i++) {
+      positions[i * 3] = 0;
+      positions[i * 3 + 1] = 0;
+      positions[i * 3 + 2] = 0;
+      velocities[i * 3] = 0;
+      velocities[i * 3 + 1] = 0;
+      velocities[i * 3 + 2] = 0;
+      sizes[i] = 0;
+      lifetimes[i] = 0;
+      colors[i * 3] = 0.5;
+      colors[i * 3 + 1] = 0.86;
+      colors[i * 3 + 2] = 0.79;
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+    const material = new THREE.PointsMaterial({
+      size: 0.08,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true
+    });
+
+    const particles = new THREE.Points(geometry, material);
+    inkGroup.add(particles);
+
+    let nextParticle = 0;
+    let lastDropTime = 0;
+
+    // Spawn ink drop
+    const spawnInkDrop = (x, y, z, count = 50) => {
+      const hueShift = (Math.random() - 0.5) * 30;
+      const h = (hue + hueShift + 360) % 360;
+      const rgb = {
+        r: 0, g: 0, b: 0
+      };
+      // Convert hue to RGB
+      const c = 0.6;
+      const xVal = c * (1 - Math.abs((h / 60) % 2 - 1));
+      if (h < 60) { rgb.r = c; rgb.g = xVal; }
+      else if (h < 120) { rgb.r = xVal; rgb.g = c; }
+      else if (h < 180) { rgb.g = c; rgb.b = xVal; }
+      else if (h < 240) { rgb.g = xVal; rgb.b = c; }
+      else if (h < 300) { rgb.r = xVal; rgb.b = c; }
+      else { rgb.r = c; rgb.b = xVal; }
+      rgb.r += 0.3; rgb.g += 0.3; rgb.b += 0.3;
+
+      for (let i = 0; i < count; i++) {
+        const idx = nextParticle;
+        nextParticle = (nextParticle + 1) % particleCount;
+
+        positions[idx * 3] = x + (Math.random() - 0.5) * 0.3;
+        positions[idx * 3 + 1] = y + (Math.random() - 0.5) * 0.3;
+        positions[idx * 3 + 2] = z + (Math.random() - 0.5) * 0.3;
+
+        const angle = Math.random() * Math.PI * 2;
+        const spread = 0.02 + Math.random() * 0.03;
+        velocities[idx * 3] = Math.cos(angle) * spread;
+        velocities[idx * 3 + 1] = -0.005 - Math.random() * 0.01; // Sink slowly
+        velocities[idx * 3 + 2] = Math.sin(angle) * spread;
+
+        colors[idx * 3] = rgb.r;
+        colors[idx * 3 + 1] = rgb.g;
+        colors[idx * 3 + 2] = rgb.b;
+
+        sizes[idx] = 0.05 + Math.random() * 0.1;
+        lifetimes[idx] = 1.0;
       }
     };
 
-    // Advection helper
-    const advect = (field, velX, velY, dt) => {
-      const newField = new Float32Array(field.length);
-      const scale = dt * GRID_SIZE * 0.5;
+    // Initial ink drops
+    spawnInkDrop(0, 0.5, 0, 100);
+    spawnInkDrop(-0.5, 0, 0, 80);
+    spawnInkDrop(0.5, -0.3, 0, 80);
 
-      for (let i = 1; i < GRID_SIZE - 1; i++) {
-        for (let j = 1; j < GRID_SIZE - 1; j++) {
-          const idx = i + j * GRID_SIZE;
-
-          let x = i - scale * velX[idx];
-          let y = j - scale * velY[idx];
-
-          x = Math.max(0.5, Math.min(GRID_SIZE - 1.5, x));
-          y = Math.max(0.5, Math.min(GRID_SIZE - 1.5, y));
-
-          const i0 = Math.floor(x), i1 = i0 + 1;
-          const j0 = Math.floor(y), j1 = j0 + 1;
-          const s1 = x - i0, s0 = 1 - s1;
-          const t1 = y - j0, t0 = 1 - t1;
-
-          newField[idx] =
-            s0 * (t0 * field[i0 + j0 * GRID_SIZE] + t1 * field[i0 + j1 * GRID_SIZE]) +
-            s1 * (t0 * field[i1 + j0 * GRID_SIZE] + t1 * field[i1 + j1 * GRID_SIZE]);
-        }
-      }
-      field.set(newField);
-    };
-
-    // Fluid simulation step
-    const fluidStep = (dt) => {
-      // Diffuse velocity (viscosity)
-      diffuse(grid.velocityX, 0.00005);
-      diffuse(grid.velocityY, 0.00005);
-
-      // Advect velocity
-      advect(grid.velocityX, grid.velocityX, grid.velocityY, dt);
-      advect(grid.velocityY, grid.velocityX, grid.velocityY, dt);
-
-      // Diffuse density
-      diffuse(grid.density, 0.0002);
-      diffuse(grid.colorR, 0.0002);
-      diffuse(grid.colorG, 0.0002);
-      diffuse(grid.colorB, 0.0002);
-
-      // Advect density and color
-      advect(grid.density, grid.velocityX, grid.velocityY, dt);
-      advect(grid.colorR, grid.velocityX, grid.velocityY, dt);
-      advect(grid.colorG, grid.velocityX, grid.velocityY, dt);
-      advect(grid.colorB, grid.velocityX, grid.velocityY, dt);
-
-      // Decay
-      for (let i = 0; i < grid.density.length; i++) {
-        grid.density[i] *= 0.998;
-        grid.velocityX[i] *= 0.995;
-        grid.velocityY[i] *= 0.995;
-      }
-    };
-
-    // Add ink at position
-    const addInk = (x, y, color, radius = 6) => {
-      const gx = Math.floor((x / canvas.width) * GRID_SIZE);
-      const gy = Math.floor((y / canvas.height) * GRID_SIZE);
-
-      for (let ox = -radius; ox <= radius; ox++) {
-        for (let oy = -radius; oy <= radius; oy++) {
-          const dist = Math.sqrt(ox * ox + oy * oy);
-          if (dist > radius) continue;
-
-          const i = gx + ox;
-          const j = gy + oy;
-          if (i < 0 || i >= GRID_SIZE || j < 0 || j >= GRID_SIZE) continue;
-
-          const idx = i + j * GRID_SIZE;
-          const influence = (1 - dist / radius) * 0.4;
-
-          grid.density[idx] += influence;
-          grid.colorR[idx] += color.r * influence;
-          grid.colorG[idx] += color.g * influence;
-          grid.colorB[idx] += color.b * influence;
-
-          // Slight downward velocity (ink sinks)
-          grid.velocityY[idx] += influence * 0.02;
-        }
-      }
-    };
-
-    // Add velocity at position (for drag)
-    const addVelocity = (x, y, vx, vy, radius = 8) => {
-      const gx = Math.floor((x / canvas.width) * GRID_SIZE);
-      const gy = Math.floor((y / canvas.height) * GRID_SIZE);
-
-      for (let ox = -radius; ox <= radius; ox++) {
-        for (let oy = -radius; oy <= radius; oy++) {
-          const dist = Math.sqrt(ox * ox + oy * oy);
-          if (dist > radius) continue;
-
-          const i = gx + ox;
-          const j = gy + oy;
-          if (i < 0 || i >= GRID_SIZE || j < 0 || j >= GRID_SIZE) continue;
-
-          const idx = i + j * GRID_SIZE;
-          const influence = 1 - dist / radius;
-
-          grid.velocityX[idx] += vx * influence * 0.15;
-          grid.velocityY[idx] += vy * influence * 0.15;
-        }
-      }
-    };
-
-    // Apply radial force (for breath sync)
-    const applyRadialForce = (cx, cy, strength) => {
-      const gcx = (cx / canvas.width) * GRID_SIZE;
-      const gcy = (cy / canvas.height) * GRID_SIZE;
-
-      for (let i = 0; i < GRID_SIZE; i++) {
-        for (let j = 0; j < GRID_SIZE; j++) {
-          const dx = i - gcx;
-          const dy = j - gcy;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist > 0 && dist < GRID_SIZE * 0.4) {
-            const idx = i + j * GRID_SIZE;
-            const influence = (1 - dist / (GRID_SIZE * 0.4)) * strength;
-
-            grid.velocityX[idx] += (dx / dist) * influence;
-            grid.velocityY[idx] += (dy / dist) * influence;
-          }
-        }
-      }
-    };
-
-    // Render offscreen then draw
-    const offscreenCanvas = document.createElement('canvas');
-    offscreenCanvas.width = GRID_SIZE;
-    offscreenCanvas.height = GRID_SIZE;
-    const offCtx = offscreenCanvas.getContext('2d');
-
-    const render = () => {
-      const imageData = offCtx.createImageData(GRID_SIZE, GRID_SIZE);
-
-      for (let i = 0; i < GRID_SIZE; i++) {
-        for (let j = 0; j < GRID_SIZE; j++) {
-          const idx = i + j * GRID_SIZE;
-          const pixelIdx = (i + j * GRID_SIZE) * 4;
-
-          const density = Math.min(1, grid.density[idx]);
-
-          // Dark background (5, 5, 12) - matching app theme
-          const bgR = 5, bgG = 5, bgB = 12;
-
-          if (density > 0.005) {
-            const totalColor = grid.colorR[idx] + grid.colorG[idx] + grid.colorB[idx];
-
-            if (totalColor > 0.001) {
-              const r = (grid.colorR[idx] / totalColor) * 255;
-              const g = (grid.colorG[idx] / totalColor) * 255;
-              const b = (grid.colorB[idx] / totalColor) * 255;
-
-              // Blend ink with dark background
-              imageData.data[pixelIdx + 0] = Math.floor(bgR * (1 - density) + r * density);
-              imageData.data[pixelIdx + 1] = Math.floor(bgG * (1 - density) + g * density);
-              imageData.data[pixelIdx + 2] = Math.floor(bgB * (1 - density) + b * density);
-              imageData.data[pixelIdx + 3] = 255;
-            } else {
-              imageData.data[pixelIdx + 0] = bgR;
-              imageData.data[pixelIdx + 1] = bgG;
-              imageData.data[pixelIdx + 2] = bgB;
-              imageData.data[pixelIdx + 3] = 255;
-            }
-          } else {
-            imageData.data[pixelIdx + 0] = bgR;
-            imageData.data[pixelIdx + 1] = bgG;
-            imageData.data[pixelIdx + 2] = bgB;
-            imageData.data[pixelIdx + 3] = 255;
-          }
-        }
-      }
-
-      offCtx.putImageData(imageData, 0, 0);
-
-      // Scale up to canvas with smoothing
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(offscreenCanvas, 0, 0, canvas.width, canvas.height);
-    };
-
-    let lastTouchPos = {};
-    let holdingTouch = false;
-    let lastInkTime = 0;
+    let targetRotationY = 0;
+    let currentRotationY = 0;
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
-      const now = Date.now();
-      const elapsed = (now - startTime) / 1000;
+      const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
-      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
 
-      // Breath sync - ink gathers on inhale, expands on exhale
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      if (isInhaling) {
-        applyRadialForce(centerX, centerY, -0.003 * breath);
-      } else {
-        applyRadialForce(centerX, centerY, 0.004 * (1 - breath));
+      // Auto-drop ink periodically
+      if (elapsed - lastDropTime > 4) {
+        const x = (Math.random() - 0.5) * 2;
+        const y = (Math.random() - 0.5) * 2;
+        spawnInkDrop(x, y, (Math.random() - 0.5) * 0.5, 60);
+        lastDropTime = elapsed;
       }
 
-      // Auto-drop ink on breath cycle peak
-      if (breath > 0.95 && now - lastInkTime > 3000) {
-        const color = inkColors[colorIndex];
-        addInk(centerX + (Math.random() - 0.5) * 100, centerY + (Math.random() - 0.5) * 100, color, 8);
-        colorIndex = (colorIndex + 1) % inkColors.length;
-        lastInkTime = now;
-      }
-
-      // Handle touch interactions
+      // Touch creates ink drops
       touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          const lastPos = lastTouchPos[point.id] || { x: point.x, y: point.y };
-          const dx = point.x - lastPos.x;
-          const dy = point.y - lastPos.y;
-
-          // Add velocity from drag
-          if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
-            addVelocity(point.x, point.y, dx, dy, 10);
-          }
-
-          // Continuous ink stream if holding
-          if (!point.inkDropped) {
-            const color = inkColors[colorIndex];
-            addInk(point.x, point.y, color, 7);
-            colorIndex = (colorIndex + 1) % inkColors.length;
-            point.inkDropped = true;
-          } else if (holdingTouch && now % 80 < 20) {
-            const color = inkColors[colorIndex];
-            addInk(point.x + (Math.random() - 0.5) * 15, point.y + (Math.random() - 0.5) * 15, color, 4);
-          }
-
-          lastTouchPos[point.id] = { x: point.x, y: point.y };
-
-          // Set holding after 300ms
-          if (!point.holdStart) point.holdStart = now;
-          if (now - point.holdStart > 300) holdingTouch = true;
-        } else {
-          delete lastTouchPos[point.id];
-          point.inkDropped = false;
-          point.holdStart = null;
-          holdingTouch = false;
+        if (point.active && !point.inkDropped3d) {
+          const x = (point.x / window.innerWidth - 0.5) * 4;
+          const y = -(point.y / window.innerHeight - 0.5) * 4;
+          spawnInkDrop(x, y, 0, 80);
+          point.inkDropped3d = true;
         }
       });
 
-      // Fluid simulation step
-      fluidStep(0.016);
+      // Glacial touch rotation
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 0.5;
+        }
+      } else {
+        targetRotationY = Math.sin(elapsed * 0.05) * 0.15;
+      }
 
-      // Render
-      render();
+      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
+      inkGroup.rotation.y = currentRotationY;
 
-      // Draw touch ripples
-      drawRipples(ctx);
+      // Breath affects particle movement
+      const breathForce = (breath - 0.5) * 0.002;
+
+      // Update particles
+      for (let i = 0; i < particleCount; i++) {
+        if (lifetimes[i] > 0) {
+          // Apply velocity with diffusion
+          positions[i * 3] += velocities[i * 3];
+          positions[i * 3 + 1] += velocities[i * 3 + 1];
+          positions[i * 3 + 2] += velocities[i * 3 + 2];
+
+          // Breath push/pull from center
+          const dx = positions[i * 3];
+          const dy = positions[i * 3 + 1];
+          const dz = positions[i * 3 + 2];
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.01;
+          positions[i * 3] += (dx / dist) * breathForce;
+          positions[i * 3 + 1] += (dy / dist) * breathForce;
+          positions[i * 3 + 2] += (dz / dist) * breathForce;
+
+          // Slow diffusion
+          velocities[i * 3] *= 0.995;
+          velocities[i * 3 + 1] *= 0.995;
+          velocities[i * 3 + 2] *= 0.995;
+
+          // Add slight random drift
+          velocities[i * 3] += (Math.random() - 0.5) * 0.001;
+          velocities[i * 3 + 2] += (Math.random() - 0.5) * 0.001;
+
+          // Decay lifetime
+          lifetimes[i] -= 0.001;
+          sizes[i] = lifetimes[i] * 0.15;
+        }
+      }
+
+      geometry.attributes.position.needsUpdate = true;
+      geometry.attributes.color.needsUpdate = true;
+      geometry.attributes.size.needsUpdate = true;
+
+      renderer.render(scene, camera);
     };
-
     animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      geometry.dispose();
+      material.dispose();
+      renderer.dispose();
     };
-  }, [currentMode, getInteractionInfluence, drawRipples]);
+  }, [currentMode, hue, getBreathPhase]);
 
   // ========== MUSHROOMS MODE (3D with Torus-style touch mechanics) ==========
   React.useEffect(() => {
@@ -4693,257 +4701,396 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue]);
 
-  // ========== GYROID SURFACE MODE ==========
+  // ========== GYROID SURFACE MODE (3D) ==========
   React.useEffect(() => {
-    if (currentMode !== 'gyroid' || !canvasRef.current) return;
+    if (currentMode !== 'gyroid' || !containerRef.current || typeof THREE === 'undefined') return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 6);
+    camera.lookAt(0, 0, 0);
 
-    // Simplified gyroid visualization using layered sine waves
-    const layers = 12;
-    const pointsPerLayer = 60;
-    let rotationY = 0;
-    let rotationX = 0.3;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
 
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const gyroidGroup = new THREE.Group();
+    scene.add(gyroidGroup);
+
+    // Gyroid function: sin(x)cos(y) + sin(y)cos(z) + sin(z)cos(x) = 0
     const gyroidValue = (x, y, z) => {
       return Math.sin(x) * Math.cos(y) + Math.sin(y) * Math.cos(z) + Math.sin(z) * Math.cos(x);
     };
 
-    const project = (x, y, z, rotY, rotX) => {
-      const cosY = Math.cos(rotY);
-      const sinY = Math.sin(rotY);
-      const x1 = x * cosY - z * sinY;
-      const z1 = x * sinY + z * cosY;
+    // Sample gyroid surface as point cloud
+    const particleCount = 8000;
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+    const basePositions = new Float32Array(particleCount * 3);
 
-      const cosX = Math.cos(rotX);
-      const sinX = Math.sin(rotX);
-      const y1 = y * cosX - z1 * sinX;
-      const z2 = y * sinX + z1 * cosX;
+    let idx = 0;
+    const range = Math.PI * 1.5;
+    const step = 0.15;
 
-      const perspective = 400 / (400 + z2);
-      return {
-        x: canvas.width / 2 + x1 * perspective,
-        y: canvas.height / 2 + y1 * perspective,
-        z: z2
-      };
-    };
+    // Find points on the gyroid surface
+    for (let x = -range; x <= range && idx < particleCount; x += step) {
+      for (let y = -range; y <= range && idx < particleCount; y += step) {
+        for (let z = -range; z <= range && idx < particleCount; z += step) {
+          const val = gyroidValue(x, y, z);
+          if (Math.abs(val) < 0.2) {
+            positions[idx * 3] = x * 0.7;
+            positions[idx * 3 + 1] = y * 0.7;
+            positions[idx * 3 + 2] = z * 0.7;
+            basePositions[idx * 3] = x * 0.7;
+            basePositions[idx * 3 + 1] = y * 0.7;
+            basePositions[idx * 3 + 2] = z * 0.7;
 
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
+            // Color based on position
+            const dist = Math.sqrt(x * x + y * y + z * z);
+            const h = (hue + dist * 10) % 360;
+            const rgb = { r: 0, g: 0, b: 0 };
+            const c = 0.6;
+            const xVal = c * (1 - Math.abs((h / 60) % 2 - 1));
+            if (h < 60) { rgb.r = c; rgb.g = xVal; }
+            else if (h < 120) { rgb.r = xVal; rgb.g = c; }
+            else if (h < 180) { rgb.g = c; rgb.b = xVal; }
+            else if (h < 240) { rgb.g = xVal; rgb.b = c; }
+            else if (h < 300) { rgb.r = xVal; rgb.b = c; }
+            else { rgb.r = c; rgb.b = xVal; }
 
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+            colors[idx * 3] = rgb.r + 0.4;
+            colors[idx * 3 + 1] = rgb.g + 0.4;
+            colors[idx * 3 + 2] = rgb.b + 0.4;
 
-      rotationY += 0.002;
-
-      // Mouse interaction
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          rotationX = (point.y / canvas.height - 0.5) * 1.5;
-        }
-      });
-
-      const scale = 80 * (1 + breath * 0.1);
-      const brightness = 0.3 + breath * 0.7;
-
-      // Draw gyroid iso-surface approximation
-      ctx.strokeStyle = `hsla(${hue}, 70%, ${55 + breath * 15}%, ${brightness * 0.6})`;
-      ctx.lineWidth = 1;
-
-      // Sample points on gyroid surface
-      const range = Math.PI;
-      const step = range / 15;
-
-      for (let x = -range; x <= range; x += step) {
-        for (let y = -range; y <= range; y += step) {
-          // Find z where gyroid ≈ 0
-          for (let z = -range; z <= range; z += step) {
-            const val = gyroidValue(x, y, z);
-            if (Math.abs(val) < 0.3) {
-              const p = project(x * scale, y * scale, z * scale, rotationY, rotationX);
-              const dist = Math.sqrt(x * x + y * y + z * z);
-              const alpha = Math.max(0, 1 - dist / (range * 1.5));
-
-              ctx.fillStyle = `hsla(${hue}, 70%, ${60 + breath * 20}%, ${alpha * brightness})`;
-              ctx.beginPath();
-              ctx.arc(p.x, p.y, 2 + breath * 2, 0, Math.PI * 2);
-              ctx.fill();
-            }
+            idx++;
           }
         }
       }
+    }
 
-      // Draw connecting lines for structure
-      ctx.strokeStyle = `hsla(${hue}, 60%, 50%, ${brightness * 0.3})`;
-      for (let layer = 0; layer < 6; layer++) {
-        const z = (layer / 6 - 0.5) * Math.PI * 2;
-        ctx.beginPath();
-        for (let i = 0; i <= 40; i++) {
-          const angle = (i / 40) * Math.PI * 2;
-          const r = 60 + Math.sin(angle * 3 + z * 2 + elapsed) * 20;
-          const x = Math.cos(angle) * r;
-          const y = Math.sin(angle) * r;
-          const p = project(x * (1 + breath * 0.1), y * (1 + breath * 0.1), z * 30, rotationY, rotationX);
-          if (i === 0) ctx.moveTo(p.x, p.y);
-          else ctx.lineTo(p.x, p.y);
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const material = new THREE.PointsMaterial({
+      size: 0.04,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.7,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true
+    });
+
+    const particles = new THREE.Points(geometry, material);
+    gyroidGroup.add(particles);
+
+    // Add wireframe structure rings
+    const ringCount = 6;
+    const rings = [];
+    for (let i = 0; i < ringCount; i++) {
+      const ringGeom = new THREE.TorusGeometry(1.2 + i * 0.3, 0.01, 8, 64);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 50, 55),
+        transparent: true,
+        opacity: 0.3,
+        wireframe: true
+      });
+      const ring = new THREE.Mesh(ringGeom, ringMat);
+      ring.rotation.x = (i / ringCount) * Math.PI;
+      ring.rotation.y = (i / ringCount) * Math.PI * 0.5;
+      gyroidGroup.add(ring);
+      rings.push(ring);
+    }
+
+    let targetRotationY = 0;
+    let currentRotationY = 0;
+    let targetRotationX = 0.3;
+    let currentRotationX = 0.3;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clockRef.current.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Glacial touch rotation
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 1.5;
+          targetRotationX = (activeTouch.y / window.innerHeight - 0.5) * 1.0;
         }
-        ctx.stroke();
+      } else {
+        targetRotationY += 0.002;
       }
 
-      drawRipples(ctx);
-    };
+      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
+      currentRotationX += (targetRotationX - currentRotationX) * 0.02;
 
+      gyroidGroup.rotation.y = currentRotationY;
+      gyroidGroup.rotation.x = currentRotationX;
+
+      // Breathing pulse
+      const scale = 1 + breath * 0.1;
+      gyroidGroup.scale.setScalar(scale);
+
+      // Animate particles with subtle wave
+      for (let i = 0; i < idx; i++) {
+        const bx = basePositions[i * 3];
+        const by = basePositions[i * 3 + 1];
+        const bz = basePositions[i * 3 + 2];
+        const dist = Math.sqrt(bx * bx + by * by + bz * bz);
+        const wave = Math.sin(elapsed * 0.5 + dist * 0.5) * 0.05;
+
+        positions[i * 3] = bx * (1 + wave);
+        positions[i * 3 + 1] = by * (1 + wave);
+        positions[i * 3 + 2] = bz * (1 + wave);
+      }
+      geometry.attributes.position.needsUpdate = true;
+
+      // Animate rings
+      rings.forEach((ring, i) => {
+        ring.rotation.z = elapsed * 0.1 * (i % 2 === 0 ? 1 : -1);
+        ring.material.opacity = 0.2 + breath * 0.15;
+      });
+
+      material.opacity = 0.5 + breath * 0.3;
+
+      renderer.render(scene, camera);
+    };
     animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      geometry.dispose();
+      material.dispose();
+      rings.forEach(ring => {
+        ring.geometry.dispose();
+        ring.material.dispose();
+      });
+      renderer.dispose();
     };
-  }, [currentMode, hue, getBreathPhase, drawRipples]);
+  }, [currentMode, hue, getBreathPhase]);
 
-  // ========== RÖSSLER ATTRACTOR MODE ==========
+  // ========== RÖSSLER ATTRACTOR MODE (3D) ==========
   React.useEffect(() => {
-    if (currentMode !== 'rossler' || !canvasRef.current) return;
+    if (currentMode !== 'rossler' || !containerRef.current || typeof THREE === 'undefined') return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 8);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const rosslerGroup = new THREE.Group();
+    scene.add(rosslerGroup);
 
     // Rössler system parameters
     const a = 0.2;
     const b = 0.2;
     const c = 5.7;
     const dt = 0.02;
+    const scale = 0.15;
 
-    const particle = {
-      x: 1,
-      y: 1,
-      z: 1,
-      trail: []
-    };
-    const trailLength = 800;
+    // Trail as tube geometry
+    const trailLength = 600;
+    const trailPoints = [];
+    let px = 1, py = 1, pz = 1;
 
-    let rotationY = 0;
-    let rotationX = 0.5;
+    // Pre-compute initial trail
+    for (let i = 0; i < trailLength; i++) {
+      const dx = (-py - pz) * dt;
+      const dy = (px + a * py) * dt;
+      const dz = (b + pz * (px - c)) * dt;
+      px += dx;
+      py += dy;
+      pz += dz;
+      trailPoints.push(new THREE.Vector3(px * scale, py * scale, pz * scale));
+    }
 
-    const project = (x, y, z, rotY, rotX, scale = 12) => {
-      x *= scale;
-      y *= scale;
-      z *= scale;
+    // Create tube from trail
+    let curve = new THREE.CatmullRomCurve3(trailPoints);
+    let tubeGeom = new THREE.TubeGeometry(curve, trailLength, 0.03, 8, false);
+    const tubeMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 60, 55),
+      transparent: true,
+      opacity: 0.7,
+      wireframe: true
+    });
+    let tube = new THREE.Mesh(tubeGeom, tubeMat);
+    rosslerGroup.add(tube);
 
-      const cosY = Math.cos(rotY);
-      const sinY = Math.sin(rotY);
-      const x1 = x * cosY - z * sinY;
-      const z1 = x * sinY + z * cosY;
+    // Head glow sphere
+    const headGeom = new THREE.SphereGeometry(0.12, 16, 16);
+    const headMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 70, 70),
+      transparent: true,
+      opacity: 0.9
+    });
+    const head = new THREE.Mesh(headGeom, headMat);
+    rosslerGroup.add(head);
 
-      const cosX = Math.cos(rotX);
-      const sinX = Math.sin(rotX);
-      const y1 = y * cosX - z1 * sinX;
-      const z2 = y * sinX + z1 * cosX;
+    // Particle trail for ethereal effect
+    const particleCount = 500;
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleColors = new Float32Array(particleCount * 3);
 
-      const perspective = 500 / (500 + z2);
-      return {
-        x: canvas.width / 2 + x1 * perspective,
-        y: canvas.height / 2 + y1 * perspective,
-        z: z2
-      };
-    };
+    for (let i = 0; i < particleCount; i++) {
+      const t = i / particleCount;
+      const idx = Math.floor(t * (trailPoints.length - 1));
+      const pt = trailPoints[idx];
+      particlePositions[i * 3] = pt.x + (Math.random() - 0.5) * 0.2;
+      particlePositions[i * 3 + 1] = pt.y + (Math.random() - 0.5) * 0.2;
+      particlePositions[i * 3 + 2] = pt.z + (Math.random() - 0.5) * 0.2;
+
+      const c = 0.5 + t * 0.5;
+      particleColors[i * 3] = c * 0.5;
+      particleColors[i * 3 + 1] = c * 0.86;
+      particleColors[i * 3 + 2] = c * 0.79;
+    }
+
+    const particleGeom = new THREE.BufferGeometry();
+    particleGeom.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    particleGeom.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+
+    const particleMat = new THREE.PointsMaterial({
+      size: 0.04,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true
+    });
+
+    const particles = new THREE.Points(particleGeom, particleMat);
+    rosslerGroup.add(particles);
+
+    let targetRotationY = 0;
+    let currentRotationY = 0;
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
+      const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Slow simulation speed synced with breath
+      const speed = 0.5 + breath * 0.5;
 
-      rotationY += 0.0015;
+      // Update Rössler system
+      for (let i = 0; i < Math.floor(2 * speed); i++) {
+        const dx = (-py - pz) * dt;
+        const dy = (px + a * py) * dt;
+        const dz = (b + pz * (px - c)) * dt;
+        px += dx;
+        py += dy;
+        pz += dz;
 
-      // Mouse interaction
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          rotationX = (point.y / canvas.height - 0.5) * 2;
-        }
-      });
-
-      const speed = 0.5 + breath * 1;
-      const brightness = 0.4 + breath * 0.6;
-
-      // Update particle using Rössler equations
-      for (let i = 0; i < Math.floor(3 * speed); i++) {
-        const dx = (-particle.y - particle.z) * dt;
-        const dy = (particle.x + a * particle.y) * dt;
-        const dz = (b + particle.z * (particle.x - c)) * dt;
-
-        particle.x += dx;
-        particle.y += dy;
-        particle.z += dz;
-
-        particle.trail.push({ x: particle.x, y: particle.y, z: particle.z });
-        if (particle.trail.length > trailLength) {
-          particle.trail.shift();
+        trailPoints.push(new THREE.Vector3(px * scale, py * scale, pz * scale));
+        if (trailPoints.length > trailLength) {
+          trailPoints.shift();
         }
       }
 
-      // Draw trail as ribbon
-      if (particle.trail.length > 2) {
-        for (let i = 2; i < particle.trail.length; i++) {
-          const t = i / particle.trail.length;
-          const p1 = project(particle.trail[i - 1].x, particle.trail[i - 1].y, particle.trail[i - 1].z, rotationY, rotationX);
-          const p2 = project(particle.trail[i].x, particle.trail[i].y, particle.trail[i].z, rotationY, rotationX);
+      // Update tube geometry
+      rosslerGroup.remove(tube);
+      tubeGeom.dispose();
+      curve = new THREE.CatmullRomCurve3(trailPoints);
+      tubeGeom = new THREE.TubeGeometry(curve, Math.min(trailPoints.length, trailLength), 0.025 + breath * 0.015, 8, false);
+      tube = new THREE.Mesh(tubeGeom, tubeMat);
+      rosslerGroup.add(tube);
 
-          const ribbonWidth = (1 + breath * 2) * t;
-          ctx.strokeStyle = `hsla(${hue}, 70%, ${45 + t * 25}%, ${t * brightness})`;
-          ctx.lineWidth = ribbonWidth;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.stroke();
+      // Update head position
+      const lastPt = trailPoints[trailPoints.length - 1];
+      head.position.copy(lastPt);
+      head.scale.setScalar(1 + breath * 0.3);
+      headMat.opacity = 0.6 + breath * 0.3;
+
+      // Update particles to follow trail
+      for (let i = 0; i < particleCount; i++) {
+        const t = i / particleCount;
+        const idx = Math.floor(t * (trailPoints.length - 1));
+        const pt = trailPoints[idx];
+        const drift = Math.sin(elapsed * 0.5 + i * 0.1) * 0.05;
+        particlePositions[i * 3] = pt.x + drift;
+        particlePositions[i * 3 + 1] = pt.y + drift;
+        particlePositions[i * 3 + 2] = pt.z + drift;
+      }
+      particleGeom.attributes.position.needsUpdate = true;
+
+      // Glacial touch rotation
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 2;
         }
-
-        // Head glow
-        const head = particle.trail[particle.trail.length - 1];
-        const p = project(head.x, head.y, head.z, rotationY, rotationX);
-        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 15);
-        gradient.addColorStop(0, `hsla(${hue + 20}, 80%, 70%, ${brightness})`);
-        gradient.addColorStop(1, 'transparent');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 15, 0, Math.PI * 2);
-        ctx.fill();
+      } else {
+        targetRotationY += 0.002;
       }
 
-      drawRipples(ctx);
+      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
+      rosslerGroup.rotation.y = currentRotationY;
+      rosslerGroup.rotation.x = Math.sin(elapsed * 0.1) * 0.2;
+
+      tubeMat.opacity = 0.5 + breath * 0.3;
+      particleMat.opacity = 0.3 + breath * 0.3;
+
+      renderer.render(scene, camera);
     };
-
     animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      tubeGeom.dispose();
+      tubeMat.dispose();
+      headGeom.dispose();
+      headMat.dispose();
+      particleGeom.dispose();
+      particleMat.dispose();
+      renderer.dispose();
     };
-  }, [currentMode, hue, getBreathPhase, drawRipples]);
+  }, [currentMode, hue, getBreathPhase]);
 
   // ========== FLOWER OF LIFE MODE (3D) ==========
   React.useEffect(() => {
@@ -5093,12 +5240,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'dmt' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'dmt' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'ink' || currentMode === 'gyroid' || currentMode === 'rossler') && (
         <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       )}
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'dmt' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'dmt' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'ink' && currentMode !== 'gyroid' && currentMode !== 'rossler' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       )}
 
