@@ -9346,927 +9346,117 @@ const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 // ============================================================================
 
 function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
-  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
   const frameRef = useRef(null);
-  const lungDataRef = useRef(null);
+  const rendererRef = useRef(null);
+  const meshRef = useRef(null);
+  const scaleRef = useRef(1);
   const [showUI, setShowUI] = useState(false);
   const swipeStartRef = useRef(null);
   const wheelAccumRef = useRef(0);
   const wheelTimeoutRef = useRef(null);
 
-  // Initialize lung capillaries data structure
+  // Initialize Torus visualization (mobile-friendly replacement for lung capillaries)
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!containerRef.current || typeof THREE === 'undefined') return;
 
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 4;
 
-    const centerX = canvas.width / 2;
-    const startY = canvas.height * 0.18;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
 
-    // Mobile optimization - reduce branch complexity
-    const mobileDepthReduction = isMobile ? 2 : 0;
-
-    // Colors - based on primaryHue
-    const colorDeoxygenated = { h: primaryHue, s: 40, l: 32 };
-    const colorOxygenated = { h: primaryHue, s: 66, l: 55 };
-    const colorExhale = { h: primaryHue, s: 51, l: 45 };
-
-    // Branch class for the bronchial tree
-    class Branch {
-      constructor(x1, y1, angle, length, depth, maxDepth, side, parent = null) {
-        this.x1 = x1;
-        this.y1 = y1;
-        this.angle = angle;
-        this.length = length;
-        this.depth = depth;
-        this.maxDepth = maxDepth;
-        this.side = side;
-        this.parent = parent;
-
-        const curve = Math.sin(depth * 1.5) * 0.1;
-        this.x2 = x1 + Math.cos(angle + curve) * length;
-        this.y2 = y1 + Math.sin(angle + curve) * length;
-
-        this.thickness = Math.max(1, 7 - depth * 0.85);
-        this.fillProgress = 0;
-        this.targetFillProgress = 0;
-        this.fillDelay = depth * 0.15; // Depth delay per spec
-        this.children = [];
-        this.alveoli = null;
-
-        // For gradient fill along branch
-        this.fillPosition = 0; // 0-1 position of fill "wavefront"
-        this.targetFillPosition = 0;
-      }
-
-      getPathDistance() {
-        let dist = this.length;
-        let current = this.parent;
-        while (current) {
-          dist += current.length;
-          current = current.parent;
-        }
-        return dist;
-      }
-
-      // Normalized path distance (0-1 based on max)
-      getNormalizedPathDistance(maxDist) {
-        return this.getPathDistance() / maxDist;
-      }
-    }
-
-    // Alveoli cluster class
-    class AlveoliCluster {
-      constructor(x, y, depth, side, parentBranch = null) {
-        this.x = x;
-        this.y = y;
-        this.depth = depth;
-        this.side = side;
-        this.parentBranch = parentBranch;
-        this.fillProgress = 0;
-        this.targetFillProgress = 0;
-        this.pulsePhase = Math.random() * Math.PI * 2;
-
-        // Bloom effect state
-        this.bloomIntensity = 0;
-        this.bloomScale = 1;
-        this.hasBloomedThisCycle = false;
-        this.bloomStartTime = 0;
-
-        this.spheres = [];
-        const count = 4 + Math.floor(Math.random() * 4);
-        for (let i = 0; i < count; i++) {
-          const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
-          const dist = 3 + Math.random() * 4;
-          this.spheres.push({
-            offsetX: Math.cos(angle) * dist,
-            offsetY: Math.sin(angle) * dist,
-            radius: 2 + Math.random() * 2.5,
-            phase: Math.random() * Math.PI * 2,
-          });
-        }
-      }
-
-      // Get fill timing based on parent branch path distance
-      getArrivalTiming(maxDist) {
-        if (this.parentBranch) {
-          return this.parentBranch.getNormalizedPathDistance(maxDist);
-        }
-        return this.depth / 8; // Fallback to depth-based
-      }
-    }
-
-    // Oxygen particle class
-    class OxygenParticle {
-      constructor(startX, startY, branch) {
-        this.x = startX;
-        this.y = startY;
-        this.branch = branch;
-        this.progress = 0;
-        this.speed = 0.018 + Math.random() * 0.012;
-        this.size = 1.2 + Math.random() * 1.2;
-        this.alpha = 0.5 + Math.random() * 0.4;
-        this.alive = true;
-        this.direction = 1;
-      }
-
-      update(isInhaling) {
-        this.direction = isInhaling ? 1 : -1;
-        this.progress += this.speed * this.direction;
-
-        if (this.progress >= 1 && this.direction === 1) {
-          if (this.branch.children.length > 0) {
-            this.branch = this.branch.children[Math.floor(Math.random() * this.branch.children.length)];
-            this.progress = 0;
-          } else {
-            this.alive = false;
-          }
-        } else if (this.progress <= 0 && this.direction === -1) {
-          if (this.branch.parent) {
-            this.branch = this.branch.parent;
-            this.progress = 1;
-          } else {
-            this.alive = false;
-          }
-        }
-
-        const t = Math.max(0, Math.min(1, this.progress));
-        this.x = this.branch.x1 + (this.branch.x2 - this.branch.x1) * t;
-        this.y = this.branch.y1 + (this.branch.y2 - this.branch.y1) * t;
-      }
-    }
-
-    // Generate the bronchial tree
-    const allBranches = [];
-    const allAlveoli = [];
-    const particles = [];
-
-    // Lung shape boundaries for constraining branches
-    const lungScale = Math.min(canvas.width, canvas.height) * 0.01;
-
-    const isInsideLung = (x, y, side) => {
-      const relX = (x - centerX) / lungScale;
-      const relY = (y - startY) / lungScale;
-
-      if (side === 'right') {
-        // Right lung shape (3 lobes, larger)
-        const inUpperLobe = relX > 5 && relX < 110 && relY > 0 && relY < 90 &&
-          relY < 90 - Math.pow(Math.max(0, relX - 80), 2) * 0.03;
-        const inMiddleLobe = relX > 15 && relX < 100 && relY > 70 && relY < 150;
-        const inLowerLobe = relX > 10 && relX < 95 && relY > 130 && relY < 220 &&
-          relY < 220 - Math.pow(Math.max(0, relX - 60), 2) * 0.02;
-        return inUpperLobe || inMiddleLobe || inLowerLobe;
-      } else {
-        // Left lung shape (2 lobes, smaller, with cardiac notch)
-        const inUpperLobe = relX < -5 && relX > -95 && relY > 0 && relY < 100 &&
-          relY < 100 - Math.pow(Math.max(0, -relX - 70), 2) * 0.03;
-        const inLowerLobe = relX < -8 && relX > -85 && relY > 80 && relY < 210 &&
-          !(relX > -50 && relY > 140 && relY < 190); // Cardiac notch
-        return inUpperLobe || inLowerLobe;
-      }
+    // Convert HSL hue to hex color for THREE.js
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
     };
 
-    const generateBranch = (x, y, angle, length, depth, maxDepth, side, parent = null) => {
-      if (depth > maxDepth) {
-        const cluster = new AlveoliCluster(x, y, depth, side, parent);
-        allAlveoli.push(cluster);
-        if (parent) parent.alveoli = cluster;
-        return null;
+    // Create Torus
+    const geometry = new THREE.TorusGeometry(1, 0.4, 16, 100);
+    const dynamicColor = hslToHex(primaryHue, 52, 68);
+    const material = new THREE.MeshBasicMaterial({ color: dynamicColor, wireframe: true, transparent: true, opacity: 0.8 });
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+    meshRef.current = mesh;
+
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+
+      // Get breath state
+      const phase = breathSession.phase;
+      const phaseProgress = breathSession.phaseProgress || 0.5;
+      const isActive = breathSession.isActive;
+
+      // Calculate target scale based on breath phase
+      const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
+      const easedProgress = easeInOutSine(phaseProgress);
+
+      let targetScale = 0.85; // Base scale
+      if (!isActive) {
+        targetScale = 0.9;
+      } else if (phase === 'inhale') {
+        targetScale = 0.85 + easedProgress * 0.35; // Expand to 1.2
+      } else if (phase === 'holdFull') {
+        targetScale = 1.2;
+      } else if (phase === 'exhale') {
+        targetScale = 1.2 - easedProgress * 0.35; // Contract to 0.85
+      } else if (phase === 'holdEmpty') {
+        targetScale = 0.85;
       }
 
-      const branch = new Branch(x, y, angle, length, depth, maxDepth, side, parent);
-      allBranches.push(branch);
+      // Smooth scale transition
+      scaleRef.current += (targetScale - scaleRef.current) * 0.08;
 
-      // More aggressive branching for fuller appearance
-      const nextLength = length * (0.68 + Math.random() * 0.1);
-      const spread = 0.42 - depth * 0.03;
-      const jitter = (Math.random() - 0.5) * 0.2;
+      if (meshRef.current) {
+        // Slow rotation
+        meshRef.current.rotation.y += 0.002;
+        meshRef.current.rotation.x += 0.001;
 
-      // More children at earlier depths for fuller tree
-      const childCount = depth < 2 ? 3 : (depth < 4 ? (Math.random() > 0.2 ? 3 : 2) : 2);
+        // Apply breath-based scale
+        meshRef.current.scale.setScalar(scaleRef.current);
 
-      const angles = [];
-      if (childCount === 2) {
-        angles.push(angle - spread + jitter, angle + spread + jitter);
-      } else {
-        angles.push(angle - spread + jitter, angle + jitter * 0.3, angle + spread + jitter);
+        // Opacity pulses with breath
+        const breathOpacity = isActive ? 0.5 + scaleRef.current * 0.3 : 0.6;
+        meshRef.current.material.opacity = breathOpacity;
       }
 
-      angles.forEach((childAngle, i) => {
-        const childLength = nextLength * (i === 1 && childCount === 3 ? 0.85 : 1);
-        const testX = branch.x2 + Math.cos(childAngle) * childLength;
-        const testY = branch.y2 + Math.sin(childAngle) * childLength;
-
-        // Only generate if inside lung boundary or at early depth
-        if (depth < 3 || isInsideLung(testX, testY, side)) {
-          const child = generateBranch(branch.x2, branch.y2, childAngle, childLength, depth + 1, maxDepth, side, branch);
-          if (child) branch.children.push(child);
-        } else if (depth >= 3) {
-          // Create alveoli at boundary
-          const cluster = new AlveoliCluster(branch.x2, branch.y2, depth + 1, side, branch);
-          allAlveoli.push(cluster);
-        }
-      });
-
-      return branch;
+      renderer.render(scene, camera);
     };
 
-    // Create trachea (windpipe)
-    const tracheaLength = canvas.height * 0.05;
-    const trachea = new Branch(centerX, startY - tracheaLength, Math.PI / 2, tracheaLength, 0, 8 - mobileDepthReduction, 'center');
-    allBranches.push(trachea);
-
-    // Main bronchi split
-    const mainBronchusLength = 35 * lungScale / 3;
-
-    // === RIGHT LUNG (3 lobes) ===
-    // Right main bronchus
-    const rightMain = generateBranch(centerX, startY, Math.PI / 2 + 0.35, mainBronchusLength, 1, 8 - mobileDepthReduction, 'right', trachea);
-
-    // Right upper lobe branches
-    generateBranch(centerX + 15 * lungScale / 3, startY + 10 * lungScale / 3, Math.PI / 2 + 0.9, 28 * lungScale / 3, 2, 7 - mobileDepthReduction, 'right', trachea);
-    generateBranch(centerX + 25 * lungScale / 3, startY + 5 * lungScale / 3, Math.PI * 0.15, 22 * lungScale / 3, 2, 6 - mobileDepthReduction, 'right', trachea);
-
-    // Right middle lobe branches
-    generateBranch(centerX + 30 * lungScale / 3, startY + 45 * lungScale / 3, Math.PI / 2 + 0.6, 25 * lungScale / 3, 2, 7 - mobileDepthReduction, 'right', trachea);
-    generateBranch(centerX + 40 * lungScale / 3, startY + 55 * lungScale / 3, Math.PI * 0.35, 20 * lungScale / 3, 3, 6 - mobileDepthReduction, 'right', trachea);
-
-    // Right lower lobe branches
-    generateBranch(centerX + 20 * lungScale / 3, startY + 80 * lungScale / 3, Math.PI / 2 + 0.4, 30 * lungScale / 3, 2, 8 - mobileDepthReduction, 'right', trachea);
-    generateBranch(centerX + 35 * lungScale / 3, startY + 95 * lungScale / 3, Math.PI / 2 + 0.7, 25 * lungScale / 3, 3, 7 - mobileDepthReduction, 'right', trachea);
-    generateBranch(centerX + 25 * lungScale / 3, startY + 110 * lungScale / 3, Math.PI * 0.6, 22 * lungScale / 3, 3, 6 - mobileDepthReduction, 'right', trachea);
-
-    // === LEFT LUNG (2 lobes with cardiac notch) ===
-    // Left main bronchus
-    const leftMain = generateBranch(centerX, startY, Math.PI / 2 - 0.35, mainBronchusLength * 0.95, 1, 7 - mobileDepthReduction, 'left', trachea);
-
-    // Left upper lobe branches
-    generateBranch(centerX - 15 * lungScale / 3, startY + 8 * lungScale / 3, Math.PI / 2 - 0.85, 26 * lungScale / 3, 2, 7 - mobileDepthReduction, 'left', trachea);
-    generateBranch(centerX - 22 * lungScale / 3, startY + 3 * lungScale / 3, Math.PI * 0.85, 20 * lungScale / 3, 2, 6 - mobileDepthReduction, 'left', trachea);
-    generateBranch(centerX - 28 * lungScale / 3, startY + 40 * lungScale / 3, Math.PI / 2 - 0.5, 22 * lungScale / 3, 2, 6 - mobileDepthReduction, 'left', trachea);
-
-    // Left lower lobe branches (avoiding cardiac notch area)
-    generateBranch(centerX - 18 * lungScale / 3, startY + 75 * lungScale / 3, Math.PI / 2 - 0.3, 28 * lungScale / 3, 2, 7 - mobileDepthReduction, 'left', trachea);
-    generateBranch(centerX - 30 * lungScale / 3, startY + 90 * lungScale / 3, Math.PI / 2 - 0.6, 24 * lungScale / 3, 3, 6 - mobileDepthReduction, 'left', trachea);
-    generateBranch(centerX - 22 * lungScale / 3, startY + 105 * lungScale / 3, Math.PI * 0.55, 20 * lungScale / 3, 3, 6 - mobileDepthReduction, 'left', trachea);
-
-    // Add extra peripheral alveoli to fill out the lung shape
-    const addPeripheralAlveoli = (side) => {
-      const count = isMobile ? 10 : 35;
-      for (let i = 0; i < count; i++) {
-        let x, y, attempts = 0;
-        do {
-          if (side === 'right') {
-            x = centerX + (20 + Math.random() * 90) * lungScale / 3;
-            y = startY + (10 + Math.random() * 180) * lungScale / 3;
-          } else {
-            x = centerX - (20 + Math.random() * 75) * lungScale / 3;
-            y = startY + (10 + Math.random() * 170) * lungScale / 3;
-          }
-          attempts++;
-        } while (!isInsideLung(x, y, side) && attempts < 20);
-
-        if (isInsideLung(x, y, side)) {
-          const cluster = new AlveoliCluster(x, y, 7, side);
-          cluster.spheres.forEach(s => {
-            s.radius *= 0.7; // Smaller peripheral alveoli
-          });
-          allAlveoli.push(cluster);
-        }
-      }
-    };
-
-    addPeripheralAlveoli('right');
-    addPeripheralAlveoli('left');
-
-    // Calculate max path distance
-    let maxPathDist = 0;
-    allBranches.forEach(b => {
-      const dist = b.getPathDistance();
-      if (dist > maxPathDist) maxPathDist = dist;
-    });
-
-    // Store lung data for animation
-    lungDataRef.current = {
-      allBranches,
-      allAlveoli,
-      particles,
-      trachea,
-      maxPathDist,
-      colorDeoxygenated,
-      colorOxygenated,
-      colorExhale,
-      centerX,
-      startY,
-      OxygenParticle,
-      // Trachea entry glow state
-      tracheaGlow: 0,
-      lastPhase: null,
-    };
+    animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
-    };
-  }, [primaryHue]);
-
-  // Animation loop for lung capillaries
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !lungDataRef.current) return;
-
-    const ctx = canvas.getContext('2d');
-    const startTime = Date.now();
-
-    const {
-      allBranches,
-      allAlveoli,
-      particles,
-      trachea,
-      maxPathDist,
-      colorDeoxygenated,
-      colorOxygenated,
-      colorExhale,
-      centerX,
-      startY,
-      OxygenParticle,
-    } = lungDataRef.current;
-
-    const MAX_PARTICLES = isMobile ? 30 : 120;
-
-    const spawnParticle = () => {
-      if (particles.length < MAX_PARTICLES) {
-        const p = new OxygenParticle(trachea.x1, trachea.y1, trachea);
-        particles.push(p);
-      }
-    };
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
-
-      // Get breath phase from session
-      const phase = breathSession.phase; // 'inhale', 'exhale', 'holdFull', 'holdEmpty'
-      const phaseProgress = breathSession.phaseProgress || 0.5;
-      const isInhaling = phase === 'inhale';
-      const isHoldingFull = phase === 'holdFull';
-      const isExhaling = phase === 'exhale';
-      const isHoldingEmpty = phase === 'holdEmpty';
-      const isActive = breathSession.isActive;
-
-      // Dark background
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Vignette
-      const vignette = ctx.createRadialGradient(
-        centerX, canvas.height * 0.4, 0,
-        centerX, canvas.height * 0.4, canvas.width * 0.7
-      );
-      vignette.addColorStop(0, 'transparent');
-      vignette.addColorStop(0.7, 'transparent');
-      vignette.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
-      ctx.fillStyle = vignette;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Calculate breath expansion scale (lungs expand ~15% when full)
-      // Use smooth easing for natural breathing motion
-      const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
-      const easedProgress = easeInOutSine(phaseProgress);
-
-      let targetBreathScale = 0.92; // Default contracted state
-      if (!isActive) {
-        targetBreathScale = 0.96; // Resting state
-      } else if (isInhaling) {
-        targetBreathScale = 0.92 + easedProgress * 0.14; // Expand from 0.92 to 1.06
-      } else if (isHoldingFull) {
-        targetBreathScale = 1.06; // Fully expanded
-      } else if (isExhaling) {
-        targetBreathScale = 1.06 - easedProgress * 0.14; // Contract from 1.06 to 0.92
-      } else if (isHoldingEmpty) {
-        targetBreathScale = 0.92; // Fully contracted
-      }
-
-      // Smooth the breath scale with velocity-based interpolation
-      if (!lungDataRef.current.breathScale) lungDataRef.current.breathScale = targetBreathScale;
-      if (!lungDataRef.current.breathVelocity) lungDataRef.current.breathVelocity = 0;
-
-      // Spring-like smoothing for fluid motion - smoother on mobile
-      const stiffness = isMobile ? 0.06 : 0.04;
-      const damping = isMobile ? 0.8 : 0.85;
-      const diff = targetBreathScale - lungDataRef.current.breathScale;
-      lungDataRef.current.breathVelocity = lungDataRef.current.breathVelocity * damping + diff * stiffness;
-      lungDataRef.current.breathScale += lungDataRef.current.breathVelocity;
-      const breathScale = lungDataRef.current.breathScale;
-
-      // Calculate lung center for scaling (center of the lung mass)
-      const lungCenterY = startY + canvas.height * 0.25;
-
-      // Detect phase transitions for trachea flash
-      if (lungDataRef.current.lastPhase !== phase) {
-        if (phase === 'inhale' && lungDataRef.current.lastPhase !== 'inhale') {
-          lungDataRef.current.tracheaGlow = 1.5; // Flash on inhale start
-        }
-        if (phase === 'inhale') {
-          // Reset bloom flags for new inhale cycle
-          allAlveoli.forEach(a => { a.hasBloomedThisCycle = false; });
-        }
-        lungDataRef.current.lastPhase = phase;
-      }
-
-      // Decay trachea glow
-      if (lungDataRef.current.tracheaGlow > 0) {
-        lungDataRef.current.tracheaGlow *= 0.92;
-        if (lungDataRef.current.tracheaGlow < 0.01) lungDataRef.current.tracheaGlow = 0;
-      }
-
-      // Calculate fill progress for each branch using PATH DISTANCE (not just depth)
-      // This creates the visible "wave" traveling through the bronchial tree
-      allBranches.forEach(branch => {
-        const pathNorm = branch.getNormalizedPathDistance(maxPathDist);
-
-        // Timing per spec: depthLevel * 0.15 delay, 0.25 window
-        const depthDelay = pathNorm * 0.6; // Stagger based on distance from trachea
-        const depthWindow = 0.25;
-
-        if (!isActive) {
-          branch.targetFillProgress = 0.15; // Subtle ambient glow
-          branch.targetFillPosition = 0.5;
-        } else if (isInhaling) {
-          // Progressive fill: starts at trachea, flows outward
-          const fillStart = depthDelay;
-          const fillEnd = depthDelay + depthWindow;
-          const raw = Math.max(0, Math.min(1, (easedProgress - fillStart) / (fillEnd - fillStart + 0.001)));
-          branch.targetFillProgress = easeInOutSine(raw);
-
-          // Fill position travels along the branch (0=base, 1=tip)
-          branch.targetFillPosition = Math.min(1, raw * 1.5);
-        } else if (isHoldingFull) {
-          branch.targetFillProgress = 1;
-          branch.targetFillPosition = 1;
-        } else if (isExhaling) {
-          // Reverse: alveoli drain first, then branches, then trunk
-          const drainDelay = (1 - pathNorm) * 0.6;
-          const drainWindow = 0.25;
-          const drainStart = drainDelay;
-          const drainEnd = drainDelay + drainWindow;
-          const raw = Math.max(0, Math.min(1, (easedProgress - drainStart) / (drainEnd - drainStart + 0.001)));
-          branch.targetFillProgress = 1 - easeInOutSine(raw);
-
-          // Fill position retreats from tip to base
-          branch.targetFillPosition = 1 - Math.min(1, raw * 1.5);
-        } else if (isHoldingEmpty) {
-          branch.targetFillProgress = 0.05; // Very dim baseline
-          branch.targetFillPosition = 0;
-        }
-
-        // Smooth interpolation
-        branch.fillProgress += (branch.targetFillProgress - branch.fillProgress) * 0.08;
-        branch.fillPosition += (branch.targetFillPosition - branch.fillPosition) * 0.1;
-      });
-
-      // Update alveoli with path-distance timing and BLOOM effect
-      allAlveoli.forEach(alveolus => {
-        // Use parent branch timing or depth-based fallback
-        const arrivalTiming = alveolus.getArrivalTiming(maxPathDist);
-        const arrivalDelay = arrivalTiming * 0.6 + 0.15; // Alveoli fill slightly after their parent branch
-        const arrivalWindow = 0.2;
-
-        let targetFill = 0.1;
-        if (!isActive) {
-          targetFill = 0.1;
-          alveolus.hasBloomedThisCycle = false;
-        } else if (isInhaling) {
-          const fillStart = arrivalDelay;
-          const fillEnd = arrivalDelay + arrivalWindow;
-          const raw = Math.max(0, Math.min(1, (easedProgress - fillStart) / (fillEnd - fillStart + 0.001)));
-          targetFill = easeInOutSine(raw);
-
-          // BLOOM EFFECT: Trigger when oxygen "arrives" (crosses 0.5 threshold)
-          if (targetFill > 0.5 && !alveolus.hasBloomedThisCycle) {
-            alveolus.hasBloomedThisCycle = true;
-            alveolus.bloomStartTime = elapsed;
-            alveolus.bloomIntensity = 1.5; // Brightness spike
-            alveolus.bloomScale = 1.08; // Scale pop
-          }
-        } else if (isHoldingFull) {
-          targetFill = 1;
-        } else if (isExhaling) {
-          // Alveoli drain first (inverted timing)
-          const drainDelay = (1 - arrivalTiming) * 0.5;
-          const drainWindow = 0.3;
-          const drainStart = drainDelay;
-          const drainEnd = drainDelay + drainWindow;
-          const raw = Math.max(0, Math.min(1, (easedProgress - drainStart) / (drainEnd - drainStart + 0.001)));
-          targetFill = 1 - easeInOutSine(raw);
-          alveolus.hasBloomedThisCycle = false;
-        } else {
-          targetFill = 0;
-          alveolus.hasBloomedThisCycle = false;
-        }
-
-        alveolus.targetFillProgress = targetFill;
-
-        // Smooth interpolation for fill
-        alveolus.fillProgress += (alveolus.targetFillProgress - alveolus.fillProgress) * 0.08;
-
-        // Decay bloom effects (300ms duration)
-        const bloomDuration = 0.3;
-        const bloomAge = elapsed - alveolus.bloomStartTime;
-        if (bloomAge < bloomDuration && alveolus.bloomIntensity > 1) {
-          const bloomProgress = bloomAge / bloomDuration;
-          const bloomEase = 1 - Math.pow(bloomProgress, 2); // Fast attack, slow decay
-          alveolus.bloomIntensity = 1 + 0.5 * bloomEase;
-          alveolus.bloomScale = 1 + 0.08 * bloomEase;
-        } else {
-          alveolus.bloomIntensity += (1 - alveolus.bloomIntensity) * 0.15;
-          alveolus.bloomScale += (1 - alveolus.bloomScale) * 0.15;
-        }
-      });
-
-      // Spawn particles during inhale
-      if (isActive && isInhaling && Math.random() < 0.25) {
-        spawnParticle();
-      }
-
-      // Update particles
-      for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].update(isInhaling);
-        if (!particles[i].alive) {
-          particles.splice(i, 1);
-        }
-      }
-
-      // Apply breath expansion transform
-      ctx.save();
-      ctx.translate(centerX, lungCenterY);
-      ctx.scale(breathScale, breathScale);
-      ctx.translate(-centerX, -lungCenterY);
-
-      // Trachea entry glow (flash on inhale start)
-      const tracheaGlow = lungDataRef.current.tracheaGlow || 0;
-      if (tracheaGlow > 0.05 || isInhaling) {
-        const baseGlow = isInhaling ? 0.3 + easedProgress * 0.2 : 0.2;
-        const glowIntensity = baseGlow + tracheaGlow * 0.5;
-        const entryGradient = ctx.createRadialGradient(
-          centerX, startY - 10, 0,
-          centerX, startY - 10, 40
-        );
-        entryGradient.addColorStop(0, `hsla(${colorOxygenated.h}, ${colorOxygenated.s}%, ${colorOxygenated.l + 10}%, ${glowIntensity})`);
-        entryGradient.addColorStop(0.5, `hsla(${colorOxygenated.h}, ${colorOxygenated.s}%, ${colorOxygenated.l}%, ${glowIntensity * 0.4})`);
-        entryGradient.addColorStop(1, 'transparent');
-
-        ctx.beginPath();
-        ctx.arc(centerX, startY - 10, 40, 0, Math.PI * 2);
-        ctx.fillStyle = entryGradient;
-        ctx.fill();
-      }
-
-      // Draw branches with gradient fill along length
-      allBranches.forEach(branch => {
-        const fill = branch.fillProgress;
-        const fillPos = branch.fillPosition || 0;
-
-        // Color interpolation with EXHALE shift toward cooler tone
-        let targetColor = colorOxygenated;
-        if (isExhaling || isHoldingEmpty) {
-          // Shift toward cooler exhale color
-          const exhaleBlend = isExhaling ? easedProgress : 1;
-          targetColor = {
-            h: colorOxygenated.h + (colorExhale.h - colorOxygenated.h) * exhaleBlend * 0.5,
-            s: colorOxygenated.s + (colorExhale.s - colorOxygenated.s) * exhaleBlend * 0.5,
-            l: colorOxygenated.l + (colorExhale.l - colorOxygenated.l) * exhaleBlend * 0.3
-          };
-        }
-
-        const h = colorDeoxygenated.h + (targetColor.h - colorDeoxygenated.h) * fill;
-        const s = colorDeoxygenated.s + (targetColor.s - colorDeoxygenated.s) * fill;
-        const l = colorDeoxygenated.l + (targetColor.l - colorDeoxygenated.l) * fill;
-
-        // Branch glow (softer)
-        if (fill > 0.1) {
-          ctx.strokeStyle = `hsla(${h}, ${s}%, ${l + 5}%, ${0.1 * fill})`;
-          ctx.lineWidth = branch.thickness + 4;
-          ctx.lineCap = 'round';
-          ctx.beginPath();
-          ctx.moveTo(branch.x1, branch.y1);
-          ctx.lineTo(branch.x2, branch.y2);
-          ctx.stroke();
-        }
-
-        // GRADIENT FILL along branch: creates "traveling" oxygenation effect
-        // Draw branch as gradient from base (dimmer/filled) to tip (brighter/filling)
-        const gradient = ctx.createLinearGradient(branch.x1, branch.y1, branch.x2, branch.y2);
-
-        // Base of branch (already filled)
-        const baseFill = Math.min(1, fill * 1.2);
-        const baseH = colorDeoxygenated.h + (targetColor.h - colorDeoxygenated.h) * baseFill;
-        const baseS = colorDeoxygenated.s + (targetColor.s - colorDeoxygenated.s) * baseFill;
-        const baseL = colorDeoxygenated.l + (targetColor.l - colorDeoxygenated.l) * baseFill;
-        const baseAlpha = 0.3 + baseFill * 0.5;
-
-        // Tip of branch (filling or unfilled)
-        const tipFill = Math.max(0, fill * 0.6);
-        const tipH = colorDeoxygenated.h + (targetColor.h - colorDeoxygenated.h) * tipFill;
-        const tipS = colorDeoxygenated.s + (targetColor.s - colorDeoxygenated.s) * tipFill;
-        const tipL = colorDeoxygenated.l + (targetColor.l - colorDeoxygenated.l) * tipFill;
-        const tipAlpha = 0.2 + tipFill * 0.5;
-
-        gradient.addColorStop(0, `hsla(${baseH}, ${baseS}%, ${baseL}%, ${baseAlpha})`);
-        gradient.addColorStop(Math.min(0.95, fillPos), `hsla(${baseH}, ${baseS}%, ${baseL}%, ${baseAlpha})`);
-        gradient.addColorStop(Math.min(1, fillPos + 0.05), `hsla(${tipH}, ${tipS}%, ${tipL}%, ${tipAlpha})`);
-        gradient.addColorStop(1, `hsla(${tipH}, ${tipS}%, ${tipL}%, ${tipAlpha * 0.7})`);
-
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = branch.thickness;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(branch.x1, branch.y1);
-        ctx.lineTo(branch.x2, branch.y2);
-        ctx.stroke();
-
-        // Bright "wavefront" glow at fill position (the traveling oxygen)
-        if (fill > 0.05 && fill < 0.95 && isActive) {
-          const wavefrontX = branch.x1 + (branch.x2 - branch.x1) * fillPos;
-          const wavefrontY = branch.y1 + (branch.y2 - branch.y1) * fillPos;
-          const glowSize = 6 + branch.thickness;
-
-          const waveGradient = ctx.createRadialGradient(wavefrontX, wavefrontY, 0, wavefrontX, wavefrontY, glowSize);
-          waveGradient.addColorStop(0, `hsla(${targetColor.h}, ${targetColor.s + 10}%, ${targetColor.l + 15}%, ${0.5 * fill})`);
-          waveGradient.addColorStop(0.5, `hsla(${targetColor.h}, ${targetColor.s}%, ${targetColor.l}%, ${0.2 * fill})`);
-          waveGradient.addColorStop(1, 'transparent');
-
-          ctx.beginPath();
-          ctx.arc(wavefrontX, wavefrontY, glowSize, 0, Math.PI * 2);
-          ctx.fillStyle = waveGradient;
-          ctx.fill();
-        }
-      });
-
-      // Draw alveoli with BLOOM effect and hold-in shimmer
-      allAlveoli.forEach(cluster => {
-        const fill = cluster.fillProgress;
-        const bloomIntensity = cluster.bloomIntensity || 1;
-        const bloomScale = cluster.bloomScale || 1;
-
-        // HOLD-IN effects: gentle pulse (scale 1.0 → 1.05 → 1.0) and shimmer
-        const holdPulse = isHoldingFull ? Math.sin(elapsed * 2 + cluster.pulsePhase) * 0.05 : 0;
-        const shimmer = isHoldingFull ? Math.sin(elapsed * 8 + cluster.pulsePhase * 2) * 0.15 : 0;
-
-        // HOLD-OUT: subtle ambient pulse so it still feels alive
-        const restPulse = isHoldingEmpty ? Math.sin(elapsed * 1.5 + cluster.pulsePhase) * 0.03 : 0;
-
-        // Exhale color shift
-        let targetColor = colorOxygenated;
-        if (isExhaling || isHoldingEmpty) {
-          const exhaleBlend = isExhaling ? easedProgress : 1;
-          targetColor = {
-            h: colorOxygenated.h + (colorExhale.h - colorOxygenated.h) * exhaleBlend * 0.6,
-            s: colorOxygenated.s + (colorExhale.s - colorOxygenated.s) * exhaleBlend * 0.5,
-            l: colorOxygenated.l + (colorExhale.l - colorOxygenated.l) * exhaleBlend * 0.4
-          };
-        }
-
-        cluster.spheres.forEach(sphere => {
-          const x = cluster.x + sphere.offsetX;
-          const y = cluster.y + sphere.offsetY;
-
-          // Apply bloom scale, hold pulse, and rest pulse
-          const scaleMultiplier = bloomScale * (1 + holdPulse + restPulse);
-          const r = sphere.radius * (1 + fill * 0.1) * scaleMultiplier;
-
-          // Color with bloom intensity boost
-          const h = colorDeoxygenated.h + (targetColor.h - colorDeoxygenated.h) * fill;
-          const s = colorDeoxygenated.s + (targetColor.s - colorDeoxygenated.s) * fill;
-          const baseLightness = colorDeoxygenated.l + (targetColor.l - colorDeoxygenated.l) * fill;
-          const l = baseLightness + (bloomIntensity - 1) * 20 + shimmer * 8; // Bloom brightens, shimmer adds sparkle
-
-          const glowSize = r * (1.5 + fill * 0.4);
-
-          // Outer glow (bloom makes this bigger and brighter)
-          const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, glowSize * bloomIntensity);
-          const glowAlpha = (0.25 + fill * 0.35) * bloomIntensity;
-          glowGradient.addColorStop(0, `hsla(${h}, ${s + 10}%, ${l + 10}%, ${glowAlpha})`);
-          glowGradient.addColorStop(0.4, `hsla(${h}, ${s}%, ${l}%, ${glowAlpha * 0.4})`);
-          glowGradient.addColorStop(1, 'transparent');
-
-          ctx.beginPath();
-          ctx.arc(x, y, glowSize * bloomIntensity, 0, Math.PI * 2);
-          ctx.fillStyle = glowGradient;
-          ctx.fill();
-
-          // Core sphere
-          const coreGradient = ctx.createRadialGradient(x - r * 0.25, y - r * 0.25, 0, x, y, r);
-          coreGradient.addColorStop(0, `hsla(${h}, ${s + 5}%, ${l + 8}%, ${(0.45 + fill * 0.35) * bloomIntensity})`);
-          coreGradient.addColorStop(0.6, `hsla(${h}, ${s}%, ${l}%, ${(0.3 + fill * 0.3) * bloomIntensity})`);
-          coreGradient.addColorStop(1, `hsla(${h}, ${s - 5}%, ${l - 8}%, ${0.15 + fill * 0.2})`);
-
-          ctx.beginPath();
-          ctx.arc(x, y, r, 0, Math.PI * 2);
-          ctx.fillStyle = coreGradient;
-          ctx.fill();
-
-          // SHIMMER sparkles during hold-in (oxygen exchange happening)
-          if (isHoldingFull && shimmer > 0.05) {
-            const sparkleAlpha = shimmer * 0.8;
-            ctx.beginPath();
-            ctx.arc(x + Math.cos(elapsed * 5 + sphere.phase) * r * 0.3,
-                   y + Math.sin(elapsed * 5 + sphere.phase) * r * 0.3,
-                   1.5, 0, Math.PI * 2);
-            ctx.fillStyle = `hsla(${targetColor.h}, 90%, 80%, ${sparkleAlpha})`;
-            ctx.fill();
-          }
-        });
-      });
-
-      // Draw particles
-      particles.forEach(p => {
-        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
-        gradient.addColorStop(0, `hsla(${colorOxygenated.h}, 90%, 70%, ${p.alpha})`);
-        gradient.addColorStop(0.5, `hsla(${colorOxygenated.h}, 80%, 60%, ${p.alpha * 0.5})`);
-        gradient.addColorStop(1, 'transparent');
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
-        ctx.fillStyle = gradient;
-        ctx.fill();
-      });
-
-      // Draw filled lung tissue (behind everything)
-      // This is drawn in the animate loop to apply breath-based fill color
-
-      // Calculate average fill for lung tissue color
-      const avgFill = isActive ? (isHoldingFull ? 1 : (isHoldingEmpty ? 0.05 : breathSession.phaseProgress * (isInhaling ? 1 : -1) + (isExhaling ? 1 : 0))) : 0.25;
-      const tissueH = colorDeoxygenated.h + (colorOxygenated.h - colorDeoxygenated.h) * Math.max(0, Math.min(1, avgFill));
-
-      // Compute convex hull for lung outlines from alveoli positions
-      const computeConvexHull = (points) => {
-        if (points.length < 3) return points;
-
-        // Find leftmost point
-        let start = 0;
-        for (let i = 1; i < points.length; i++) {
-          if (points[i].x < points[start].x) start = i;
-        }
-
-        const hull = [];
-        let current = start;
-        do {
-          hull.push(points[current]);
-          let next = 0;
-          for (let i = 1; i < points.length; i++) {
-            if (next === current) {
-              next = i;
-              continue;
-            }
-            const cross = (points[i].x - points[current].x) * (points[next].y - points[current].y) -
-                         (points[i].y - points[current].y) * (points[next].x - points[current].x);
-            if (cross > 0) next = i;
-          }
-          current = next;
-        } while (current !== start && hull.length < points.length);
-
-        return hull;
-      };
-
-      // Draw smooth curve through hull points
-      const drawSmoothHull = (hull, padding = 12) => {
-        if (hull.length < 3) return;
-
-        // Expand hull outward by padding
-        const expandedHull = hull.map((p, i) => {
-          const prev = hull[(i - 1 + hull.length) % hull.length];
-          const next = hull[(i + 1) % hull.length];
-          const nx = (next.y - prev.y);
-          const ny = -(next.x - prev.x);
-          const len = Math.sqrt(nx * nx + ny * ny) || 1;
-          return { x: p.x + (nx / len) * padding, y: p.y + (ny / len) * padding };
-        });
-
-        ctx.beginPath();
-        ctx.moveTo(expandedHull[0].x, expandedHull[0].y);
-
-        for (let i = 0; i < expandedHull.length; i++) {
-          const p0 = expandedHull[(i - 1 + expandedHull.length) % expandedHull.length];
-          const p1 = expandedHull[i];
-          const p2 = expandedHull[(i + 1) % expandedHull.length];
-          const p3 = expandedHull[(i + 2) % expandedHull.length];
-
-          // Catmull-Rom to Bezier conversion
-          const cp1x = p1.x + (p2.x - p0.x) / 6;
-          const cp1y = p1.y + (p2.y - p0.y) / 6;
-          const cp2x = p2.x - (p3.x - p1.x) / 6;
-          const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
-        }
-        ctx.closePath();
-      };
-
-      // Collect points for each lung
-      const rightPoints = [];
-      const leftPoints = [];
-
-      // Add alveoli positions
-      allAlveoli.forEach(cluster => {
-        cluster.spheres.forEach(sphere => {
-          const point = { x: cluster.x + sphere.offsetX, y: cluster.y + sphere.offsetY };
-          if (cluster.side === 'right') {
-            rightPoints.push(point);
-          } else if (cluster.side === 'left') {
-            leftPoints.push(point);
-          }
-        });
-      });
-
-      // Add branch endpoints
-      allBranches.forEach(branch => {
-        if (branch.side === 'right') {
-          rightPoints.push({ x: branch.x2, y: branch.y2 });
-        } else if (branch.side === 'left') {
-          leftPoints.push({ x: branch.x2, y: branch.y2 });
-        }
-      });
-
-      // Add trachea connection points
-      rightPoints.push({ x: centerX + 5, y: startY });
-      leftPoints.push({ x: centerX - 5, y: startY });
-
-      // Compute and draw right lung
-      if (rightPoints.length > 2) {
-        const rightHull = computeConvexHull(rightPoints);
-        drawSmoothHull(rightHull, 15);
-
-        // Find center for gradient
-        const rcx = rightPoints.reduce((s, p) => s + p.x, 0) / rightPoints.length;
-        const rcy = rightPoints.reduce((s, p) => s + p.y, 0) / rightPoints.length;
-
-        // Subtle lung tissue fill
-        const rightGradient = ctx.createRadialGradient(rcx, rcy, 0, rcx, rcy, 150);
-        rightGradient.addColorStop(0, `hsla(${tissueH}, 50%, 35%, 0.08)`);
-        rightGradient.addColorStop(0.6, `hsla(${tissueH}, 45%, 25%, 0.05)`);
-        rightGradient.addColorStop(1, `hsla(${tissueH}, 40%, 20%, 0.02)`);
-        ctx.fillStyle = rightGradient;
-        ctx.fill();
-
-        // Barely visible outline - let branches define the shape
-        ctx.strokeStyle = `hsla(${tissueH}, 35%, 50%, 0.1)`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-
-      // Compute and draw left lung
-      if (leftPoints.length > 2) {
-        const leftHull = computeConvexHull(leftPoints);
-        drawSmoothHull(leftHull, 15);
-
-        const lcx = leftPoints.reduce((s, p) => s + p.x, 0) / leftPoints.length;
-        const lcy = leftPoints.reduce((s, p) => s + p.y, 0) / leftPoints.length;
-
-        const leftGradient = ctx.createRadialGradient(lcx, lcy, 0, lcx, lcy, 130);
-        leftGradient.addColorStop(0, `hsla(${tissueH}, 50%, 35%, 0.08)`);
-        leftGradient.addColorStop(0.6, `hsla(${tissueH}, 45%, 25%, 0.05)`);
-        leftGradient.addColorStop(1, `hsla(${tissueH}, 40%, 20%, 0.02)`);
-        ctx.fillStyle = leftGradient;
-        ctx.fill();
-
-        // Barely visible outline
-        ctx.strokeStyle = `hsla(${tissueH}, 35%, 50%, 0.1)`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-
-      // Trachea tube (subtle)
-      ctx.fillStyle = `hsla(${tissueH}, 35%, 40%, 0.1)`;
-      ctx.beginPath();
-      ctx.moveTo(centerX - 8, startY - 25);
-      ctx.lineTo(centerX + 8, startY - 25);
-      ctx.lineTo(centerX + 6, startY + 5);
-      ctx.lineTo(centerX - 6, startY + 5);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = `hsla(${tissueH}, 40%, 50%, 0.12)`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Restore transform after lung drawing
-      ctx.restore();
-    };
-
-    animate();
-
-    return () => {
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      geometry.dispose();
+      material.dispose();
+      renderer.dispose();
     };
-  }, [breathSession.isActive, breathSession.phase, breathSession.phaseProgress, primaryHue]);
+  }, [primaryHue, breathSession.isActive, breathSession.phase, breathSession.phaseProgress]);
+
+  // NOTE: Complex lung capillaries visualization was removed for mobile performance
+  // The Torus visualization above is much simpler and works better on mobile devices
 
   // Handle swipe gestures
   const handleTouchStart = useCallback((e) => {
@@ -10351,9 +9541,9 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         cursor: 'pointer',
       }}
     >
-      {/* Lung capillaries canvas */}
-      <canvas
-        ref={canvasRef}
+      {/* Torus visualization container */}
+      <div
+        ref={containerRef}
         style={{
           position: 'absolute',
           top: 0,
