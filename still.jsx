@@ -907,6 +907,15 @@ const themes = {
     cardBg: 'rgba(255,255,255,0.03)',
     border: 'rgba(255,255,255,0.1)',
   },
+  blossom: {
+    name: 'Cherry Blossom',
+    bg: '#000',
+    text: '#F8E8F0',
+    textMuted: '#8a7580',
+    accent: '#FFB7C5',
+    cardBg: 'rgba(255,183,197,0.02)',
+    border: 'rgba(255,183,197,0.08)',
+  },
 };
 
 const ThemeContext = createContext(themes.void);
@@ -2411,6 +2420,205 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
       leaves.forEach(l => { l.geometry.dispose(); l.material.dispose(); });
       coreGeom.dispose(); coreMat.dispose();
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== CHERRY BLOSSOM MODE (3D) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'blossom' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 6);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const blossomGroup = new THREE.Group();
+    scene.add(blossomGroup);
+
+    // Create cherry blossom petals
+    const petals = [];
+    const petalCount = 150;
+
+    // Petal geometry - curved ellipse shape
+    const createPetalGeometry = () => {
+      const shape = new THREE.Shape();
+      shape.moveTo(0, 0);
+      shape.quadraticCurveTo(0.03, 0.04, 0.02, 0.08);
+      shape.quadraticCurveTo(0, 0.1, -0.02, 0.08);
+      shape.quadraticCurveTo(-0.03, 0.04, 0, 0);
+
+      const geom = new THREE.ShapeGeometry(shape);
+      return geom;
+    };
+
+    for (let i = 0; i < petalCount; i++) {
+      const petalGeom = createPetalGeometry();
+
+      // Pink hues with variation
+      const pinkHue = 340 + (Math.random() - 0.5) * 20;
+      const sat = 60 + Math.random() * 30;
+      const light = 70 + Math.random() * 20;
+
+      const petalMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(pinkHue, sat, light),
+        transparent: true,
+        opacity: 0.7 + Math.random() * 0.3,
+        side: THREE.DoubleSide
+      });
+
+      const petal = new THREE.Mesh(petalGeom, petalMat);
+
+      // Random starting position
+      petal.position.set(
+        (Math.random() - 0.5) * 8,
+        (Math.random() - 0.5) * 8 + 4,
+        (Math.random() - 0.5) * 4
+      );
+
+      // Random rotation
+      petal.rotation.set(
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2
+      );
+
+      // Store animation data
+      petal.userData = {
+        fallSpeed: 0.005 + Math.random() * 0.01,
+        swaySpeed: 0.5 + Math.random() * 0.5,
+        swayAmount: 0.02 + Math.random() * 0.02,
+        spinSpeed: 0.01 + Math.random() * 0.02,
+        phase: Math.random() * Math.PI * 2,
+        startX: petal.position.x
+      };
+
+      blossomGroup.add(petal);
+      petals.push(petal);
+    }
+
+    // Create a few branch silhouettes
+    const branchGroup = new THREE.Group();
+    scene.add(branchGroup);
+
+    const createBranch = (startX, startY, length, angle, depth) => {
+      if (depth > 4) return;
+
+      const endX = startX + Math.cos(angle) * length;
+      const endY = startY + Math.sin(angle) * length;
+
+      const points = [
+        new THREE.Vector3(startX, startY, -2),
+        new THREE.Vector3(endX, endY, -2)
+      ];
+      const branchGeom = new THREE.BufferGeometry().setFromPoints(points);
+      const branchMat = new THREE.LineBasicMaterial({
+        color: 0x3a2520,
+        transparent: true,
+        opacity: 0.4
+      });
+      const branch = new THREE.Line(branchGeom, branchMat);
+      branchGroup.add(branch);
+
+      // Sub-branches
+      if (depth < 4) {
+        const spread = 0.4 + Math.random() * 0.3;
+        createBranch(endX, endY, length * 0.7, angle + spread, depth + 1);
+        createBranch(endX, endY, length * 0.7, angle - spread, depth + 1);
+        if (Math.random() > 0.5) {
+          createBranch(endX, endY, length * 0.5, angle + (Math.random() - 0.5) * 0.5, depth + 1);
+        }
+      }
+    };
+
+    // Create branches from corners
+    createBranch(-4, 3, 1.5, -0.3, 0);
+    createBranch(4, 2.5, 1.5, Math.PI + 0.4, 0);
+    createBranch(-3.5, -3, 1.2, 0.5, 0);
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clockRef.current.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Direct touch response
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          blossomGroup.rotation.y += normalizedX * 0.02;
+          blossomGroup.rotation.x += normalizedY * 0.01;
+        }
+      } else {
+        blossomGroup.rotation.y += 0.0005;
+      }
+
+      // Animate petals falling
+      petals.forEach(petal => {
+        const data = petal.userData;
+
+        // Fall down
+        petal.position.y -= data.fallSpeed * (0.5 + breath * 0.5);
+
+        // Sway side to side
+        petal.position.x = data.startX + Math.sin(elapsed * data.swaySpeed + data.phase) * data.swayAmount * 50;
+
+        // Gentle forward/back drift
+        petal.position.z += Math.sin(elapsed * 0.3 + data.phase) * 0.002;
+
+        // Spin and tumble
+        petal.rotation.x += data.spinSpeed * 0.5;
+        petal.rotation.y += data.spinSpeed * 0.3;
+        petal.rotation.z += data.spinSpeed * 0.2;
+
+        // Reset when fallen below view
+        if (petal.position.y < -5) {
+          petal.position.y = 5 + Math.random() * 2;
+          petal.position.x = (Math.random() - 0.5) * 8;
+          petal.position.z = (Math.random() - 0.5) * 4;
+          data.startX = petal.position.x;
+        }
+
+        // Breath affects opacity
+        petal.material.opacity = 0.5 + breath * 0.4;
+      });
+
+      // Branches sway slightly
+      branchGroup.rotation.z = Math.sin(elapsed * 0.2) * 0.02;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      petals.forEach(p => { p.geometry.dispose(); p.material.dispose(); });
+      branchGroup.children.forEach(b => { b.geometry.dispose(); b.material.dispose(); });
       renderer.dispose();
     };
   }, [currentMode, hue, getBreathPhase]);
@@ -4967,12 +5175,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'dmt' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'gyroid' || currentMode === 'rossler') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'dmt' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'blossom' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'gyroid' || currentMode === 'rossler') && (
         <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       )}
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'dmt' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'gyroid' && currentMode !== 'rossler' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'dmt' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'blossom' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'gyroid' && currentMode !== 'rossler' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       )}
 
