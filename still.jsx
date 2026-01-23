@@ -1232,7 +1232,6 @@ const gazeModes = [
   { key: 'tree', name: 'Fractal Tree' },
   { key: 'fern', name: 'Fern' },
   { key: 'succulent', name: 'Succulent' },
-  { key: 'mycelium', name: 'Mycelium' },
   { key: 'dandelion', name: 'Dandelion' },
   { key: 'blossom', name: 'Cherry Blossom' },
   { key: 'lungs', name: 'Breath Tree' },
@@ -1240,7 +1239,6 @@ const gazeModes = [
   { key: 'jellyfish', name: 'Jellyfish 3D' },
   { key: 'jellyfish2d', name: 'Deep Sea' },
   { key: 'ink', name: 'Ink in Water' },
-  { key: 'nebula', name: 'Nebula' },
   { key: 'mushrooms', name: 'Mushrooms' },
   // Mathematical/Topological visuals
   { key: 'gyroid', name: 'Gyroid' },
@@ -2291,106 +2289,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(200, 220, 200, 0.8)';
       ctx.fill();
-
-      // Draw touch ripples
-      drawRipples(ctx);
-    };
-
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    animate();
-
-    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-    window.addEventListener('resize', handleResize);
-    return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode, getInteractionInfluence, drawRipples, hue]);
-
-  // ========== MYCELIUM NETWORK MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'mycelium' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    // Generate network nodes
-    const nodes = [];
-    const connections = [];
-    const nodeCount = 40;
-
-    for (let i = 0; i < nodeCount; i++) {
-      nodes.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        radius: 3 + Math.random() * 4,
-        phase: Math.random() * Math.PI * 2,
-      });
-    }
-
-    // Create connections between nearby nodes
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const dist = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
-        if (dist < 200) {
-          connections.push({ from: i, to: j, pulseOffset: Math.random() });
-        }
-      }
-    }
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw connections with traveling pulses
-      connections.forEach(conn => {
-        const from = nodes[conn.from];
-        const to = nodes[conn.to];
-
-        // Check touch influence on connection midpoint
-        const midX = (from.x + to.x) / 2;
-        const midY = (from.y + to.y) / 2;
-        const influence = getInteractionInfluence(midX, midY, 150);
-
-        ctx.strokeStyle = `hsla(${hue}, 52%, 68%, ${0.1 + breath * 0.1 + influence.strength * 0.3})`;
-        ctx.lineWidth = 0.5 + influence.strength * 1.5;
-        ctx.beginPath();
-        ctx.moveTo(from.x, from.y);
-        ctx.lineTo(to.x, to.y);
-        ctx.stroke();
-
-        // Traveling pulse - faster when touched
-        const pulseSpeed = 0.3 + influence.strength * 0.5;
-        const pulsePos = ((elapsed * pulseSpeed + conn.pulseOffset) % 1);
-        const px = from.x + (to.x - from.x) * pulsePos;
-        const py = from.y + (to.y - from.y) * pulsePos;
-
-        ctx.beginPath();
-        ctx.arc(px, py, 2 + influence.strength * 2, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(${hue}, 52%, 68%, ${0.5 + breath * 0.3 + influence.strength * 0.3})`;
-        ctx.fill();
-      });
-
-      // Draw nodes with touch glow
-      nodes.forEach(node => {
-        const influence = getInteractionInfluence(node.x, node.y, 120);
-        const pulse = Math.sin(elapsed * 2 + node.phase) * 0.3;
-        const radius = node.radius * (1 + pulse) * (0.8 + breath * 0.2) * (1 + influence.strength * 0.5);
-
-        const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, radius * 2);
-        gradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.6 + breath * 0.3 + influence.strength * 0.4})`);
-        gradient.addColorStop(1, `hsla(${hue}, 52%, 68%, 0)`);
-
-        ctx.beginPath();
-        ctx.arc(node.x + influence.x * 0.1, node.y + influence.y * 0.1, radius * 2, 0, Math.PI * 2);
-        ctx.fillStyle = gradient;
-        ctx.fill();
-      });
 
       // Draw touch ripples
       drawRipples(ctx);
@@ -3830,8 +3728,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         this.size = size;
         this.bellHeight = size * 0.6; // Slightly flattened dome
         this.pulsePhase = Math.random() * Math.PI * 2;
-        this.pulseSpeed = 0.008 + Math.random() * 0.004; // SLOW pulse
-        this.driftVelocity = { x: (Math.random() - 0.5) * 0.1, y: -0.02 - Math.random() * 0.015 }; // Gentle upward drift
+        this.pulseSpeed = 0.003 + Math.random() * 0.002; // Very slow pulse
+        this.driftVelocity = { x: (Math.random() - 0.5) * 0.02, y: -0.005 - Math.random() * 0.005 }; // Very gentle drift
         this.lastPulse = 0;
 
         this.glow = 0.6;
@@ -3877,10 +3775,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
         const pulse = Math.sin(this.pulsePhase);
 
-        // Gentle upward thrust on pulse peak
+        // Very gentle upward thrust on pulse peak
         if (pulse > 0.9 && this.lastPulse <= 0.9) {
-          this.driftVelocity.y -= 0.08 + Math.random() * 0.04;
-          this.driftVelocity.x += (Math.random() - 0.5) * 0.06;
+          this.driftVelocity.y -= 0.02 + Math.random() * 0.01;
+          this.driftVelocity.x += (Math.random() - 0.5) * 0.015;
         }
         this.lastPulse = pulse;
 
@@ -3889,9 +3787,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         this.position.y += this.driftVelocity.y;
 
         // High friction and very gentle buoyancy (rise)
-        this.driftVelocity.x *= 0.998;
-        this.driftVelocity.y *= 0.998;
-        this.driftVelocity.y -= 0.002; // Very gentle rise (buoyancy)
+        this.driftVelocity.x *= 0.995;
+        this.driftVelocity.y *= 0.995;
+        this.driftVelocity.y -= 0.0005; // Very gentle rise (buoyancy)
 
         // Boundaries - wrap from top to bottom (swimming upward)
         if (this.position.y < -this.size * 4) this.position.y = canvas.height + this.size * 3;
@@ -4051,8 +3949,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
 
       applyForce(fx, fy) {
-        this.driftVelocity.x += fx * 0.15;
-        this.driftVelocity.y += fy * 0.15;
+        this.driftVelocity.x += fx * 0.04;
+        this.driftVelocity.y += fy * 0.04;
         this.tentacles.forEach(t => t.applyForce(fx, fy, 0.4));
         this.oralArms.forEach(o => o.applyForce(fx, fy, 0.3));
       }
@@ -4132,8 +4030,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         } else if (dist < jelly.size * 3) {
           // Near - gently drift away
           const angle = Math.atan2(jelly.position.y - y, jelly.position.x - x);
-          jelly.applyForce(Math.cos(angle) * 0.12, Math.sin(angle) * 0.12);
-          jelly.pulseSpeed = 0.022;
+          jelly.applyForce(Math.cos(angle) * 0.03, Math.sin(angle) * 0.03);
+          jelly.pulseSpeed = 0.006;
         }
       });
 
@@ -4146,8 +4044,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       jellies.filter(j => j.following).forEach(jelly => {
         const dx = x - jelly.position.x;
         const dy = y - jelly.position.y;
-        jelly.driftVelocity.x += dx * 0.003;
-        jelly.driftVelocity.y += dy * 0.003;
+        jelly.driftVelocity.x += dx * 0.0008;
+        jelly.driftVelocity.y += dy * 0.0008;
       });
 
       // Update current direction - much gentler
@@ -4162,7 +4060,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const handleJellyEnd = () => {
       jellies.forEach(jelly => {
         jelly.following = false;
-        jelly.pulseSpeed = 0.018 + Math.random() * 0.008;
+        jelly.pulseSpeed = 0.003 + Math.random() * 0.002;
       });
       lastTouchPos = null;
     };
@@ -5718,125 +5616,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         ctx.fill();
       }
       ctx.globalCompositeOperation = 'source-over';
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, drawRipples]);
-
-  // ========== NEBULA MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'nebula' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    // Star particles
-    const stars = [];
-    for (let i = 0; i < 200; i++) {
-      stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 2 + 0.5,
-        twinkle: Math.random() * Math.PI * 2,
-        speed: Math.random() * 0.003 + 0.001,
-      });
-    }
-
-    // Nebula cloud layers
-    class NebulaCloud {
-      constructor(hue) {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.radius = 100 + Math.random() * 200;
-        this.hue = hue;
-        this.phase = Math.random() * Math.PI * 2;
-        this.rotationSpeed = (Math.random() - 0.5) * 0.0002;
-      }
-
-      draw(ctx, elapsed, breath, disturbX, disturbY) {
-        const x = this.x + Math.sin(elapsed * 0.1 + this.phase) * 20 + disturbX;
-        const y = this.y + Math.cos(elapsed * 0.15 + this.phase) * 15 + disturbY;
-        const r = this.radius * (0.9 + breath * 0.2);
-
-        const gradient = ctx.createRadialGradient(x, y, 0, x, y, r);
-        gradient.addColorStop(0, `hsla(${this.hue}, 70%, 50%, 0.15)`);
-        gradient.addColorStop(0.5, `hsla(${this.hue}, 60%, 40%, 0.08)`);
-        gradient.addColorStop(1, 'transparent');
-
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    const clouds = [];
-    const hues = [hue, hue + 15, hue - 15]; // Teal variations
-    for (let i = 0; i < 8; i++) {
-      clouds.push(new NebulaCloud(hues[i % hues.length]));
-    }
-
-    let disturbX = 0, disturbY = 0;
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const now = Date.now();
-      const elapsed = (now - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      // Dark space background
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw stars
-      stars.forEach(star => {
-        const twinkle = 0.5 + Math.sin(now * star.speed + star.twinkle) * 0.5;
-        ctx.fillStyle = `rgba(255, 255, 255, ${twinkle * 0.8})`;
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Touch disturbance
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          disturbX += (point.x - canvas.width / 2) * 0.01;
-          disturbY += (point.y - canvas.height / 2) * 0.01;
-        }
-      });
-      disturbX *= 0.95;
-      disturbY *= 0.95;
-
-      // Draw nebula clouds
-      ctx.globalCompositeOperation = 'screen';
-      clouds.forEach(cloud => cloud.draw(ctx, elapsed, breath, disturbX, disturbY));
-      ctx.globalCompositeOperation = 'source-over';
-
-      // Center glow
-      const glowGradient = ctx.createRadialGradient(
-        canvas.width / 2, canvas.height / 2, 0,
-        canvas.width / 2, canvas.height / 2, canvas.width * 0.4
-      );
-      glowGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.05 + breath * 0.03})`);
-      glowGradient.addColorStop(1, 'transparent');
-      ctx.fillStyle = glowGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       drawRipples(ctx);
     };
