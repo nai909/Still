@@ -1251,7 +1251,8 @@ const gazeModes = [
   { key: 'lungs', name: 'Breath Tree' },
   { key: 'ripples', name: 'Ripples' },
   { key: 'rain', name: 'Rain on Glass' },
-  { key: 'jellyfish', name: 'Jellyfish' },
+  { key: 'jellyfish', name: 'Jellyfish 3D' },
+  { key: 'jellyfish2d', name: 'Deep Sea' },
   { key: 'ink', name: 'Ink in Water' },
   { key: 'lava', name: 'Lava Lamp' },
   { key: 'aurora', name: 'Aurora' },
@@ -4150,11 +4151,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode]);
 
-  // ========== JELLYFISH MODE (LEGACY 2D - keeping for reference) ==========
-  // This is the original 2D canvas jellyfish - now replaced by Three.js version above
-  /*
+  // ========== DEEP SEA MODE (2D Jellyfish) ==========
   React.useEffect(() => {
-    if (currentMode !== 'jellyfish_2d' || !canvasRef.current) return;
+    if (currentMode !== 'jellyfish2d' || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -4876,7 +4875,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
   }, [currentMode, getInteractionInfluence, drawRipples]);
-  */
 
   // ========== INK IN WATER MODE ==========
   React.useEffect(() => {
