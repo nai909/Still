@@ -907,15 +907,6 @@ const themes = {
     cardBg: 'rgba(255,255,255,0.03)',
     border: 'rgba(255,255,255,0.1)',
   },
-  ink: {
-    name: 'Ink',
-    bg: '#000',
-    text: '#E8E4E0',       // Warm off-white
-    textMuted: '#5a5854',
-    accent: '#D0CCC4',
-    cardBg: 'rgba(255,248,240,0.02)',
-    border: 'rgba(255,248,240,0.06)',
-  },
 };
 
 const ThemeContext = createContext(themes.void);
@@ -1188,7 +1179,6 @@ const gazeModes = [
   { key: 'ripples', name: 'Ripples' },
   { key: 'jellyfish', name: 'Jellyfish 3D' },
   { key: 'jellyfish2d', name: 'Deep Sea' },
-  { key: 'ink', name: 'Ink in Water' },
   { key: 'mushrooms', name: 'Mushrooms' },
   { key: 'dmt', name: 'DMT Realm' },
   // Mathematical/Topological visuals
@@ -3875,218 +3865,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, getInteractionInfluence, drawRipples]);
 
-  // ========== INK IN WATER MODE (3D) ==========
-  React.useEffect(() => {
-    if (currentMode !== 'ink' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 5);
-    camera.lookAt(0, 0, 0);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
-    containerRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-    clockRef.current = new THREE.Clock();
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    const inkGroup = new THREE.Group();
-    scene.add(inkGroup);
-
-    // Ink cloud particles
-    const particleCount = 3000;
-    const positions = new Float32Array(particleCount * 3);
-    const colors = new Float32Array(particleCount * 3);
-    const velocities = new Float32Array(particleCount * 3);
-    const sizes = new Float32Array(particleCount);
-    const lifetimes = new Float32Array(particleCount);
-
-    // Initialize particles as inactive
-    for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = 0;
-      positions[i * 3 + 1] = 0;
-      positions[i * 3 + 2] = 0;
-      velocities[i * 3] = 0;
-      velocities[i * 3 + 1] = 0;
-      velocities[i * 3 + 2] = 0;
-      sizes[i] = 0;
-      lifetimes[i] = 0;
-      colors[i * 3] = 0.5;
-      colors[i * 3 + 1] = 0.86;
-      colors[i * 3 + 2] = 0.79;
-    }
-
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-    const material = new THREE.PointsMaterial({
-      size: 0.08,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.6,
-      blending: THREE.AdditiveBlending,
-      sizeAttenuation: true
-    });
-
-    const particles = new THREE.Points(geometry, material);
-    inkGroup.add(particles);
-
-    let nextParticle = 0;
-    let lastDropTime = 0;
-
-    // Spawn ink drop
-    const spawnInkDrop = (x, y, z, count = 50) => {
-      const hueShift = (Math.random() - 0.5) * 30;
-      const h = (hue + hueShift + 360) % 360;
-      const rgb = {
-        r: 0, g: 0, b: 0
-      };
-      // Convert hue to RGB
-      const c = 0.6;
-      const xVal = c * (1 - Math.abs((h / 60) % 2 - 1));
-      if (h < 60) { rgb.r = c; rgb.g = xVal; }
-      else if (h < 120) { rgb.r = xVal; rgb.g = c; }
-      else if (h < 180) { rgb.g = c; rgb.b = xVal; }
-      else if (h < 240) { rgb.g = xVal; rgb.b = c; }
-      else if (h < 300) { rgb.r = xVal; rgb.b = c; }
-      else { rgb.r = c; rgb.b = xVal; }
-      rgb.r += 0.3; rgb.g += 0.3; rgb.b += 0.3;
-
-      for (let i = 0; i < count; i++) {
-        const idx = nextParticle;
-        nextParticle = (nextParticle + 1) % particleCount;
-
-        positions[idx * 3] = x + (Math.random() - 0.5) * 0.3;
-        positions[idx * 3 + 1] = y + (Math.random() - 0.5) * 0.3;
-        positions[idx * 3 + 2] = z + (Math.random() - 0.5) * 0.3;
-
-        const angle = Math.random() * Math.PI * 2;
-        const spread = 0.02 + Math.random() * 0.03;
-        velocities[idx * 3] = Math.cos(angle) * spread;
-        velocities[idx * 3 + 1] = -0.005 - Math.random() * 0.01; // Sink slowly
-        velocities[idx * 3 + 2] = Math.sin(angle) * spread;
-
-        colors[idx * 3] = rgb.r;
-        colors[idx * 3 + 1] = rgb.g;
-        colors[idx * 3 + 2] = rgb.b;
-
-        sizes[idx] = 0.05 + Math.random() * 0.1;
-        lifetimes[idx] = 1.0;
-      }
-    };
-
-    // Initial ink drops
-    spawnInkDrop(0, 0.5, 0, 100);
-    spawnInkDrop(-0.5, 0, 0, 80);
-    spawnInkDrop(0.5, -0.3, 0, 80);
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clockRef.current.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
-
-      // Auto-drop ink periodically
-      if (elapsed - lastDropTime > 4) {
-        const x = (Math.random() - 0.5) * 2;
-        const y = (Math.random() - 0.5) * 2;
-        spawnInkDrop(x, y, (Math.random() - 0.5) * 0.5, 60);
-        lastDropTime = elapsed;
-      }
-
-      // Touch creates ink drops
-      touchPointsRef.current.forEach(point => {
-        if (point.active && !point.inkDropped3d) {
-          const x = (point.x / window.innerWidth - 0.5) * 4;
-          const y = -(point.y / window.innerHeight - 0.5) * 4;
-          spawnInkDrop(x, y, 0, 80);
-          point.inkDropped3d = true;
-        }
-      });
-
-      // Direct touch response like Torus
-      if (touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          inkGroup.rotation.y += normalizedX * 0.02;
-          inkGroup.rotation.x += normalizedY * 0.01;
-        }
-      } else {
-        inkGroup.rotation.y += 0.001;
-      }
-
-      // Breath affects particle movement
-      const breathForce = (breath - 0.5) * 0.002;
-
-      // Update particles
-      for (let i = 0; i < particleCount; i++) {
-        if (lifetimes[i] > 0) {
-          // Apply velocity with diffusion
-          positions[i * 3] += velocities[i * 3];
-          positions[i * 3 + 1] += velocities[i * 3 + 1];
-          positions[i * 3 + 2] += velocities[i * 3 + 2];
-
-          // Breath push/pull from center
-          const dx = positions[i * 3];
-          const dy = positions[i * 3 + 1];
-          const dz = positions[i * 3 + 2];
-          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.01;
-          positions[i * 3] += (dx / dist) * breathForce;
-          positions[i * 3 + 1] += (dy / dist) * breathForce;
-          positions[i * 3 + 2] += (dz / dist) * breathForce;
-
-          // Slow diffusion
-          velocities[i * 3] *= 0.995;
-          velocities[i * 3 + 1] *= 0.995;
-          velocities[i * 3 + 2] *= 0.995;
-
-          // Add slight random drift
-          velocities[i * 3] += (Math.random() - 0.5) * 0.001;
-          velocities[i * 3 + 2] += (Math.random() - 0.5) * 0.001;
-
-          // Decay lifetime
-          lifetimes[i] -= 0.001;
-          sizes[i] = lifetimes[i] * 0.15;
-        }
-      }
-
-      geometry.attributes.position.needsUpdate = true;
-      geometry.attributes.color.needsUpdate = true;
-      geometry.attributes.size.needsUpdate = true;
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      geometry.dispose();
-      material.dispose();
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
-
   // ========== MUSHROOMS MODE (3D with Torus-style touch mechanics) ==========
   React.useEffect(() => {
     if (currentMode !== 'mushrooms' || !containerRef.current || typeof THREE === 'undefined') return;
@@ -5189,12 +4967,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'dmt' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'ink' || currentMode === 'gyroid' || currentMode === 'rossler') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'dmt' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'gyroid' || currentMode === 'rossler') && (
         <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       )}
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'dmt' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'ink' && currentMode !== 'gyroid' && currentMode !== 'rossler' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'dmt' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'gyroid' && currentMode !== 'rossler' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       )}
 
