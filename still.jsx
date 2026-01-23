@@ -3614,19 +3614,17 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     let breathPhase = 'exhale';
     let breathProgress = 1.0;
     let isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let lastInteractionTime = 0;
+    let lastInteractionTime = Date.now();
     let isAutoRotating = false;
     let mousePos = new THREE.Vector2();
     let mouse3D = new THREE.Vector3();
     const raycaster = new THREE.Raycaster();
     const clock = new THREE.Clock();
     let bellFlashIntensity = 0;
-    let bloomStrength = 0.4;
 
     // === SCENE SETUP ===
     const scene = new THREE.Scene();
     scene.background = COLORS.background;
-    scene.fog = new THREE.FogExp2(0x000000, 0.015);
 
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(0, 0, 5);
@@ -3634,70 +3632,24 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
-      alpha: true,
-      powerPreference: 'high-performance'
+      alpha: true
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.outputEncoding = THREE.sRGBEncoding;
     containerRef.current.appendChild(renderer.domElement);
 
     // === ORBIT CONTROLS ===
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.minDistance = 0.3;
-    controls.maxDistance = 15;
-    controls.enablePan = true;
-    controls.autoRotate = false;
-    controls.autoRotateSpeed = 0.3;
-
-    // === POST-PROCESSING ===
-    const composer = new THREE.EffectComposer(renderer);
-    const renderPass = new THREE.RenderPass(scene, camera);
-    composer.addPass(renderPass);
-
-    const bloomPass = new THREE.UnrealBloomPass(
-      new THREE.Vector2(window.innerWidth, window.innerHeight),
-      0.6, 0.5, 0.3
-    );
-    composer.addPass(bloomPass);
-
-    // FXAA
-    const fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
-    fxaaPass.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
-    composer.addPass(fxaaPass);
-
-    // Vignette shader
-    const vignetteShader = {
-      uniforms: {
-        tDiffuse: { value: null },
-        darkness: { value: 0.4 },
-        offset: { value: 0.5 }
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform sampler2D tDiffuse;
-        uniform float darkness;
-        uniform float offset;
-        varying vec2 vUv;
-        void main() {
-          vec4 color = texture2D(tDiffuse, vUv);
-          vec2 uv = (vUv - vec2(0.5)) * 2.0;
-          float vignette = 1.0 - smoothstep(offset, offset + 0.5, length(uv));
-          color.rgb *= mix(1.0 - darkness, 1.0, vignette);
-          gl_FragColor = color;
-        }
-      `
-    };
-    const vignettePass = new THREE.ShaderPass(vignetteShader);
-    composer.addPass(vignettePass);
+    let controls = null;
+    if (THREE.OrbitControls) {
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+      controls.minDistance = 1;
+      controls.maxDistance = 15;
+      controls.enablePan = true;
+      controls.autoRotate = false;
+      controls.autoRotateSpeed = 0.3;
+    }
 
     // === JELLYFISH GROUP ===
     const jellyfishGroup = new THREE.Group();
@@ -3936,9 +3888,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         bell.material.color.lerp(COLORS.accent, bellFlashIntensity);
       }
 
-      // Update bloom
-      bloomPass.strength = bloomStrength;
-
       // Tentacle animation
       const tentacleDelay = 0.3;
       const delayedProgress = Math.max(0, breathProgress - tentacleDelay);
@@ -4135,8 +4084,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-      composer.setSize(window.innerWidth, window.innerHeight);
-      fxaaPass.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
     };
 
     // === ANIMATION LOOP ===
@@ -4158,8 +4105,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
 
       updateJellyfish(deltaTime, elapsed);
-      controls.update();
-      composer.render();
+      if (controls) controls.update();
+      renderer.render(scene, camera);
     };
 
     // === EVENT LISTENERS ===
@@ -4199,7 +4146,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       particles.geometry.dispose();
       particles.material.dispose();
 
-      composer.dispose();
+      if (controls) controls.dispose();
       renderer.dispose();
 
       if (containerRef.current && renderer.domElement.parentNode === containerRef.current) {
