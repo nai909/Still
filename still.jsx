@@ -3849,9 +3849,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     scene.add(mushroomGroup);
 
     // Create central large mushroom
-    const createMushroom = (x, z, scale, hueOffset) => {
+    const createMushroom = (x, z, scale) => {
       const mushroom = new THREE.Group();
-      const mushroomHue = (hue + hueOffset) % 360;
 
       // Stem - tapered cylinder using lathe geometry
       const stemPoints = [];
@@ -3862,7 +3861,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
       const stemGeom = new THREE.LatheGeometry(stemPoints, 16);
       const stemMat = new THREE.MeshBasicMaterial({
-        color: 0x888877,
+        color: hslToHex(hue, 20, 40),
         transparent: true,
         opacity: 0.6,
         wireframe: true
@@ -3873,7 +3872,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Cap - half sphere with spots
       const capGeom = new THREE.SphereGeometry(0.5 * scale, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.6);
       const capMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(mushroomHue, 60, 50),
+        color: hslToHex(hue, 60, 50),
         transparent: true,
         opacity: 0.7,
         wireframe: true
@@ -3890,7 +3889,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         const phi = 0.3 + Math.random() * 0.4;
         const spotGeom = new THREE.SphereGeometry(0.05 * scale, 8, 8);
         const spotMat = new THREE.MeshBasicMaterial({
-          color: hslToHex(mushroomHue, 80, 70),
+          color: hslToHex(hue, 80, 70),
           transparent: true,
           opacity: 0.8
         });
@@ -3907,7 +3906,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Gills under cap
       const gillsGeom = new THREE.ConeGeometry(0.45 * scale, 0.2 * scale, 24, 1, true);
       const gillsMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(mushroomHue, 40, 40),
+        color: hslToHex(hue, 40, 35),
         transparent: true,
         opacity: 0.5,
         side: THREE.DoubleSide,
@@ -3930,12 +3929,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     // Create multiple mushrooms in a cluster
     const mushrooms = [];
-    mushrooms.push(createMushroom(0, 0, 1.2, 0)); // Central large one
-    mushrooms.push(createMushroom(-1.5, 0.5, 0.7, 15));
-    mushrooms.push(createMushroom(1.3, 0.3, 0.8, -10));
-    mushrooms.push(createMushroom(-0.8, -1.2, 0.6, 25));
-    mushrooms.push(createMushroom(1.0, -0.8, 0.65, -20));
-    mushrooms.push(createMushroom(0.3, 1.5, 0.5, 30));
+    mushrooms.push(createMushroom(0, 0, 1.2)); // Central large one
+    mushrooms.push(createMushroom(-1.5, 0.5, 0.7));
+    mushrooms.push(createMushroom(1.3, 0.3, 0.8));
+    mushrooms.push(createMushroom(-0.8, -1.2, 0.6));
+    mushrooms.push(createMushroom(1.0, -0.8, 0.65));
+    mushrooms.push(createMushroom(0.3, 1.5, 0.5));
 
     mushrooms.forEach(m => mushroomGroup.add(m));
 
@@ -4117,7 +4116,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // Outer icosahedron
     const outerGeom = new THREE.IcosahedronGeometry(2, 1);
     const outerMat = new THREE.MeshBasicMaterial({
-      color: hslToHex(hue, 60, 50),
+      color: hslToHex(hue, 50, 40),
       wireframe: true,
       transparent: true,
       opacity: 0.4
@@ -4128,7 +4127,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // Middle dodecahedron
     const midGeom = new THREE.DodecahedronGeometry(1.4, 0);
     const midMat = new THREE.MeshBasicMaterial({
-      color: hslToHex((hue + 60) % 360, 70, 55),
+      color: hslToHex(hue, 55, 48),
       wireframe: true,
       transparent: true,
       opacity: 0.5
@@ -4139,7 +4138,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // Inner octahedron
     const innerGeom = new THREE.OctahedronGeometry(0.8, 0);
     const innerMat = new THREE.MeshBasicMaterial({
-      color: hslToHex((hue + 120) % 360, 80, 60),
+      color: hslToHex(hue, 60, 55),
       wireframe: true,
       transparent: true,
       opacity: 0.6
@@ -4150,7 +4149,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // Core tetrahedron
     const coreGeom = new THREE.TetrahedronGeometry(0.4, 0);
     const coreMat = new THREE.MeshBasicMaterial({
-      color: hslToHex((hue + 180) % 360, 90, 65),
+      color: hslToHex(hue, 70, 65),
       wireframe: true,
       transparent: true,
       opacity: 0.8
@@ -4165,7 +4164,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const angle = (i / armCount) * Math.PI * 2;
       const armGeom = new THREE.TorusKnotGeometry(0.3, 0.08, 64, 8, 2, 3);
       const armMat = new THREE.MeshBasicMaterial({
-        color: hslToHex((hue + i * 30) % 360, 70, 55),
+        color: hslToHex(hue, 60, 55),
         wireframe: true,
         transparent: true,
         opacity: 0.5
@@ -4186,7 +4185,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Eye outer ring
       const ringGeom = new THREE.TorusGeometry(0.15, 0.02, 8, 24);
       const ringMat = new THREE.MeshBasicMaterial({
-        color: hslToHex((hue + i * 25) % 360, 60, 60),
+        color: hslToHex(hue, 60, 60),
         transparent: true,
         opacity: 0.7
       });
@@ -4206,7 +4205,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Inner light
       const lightGeom = new THREE.SphereGeometry(0.03, 8, 8);
       const lightMat = new THREE.MeshBasicMaterial({
-        color: hslToHex((hue + i * 25) % 360, 80, 80),
+        color: hslToHex(hue, 80, 80),
         transparent: true,
         opacity: 0.9
       });
@@ -4243,7 +4242,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       particlePositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
       particlePositions[i * 3 + 2] = r * Math.cos(phi);
 
-      const colorHue = (hue + i * 0.5) % 360;
+      const colorHue = hue;
       const rgb = new THREE.Color().setHSL(colorHue / 360, 0.7, 0.6);
       particleColors[i * 3] = rgb.r;
       particleColors[i * 3 + 1] = rgb.g;
