@@ -1190,6 +1190,7 @@ const gazeModes = [
   { key: 'jellyfish2d', name: 'Deep Sea' },
   { key: 'ink', name: 'Ink in Water' },
   { key: 'mushrooms', name: 'Mushrooms' },
+  { key: 'dmt', name: 'DMT Realm' },
   // Mathematical/Topological visuals
   { key: 'gyroid', name: 'Gyroid' },
   { key: 'rossler', name: 'Rössler Attractor' },
@@ -3817,182 +3818,608 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, getInteractionInfluence, drawRipples]);
 
-  // ========== MUSHROOMS MODE ==========
+  // ========== MUSHROOMS MODE (3D with Torus-style touch mechanics) ==========
   React.useEffect(() => {
-    if (currentMode !== 'mushrooms' || !canvasRef.current) return;
+    if (currentMode !== 'mushrooms' || !containerRef.current || typeof THREE === 'undefined') return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1, 6);
+    camera.lookAt(0, 0.5, 0);
 
-    // Mushroom class
-    class Mushroom {
-      constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.capRadius = 20 + Math.random() * 25;
-        this.stemHeight = 25 + Math.random() * 20;
-        this.stemWidth = 8 + Math.random() * 6;
-        this.hue = hue + (Math.random() - 0.5) * 20; // Teal with variation
-        this.phase = Math.random() * Math.PI * 2;
-        this.pulseSpeed = 0.5 + Math.random() * 0.5;
-        this.spores = [];
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    // HSL to hex for THREE.js
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Create mushroom group
+    const mushroomGroup = new THREE.Group();
+    scene.add(mushroomGroup);
+
+    // Create central large mushroom
+    const createMushroom = (x, z, scale, hueOffset) => {
+      const mushroom = new THREE.Group();
+      const mushroomHue = (hue + hueOffset) % 360;
+
+      // Stem - tapered cylinder using lathe geometry
+      const stemPoints = [];
+      for (let i = 0; i <= 10; i++) {
+        const t = i / 10;
+        const radius = 0.12 + Math.sin(t * Math.PI) * 0.03;
+        stemPoints.push(new THREE.Vector2(radius * scale, t * 1.2 * scale));
       }
+      const stemGeom = new THREE.LatheGeometry(stemPoints, 16);
+      const stemMat = new THREE.MeshBasicMaterial({
+        color: 0x888877,
+        transparent: true,
+        opacity: 0.6,
+        wireframe: true
+      });
+      const stem = new THREE.Mesh(stemGeom, stemMat);
+      mushroom.add(stem);
 
-      addSpores() {
-        for (let i = 0; i < 8; i++) {
-          this.spores.push({
-            x: this.x,
-            y: this.y - this.stemHeight - this.capRadius * 0.5,
-            vx: (Math.random() - 0.5) * 2,
-            vy: -1 - Math.random() * 2,
-            size: 2 + Math.random() * 3,
-            life: 1,
-          });
-        }
-      }
+      // Cap - half sphere with spots
+      const capGeom = new THREE.SphereGeometry(0.5 * scale, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.6);
+      const capMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(mushroomHue, 60, 50),
+        transparent: true,
+        opacity: 0.7,
+        wireframe: true
+      });
+      const cap = new THREE.Mesh(capGeom, capMat);
+      cap.position.y = 1.2 * scale;
+      cap.rotation.x = Math.PI;
+      mushroom.add(cap);
 
-      update(elapsed) {
-        // Update spores
-        this.spores = this.spores.filter(spore => {
-          spore.x += spore.vx;
-          spore.y += spore.vy;
-          spore.vy -= 0.01;
-          spore.life -= 0.01;
-          return spore.life > 0;
+      // Bioluminescent spots on cap
+      const spotCount = 8;
+      for (let i = 0; i < spotCount; i++) {
+        const theta = (i / spotCount) * Math.PI * 2;
+        const phi = 0.3 + Math.random() * 0.4;
+        const spotGeom = new THREE.SphereGeometry(0.05 * scale, 8, 8);
+        const spotMat = new THREE.MeshBasicMaterial({
+          color: hslToHex(mushroomHue, 80, 70),
+          transparent: true,
+          opacity: 0.8
         });
+        const spot = new THREE.Mesh(spotGeom, spotMat);
+        spot.position.set(
+          Math.sin(phi) * Math.cos(theta) * 0.4 * scale,
+          1.2 * scale - Math.cos(phi) * 0.35 * scale,
+          Math.sin(phi) * Math.sin(theta) * 0.4 * scale
+        );
+        spot.userData = { phase: Math.random() * Math.PI * 2 };
+        mushroom.add(spot);
       }
 
-      draw(ctx, elapsed, breath) {
-        const pulse = 0.5 + Math.sin(elapsed * this.pulseSpeed + this.phase) * 0.5;
-        const glowIntensity = 0.3 + pulse * 0.4 + breath * 0.2;
+      // Gills under cap
+      const gillsGeom = new THREE.ConeGeometry(0.45 * scale, 0.2 * scale, 24, 1, true);
+      const gillsMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(mushroomHue, 40, 40),
+        transparent: true,
+        opacity: 0.5,
+        side: THREE.DoubleSide,
+        wireframe: true
+      });
+      const gills = new THREE.Mesh(gillsGeom, gillsMat);
+      gills.position.y = 1.1 * scale;
+      gills.rotation.x = Math.PI;
+      mushroom.add(gills);
 
-        // Stem
-        ctx.fillStyle = PALETTE.gray;
-        ctx.beginPath();
-        ctx.moveTo(this.x - this.stemWidth / 2, this.y);
-        ctx.lineTo(this.x - this.stemWidth / 3, this.y - this.stemHeight);
-        ctx.lineTo(this.x + this.stemWidth / 3, this.y - this.stemHeight);
-        ctx.lineTo(this.x + this.stemWidth / 2, this.y);
-        ctx.closePath();
-        ctx.fill();
+      mushroom.position.set(x, 0, z);
+      mushroom.userData = {
+        baseY: 0,
+        phase: Math.random() * Math.PI * 2,
+        rotationSpeed: 0.001 + Math.random() * 0.002
+      };
 
-        // Cap glow
-        const glowGradient = ctx.createRadialGradient(
-          this.x, this.y - this.stemHeight, 0,
-          this.x, this.y - this.stemHeight, this.capRadius * 2
-        );
-        glowGradient.addColorStop(0, `hsla(${this.hue}, 70%, 50%, ${glowIntensity * 0.5})`);
-        glowGradient.addColorStop(0.5, `hsla(${this.hue}, 60%, 40%, ${glowIntensity * 0.2})`);
-        glowGradient.addColorStop(1, 'transparent');
-        ctx.fillStyle = glowGradient;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y - this.stemHeight, this.capRadius * 2, 0, Math.PI * 2);
-        ctx.fill();
+      return mushroom;
+    };
 
-        // Cap
-        const capGradient = ctx.createRadialGradient(
-          this.x - this.capRadius * 0.3, this.y - this.stemHeight - this.capRadius * 0.3, 0,
-          this.x, this.y - this.stemHeight, this.capRadius
-        );
-        capGradient.addColorStop(0, `hsla(${this.hue}, 70%, 60%, 0.9)`);
-        capGradient.addColorStop(0.7, `hsla(${this.hue}, 60%, 45%, 0.8)`);
-        capGradient.addColorStop(1, `hsla(${this.hue}, 50%, 35%, 0.7)`);
-        ctx.fillStyle = capGradient;
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y - this.stemHeight, this.capRadius, this.capRadius * 0.6, 0, Math.PI, Math.PI * 2);
-        ctx.fill();
-
-        // Spots on cap
-        for (let i = 0; i < 5; i++) {
-          const spotAngle = (i / 5) * Math.PI + 0.3;
-          const spotDist = this.capRadius * 0.5;
-          const spotX = this.x + Math.cos(spotAngle) * spotDist;
-          const spotY = this.y - this.stemHeight - Math.sin(spotAngle) * spotDist * 0.5;
-          ctx.fillStyle = `hsla(${this.hue}, 80%, 70%, ${0.5 + pulse * 0.3})`;
-          ctx.beginPath();
-          ctx.arc(spotX, spotY, 3 + Math.random() * 2, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // Draw spores
-        this.spores.forEach(spore => {
-          ctx.fillStyle = `hsla(${this.hue}, 60%, 60%, ${spore.life * 0.6})`;
-          ctx.beginPath();
-          ctx.arc(spore.x, spore.y, spore.size * spore.life, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      }
-    }
-
-    // Initialize mushrooms
+    // Create multiple mushrooms in a cluster
     const mushrooms = [];
-    for (let i = 0; i < 8; i++) {
-      mushrooms.push(new Mushroom(
-        canvas.width * 0.15 + (i / 8) * canvas.width * 0.7 + (Math.random() - 0.5) * 50,
-        canvas.height * 0.7 + Math.random() * canvas.height * 0.15
-      ));
+    mushrooms.push(createMushroom(0, 0, 1.2, 0)); // Central large one
+    mushrooms.push(createMushroom(-1.5, 0.5, 0.7, 15));
+    mushrooms.push(createMushroom(1.3, 0.3, 0.8, -10));
+    mushrooms.push(createMushroom(-0.8, -1.2, 0.6, 25));
+    mushrooms.push(createMushroom(1.0, -0.8, 0.65, -20));
+    mushrooms.push(createMushroom(0.3, 1.5, 0.5, 30));
+
+    mushrooms.forEach(m => mushroomGroup.add(m));
+
+    // Spores particle system
+    const sporeCount = 200;
+    const sporeGeom = new THREE.BufferGeometry();
+    const sporePositions = new Float32Array(sporeCount * 3);
+    const sporeSizes = new Float32Array(sporeCount);
+    const sporePhases = new Float32Array(sporeCount);
+
+    for (let i = 0; i < sporeCount; i++) {
+      sporePositions[i * 3] = (Math.random() - 0.5) * 6;
+      sporePositions[i * 3 + 1] = Math.random() * 4;
+      sporePositions[i * 3 + 2] = (Math.random() - 0.5) * 6;
+      sporeSizes[i] = 0.02 + Math.random() * 0.03;
+      sporePhases[i] = Math.random() * Math.PI * 2;
     }
+    sporeGeom.setAttribute('position', new THREE.BufferAttribute(sporePositions, 3));
+
+    const sporeMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 60, 60),
+      size: 0.05,
+      transparent: true,
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending
+    });
+    const spores = new THREE.Points(sporeGeom, sporeMat);
+    scene.add(spores);
+
+    // Touch interaction state
+    let targetRotationY = 0;
+    let targetRotationX = 0;
+    let currentRotationY = 0;
+    let currentRotationX = 0;
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
-      const now = Date.now();
-      const elapsed = (now - startTime) / 1000;
+      const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Forest floor background
-      const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      bgGradient.addColorStop(0, '#000');
-      bgGradient.addColorStop(0.6, '#000');
-      bgGradient.addColorStop(1, '#15181d');
-      ctx.fillStyle = bgGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Ground texture
-      ctx.fillStyle = 'rgba(60, 55, 50, 0.3)';
-      for (let x = 0; x < canvas.width; x += 30) {
-        const y = canvas.height * 0.75 + Math.sin(x * 0.05) * 20;
-        ctx.beginPath();
-        ctx.ellipse(x, y, 20, 8, 0, 0, Math.PI * 2);
-        ctx.fill();
+      // Touch influence - rotate entire mushroom cluster toward touch points
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          targetRotationY = normalizedX * 0.5;
+          targetRotationX = normalizedY * 0.3;
+        }
+      } else {
+        // Gentle auto-rotation when not touching
+        targetRotationY = Math.sin(elapsed * 0.1) * 0.2;
+        targetRotationX = 0;
       }
 
-      // Touch to release spores
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          mushrooms.forEach(m => {
-            const dist = Math.sqrt((point.x - m.x) ** 2 + (point.y - (m.y - m.stemHeight)) ** 2);
-            if (dist < m.capRadius + 30 && m.spores.length < 20) {
-              m.addSpores();
-            }
-          });
+      // Smooth interpolation
+      currentRotationY += (targetRotationY - currentRotationY) * 0.05;
+      currentRotationX += (targetRotationX - currentRotationX) * 0.05;
+
+      mushroomGroup.rotation.y = currentRotationY;
+      mushroomGroup.rotation.x = currentRotationX * 0.5;
+
+      // Animate individual mushrooms
+      mushrooms.forEach((mushroom, idx) => {
+        // Breathing scale
+        const breathScale = 0.9 + breath * 0.15;
+        mushroom.scale.setScalar(breathScale);
+
+        // Gentle bob
+        mushroom.position.y = mushroom.userData.baseY + Math.sin(elapsed * 0.5 + mushroom.userData.phase) * 0.05;
+
+        // Rotate cap slightly
+        const cap = mushroom.children[1];
+        if (cap) {
+          cap.rotation.y = elapsed * mushroom.userData.rotationSpeed * 10;
         }
+
+        // Pulse spots
+        mushroom.children.forEach(child => {
+          if (child.userData && child.userData.phase !== undefined) {
+            const pulse = 0.5 + Math.sin(elapsed * 2 + child.userData.phase) * 0.5;
+            child.material.opacity = 0.4 + pulse * 0.6 + breath * 0.2;
+          }
+        });
       });
 
-      // Update and draw mushrooms
-      mushrooms.forEach(m => {
-        m.update(elapsed);
-        m.draw(ctx, elapsed, breath);
-      });
+      // Animate spores floating upward
+      const positions = sporeGeom.attributes.position.array;
+      for (let i = 0; i < sporeCount; i++) {
+        const idx = i * 3;
+        positions[idx + 1] += 0.005 + Math.sin(elapsed + sporePhases[i]) * 0.002;
+        positions[idx] += Math.sin(elapsed * 0.5 + sporePhases[i]) * 0.002;
+        positions[idx + 2] += Math.cos(elapsed * 0.5 + sporePhases[i]) * 0.002;
 
-      drawRipples(ctx);
+        // Touch influence on spores
+        touchPointsRef.current.forEach(point => {
+          if (point.active) {
+            const screenX = (point.x / window.innerWidth - 0.5) * 8;
+            const screenY = -(point.y / window.innerHeight - 0.5) * 6;
+            const dx = positions[idx] - screenX;
+            const dz = positions[idx + 2];
+            const dist = Math.sqrt(dx * dx + dz * dz);
+            if (dist < 2) {
+              positions[idx] += dx * 0.02;
+              positions[idx + 1] += 0.02;
+              positions[idx + 2] += dz * 0.02;
+            }
+          }
+        });
+
+        // Reset spores that float too high
+        if (positions[idx + 1] > 5) {
+          positions[idx + 1] = -0.5;
+          positions[idx] = (Math.random() - 0.5) * 6;
+          positions[idx + 2] = (Math.random() - 0.5) * 6;
+        }
+      }
+      sporeGeom.attributes.position.needsUpdate = true;
+      sporeMat.opacity = 0.3 + breath * 0.4;
+
+      renderer.render(scene, camera);
     };
-
     animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      // Dispose geometries and materials
+      mushrooms.forEach(m => {
+        m.children.forEach(child => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+        });
+      });
+      sporeGeom.dispose();
+      sporeMat.dispose();
+      renderer.dispose();
     };
-  }, [currentMode, drawRipples]);
+  }, [currentMode, hue]);
+
+  // ========== DMT REALM MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'dmt' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Central entity - nested geometric forms
+    const entityGroup = new THREE.Group();
+    scene.add(entityGroup);
+
+    // Outer icosahedron
+    const outerGeom = new THREE.IcosahedronGeometry(2, 1);
+    const outerMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 60, 50),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.4
+    });
+    const outer = new THREE.Mesh(outerGeom, outerMat);
+    entityGroup.add(outer);
+
+    // Middle dodecahedron
+    const midGeom = new THREE.DodecahedronGeometry(1.4, 0);
+    const midMat = new THREE.MeshBasicMaterial({
+      color: hslToHex((hue + 60) % 360, 70, 55),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.5
+    });
+    const mid = new THREE.Mesh(midGeom, midMat);
+    entityGroup.add(mid);
+
+    // Inner octahedron
+    const innerGeom = new THREE.OctahedronGeometry(0.8, 0);
+    const innerMat = new THREE.MeshBasicMaterial({
+      color: hslToHex((hue + 120) % 360, 80, 60),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.6
+    });
+    const inner = new THREE.Mesh(innerGeom, innerMat);
+    entityGroup.add(inner);
+
+    // Core tetrahedron
+    const coreGeom = new THREE.TetrahedronGeometry(0.4, 0);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: hslToHex((hue + 180) % 360, 90, 65),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.8
+    });
+    const core = new THREE.Mesh(coreGeom, coreMat);
+    entityGroup.add(core);
+
+    // Fractal arms - spiraling torus knots
+    const arms = [];
+    const armCount = 6;
+    for (let i = 0; i < armCount; i++) {
+      const angle = (i / armCount) * Math.PI * 2;
+      const armGeom = new THREE.TorusKnotGeometry(0.3, 0.08, 64, 8, 2, 3);
+      const armMat = new THREE.MeshBasicMaterial({
+        color: hslToHex((hue + i * 30) % 360, 70, 55),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.5
+      });
+      const arm = new THREE.Mesh(armGeom, armMat);
+      arm.position.set(Math.cos(angle) * 2.5, Math.sin(angle) * 2.5, 0);
+      arm.userData = { angle, phase: i * Math.PI / 3 };
+      entityGroup.add(arm);
+      arms.push(arm);
+    }
+
+    // Orbiting eyes/entities
+    const eyes = [];
+    const eyeCount = 12;
+    for (let i = 0; i < eyeCount; i++) {
+      const eyeGroup = new THREE.Group();
+
+      // Eye outer ring
+      const ringGeom = new THREE.TorusGeometry(0.15, 0.02, 8, 24);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: hslToHex((hue + i * 25) % 360, 60, 60),
+        transparent: true,
+        opacity: 0.7
+      });
+      const ring = new THREE.Mesh(ringGeom, ringMat);
+      eyeGroup.add(ring);
+
+      // Eye pupil
+      const pupilGeom = new THREE.SphereGeometry(0.08, 12, 12);
+      const pupilMat = new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.9
+      });
+      const pupil = new THREE.Mesh(pupilGeom, pupilMat);
+      eyeGroup.add(pupil);
+
+      // Inner light
+      const lightGeom = new THREE.SphereGeometry(0.03, 8, 8);
+      const lightMat = new THREE.MeshBasicMaterial({
+        color: hslToHex((hue + i * 25) % 360, 80, 80),
+        transparent: true,
+        opacity: 0.9
+      });
+      const light = new THREE.Mesh(lightGeom, lightMat);
+      light.position.set(0.02, 0.02, 0.05);
+      eyeGroup.add(light);
+
+      const theta = Math.acos(2 * (i / eyeCount) - 1);
+      const phi = i * Math.PI * (3 - Math.sqrt(5));
+
+      eyeGroup.userData = {
+        orbitRadius: 3.5 + Math.random() * 0.5,
+        theta,
+        phi,
+        speed: 0.2 + Math.random() * 0.3,
+        phase: Math.random() * Math.PI * 2
+      };
+
+      scene.add(eyeGroup);
+      eyes.push(eyeGroup);
+    }
+
+    // Kaleidoscopic particle field
+    const particleCount = 500;
+    const particleGeom = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleColors = new Float32Array(particleCount * 3);
+
+    for (let i = 0; i < particleCount; i++) {
+      const r = 3 + Math.random() * 5;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.random() * Math.PI;
+      particlePositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      particlePositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      particlePositions[i * 3 + 2] = r * Math.cos(phi);
+
+      const colorHue = (hue + i * 0.5) % 360;
+      const rgb = new THREE.Color().setHSL(colorHue / 360, 0.7, 0.6);
+      particleColors[i * 3] = rgb.r;
+      particleColors[i * 3 + 1] = rgb.g;
+      particleColors[i * 3 + 2] = rgb.b;
+    }
+    particleGeom.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    particleGeom.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+
+    const particleMat = new THREE.PointsMaterial({
+      size: 0.05,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending
+    });
+    const particles = new THREE.Points(particleGeom, particleMat);
+    scene.add(particles);
+
+    // Touch interaction state
+    let targetRotationY = 0;
+    let targetRotationX = 0;
+    let currentRotationY = 0;
+    let currentRotationX = 0;
+    let touchStrength = 0;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clockRef.current.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Touch influence
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          targetRotationY = normalizedX * Math.PI * 0.5;
+          targetRotationX = normalizedY * Math.PI * 0.3;
+          touchStrength = Math.min(touchStrength + 0.05, 1);
+        }
+      } else {
+        targetRotationY = elapsed * 0.1;
+        targetRotationX = Math.sin(elapsed * 0.2) * 0.2;
+        touchStrength = Math.max(touchStrength - 0.02, 0);
+      }
+
+      // Smooth interpolation
+      currentRotationY += (targetRotationY - currentRotationY) * 0.03;
+      currentRotationX += (targetRotationX - currentRotationX) * 0.03;
+
+      // Animate central entity
+      entityGroup.rotation.y = currentRotationY;
+      entityGroup.rotation.x = currentRotationX;
+
+      // Counter-rotate nested forms for hypnotic effect
+      outer.rotation.x = elapsed * 0.1;
+      outer.rotation.z = elapsed * 0.05;
+      outer.scale.setScalar(0.9 + breath * 0.2);
+      outerMat.opacity = 0.3 + breath * 0.2 + touchStrength * 0.2;
+
+      mid.rotation.y = -elapsed * 0.15;
+      mid.rotation.x = elapsed * 0.1;
+      mid.scale.setScalar(0.85 + breath * 0.25);
+      midMat.opacity = 0.4 + breath * 0.2 + touchStrength * 0.2;
+
+      inner.rotation.z = elapsed * 0.2;
+      inner.rotation.y = -elapsed * 0.15;
+      inner.scale.setScalar(0.8 + breath * 0.3);
+      innerMat.opacity = 0.5 + breath * 0.2 + touchStrength * 0.2;
+
+      core.rotation.x = elapsed * 0.3;
+      core.rotation.y = elapsed * 0.25;
+      core.scale.setScalar(0.7 + breath * 0.4);
+      coreMat.opacity = 0.6 + breath * 0.3 + touchStrength * 0.2;
+
+      // Animate fractal arms
+      arms.forEach((arm, i) => {
+        const angle = arm.userData.angle + elapsed * 0.2;
+        const pulseRadius = 2.5 + Math.sin(elapsed + arm.userData.phase) * 0.5 + breath * 0.3;
+        arm.position.set(
+          Math.cos(angle) * pulseRadius,
+          Math.sin(angle) * pulseRadius,
+          Math.sin(elapsed * 0.5 + arm.userData.phase) * 0.5
+        );
+        arm.rotation.x = elapsed * 0.5;
+        arm.rotation.y = elapsed * 0.3;
+        arm.scale.setScalar(0.8 + breath * 0.3 + touchStrength * 0.2);
+      });
+
+      // Animate orbiting eyes - they look toward touch point
+      eyes.forEach((eye, i) => {
+        const data = eye.userData;
+        const orbitTime = elapsed * data.speed + data.phase;
+
+        eye.position.set(
+          data.orbitRadius * Math.sin(data.theta + orbitTime * 0.3) * Math.cos(data.phi + orbitTime),
+          data.orbitRadius * Math.sin(data.theta + orbitTime * 0.3) * Math.sin(data.phi + orbitTime),
+          data.orbitRadius * Math.cos(data.theta + orbitTime * 0.3)
+        );
+
+        // Eyes look toward center or touch point
+        if (touchPointsRef.current.length > 0 && touchPointsRef.current[0].active) {
+          const touch = touchPointsRef.current[0];
+          const lookX = (touch.x / window.innerWidth - 0.5) * 10;
+          const lookY = -(touch.y / window.innerHeight - 0.5) * 10;
+          eye.lookAt(lookX, lookY, 0);
+        } else {
+          eye.lookAt(0, 0, 0);
+        }
+
+        // Pulse eye brightness
+        const pulse = 0.5 + Math.sin(elapsed * 2 + data.phase) * 0.5;
+        eye.children[2].material.opacity = 0.5 + pulse * 0.5 + breath * 0.3;
+      });
+
+      // Animate particle field
+      particles.rotation.y = elapsed * 0.02;
+      particles.rotation.x = elapsed * 0.01;
+
+      const positions = particleGeom.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        const idx = i * 3;
+        // Subtle pulsing motion
+        const dist = Math.sqrt(positions[idx] ** 2 + positions[idx + 1] ** 2 + positions[idx + 2] ** 2);
+        const pulse = 1 + Math.sin(elapsed + dist * 0.5) * 0.02 * (1 + breath * 0.5);
+        positions[idx] *= pulse;
+        positions[idx + 1] *= pulse;
+        positions[idx + 2] *= pulse;
+
+        // Keep particles in bounds
+        const newDist = Math.sqrt(positions[idx] ** 2 + positions[idx + 1] ** 2 + positions[idx + 2] ** 2);
+        if (newDist > 8) {
+          const scale = 3 / newDist;
+          positions[idx] *= scale;
+          positions[idx + 1] *= scale;
+          positions[idx + 2] *= scale;
+        }
+      }
+      particleGeom.attributes.position.needsUpdate = true;
+      particleMat.opacity = 0.4 + breath * 0.3 + touchStrength * 0.2;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      // Dispose
+      [outerGeom, midGeom, innerGeom, coreGeom].forEach(g => g.dispose());
+      [outerMat, midMat, innerMat, coreMat].forEach(m => m.dispose());
+      arms.forEach(arm => {
+        arm.geometry.dispose();
+        arm.material.dispose();
+      });
+      eyes.forEach(eye => {
+        eye.children.forEach(child => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+        });
+      });
+      particleGeom.dispose();
+      particleMat.dispose();
+      renderer.dispose();
+    };
+  }, [currentMode, hue]);
 
   // ========== GYROID SURFACE MODE ==========
   React.useEffect(() => {
