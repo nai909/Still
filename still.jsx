@@ -3856,20 +3856,17 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         bellScaleXZ = 1.0 - breathProgress * 0.08;
         bellY = breathProgress * 0.1;
         colorLerp = breathProgress;
-        bloomStrength = 0.4 + breathProgress * 0.4;
       } else if (breathPhase === 'hold') {
         const pulse = Math.sin(elapsed * 3) * 0.02;
         bellScaleY = 1.15 + pulse;
         bellScaleXZ = 0.92 - pulse * 0.5;
         bellY = 0.1;
         colorLerp = 1;
-        bloomStrength = 0.8;
       } else { // exhale
         bellScaleY = 1.15 - breathProgress * 0.15;
         bellScaleXZ = 0.92 + breathProgress * 0.08;
         bellY = 0.1 - breathProgress * 0.15;
         colorLerp = 1 - breathProgress;
-        bloomStrength = 0.8 - breathProgress * 0.4;
       }
 
       // Apply bell transformations
@@ -3977,15 +3974,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Auto-rotate after idle
       const now = Date.now();
-      if (now - lastInteractionTime > 8000 && !isReducedMotion) {
+      if (now - lastInteractionTime > 8000 && !isReducedMotion && controls) {
         if (!isAutoRotating) {
           isAutoRotating = true;
           controls.autoRotate = true;
         }
       }
 
-      // Fog density based on breath
-      scene.fog.density = breathPhase === 'exhale' ? 0.015 + breathProgress * 0.005 : 0.015 - colorLerp * 0.003;
     };
 
     // === INTERACTION HANDLERS ===
@@ -3998,7 +3993,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       raycaster.ray.intersectPlane(plane, mouse3D);
 
       lastInteractionTime = Date.now();
-      if (isAutoRotating) {
+      if (isAutoRotating && controls) {
         isAutoRotating = false;
         controls.autoRotate = false;
       }
@@ -4030,7 +4025,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const onDoubleClick = () => {
       // Reset camera
       const startPos = camera.position.clone();
-      const startTarget = controls.target.clone();
+      const startTarget = controls ? controls.target.clone() : new THREE.Vector3(0, 0, 0);
       const endPos = new THREE.Vector3(0, 0, 5);
       const endTarget = new THREE.Vector3(0, 0, 0);
 
@@ -4039,12 +4034,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         t += 0.02;
         if (t >= 1) {
           camera.position.copy(endPos);
-          controls.target.copy(endTarget);
+          if (controls) controls.target.copy(endTarget);
           return;
         }
         const ease = 1 - Math.pow(1 - t, 3);
         camera.position.lerpVectors(startPos, endPos, ease);
-        controls.target.lerpVectors(startTarget, endTarget, ease);
+        if (controls) controls.target.lerpVectors(startTarget, endTarget, ease);
         requestAnimationFrame(animateReset);
       };
       animateReset();
