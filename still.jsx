@@ -1242,16 +1242,9 @@ const gazeModes = [
   { key: 'ink', name: 'Ink in Water' },
   { key: 'nebula', name: 'Nebula' },
   { key: 'mushrooms', name: 'Mushrooms' },
-  { key: 'lanterns', name: 'Lanterns' },
   // Mathematical/Topological visuals
-  { key: 'kleinBottle', name: 'Klein Bottle' },
   { key: 'gyroid', name: 'Gyroid' },
-  { key: 'radiolarian', name: 'Radiolarian' },
   { key: 'rossler', name: 'Rössler Attractor' },
-  { key: 'ferrofluid', name: 'Ferrofluid' },
-  { key: 'murmuration', name: 'Murmuration' },
-  { key: 'morphingSolids', name: 'Morphing Solids' },
-  { key: 'nestedSolids', name: 'Nested Solids' },
   { key: 'flowerOfLife', name: 'Flower of Life' },
 ];
 
@@ -6741,444 +6734,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, drawRipples]);
 
-  // ========== LANTERNS MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'lanterns' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    // Lantern class
-    class Lantern {
-      constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.size = 30 + Math.random() * 20;
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = -0.5 - Math.random() * 0.5;
-        this.rotation = (Math.random() - 0.5) * 0.1;
-        this.rotationSpeed = (Math.random() - 0.5) * 0.002;
-        this.hue = hue + Math.random() * 15; // Teal from palette
-        this.alpha = 1;
-      }
-
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.rotation += this.rotationSpeed;
-
-        // Shrink as they rise
-        if (this.y < canvas.height * 0.3) {
-          this.size *= 0.998;
-          this.alpha *= 0.998;
-        }
-
-        // Remove when off screen or too small
-        return this.y > -100 && this.size > 5 && this.alpha > 0.1;
-      }
-
-      draw(ctx, breath) {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation);
-        ctx.globalAlpha = this.alpha;
-
-        // Lantern glow
-        const glowGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size * 2);
-        glowGradient.addColorStop(0, `hsla(${this.hue}, 80%, 55%, ${0.4 + breath * 0.1})`);
-        glowGradient.addColorStop(0.5, `hsla(${this.hue}, 70%, 45%, 0.1)`);
-        glowGradient.addColorStop(1, 'transparent');
-        ctx.fillStyle = glowGradient;
-        ctx.beginPath();
-        ctx.arc(0, 0, this.size * 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Lantern body
-        const bodyGradient = ctx.createLinearGradient(-this.size / 2, -this.size, this.size / 2, this.size);
-        bodyGradient.addColorStop(0, `hsla(${this.hue}, 70%, 60%, 0.9)`);
-        bodyGradient.addColorStop(0.5, `hsla(${this.hue - 5}, 80%, 55%, 0.95)`);
-        bodyGradient.addColorStop(1, `hsla(${this.hue}, 70%, 50%, 0.85)`);
-        ctx.fillStyle = bodyGradient;
-
-        // Lantern shape
-        ctx.beginPath();
-        ctx.moveTo(-this.size * 0.3, -this.size);
-        ctx.quadraticCurveTo(-this.size * 0.6, 0, -this.size * 0.3, this.size);
-        ctx.lineTo(this.size * 0.3, this.size);
-        ctx.quadraticCurveTo(this.size * 0.6, 0, this.size * 0.3, -this.size);
-        ctx.closePath();
-        ctx.fill();
-
-        // Top and bottom caps - use darker version of lantern hue
-        ctx.fillStyle = `hsl(${this.hue}, 40%, 35%)`;
-        ctx.fillRect(-this.size * 0.2, -this.size - 5, this.size * 0.4, 8);
-        ctx.fillRect(-this.size * 0.15, this.size - 3, this.size * 0.3, 6);
-
-        ctx.restore();
-        ctx.globalAlpha = 1;
-      }
-    }
-
-    // Stars
-    const stars = [];
-    for (let i = 0; i < 100; i++) {
-      stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height * 0.7,
-        size: Math.random() * 1.5 + 0.5,
-        twinkle: Math.random() * Math.PI * 2,
-      });
-    }
-
-    const lanterns = [];
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const now = Date.now();
-      const elapsed = (now - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      // Night sky
-      const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      skyGradient.addColorStop(0, '#000');
-      skyGradient.addColorStop(0.7, '#000');
-      skyGradient.addColorStop(1, '#101025');
-      ctx.fillStyle = skyGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw stars
-      stars.forEach(star => {
-        const twinkle = 0.5 + Math.sin(now * 0.002 + star.twinkle) * 0.5;
-        ctx.fillStyle = `rgba(255, 255, 255, ${twinkle * 0.6})`;
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Touch to release lantern
-      touchPointsRef.current.forEach(point => {
-        if (point.active && lanterns.length < 8 && Math.random() < 0.03) {
-          lanterns.push(new Lantern(point.x, canvas.height + 50));
-        }
-      });
-
-      // Auto release occasionally
-      if (Math.random() < 0.002 && lanterns.length < 6) {
-        lanterns.push(new Lantern(
-          canvas.width * 0.2 + Math.random() * canvas.width * 0.6,
-          canvas.height + 50
-        ));
-      }
-
-      // Update and draw lanterns
-      for (let i = lanterns.length - 1; i >= 0; i--) {
-        if (!lanterns[i].update()) {
-          lanterns.splice(i, 1);
-        } else {
-          lanterns[i].draw(ctx, breath);
-        }
-      }
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, drawRipples]);
-
-  // ========== HEART SYNC MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'heartSync' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-
-    // Two hearts with different rhythms - using selected hue with variations
-    const hearts = [
-      { x: centerX - 80, phase: 0, speed: 1.2, hue: hue, baseSize: 40 },
-      { x: centerX + 80, phase: Math.PI, speed: 0.8, hue: hue + 30, baseSize: 40 },
-    ];
-
-    let syncLevel = 0;
-    let lastTapTime = 0;
-    let tapRhythm = 1;
-
-    // Draw heart shape
-    const drawHeart = (x, y, size, hue, pulse) => {
-      const s = size * (0.9 + pulse * 0.2);
-
-      // Heart glow
-      const glowGradient = ctx.createRadialGradient(x, y, 0, x, y, s * 2);
-      glowGradient.addColorStop(0, `hsla(${hue}, 70%, 50%, ${0.2 + pulse * 0.2})`);
-      glowGradient.addColorStop(1, 'transparent');
-      ctx.fillStyle = glowGradient;
-      ctx.beginPath();
-      ctx.arc(x, y, s * 2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Heart shape
-      ctx.fillStyle = `hsla(${hue}, 70%, 55%, 0.9)`;
-      ctx.beginPath();
-      ctx.moveTo(x, y + s * 0.7);
-      ctx.bezierCurveTo(x - s * 1.5, y - s * 0.5, x - s * 0.8, y - s * 1.3, x, y - s * 0.6);
-      ctx.bezierCurveTo(x + s * 0.8, y - s * 1.3, x + s * 1.5, y - s * 0.5, x, y + s * 0.7);
-      ctx.fill();
-
-      // Highlight
-      ctx.fillStyle = `hsla(${hue}, 60%, 70%, 0.4)`;
-      ctx.beginPath();
-      ctx.ellipse(x - s * 0.3, y - s * 0.4, s * 0.25, s * 0.2, -0.3, 0, Math.PI * 2);
-      ctx.fill();
-    };
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const now = Date.now();
-      const elapsed = (now - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      // Dark background
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Touch to set rhythm for first heart
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          const timeSinceTap = now - lastTapTime;
-          if (timeSinceTap > 200) {
-            tapRhythm = Math.max(0.5, Math.min(2, 1000 / timeSinceTap));
-            lastTapTime = now;
-            hearts[0].speed = tapRhythm;
-          }
-        }
-      });
-
-      // Second heart gradually syncs to first
-      const speedDiff = hearts[0].speed - hearts[1].speed;
-      hearts[1].speed += speedDiff * 0.001;
-
-      // Calculate sync level based on phase alignment
-      const phaseDiff = Math.abs(Math.sin(hearts[0].phase) - Math.sin(hearts[1].phase));
-      syncLevel = 1 - phaseDiff;
-
-      // Breath sync option - first heart follows breath
-      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
-      if (isInhaling) {
-        hearts[0].phase += 0.02;
-      }
-
-      // Update and draw hearts
-      hearts.forEach((heart, i) => {
-        heart.phase += 0.05 * heart.speed;
-        const pulse = (Math.sin(heart.phase) + 1) / 2;
-
-        // Merge color when synced
-        let drawHue = heart.hue;
-        if (syncLevel > 0.8) {
-          drawHue = hue; // Use selected hue when synced
-        }
-
-        drawHeart(heart.x, centerY, heart.baseSize, drawHue, pulse);
-      });
-
-      // Sync burst effect
-      if (syncLevel > 0.9) {
-        const burstGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 150);
-        burstGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${(syncLevel - 0.9) * 2})`);
-        burstGradient.addColorStop(1, 'transparent');
-        ctx.fillStyle = burstGradient;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 150, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Connection line between hearts
-      ctx.strokeStyle = `rgba(180, 150, 200, ${0.2 + syncLevel * 0.3})`;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
-      ctx.beginPath();
-      ctx.moveTo(hearts[0].x + 30, centerY);
-      ctx.lineTo(hearts[1].x - 30, centerY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // Sync indicator
-      ctx.fillStyle = `rgba(255, 255, 255, 0.5)`;
-      ctx.font = '14px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(`Sync: ${Math.round(syncLevel * 100)}%`, centerX, centerY + 100);
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, drawRipples]);
-
-  // ========== KLEIN BOTTLE MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'kleinBottle' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    // Klein bottle parametric surface
-    const kleinPoints = [];
-    const uSteps = 60;
-    const vSteps = 30;
-
-    for (let i = 0; i <= uSteps; i++) {
-      kleinPoints[i] = [];
-      const u = (i / uSteps) * Math.PI * 2;
-      for (let j = 0; j <= vSteps; j++) {
-        const v = (j / vSteps) * Math.PI * 2;
-        let x, y, z;
-
-        // Klein bottle immersion
-        const r = 4 * (1 - Math.cos(u) / 2);
-        if (u < Math.PI) {
-          x = 6 * Math.cos(u) * (1 + Math.sin(u)) + r * Math.cos(u) * Math.cos(v);
-          y = 16 * Math.sin(u) + r * Math.sin(u) * Math.cos(v);
-        } else {
-          x = 6 * Math.cos(u) * (1 + Math.sin(u)) + r * Math.cos(v + Math.PI);
-          y = 16 * Math.sin(u);
-        }
-        z = r * Math.sin(v);
-
-        kleinPoints[i][j] = { x: x * 8, y: y * 8, z: z * 8 };
-      }
-    }
-
-    let rotationY = 0;
-    let rotationX = 0.3;
-    let targetRotationY = 0;
-    let targetRotationX = 0.3;
-
-    const project = (point, rotY, rotX, breath) => {
-      const scale = 1 + breath * 0.15;
-      let x = point.x * scale;
-      let y = point.y * scale;
-      let z = point.z * scale;
-
-      // Rotate Y
-      const cosY = Math.cos(rotY);
-      const sinY = Math.sin(rotY);
-      const x1 = x * cosY - z * sinY;
-      const z1 = x * sinY + z * cosY;
-
-      // Rotate X
-      const cosX = Math.cos(rotX);
-      const sinX = Math.sin(rotX);
-      const y1 = y * cosX - z1 * sinX;
-      const z2 = y * sinX + z1 * cosX;
-
-      const perspective = 800 / (800 + z2);
-      return {
-        x: canvas.width / 2 + x1 * perspective,
-        y: canvas.height / 2 + y1 * perspective,
-        z: z2
-      };
-    };
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Auto rotation
-      targetRotationY += 0.003;
-
-      // Smooth rotation
-      rotationY += (targetRotationY - rotationY) * 0.1;
-      rotationX += (targetRotationX - rotationX) * 0.1;
-
-      // Mouse interaction
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          targetRotationY += (point.x - canvas.width / 2) * 0.00005;
-          targetRotationX += (point.y - canvas.height / 2) * 0.00005;
-        }
-      });
-
-      // Draw wireframe
-      const brightness = 0.3 + breath * 0.7;
-      ctx.strokeStyle = `hsla(${hue}, 70%, ${50 + breath * 20}%, ${brightness})`;
-      ctx.lineWidth = 1;
-
-      // Draw U lines
-      for (let i = 0; i < uSteps; i++) {
-        ctx.beginPath();
-        for (let j = 0; j <= vSteps; j++) {
-          const p = project(kleinPoints[i][j], rotationY, rotationX, breath);
-          if (j === 0) ctx.moveTo(p.x, p.y);
-          else ctx.lineTo(p.x, p.y);
-        }
-        ctx.stroke();
-      }
-
-      // Draw V lines
-      for (let j = 0; j < vSteps; j++) {
-        ctx.beginPath();
-        for (let i = 0; i <= uSteps; i++) {
-          const p = project(kleinPoints[i][j], rotationY, rotationX, breath);
-          if (i === 0) ctx.moveTo(p.x, p.y);
-          else ctx.lineTo(p.x, p.y);
-        }
-        ctx.stroke();
-      }
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, hue, getBreathPhase, drawRipples]);
-
   // ========== GYROID SURFACE MODE ==========
   React.useEffect(() => {
     if (currentMode !== 'gyroid' || !canvasRef.current) return;
@@ -7281,179 +6836,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
         ctx.stroke();
       }
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, hue, getBreathPhase, drawRipples]);
-
-  // ========== RADIOLARIAN SKELETON MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'radiolarian' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    // Icosahedron vertices (golden ratio based)
-    const phi = (1 + Math.sqrt(5)) / 2;
-    const icosaVertices = [
-      [-1, phi, 0], [1, phi, 0], [-1, -phi, 0], [1, -phi, 0],
-      [0, -1, phi], [0, 1, phi], [0, -1, -phi], [0, 1, -phi],
-      [phi, 0, -1], [phi, 0, 1], [-phi, 0, -1], [-phi, 0, 1]
-    ].map(v => ({ x: v[0] * 100, y: v[1] * 100, z: v[2] * 100 }));
-
-    // Icosahedron edges
-    const icosaEdges = [
-      [0,1], [0,5], [0,7], [0,10], [0,11],
-      [1,5], [1,7], [1,8], [1,9],
-      [2,3], [2,4], [2,6], [2,10], [2,11],
-      [3,4], [3,6], [3,8], [3,9],
-      [4,5], [4,9], [4,11],
-      [5,9], [5,11],
-      [6,7], [6,8], [6,10],
-      [7,8], [7,10],
-      [8,9], [10,11]
-    ];
-
-    let rotationY = 0;
-    let rotationX = 0.4;
-    let spineExtension = 0;
-
-    const project = (x, y, z, rotY, rotX, scale = 1) => {
-      x *= scale;
-      y *= scale;
-      z *= scale;
-
-      const cosY = Math.cos(rotY);
-      const sinY = Math.sin(rotY);
-      const x1 = x * cosY - z * sinY;
-      const z1 = x * sinY + z * cosY;
-
-      const cosX = Math.cos(rotX);
-      const sinX = Math.sin(rotX);
-      const y1 = y * cosX - z1 * sinX;
-      const z2 = y * sinX + z1 * cosX;
-
-      const perspective = 500 / (500 + z2);
-      return {
-        x: canvas.width / 2 + x1 * perspective,
-        y: canvas.height / 2 + y1 * perspective,
-        z: z2
-      };
-    };
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      rotationY += 0.003;
-      rotationX = 0.4 + Math.sin(elapsed * 0.2) * 0.1;
-
-      // Mouse interaction - spines point toward cursor
-      let mouseInfluence = { x: 0, y: 0 };
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          mouseInfluence.x = (point.x - canvas.width / 2) / canvas.width;
-          mouseInfluence.y = (point.y - canvas.height / 2) / canvas.height;
-          spineExtension = 1.5;
-        }
-      });
-      spineExtension *= 0.95;
-
-      const scale = 1 + breath * 0.15;
-      const brightness = 0.4 + breath * 0.6;
-
-      // Draw outer shell (icosahedron)
-      ctx.strokeStyle = `hsla(${hue}, 70%, ${55 + breath * 15}%, ${brightness})`;
-      ctx.lineWidth = 1.5;
-
-      icosaEdges.forEach(([i, j]) => {
-        const p1 = project(icosaVertices[i].x, icosaVertices[i].y, icosaVertices[i].z, rotationY, rotationX, scale);
-        const p2 = project(icosaVertices[j].x, icosaVertices[j].y, icosaVertices[j].z, rotationY, rotationX, scale);
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.stroke();
-      });
-
-      // Draw inner sphere
-      ctx.strokeStyle = `hsla(${hue + 20}, 60%, 45%, ${brightness * 0.7})`;
-      const innerScale = 0.4 * (0.9 + Math.sin(elapsed) * 0.1);
-      icosaEdges.forEach(([i, j]) => {
-        const p1 = project(icosaVertices[i].x * innerScale, icosaVertices[i].y * innerScale, icosaVertices[i].z * innerScale, rotationY, rotationX, scale);
-        const p2 = project(icosaVertices[j].x * innerScale, icosaVertices[j].y * innerScale, icosaVertices[j].z * innerScale, rotationY, rotationX, scale);
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.stroke();
-      });
-
-      // Draw spines
-      ctx.strokeStyle = `hsla(${hue + 30}, 80%, 70%, ${brightness})`;
-      ctx.lineWidth = 2;
-      icosaVertices.forEach((v, idx) => {
-        const len = 1 + v.x * 0.001 * mouseInfluence.x + v.y * 0.001 * mouseInfluence.y;
-        const spineLen = (0.5 + spineExtension * 0.3 + breath * 0.1) * len;
-        const norm = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-        const spineEnd = {
-          x: v.x * (1 + spineLen / norm * 50),
-          y: v.y * (1 + spineLen / norm * 50),
-          z: v.z * (1 + spineLen / norm * 50)
-        };
-
-        const p1 = project(v.x, v.y, v.z, rotationY, rotationX, scale);
-        const p2 = project(spineEnd.x, spineEnd.y, spineEnd.z, rotationY, rotationX, scale);
-
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.stroke();
-
-        // Spine tip glow
-        const gradient = ctx.createRadialGradient(p2.x, p2.y, 0, p2.x, p2.y, 5);
-        gradient.addColorStop(0, `hsla(${hue + 30}, 80%, 70%, ${brightness})`);
-        gradient.addColorStop(1, 'transparent');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(p2.x, p2.y, 5, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Draw connecting struts
-      ctx.strokeStyle = `hsla(${hue}, 50%, 40%, ${brightness * 0.4})`;
-      ctx.lineWidth = 0.5;
-      icosaVertices.forEach((v) => {
-        const inner = {
-          x: v.x * innerScale,
-          y: v.y * innerScale,
-          z: v.z * innerScale
-        };
-        const p1 = project(v.x, v.y, v.z, rotationY, rotationX, scale);
-        const p2 = project(inner.x, inner.y, inner.z, rotationY, rotationX, scale);
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.stroke();
-      });
 
       drawRipples(ctx);
     };
@@ -7604,797 +6986,128 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase, drawRipples]);
 
-  // ========== FERROFLUID MODE ==========
+  // ========== FLOWER OF LIFE MODE (3D) ==========
   React.useEffect(() => {
-    if (currentMode !== 'ferrofluid' || !canvasRef.current) return;
+    if (currentMode !== 'flowerOfLife' || !containerRef.current || typeof THREE === 'undefined') return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
 
-    // Particles
-    const particles = [];
-    const particleCount = 800;
-    const boundRadius = 150;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
 
-    for (let i = 0; i < particleCount; i++) {
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      const r = boundRadius * Math.cbrt(Math.random());
-
-      particles.push({
-        x: r * Math.sin(phi) * Math.cos(theta),
-        y: r * Math.sin(phi) * Math.sin(theta),
-        z: r * Math.cos(phi),
-        vx: 0,
-        vy: 0,
-        vz: 0
-      });
-    }
-
-    // Magnet position (orbits slowly)
-    let magnetAngle = 0;
-    let magnetStrength = 1;
-    let mouseOverride = false;
-    let mouseX = 0, mouseY = 0;
-
-    const project = (x, y, z) => {
-      const perspective = 400 / (400 + z);
-      return {
-        x: canvas.width / 2 + x * perspective,
-        y: canvas.height / 2 + y * perspective,
-        z: z
-      };
+    // Convert HSL hue to hex color
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
     };
 
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Magnet position
-      magnetAngle += 0.01;
-      let magnetX, magnetY, magnetZ;
-
-      if (mouseOverride) {
-        magnetX = (mouseX - canvas.width / 2) * 0.8;
-        magnetY = (mouseY - canvas.height / 2) * 0.8;
-        magnetZ = 100;
-      } else {
-        magnetX = Math.cos(magnetAngle) * 180;
-        magnetY = Math.sin(magnetAngle * 0.7) * 100;
-        magnetZ = Math.sin(magnetAngle * 0.5) * 80 + 100;
-      }
-
-      magnetStrength = 0.5 + breath * 1.5;
-      const brightness = 0.4 + breath * 0.6;
-
-      // Mouse interaction
-      mouseOverride = false;
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          mouseOverride = true;
-          mouseX = point.x;
-          mouseY = point.y;
-        }
-      });
-
-      // Update particles
-      particles.forEach(p => {
-        // Attraction to magnet
-        const dx = magnetX - p.x;
-        const dy = magnetY - p.y;
-        const dz = magnetZ - p.z;
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) + 1;
-
-        const force = magnetStrength * 50 / (dist * dist);
-        p.vx += (dx / dist) * force;
-        p.vy += (dy / dist) * force;
-        p.vz += (dz / dist) * force;
-
-        // Repulsion from other particles (simplified - use spatial hash in production)
-        // For performance, only check nearby particles randomly
-        for (let i = 0; i < 5; i++) {
-          const other = particles[Math.floor(Math.random() * particleCount)];
-          if (other === p) continue;
-          const odx = p.x - other.x;
-          const ody = p.y - other.y;
-          const odz = p.z - other.z;
-          const odist = Math.sqrt(odx * odx + ody * ody + odz * odz) + 1;
-          if (odist < 20) {
-            const repel = 2 / (odist * odist);
-            p.vx += (odx / odist) * repel;
-            p.vy += (ody / odist) * repel;
-            p.vz += (odz / odist) * repel;
-          }
-        }
-
-        // Damping
-        p.vx *= 0.92;
-        p.vy *= 0.92;
-        p.vz *= 0.92;
-
-        // Apply velocity
-        p.x += p.vx;
-        p.y += p.vy;
-        p.z += p.vz;
-
-        // Soft boundary
-        const r = Math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
-        if (r > boundRadius * 1.5) {
-          const scale = boundRadius * 1.5 / r;
-          p.x *= scale;
-          p.y *= scale;
-          p.z *= scale;
-        }
-      });
-
-      // Sort particles by z for proper rendering
-      particles.sort((a, b) => a.z - b.z);
-
-      // Draw particles
-      particles.forEach(p => {
-        const proj = project(p.x, p.y, p.z);
-        const size = 2 + (p.z + 200) / 200 * 2;
-
-        // Spike detection (particles forming toward magnet)
-        const dx = magnetX - p.x;
-        const dy = magnetY - p.y;
-        const dz = magnetZ - p.z;
-        const toMagnet = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        const isSpike = toMagnet < 100;
-
-        const color = isSpike
-          ? `hsla(${hue + 20}, 80%, 70%, ${brightness})`
-          : `hsla(${hue}, 70%, ${50 + (p.z + 150) / 300 * 20}%, ${brightness * 0.8})`;
-
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(proj.x, proj.y, size, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, hue, getBreathPhase, drawRipples]);
-
-  // ========== MURMURATION MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'murmuration' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    // Boids
-    const boids = [];
-    const boidCount = 500;
-    const bounds = { x: 300, y: 200, z: 200 };
-
-    for (let i = 0; i < boidCount; i++) {
-      boids.push({
-        x: (Math.random() - 0.5) * bounds.x * 2,
-        y: (Math.random() - 0.5) * bounds.y * 2,
-        z: (Math.random() - 0.5) * bounds.z * 2,
-        vx: (Math.random() - 0.5) * 2,
-        vy: (Math.random() - 0.5) * 2,
-        vz: (Math.random() - 0.5) * 2
-      });
-    }
-
-    let predatorX = 0, predatorY = 0;
-    let predatorActive = false;
-    let rotationY = 0;
-
-    const project = (x, y, z, rotY) => {
-      const cosY = Math.cos(rotY);
-      const sinY = Math.sin(rotY);
-      const x1 = x * cosY - z * sinY;
-      const z1 = x * sinY + z * cosY;
-
-      const perspective = 600 / (600 + z1);
-      return {
-        x: canvas.width / 2 + x1 * perspective,
-        y: canvas.height / 2 + y * perspective,
-        z: z1
-      };
-    };
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      rotationY += 0.0005;
-
-      // Boid parameters affected by breath
-      const separation = 25;
-      const alignment = 50;
-      const cohesion = 80 * (0.7 + breath * 0.6);
-      const maxSpeed = 3 + breath * 2;
-      const brightness = 0.4 + breath * 0.6;
-
-      // Mouse interaction (predator)
-      predatorActive = false;
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          predatorActive = true;
-          predatorX = point.x;
-          predatorY = point.y;
-        }
-      });
-
-      // Update boids
-      boids.forEach((boid, i) => {
-        let sepX = 0, sepY = 0, sepZ = 0;
-        let aliX = 0, aliY = 0, aliZ = 0;
-        let cohX = 0, cohY = 0, cohZ = 0;
-        let neighbors = 0;
-
-        boids.forEach((other, j) => {
-          if (i === j) return;
-          const dx = other.x - boid.x;
-          const dy = other.y - boid.y;
-          const dz = other.z - boid.z;
-          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-          if (dist < separation) {
-            sepX -= dx / dist;
-            sepY -= dy / dist;
-            sepZ -= dz / dist;
-          }
-
-          if (dist < alignment) {
-            aliX += other.vx;
-            aliY += other.vy;
-            aliZ += other.vz;
-            neighbors++;
-          }
-
-          if (dist < cohesion) {
-            cohX += other.x;
-            cohY += other.y;
-            cohZ += other.z;
-          }
-        });
-
-        if (neighbors > 0) {
-          aliX /= neighbors;
-          aliY /= neighbors;
-          aliZ /= neighbors;
-          cohX = cohX / neighbors - boid.x;
-          cohY = cohY / neighbors - boid.y;
-          cohZ = cohZ / neighbors - boid.z;
-        }
-
-        // Apply forces
-        boid.vx += sepX * 0.05 + aliX * 0.02 + cohX * 0.01;
-        boid.vy += sepY * 0.05 + aliY * 0.02 + cohY * 0.01;
-        boid.vz += sepZ * 0.05 + aliZ * 0.02 + cohZ * 0.01;
-
-        // Flee from predator
-        if (predatorActive) {
-          const p = project(boid.x, boid.y, boid.z, rotationY);
-          const dx = p.x - predatorX;
-          const dy = p.y - predatorY;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 150) {
-            boid.vx += dx * 0.01;
-            boid.vy += dy * 0.01;
-          }
-        }
-
-        // Bound
-        if (Math.abs(boid.x) > bounds.x) boid.vx -= Math.sign(boid.x) * 0.5;
-        if (Math.abs(boid.y) > bounds.y) boid.vy -= Math.sign(boid.y) * 0.5;
-        if (Math.abs(boid.z) > bounds.z) boid.vz -= Math.sign(boid.z) * 0.5;
-
-        // Limit speed
-        const speed = Math.sqrt(boid.vx * boid.vx + boid.vy * boid.vy + boid.vz * boid.vz);
-        if (speed > maxSpeed) {
-          boid.vx = (boid.vx / speed) * maxSpeed;
-          boid.vy = (boid.vy / speed) * maxSpeed;
-          boid.vz = (boid.vz / speed) * maxSpeed;
-        }
-
-        boid.x += boid.vx;
-        boid.y += boid.vy;
-        boid.z += boid.vz;
-      });
-
-      // Sort and draw
-      boids.sort((a, b) => a.z - b.z);
-
-      boids.forEach(boid => {
-        const p = project(boid.x, boid.y, boid.z, rotationY);
-        const size = 1.5 + (boid.z + bounds.z) / (bounds.z * 2) * 2;
-
-        // Draw boid as small triangle pointing in velocity direction
-        const angle = Math.atan2(boid.vy, boid.vx);
-        ctx.fillStyle = `hsla(${hue}, 70%, ${55 + (boid.z + bounds.z) / (bounds.z * 2) * 20}%, ${brightness})`;
-        ctx.beginPath();
-        ctx.moveTo(p.x + Math.cos(angle) * size * 2, p.y + Math.sin(angle) * size * 2);
-        ctx.lineTo(p.x + Math.cos(angle + 2.5) * size, p.y + Math.sin(angle + 2.5) * size);
-        ctx.lineTo(p.x + Math.cos(angle - 2.5) * size, p.y + Math.sin(angle - 2.5) * size);
-        ctx.closePath();
-        ctx.fill();
-      });
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, hue, getBreathPhase, drawRipples]);
-
-  // ========== MORPHING PLATONIC SOLIDS MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'morphingSolids' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    // Platonic solid vertices (normalized)
-    const phi = (1 + Math.sqrt(5)) / 2;
-
-    const solids = {
-      tetrahedron: [
-        [1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]
-      ].map(v => ({ x: v[0] * 80, y: v[1] * 80, z: v[2] * 80 })),
-
-      cube: [
-        [-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1],
-        [1, -1, -1], [1, -1, 1], [1, 1, -1], [1, 1, 1]
-      ].map(v => ({ x: v[0] * 70, y: v[1] * 70, z: v[2] * 70 })),
-
-      octahedron: [
-        [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]
-      ].map(v => ({ x: v[0] * 100, y: v[1] * 100, z: v[2] * 100 })),
-
-      icosahedron: [
-        [-1, phi, 0], [1, phi, 0], [-1, -phi, 0], [1, -phi, 0],
-        [0, -1, phi], [0, 1, phi], [0, -1, -phi], [0, 1, -phi],
-        [phi, 0, -1], [phi, 0, 1], [-phi, 0, -1], [-phi, 0, 1]
-      ].map(v => ({ x: v[0] * 60, y: v[1] * 60, z: v[2] * 60 }))
-    };
-
-    const solidNames = ['tetrahedron', 'cube', 'octahedron', 'icosahedron'];
-    let currentSolid = 0;
-    let morphProgress = 0;
-    let rotationY = 0;
-    let rotationX = 0.4;
-
-    const project = (x, y, z, rotY, rotX, scale = 1) => {
-      x *= scale;
-      y *= scale;
-      z *= scale;
-
-      const cosY = Math.cos(rotY);
-      const sinY = Math.sin(rotY);
-      const x1 = x * cosY - z * sinY;
-      const z1 = x * sinY + z * cosY;
-
-      const cosX = Math.cos(rotX);
-      const sinX = Math.sin(rotX);
-      const y1 = y * cosX - z1 * sinX;
-      const z2 = y * sinX + z1 * cosX;
-
-      const perspective = 500 / (500 + z2);
-      return {
-        x: canvas.width / 2 + x1 * perspective,
-        y: canvas.height / 2 + y1 * perspective,
-        z: z2
-      };
-    };
-
-    const lerp = (a, b, t) => a + (b - a) * t;
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      rotationY += 0.005;
-
-      // Morph during exhale
-      if (breath < 0.3) {
-        morphProgress += 0.01;
-        if (morphProgress >= 1) {
-          morphProgress = 0;
-          currentSolid = (currentSolid + 1) % solidNames.length;
-        }
-      }
-
-      // Mouse interaction
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          rotationX = (point.y / canvas.height - 0.5) * 2;
-        }
-      });
-
-      const scale = 1 + breath * 0.15;
-      const brightness = 0.4 + breath * 0.6;
-
-      const fromSolid = solids[solidNames[currentSolid]];
-      const toSolid = solids[solidNames[(currentSolid + 1) % solidNames.length]];
-
-      // Create interpolated vertices
-      const maxVerts = Math.max(fromSolid.length, toSolid.length);
-      const vertices = [];
-
-      for (let i = 0; i < maxVerts; i++) {
-        const fromV = fromSolid[i % fromSolid.length];
-        const toV = toSolid[i % toSolid.length];
-        vertices.push({
-          x: lerp(fromV.x, toV.x, morphProgress),
-          y: lerp(fromV.y, toV.y, morphProgress),
-          z: lerp(fromV.z, toV.z, morphProgress)
-        });
-      }
-
-      // Draw edges (connect all vertices for simplicity)
-      ctx.strokeStyle = `hsla(${hue}, 70%, ${55 + breath * 15}%, ${brightness})`;
-      ctx.lineWidth = 1.5;
-
-      for (let i = 0; i < vertices.length; i++) {
-        for (let j = i + 1; j < vertices.length; j++) {
-          const v1 = vertices[i];
-          const v2 = vertices[j];
-          const dist = Math.sqrt(
-            (v1.x - v2.x) ** 2 + (v1.y - v2.y) ** 2 + (v1.z - v2.z) ** 2
-          );
-          if (dist < 160) { // Only draw nearby edges
-            const p1 = project(v1.x, v1.y, v1.z, rotationY, rotationX, scale);
-            const p2 = project(v2.x, v2.y, v2.z, rotationY, rotationX, scale);
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
-          }
-        }
-      }
-
-      // Draw vertices with glow
-      vertices.forEach(v => {
-        const p = project(v.x, v.y, v.z, rotationY, rotationX, scale);
-        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 8);
-        gradient.addColorStop(0, `hsla(${hue + 20}, 80%, 70%, ${brightness})`);
-        gradient.addColorStop(1, 'transparent');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, hue, getBreathPhase, drawRipples]);
-
-  // ========== NESTED PLATONIC SOLIDS MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'nestedSolids' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    const phi = (1 + Math.sqrt(5)) / 2;
-
-    // Three nested solids
-    const icosahedron = [
-      [-1, phi, 0], [1, phi, 0], [-1, -phi, 0], [1, -phi, 0],
-      [0, -1, phi], [0, 1, phi], [0, -1, -phi], [0, 1, -phi],
-      [phi, 0, -1], [phi, 0, 1], [-phi, 0, -1], [-phi, 0, 1]
+    const dynamicColor = hslToHex(hue, 52, 68);
+    const material = new THREE.MeshBasicMaterial({ color: dynamicColor, wireframe: true, transparent: true, opacity: 0.8 });
+
+    // Create flower of life pattern with ring geometries
+    const group = new THREE.Group();
+    const ringRadius = 0.6;
+    const tubeRadius = 0.015;
+    const segments = 64;
+    const geometries = [];
+
+    // Circle positions for flower of life pattern
+    const circlePositions = [
+      { x: 0, y: 0 }, // Center
     ];
-
-    const octahedron = [
-      [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]
-    ];
-
-    const tetrahedron = [
-      [1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]
-    ];
-
-    const icosaEdges = [
-      [0,1], [0,5], [0,7], [0,10], [0,11], [1,5], [1,7], [1,8], [1,9],
-      [2,3], [2,4], [2,6], [2,10], [2,11], [3,4], [3,6], [3,8], [3,9],
-      [4,5], [4,9], [4,11], [5,9], [5,11], [6,7], [6,8], [6,10], [7,8], [7,10], [8,9], [10,11]
-    ];
-
-    const octaEdges = [[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,4],[2,5],[3,4],[3,5]];
-    const tetraEdges = [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
-
-    let rotations = [
-      { y: 0, x: 0, speed: 0.003 },
-      { y: 0, x: 0, speed: -0.005 },
-      { y: 0, x: 0, speed: 0.007 }
-    ];
-
-    const project = (vertex, scale, rotY, rotX) => {
-      let x = vertex[0] * scale;
-      let y = vertex[1] * scale;
-      let z = vertex[2] * scale;
-
-      const cosY = Math.cos(rotY);
-      const sinY = Math.sin(rotY);
-      const x1 = x * cosY - z * sinY;
-      const z1 = x * sinY + z * cosY;
-
-      const cosX = Math.cos(rotX);
-      const sinX = Math.sin(rotX);
-      const y1 = y * cosX - z1 * sinX;
-      const z2 = y * sinX + z1 * cosX;
-
-      const perspective = 500 / (500 + z2);
-      return {
-        x: canvas.width / 2 + x1 * perspective,
-        y: canvas.height / 2 + y1 * perspective
-      };
-    };
-
-    const drawSolid = (vertices, edges, scale, rotation, color, lineWidth) => {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = lineWidth;
-      edges.forEach(([i, j]) => {
-        const p1 = project(vertices[i], scale, rotation.y, rotation.x);
-        const p2 = project(vertices[j], scale, rotation.y, rotation.x);
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.stroke();
-      });
-
-      // Vertex dots
-      vertices.forEach(v => {
-        const p = project(v, scale, rotation.y, rotation.x);
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    };
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const scale = 1 + breath * 0.15;
-      const brightness = 0.4 + breath * 0.6;
-      const speedMult = 0.5 + breath * 0.5;
-
-      // Update rotations
-      rotations[0].y += rotations[0].speed * speedMult;
-      rotations[1].y += rotations[1].speed * speedMult;
-      rotations[1].x += rotations[1].speed * 0.7 * speedMult;
-      rotations[2].y += rotations[2].speed * speedMult;
-      rotations[2].x = Math.PI / 4 + Math.sin(elapsed * 0.5) * 0.2;
-
-      // Mouse interaction - tilt all solids
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          const tiltX = (point.y / canvas.height - 0.5) * 0.3;
-          const tiltY = (point.x / canvas.width - 0.5) * 0.3;
-          rotations.forEach(r => {
-            r.x += tiltX * 0.02;
-            r.y += tiltY * 0.02;
-          });
-        }
-      });
-
-      // Draw from outer to inner
-      drawSolid(icosahedron, icosaEdges, 120 * scale, rotations[0],
-        `hsla(${hue}, 70%, ${55 + breath * 15}%, ${brightness})`, 1.5);
-
-      drawSolid(octahedron, octaEdges, 80 * scale, rotations[1],
-        `hsla(${hue + 20}, 60%, 45%, ${brightness * 0.8})`, 1.5);
-
-      drawSolid(tetrahedron, tetraEdges, 50 * scale, rotations[2],
-        `hsla(${hue + 30}, 80%, 70%, ${brightness})`, 2);
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, hue, getBreathPhase, drawRipples]);
-
-  // ========== FLOWER OF LIFE MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'flowerOfLife' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    // Generate flower of life circles
-    const circles = [];
-    const radius = Math.min(canvas.width, canvas.height) * 0.08;
-
-    // Center circle
-    circles.push({ x: 0, y: 0, delay: 0 });
 
     // First ring (6 circles)
     for (let i = 0; i < 6; i++) {
       const angle = (i / 6) * Math.PI * 2;
-      circles.push({
-        x: Math.cos(angle) * radius,
-        y: Math.sin(angle) * radius,
-        delay: 1
+      circlePositions.push({
+        x: Math.cos(angle) * ringRadius,
+        y: Math.sin(angle) * ringRadius
       });
     }
 
     // Second ring (12 circles)
     for (let i = 0; i < 6; i++) {
       const angle = (i / 6) * Math.PI * 2;
-      // Outer circles
-      circles.push({
-        x: Math.cos(angle) * radius * 2,
-        y: Math.sin(angle) * radius * 2,
-        delay: 2
+      circlePositions.push({
+        x: Math.cos(angle) * ringRadius * 2,
+        y: Math.sin(angle) * ringRadius * 2
       });
-      // Between circles
       const betweenAngle = angle + Math.PI / 6;
-      circles.push({
-        x: Math.cos(betweenAngle) * radius * Math.sqrt(3),
-        y: Math.sin(betweenAngle) * radius * Math.sqrt(3),
-        delay: 2
+      circlePositions.push({
+        x: Math.cos(betweenAngle) * ringRadius * Math.sqrt(3),
+        y: Math.sin(betweenAngle) * ringRadius * Math.sqrt(3)
       });
     }
 
-    let drawProgress = 0;
-    let rotationZ = 0;
+    // Create a ring for each circle position
+    circlePositions.forEach(pos => {
+      const geometry = new THREE.TorusGeometry(ringRadius, tubeRadius, 16, segments);
+      geometries.push(geometry);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(pos.x, pos.y, 0);
+      group.add(mesh);
+    });
+
+    scene.add(group);
+    meshRef.current = group;
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
+      const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (meshRef.current) {
+        // Base rotation
+        meshRef.current.rotation.y += 0.001;
+        meshRef.current.rotation.x += 0.0005;
+        meshRef.current.rotation.z += 0.0003;
 
-      drawProgress += 0.02;
-      rotationZ += 0.001;
-
-      const scale = 1 + breath * 0.1;
-      const brightness = 0.4 + breath * 0.6;
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-
-      // Mouse interaction - highlight nearest circle
-      let highlightIdx = -1;
-      let minDist = Infinity;
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          circles.forEach((circle, idx) => {
-            const cx = centerX + circle.x * scale * Math.cos(rotationZ) - circle.y * scale * Math.sin(rotationZ);
-            const cy = centerY + circle.x * scale * Math.sin(rotationZ) + circle.y * scale * Math.cos(rotationZ);
-            const dist = Math.sqrt((point.x - cx) ** 2 + (point.y - cy) ** 2);
-            if (dist < minDist) {
-              minDist = dist;
-              highlightIdx = idx;
-            }
-          });
+        // Touch influence - rotate toward touch points
+        if (touchPointsRef.current.length > 0) {
+          const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+          if (activeTouch) {
+            const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+            const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+            meshRef.current.rotation.y += normalizedX * 0.02;
+            meshRef.current.rotation.x += normalizedY * 0.02;
+          }
         }
-      });
 
-      // Draw circles
-      circles.forEach((circle, idx) => {
-        const progress = Math.max(0, Math.min(1, drawProgress - circle.delay));
-        if (progress <= 0) return;
-
-        const cx = centerX + circle.x * scale * Math.cos(rotationZ) - circle.y * scale * Math.sin(rotationZ);
-        const cy = centerY + circle.x * scale * Math.sin(rotationZ) + circle.y * scale * Math.cos(rotationZ);
-
-        const isHighlight = idx === highlightIdx;
-        const circleRadius = radius * scale * (isHighlight ? 1.05 : 1);
-
-        ctx.strokeStyle = isHighlight
-          ? `hsla(${hue + 20}, 80%, 70%, ${brightness})`
-          : `hsla(${hue}, 70%, ${55 + breath * 15}%, ${brightness * 0.8})`;
-        ctx.lineWidth = isHighlight ? 2.5 : 1.5;
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, circleRadius, 0, Math.PI * 2 * progress);
-        ctx.stroke();
-
-        // Center glow
-        if (progress >= 1) {
-          const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, circleRadius * 0.3);
-          gradient.addColorStop(0, `hsla(${hue}, 60%, 60%, ${brightness * 0.2 * (1 + Math.sin(elapsed * 2 + idx))})`);
-          gradient.addColorStop(1, 'transparent');
-          ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.arc(cx, cy, circleRadius * 0.3, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      });
-
-      drawRipples(ctx);
+        meshRef.current.scale.setScalar(0.8 + breath * 0.4);
+        material.opacity = 0.5 + breath * 0.3;
+      }
+      renderer.render(scene, camera);
     };
-
     animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      geometries.forEach(g => g.dispose());
+      material.dispose();
+      renderer.dispose();
     };
-  }, [currentMode, hue, getBreathPhase, drawRipples]);
+  }, [currentMode, hue, getBreathPhase]);
 
   return (
     <div
@@ -8421,12 +7134,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife') && (
         <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       )}
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       )}
 
