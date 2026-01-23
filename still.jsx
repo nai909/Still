@@ -7455,6 +7455,11 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         // Apply breath-based scale
         meshRef.current.scale.setScalar(scaleRef.current);
 
+        // Move toward viewer on inhale, away on exhale
+        // Map scale (0.85-1.2) to z position (-0.3 to 0.5)
+        const zOffset = (scaleRef.current - 0.85) * 2.3 - 0.3;
+        meshRef.current.position.z = zOffset;
+
         // Opacity pulses with breath
         const breathOpacity = isActive ? 0.5 + scaleRef.current * 0.3 : 0.6;
         meshRef.current.material.opacity = breathOpacity;
