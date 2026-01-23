@@ -1459,9 +1459,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     }, 2000);
   }, [backgroundMode, cycleVisual, showUI]);
 
-  // Two-finger swipe (wheel event on trackpad) to open/close menu
+  // Two-finger swipe (wheel event on trackpad) to change visuals or open menu
   const showUIRef = React.useRef(showUI);
   showUIRef.current = showUI;
+  const wheelAccumXRef = React.useRef(0);
 
   React.useEffect(() => {
     // Skip wheel handling in background mode
@@ -1471,17 +1472,27 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // When menu is open, let scroll pass through naturally
       if (showUIRef.current) return;
 
+      // Track both horizontal and vertical scroll
       wheelAccumRef.current += e.deltaY;
+      wheelAccumXRef.current += e.deltaX;
 
       clearTimeout(wheelTimeoutRef.current);
       wheelTimeoutRef.current = setTimeout(() => {
         wheelAccumRef.current = 0;
+        wheelAccumXRef.current = 0;
       }, 200);
 
       const threshold = 50;
 
-      // Swipe UP = open menu
-      if (wheelAccumRef.current > threshold) {
+      // Horizontal swipe = change visual
+      if (Math.abs(wheelAccumXRef.current) > threshold) {
+        e.preventDefault();
+        cycleVisual(wheelAccumXRef.current > 0 ? 1 : -1); // Swipe right = next, left = previous
+        wheelAccumXRef.current = 0;
+        wheelAccumRef.current = 0;
+      }
+      // Vertical swipe UP = open menu
+      else if (wheelAccumRef.current > threshold) {
         e.preventDefault();
         setShowUI(true);
         wheelAccumRef.current = 0;
@@ -1490,7 +1501,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     window.addEventListener('wheel', handleWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleWheel);
-  }, [backgroundMode]);
+  }, [backgroundMode, cycleVisual]);
 
   // Helper: Calculate influence of touch points on a position
   const getInteractionInfluence = React.useCallback((x, y, maxRadius = 200) => {
