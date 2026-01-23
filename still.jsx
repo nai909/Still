@@ -1312,7 +1312,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   const clockRef = React.useRef(null);
 
   // Use prop if provided, otherwise use internal state
-  const [internalMode, setInternalMode] = React.useState('jellyfish');
+  const [internalMode, setInternalMode] = React.useState('geometry');
   const currentMode = currentVisual !== undefined ? currentVisual : internalMode;
   const setCurrentMode = onVisualChange !== undefined ? onVisualChange : setInternalMode;
   const [currentShape, setCurrentShape] = React.useState('torus');
@@ -14412,7 +14412,7 @@ function Still() {
   const [toast, setToast] = useState(null);
   const [settings, setSettings] = useState(defaultSettings);
   const [showColorOverlay, setShowColorOverlay] = useState(false);
-  const [gazeVisual, setGazeVisual] = useState('jellyfish');
+  const [gazeVisual, setGazeVisual] = useState('geometry');
 
   // Music player state
   const [musicOpen, setMusicOpen] = useState(false);
