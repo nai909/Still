@@ -4275,10 +4275,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
 
       applyForce(fx, fy) {
-        this.driftVelocity.x += fx * 0.5;
-        this.driftVelocity.y += fy * 0.5;
-        this.tentacles.forEach(t => t.applyForce(fx, fy, 1.5));
-        this.oralArms.forEach(o => o.applyForce(fx, fy, 1));
+        this.driftVelocity.x += fx * 0.15;
+        this.driftVelocity.y += fy * 0.15;
+        this.tentacles.forEach(t => t.applyForce(fx, fy, 0.4));
+        this.oralArms.forEach(o => o.applyForce(fx, fy, 0.3));
       }
     }
 
@@ -4353,11 +4353,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           // Touched the jellyfish - glow and follow
           jelly.following = true;
           jelly.glow = 1.0;
-        } else if (dist < jelly.size * 4) {
-          // Near - startle and move away
+        } else if (dist < jelly.size * 3) {
+          // Near - gently drift away
           const angle = Math.atan2(jelly.position.y - y, jelly.position.x - x);
-          jelly.applyForce(Math.cos(angle) * 0.4, Math.sin(angle) * 0.4);
-          jelly.pulseSpeed = 0.035;
+          jelly.applyForce(Math.cos(angle) * 0.12, Math.sin(angle) * 0.12);
+          jelly.pulseSpeed = 0.022;
         }
       });
 
@@ -4366,19 +4366,19 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
 
     const handleJellyMove = (x, y) => {
-      // Following jellyfish move toward finger
+      // Following jellyfish move toward finger - very gently
       jellies.filter(j => j.following).forEach(jelly => {
         const dx = x - jelly.position.x;
         const dy = y - jelly.position.y;
-        jelly.driftVelocity.x += dx * 0.008;
-        jelly.driftVelocity.y += dy * 0.008;
+        jelly.driftVelocity.x += dx * 0.003;
+        jelly.driftVelocity.y += dy * 0.003;
       });
 
-      // Update current direction
+      // Update current direction - much gentler
       if (currents.length > 0 && lastTouchPos) {
         const current = currents[currents.length - 1];
-        current.direction.x = (x - lastTouchPos.x) * 0.3;
-        current.direction.y = (y - lastTouchPos.y) * 0.3;
+        current.direction.x = (x - lastTouchPos.x) * 0.1;
+        current.direction.y = (y - lastTouchPos.y) * 0.1;
       }
       lastTouchPos = { x, y };
     };
@@ -4394,13 +4394,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // Apply currents to jellies
     const applyCurrent = () => {
       currents.forEach((current, idx) => {
-        current.radius += 3;
-        current.strength *= 0.97;
+        current.radius += 2;
+        current.strength *= 0.95;
 
         jellies.forEach(jelly => {
           const dist = Math.hypot(current.x - jelly.position.x, current.y - jelly.position.y);
           if (dist < current.radius && dist > current.radius - 60) {
-            const influence = current.strength * (1 - dist / Math.max(current.radius, 1)) * 0.5;
+            const influence = current.strength * (1 - dist / Math.max(current.radius, 1)) * 0.15;
             jelly.applyForce(current.direction.x * influence, current.direction.y * influence);
           }
         });
@@ -7077,13 +7077,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Touch to release lantern
       touchPointsRef.current.forEach(point => {
-        if (point.active && lanterns.length < 20 && Math.random() < 0.05) {
+        if (point.active && lanterns.length < 8 && Math.random() < 0.03) {
           lanterns.push(new Lantern(point.x, canvas.height + 50));
         }
       });
 
       // Auto release occasionally
-      if (Math.random() < 0.005 && lanterns.length < 15) {
+      if (Math.random() < 0.002 && lanterns.length < 6) {
         lanterns.push(new Lantern(
           canvas.width * 0.2 + Math.random() * canvas.width * 0.6,
           canvas.height + 50
