@@ -1281,6 +1281,12 @@ const gazeShapes = [
 const BREATH_CYCLE = 11; // seconds for full cycle
 const BREATH_SPEED = (2 * Math.PI) / BREATH_CYCLE;
 
+// Mobile optimization
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+const MOBILE_SPEED = isMobile ? 0.6 : 1;  // Slower animations on mobile
+const MOBILE_PARTICLES = isMobile ? 0.4 : 1;  // Fewer particles on mobile
+const MOBILE_PIXEL_RATIO = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2);
+
 function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false, currentVisual, onVisualChange }) {
   // Use primaryHue throughout for consistent color scheme
   const hue = primaryHue;
@@ -2142,7 +2148,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           seed.x = centerX + Math.cos(angle) * seed.length;
           seed.y = centerY + Math.sin(angle) * seed.length;
           seed.vx = (Math.random() - 0.5) * 0.5;
-          seed.vy = -Math.random() * 0.8 - 0.3;
+          seed.vy = (-Math.random() * 0.8 - 0.3) * MOBILE_SPEED;
           floatingSeeds.push(seed);
         });
         lastExhale = elapsed;
@@ -2177,7 +2183,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           seed.y = y;
           // Launch in direction away from touch
           seed.vx = (influence.x / 30) + (Math.random() - 0.5) * 0.5;
-          seed.vy = -Math.random() * 1.5 - 0.5 + (influence.y / 30);
+          seed.vy = (-Math.random() * 1.5 - 0.5 + (influence.y / 30)) * MOBILE_SPEED;
           floatingSeeds.push(seed);
         }
 
@@ -2323,7 +2329,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
   }, [currentMode, getInteractionInfluence, drawRipples, hue]);
 
-  // ========== CORAL MODE ==========
+  // ========== CORAL MODE (Minimal) ==========
   React.useEffect(() => {
     if (currentMode !== 'coral' || !canvasRef.current) return;
 
@@ -2333,97 +2339,78 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     canvas.height = window.innerHeight;
     let startTime = Date.now();
 
-    // Generate coral branches
+    // Generate minimal coral - just a few gentle branches
     const branches = [];
     const generateCoral = (x, y, angle, depth, maxDepth) => {
       if (depth > maxDepth) return;
 
-      const length = 65 - depth * 7 + Math.random() * 30; // Larger branches
+      const length = 80 - depth * 15;
       const endX = x + Math.cos(angle) * length;
       const endY = y + Math.sin(angle) * length;
 
       branches.push({ x1: x, y1: y, x2: endX, y2: endY, depth, maxDepth });
 
-      const branchCount = depth < 2 ? 3 : 2;
-      for (let i = 0; i < branchCount; i++) {
-        const newAngle = angle + (Math.random() - 0.5) * 1.2;
-        generateCoral(endX, endY, newAngle, depth + 1, maxDepth);
+      // Only 2 branches, less chaotic
+      if (depth < maxDepth) {
+        generateCoral(endX, endY, angle - 0.4, depth + 1, maxDepth);
+        generateCoral(endX, endY, angle + 0.4, depth + 1, maxDepth);
       }
     };
 
-    // Create multiple coral structures - larger and more
-    const coralBases = [
-      { x: canvas.width * 0.15, maxDepth: 7 },
-      { x: canvas.width * 0.35, maxDepth: 8 },
-      { x: canvas.width * 0.5, maxDepth: 9 },
-      { x: canvas.width * 0.65, maxDepth: 8 },
-      { x: canvas.width * 0.85, maxDepth: 7 },
-    ];
-
-    coralBases.forEach(base => {
-      generateCoral(base.x, canvas.height, -Math.PI / 2 + (Math.random() - 0.5) * 0.3, 0, base.maxDepth);
-    });
+    // Just 1-2 coral structures, centered
+    const coralCount = isMobile ? 1 : 2;
+    for (let i = 0; i < coralCount; i++) {
+      const x = canvas.width * (0.35 + i * 0.3);
+      generateCoral(x, canvas.height + 20, -Math.PI / 2, 0, isMobile ? 4 : 5);
+    }
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = (Date.now() - startTime) / 1000;
       const breath = getBreathPhase(elapsed);
 
-      ctx.fillStyle = 'rgba(0, 0, 10, 0.08)';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       branches.forEach(branch => {
-        // Touch influence - coral bends like water current
-        const influence = getInteractionInfluence(branch.x2, branch.y2, 200);
+        // Very gentle sway
+        const sway = Math.sin(elapsed * 0.3 * MOBILE_SPEED + branch.x1 * 0.005) * (branch.depth * 1.5) * breath;
 
-        // Sway like in water + touch influence
-        const sway = Math.sin(elapsed * 0.5 + branch.x1 * 0.01) * (branch.depth * 2) * breath + influence.x * 0.5;
-
-        const x1 = branch.x1 + sway * 0.5;
+        const x1 = branch.x1 + sway * 0.3;
         const y1 = branch.y1;
-        const x2 = branch.x2 + sway + influence.x * 0.3;
-        const y2 = branch.y2 + influence.y * 0.2;
+        const x2 = branch.x2 + sway;
+        const y2 = branch.y2;
 
-        // Color: gradient based on depth, brighter near touch
         const t = branch.depth / branch.maxDepth;
-        const lightness = 35 + t * 30 + influence.strength * 12;
-        const saturation = 40 + t * 20 + influence.strength * 10;
+        const alpha = 0.3 + breath * 0.3;
 
-        ctx.strokeStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${0.4 + breath * 0.4 + influence.strength * 0.2})`;
-        ctx.lineWidth = Math.max(1, 4 - branch.depth * 0.5);
+        ctx.strokeStyle = `hsla(${hue}, 45%, ${45 + t * 20}%, ${alpha})`;
+        ctx.lineWidth = Math.max(2, 6 - branch.depth);
         ctx.lineCap = 'round';
 
         ctx.beginPath();
         ctx.moveTo(x1, y1);
-        ctx.quadraticCurveTo(
-          (x1 + x2) / 2 + sway * 0.3,
-          (y1 + y2) / 2,
-          x2, y2
-        );
+        ctx.quadraticCurveTo((x1 + x2) / 2 + sway * 0.2, (y1 + y2) / 2, x2, y2);
         ctx.stroke();
 
-        // Bioluminescent tips - glow brighter when touched
+        // Subtle tips only on endpoints
         if (branch.depth === branch.maxDepth) {
-          const tipGlow = influence.strength * 0.5;
           ctx.beginPath();
-          ctx.arc(x2, y2, 2 + breath * 2 + influence.strength * 3, 0, Math.PI * 2);
-          ctx.fillStyle = `hsla(${hue}, 52%, 68%, ${0.3 + breath * 0.5 + tipGlow})`;
+          ctx.arc(x2, y2, 3 + breath * 2, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${hue}, 52%, 68%, ${0.2 + breath * 0.3})`;
           ctx.fill();
         }
       });
 
-      // Draw touch ripples
       drawRipples(ctx);
     };
 
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
     animate();
 
     const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener('resize', handleResize);
     return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode, getInteractionInfluence, drawRipples, hue]);
+  }, [currentMode, drawRipples, hue]);
 
   // ========== CHERRY BLOSSOM MODE ==========
   React.useEffect(() => {
@@ -2665,32 +2652,34 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     canvas.height = window.innerHeight;
     let startTime = Date.now();
 
-    // Generate bronchial tree
+    // Generate bronchial tree - smaller on mobile
     const branches = [];
+    const mobileScale = isMobile ? 0.5 : 1;
+    const maxBranchDepth = isMobile ? 5 : 7;
 
     const generateLung = (x, y, angle, depth, maxDepth, side) => {
       if (depth > maxDepth) return;
 
-      const length = 120 - depth * 12;  // Larger branches
+      const length = (120 - depth * 12) * mobileScale;
       const endX = x + Math.cos(angle) * length;
       const endY = y + Math.sin(angle) * length;
 
       branches.push({ x1: x, y1: y, x2: endX, y2: endY, depth, maxDepth, side });
 
-      const spread = 0.45 - depth * 0.03;  // Slightly wider spread
+      const spread = 0.45 - depth * 0.03;
       generateLung(endX, endY, angle - spread, depth + 1, maxDepth, side);
       generateLung(endX, endY, angle + spread, depth + 1, maxDepth, side);
     };
 
     const centerX = canvas.width / 2;
-    const startY = canvas.height * 0.08;  // Start higher on screen
+    const startY = canvas.height * (isMobile ? 0.25 : 0.08);
 
-    // Trachea (longer)
-    branches.push({ x1: centerX, y1: startY - 60, x2: centerX, y2: startY, depth: 0, maxDepth: 7, side: 'center' });
+    // Trachea
+    branches.push({ x1: centerX, y1: startY - 60 * mobileScale, x2: centerX, y2: startY, depth: 0, maxDepth: maxBranchDepth, side: 'center' });
 
-    // Left and right lungs (more depth, wider angle)
-    generateLung(centerX, startY, Math.PI / 2 - 0.55, 1, 7, 'left');
-    generateLung(centerX, startY, Math.PI / 2 + 0.55, 1, 7, 'right');
+    // Left and right lungs
+    generateLung(centerX, startY, Math.PI / 2 - 0.55, 1, maxBranchDepth, 'left');
+    generateLung(centerX, startY, Math.PI / 2 + 0.55, 1, maxBranchDepth, 'right');
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
@@ -2923,7 +2912,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         this.y = startY;
         this.branch = branch;
         this.progress = 0; // 0-1 along branch
-        this.speed = 0.02 + Math.random() * 0.015;
+        this.speed = (0.02 + Math.random() * 0.015) * MOBILE_SPEED;
         this.size = 1.5 + Math.random() * 1.5;
         this.alpha = 0.6 + Math.random() * 0.4;
         this.alive = true;
@@ -3250,7 +3239,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         this.x = x ?? Math.random() * canvas.width;
         this.y = y ?? -20;
         this.radius = radius ?? (Math.random() * 10 + 3);
-        this.velocity = { x: 0, y: Math.random() * 2 + 1 };
+        this.velocity = { x: 0, y: (Math.random() * 2 + 1) * MOBILE_SPEED };
         this.mass = this.radius * 0.5;
         this.stuck = Math.random() < 0.3;
         this.stuckTime = 0;
@@ -4669,7 +4658,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
         this.size = Math.random() * 1.5 + 0.3;
-        this.speed = Math.random() * 0.15 + 0.05;
+        this.speed = (Math.random() * 0.15 + 0.05) * MOBILE_SPEED;
         this.angle = Math.random() * Math.PI * 2;
         this.wobble = Math.random() * Math.PI * 2;
         this.opacity = Math.random() * 0.3 + 0.1;
@@ -12348,6 +12337,9 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
     const centerX = canvas.width / 2;
     const startY = canvas.height * 0.18;
 
+    // Mobile optimization - reduce branch complexity
+    const mobileDepthReduction = isMobile ? 2 : 0;
+
     // Colors - based on primaryHue
     const colorDeoxygenated = { h: primaryHue, s: 40, l: 32 };
     const colorOxygenated = { h: primaryHue, s: 66, l: 55 };
@@ -12555,7 +12547,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 
     // Create trachea (windpipe)
     const tracheaLength = canvas.height * 0.05;
-    const trachea = new Branch(centerX, startY - tracheaLength, Math.PI / 2, tracheaLength, 0, 8, 'center');
+    const trachea = new Branch(centerX, startY - tracheaLength, Math.PI / 2, tracheaLength, 0, 8 - mobileDepthReduction, 'center');
     allBranches.push(trachea);
 
     // Main bronchi split
@@ -12563,38 +12555,38 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 
     // === RIGHT LUNG (3 lobes) ===
     // Right main bronchus
-    const rightMain = generateBranch(centerX, startY, Math.PI / 2 + 0.35, mainBronchusLength, 1, 8, 'right', trachea);
+    const rightMain = generateBranch(centerX, startY, Math.PI / 2 + 0.35, mainBronchusLength, 1, 8 - mobileDepthReduction, 'right', trachea);
 
     // Right upper lobe branches
-    generateBranch(centerX + 15 * lungScale / 3, startY + 10 * lungScale / 3, Math.PI / 2 + 0.9, 28 * lungScale / 3, 2, 7, 'right', trachea);
-    generateBranch(centerX + 25 * lungScale / 3, startY + 5 * lungScale / 3, Math.PI * 0.15, 22 * lungScale / 3, 2, 6, 'right', trachea);
+    generateBranch(centerX + 15 * lungScale / 3, startY + 10 * lungScale / 3, Math.PI / 2 + 0.9, 28 * lungScale / 3, 2, 7 - mobileDepthReduction, 'right', trachea);
+    generateBranch(centerX + 25 * lungScale / 3, startY + 5 * lungScale / 3, Math.PI * 0.15, 22 * lungScale / 3, 2, 6 - mobileDepthReduction, 'right', trachea);
 
     // Right middle lobe branches
-    generateBranch(centerX + 30 * lungScale / 3, startY + 45 * lungScale / 3, Math.PI / 2 + 0.6, 25 * lungScale / 3, 2, 7, 'right', trachea);
-    generateBranch(centerX + 40 * lungScale / 3, startY + 55 * lungScale / 3, Math.PI * 0.35, 20 * lungScale / 3, 3, 6, 'right', trachea);
+    generateBranch(centerX + 30 * lungScale / 3, startY + 45 * lungScale / 3, Math.PI / 2 + 0.6, 25 * lungScale / 3, 2, 7 - mobileDepthReduction, 'right', trachea);
+    generateBranch(centerX + 40 * lungScale / 3, startY + 55 * lungScale / 3, Math.PI * 0.35, 20 * lungScale / 3, 3, 6 - mobileDepthReduction, 'right', trachea);
 
     // Right lower lobe branches
-    generateBranch(centerX + 20 * lungScale / 3, startY + 80 * lungScale / 3, Math.PI / 2 + 0.4, 30 * lungScale / 3, 2, 8, 'right', trachea);
-    generateBranch(centerX + 35 * lungScale / 3, startY + 95 * lungScale / 3, Math.PI / 2 + 0.7, 25 * lungScale / 3, 3, 7, 'right', trachea);
-    generateBranch(centerX + 25 * lungScale / 3, startY + 110 * lungScale / 3, Math.PI * 0.6, 22 * lungScale / 3, 3, 6, 'right', trachea);
+    generateBranch(centerX + 20 * lungScale / 3, startY + 80 * lungScale / 3, Math.PI / 2 + 0.4, 30 * lungScale / 3, 2, 8 - mobileDepthReduction, 'right', trachea);
+    generateBranch(centerX + 35 * lungScale / 3, startY + 95 * lungScale / 3, Math.PI / 2 + 0.7, 25 * lungScale / 3, 3, 7 - mobileDepthReduction, 'right', trachea);
+    generateBranch(centerX + 25 * lungScale / 3, startY + 110 * lungScale / 3, Math.PI * 0.6, 22 * lungScale / 3, 3, 6 - mobileDepthReduction, 'right', trachea);
 
     // === LEFT LUNG (2 lobes with cardiac notch) ===
     // Left main bronchus
-    const leftMain = generateBranch(centerX, startY, Math.PI / 2 - 0.35, mainBronchusLength * 0.95, 1, 7, 'left', trachea);
+    const leftMain = generateBranch(centerX, startY, Math.PI / 2 - 0.35, mainBronchusLength * 0.95, 1, 7 - mobileDepthReduction, 'left', trachea);
 
     // Left upper lobe branches
-    generateBranch(centerX - 15 * lungScale / 3, startY + 8 * lungScale / 3, Math.PI / 2 - 0.85, 26 * lungScale / 3, 2, 7, 'left', trachea);
-    generateBranch(centerX - 22 * lungScale / 3, startY + 3 * lungScale / 3, Math.PI * 0.85, 20 * lungScale / 3, 2, 6, 'left', trachea);
-    generateBranch(centerX - 28 * lungScale / 3, startY + 40 * lungScale / 3, Math.PI / 2 - 0.5, 22 * lungScale / 3, 2, 6, 'left', trachea);
+    generateBranch(centerX - 15 * lungScale / 3, startY + 8 * lungScale / 3, Math.PI / 2 - 0.85, 26 * lungScale / 3, 2, 7 - mobileDepthReduction, 'left', trachea);
+    generateBranch(centerX - 22 * lungScale / 3, startY + 3 * lungScale / 3, Math.PI * 0.85, 20 * lungScale / 3, 2, 6 - mobileDepthReduction, 'left', trachea);
+    generateBranch(centerX - 28 * lungScale / 3, startY + 40 * lungScale / 3, Math.PI / 2 - 0.5, 22 * lungScale / 3, 2, 6 - mobileDepthReduction, 'left', trachea);
 
     // Left lower lobe branches (avoiding cardiac notch area)
-    generateBranch(centerX - 18 * lungScale / 3, startY + 75 * lungScale / 3, Math.PI / 2 - 0.3, 28 * lungScale / 3, 2, 7, 'left', trachea);
-    generateBranch(centerX - 30 * lungScale / 3, startY + 90 * lungScale / 3, Math.PI / 2 - 0.6, 24 * lungScale / 3, 3, 6, 'left', trachea);
-    generateBranch(centerX - 22 * lungScale / 3, startY + 105 * lungScale / 3, Math.PI * 0.55, 20 * lungScale / 3, 3, 6, 'left', trachea);
+    generateBranch(centerX - 18 * lungScale / 3, startY + 75 * lungScale / 3, Math.PI / 2 - 0.3, 28 * lungScale / 3, 2, 7 - mobileDepthReduction, 'left', trachea);
+    generateBranch(centerX - 30 * lungScale / 3, startY + 90 * lungScale / 3, Math.PI / 2 - 0.6, 24 * lungScale / 3, 3, 6 - mobileDepthReduction, 'left', trachea);
+    generateBranch(centerX - 22 * lungScale / 3, startY + 105 * lungScale / 3, Math.PI * 0.55, 20 * lungScale / 3, 3, 6 - mobileDepthReduction, 'left', trachea);
 
     // Add extra peripheral alveoli to fill out the lung shape
     const addPeripheralAlveoli = (side) => {
-      const count = 35;
+      const count = isMobile ? 10 : 35;
       for (let i = 0; i < count; i++) {
         let x, y, attempts = 0;
         do {
@@ -12679,7 +12671,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       OxygenParticle,
     } = lungDataRef.current;
 
-    const MAX_PARTICLES = 120;
+    const MAX_PARTICLES = isMobile ? 30 : 120;
 
     const spawnParticle = () => {
       if (particles.length < MAX_PARTICLES) {
@@ -12738,9 +12730,9 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       if (!lungDataRef.current.breathScale) lungDataRef.current.breathScale = targetBreathScale;
       if (!lungDataRef.current.breathVelocity) lungDataRef.current.breathVelocity = 0;
 
-      // Spring-like smoothing for fluid motion
-      const stiffness = 0.04;
-      const damping = 0.85;
+      // Spring-like smoothing for fluid motion - smoother on mobile
+      const stiffness = isMobile ? 0.06 : 0.04;
+      const damping = isMobile ? 0.8 : 0.85;
       const diff = targetBreathScale - lungDataRef.current.breathScale;
       lungDataRef.current.breathVelocity = lungDataRef.current.breathVelocity * damping + diff * stiffness;
       lungDataRef.current.breathScale += lungDataRef.current.breathVelocity;
@@ -14289,6 +14281,7 @@ function Still() {
                   {currentQuote.author}
                 </div>
 
+                {/* HIDDEN FOR MINIMAL UI - Tags and save/filter buttons preserved for later
                 <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <span style={{
                     padding: '0.3rem 0.8rem',
@@ -14356,6 +14349,7 @@ function Still() {
                     <span style={{ fontSize: '1.1rem' }}>◉</span>filter
                   </button>
                 </div>
+                END HIDDEN FOR MINIMAL UI */}
               </div>
             </div>
           </main>
@@ -14930,7 +14924,7 @@ function Still() {
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    {currentTrack === i && isPlaying ? '▶ ' : ''}{track.name}
+                    {currentTrack === i && isPlaying ? '· ' : ''}{track.name}
                   </button>
                 ))}
               </div>
