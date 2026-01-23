@@ -1604,84 +1604,163 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, currentShape, hue]);
 
-  // ========== FRACTAL TREE MODE ==========
+  // ========== FRACTAL TREE MODE (3D) ==========
   React.useEffect(() => {
-    if (currentMode !== 'tree' || !canvasRef.current) return;
+    if (currentMode !== 'tree' || !containerRef.current || typeof THREE === 'undefined') return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2.5, 7);
+    camera.lookAt(0, 2, 0);
 
-    const drawBranch = (x, y, len, angle, depth, breath, time, getInfluence) => {
-      if (depth === 0 || len < 4) return;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
 
-      // Sway with breath and time
-      const sway = Math.sin(time * 0.5 + depth * 0.5) * 0.05 * breath;
-
-      // Touch influence - branches bend away from touch
-      const influence = getInfluence(x, y, 250);
-      const touchSway = influence.strength > 0 ? Math.atan2(influence.y, influence.x) * influence.strength * 0.3 : 0;
-      const newAngle = angle + sway + touchSway;
-
-      const x2 = x + Math.cos(newAngle) * len;
-      const y2 = y + Math.sin(newAngle) * len;
-
-      // Color gradient: warm brown at base to theme color at tips
-      const t = 1 - depth / 8;
-      const lightness = 30 + t * 35;
-      const saturation = 25 + t * 30;
-
-      ctx.strokeStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${0.4 + breath * 0.4})`;
-      ctx.lineWidth = depth * 0.8;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-
-      // Branch factor varies with breath
-      const branchAngle = 0.4 + breath * 0.2;
-      const lenFactor = 0.67 + breath * 0.08;
-
-      drawBranch(x2, y2, len * lenFactor, newAngle - branchAngle, depth - 1, breath, time, getInfluence);
-      drawBranch(x2, y2, len * lenFactor, newAngle + branchAngle, depth - 1, breath, time, getInfluence);
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
     };
+
+    const treeGroup = new THREE.Group();
+    scene.add(treeGroup);
+
+    const branches = [];
+    const leaves = [];
+
+    // Recursive branch creation - organic, contemplative
+    const createBranch = (startPos, direction, length, depth, maxDepth) => {
+      if (depth > maxDepth || length < 0.05) return;
+
+      const endPos = startPos.clone().add(direction.clone().multiplyScalar(length));
+
+      // Wireframe branches for ethereal feel
+      const branchGeom = new THREE.CylinderGeometry(
+        0.015 * (maxDepth - depth + 1) * 0.4,
+        0.02 * (maxDepth - depth + 1) * 0.4,
+        length,
+        6
+      );
+
+      const t = depth / maxDepth;
+      const branchMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 35 + t * 25, 30 + t * 30),
+        transparent: true,
+        opacity: 0.5 + t * 0.2,
+        wireframe: true
+      });
+
+      const branch = new THREE.Mesh(branchGeom, branchMat);
+      const midPoint = startPos.clone().add(endPos).multiplyScalar(0.5);
+      branch.position.copy(midPoint);
+      branch.lookAt(endPos);
+      branch.rotateX(Math.PI / 2);
+      branch.userData = { depth, phase: Math.random() * Math.PI * 2 };
+      treeGroup.add(branch);
+      branches.push(branch);
+
+      // Ethereal leaf orbs at tips
+      if (depth >= maxDepth - 2) {
+        const leafGeom = new THREE.SphereGeometry(0.06 + Math.random() * 0.03, 8, 8);
+        const leafMat = new THREE.MeshBasicMaterial({
+          color: hslToHex(hue, 55, 55),
+          transparent: true,
+          opacity: 0.4
+        });
+        const leaf = new THREE.Mesh(leafGeom, leafMat);
+        leaf.position.copy(endPos);
+        leaf.userData = { phase: Math.random() * Math.PI * 2 };
+        treeGroup.add(leaf);
+        leaves.push(leaf);
+      }
+
+      // Organic branching
+      const branchAngle = 0.45 + Math.random() * 0.25;
+      const newLength = length * (0.68 + Math.random() * 0.12);
+
+      const leftDir = direction.clone();
+      leftDir.applyAxisAngle(new THREE.Vector3(0, 0, 1), branchAngle);
+      leftDir.applyAxisAngle(new THREE.Vector3(1, 0, 0), (Math.random() - 0.5) * 0.4);
+      createBranch(endPos.clone(), leftDir, newLength, depth + 1, maxDepth);
+
+      const rightDir = direction.clone();
+      rightDir.applyAxisAngle(new THREE.Vector3(0, 0, 1), -branchAngle);
+      rightDir.applyAxisAngle(new THREE.Vector3(1, 0, 0), (Math.random() - 0.5) * 0.4);
+      createBranch(endPos.clone(), rightDir, newLength, depth + 1, maxDepth);
+    };
+
+    createBranch(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0), 1.4, 0, 6);
+
+    // Slow, contemplative touch interaction
+    let targetRotationY = 0;
+    let currentRotationY = 0;
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
+      const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Very slow touch response - like touching water
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 1.2;
+        }
+      } else {
+        // Glacial drift when not touching
+        targetRotationY = Math.sin(elapsed * 0.08) * 0.25;
+      }
 
-      const centerX = canvas.width / 2;
-      const baseY = canvas.height * 0.85;
-      const trunkLen = canvas.height * 0.18;
+      // Very slow interpolation - contemplative
+      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
+      treeGroup.rotation.y = currentRotationY;
 
-      drawBranch(centerX, baseY, trunkLen, -Math.PI / 2, 8, breath, elapsed, getInteractionInfluence);
+      // Gentle breathing scale
+      const breathScale = 0.97 + breath * 0.06;
+      treeGroup.scale.setScalar(breathScale);
 
-      // Draw touch ripples
-      drawRipples(ctx);
+      // Branches sway like they're underwater
+      branches.forEach(branch => {
+        const sway = Math.sin(elapsed * 0.3 + branch.userData.depth * 0.2 + branch.userData.phase) * 0.008 * branch.userData.depth;
+        branch.rotation.z += sway * 0.1;
+      });
+
+      // Leaves pulse with breath
+      leaves.forEach(leaf => {
+        const pulse = 0.9 + Math.sin(elapsed * 0.8 + leaf.userData.phase) * 0.1;
+        leaf.scale.setScalar(pulse + breath * 0.15);
+        leaf.material.opacity = 0.3 + breath * 0.25;
+      });
+
+      renderer.render(scene, camera);
     };
-
-    // Initial clear
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
     animate();
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      branches.forEach(b => { b.geometry.dispose(); b.material.dispose(); });
+      leaves.forEach(l => { l.geometry.dispose(); l.material.dispose(); });
+      renderer.dispose();
     };
-  }, [currentMode, getInteractionInfluence, drawRipples, hue]);
+  }, [currentMode, hue, getBreathPhase]);
 
   // ========== RIPPLES MODE ==========
   React.useEffect(() => {
@@ -1777,15 +1856,33 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, getInteractionInfluence, drawRipples, hue]);
 
-  // ========== FERN MODE (Barnsley Fern) ==========
+  // ========== FERN MODE (3D Barnsley Fern) ==========
   React.useEffect(() => {
-    if (currentMode !== 'fern' || !canvasRef.current) return;
+    if (currentMode !== 'fern' || !containerRef.current || typeof THREE === 'undefined') return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2.5, 6);
+    camera.lookAt(0, 2.5, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const fernGroup = new THREE.Group();
+    scene.add(fernGroup);
 
     // Barnsley fern transformation matrices
     const transforms = [
@@ -1795,11 +1892,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       { a: -0.15, b: 0.28, c: 0.26, d: 0.24, e: 0, f: 0.44, p: 0.07 },
     ];
 
-    const fernPoints = [];
+    // Generate fern points
+    const pointCount = 15000;
+    const positions = new Float32Array(pointCount * 3);
+    const colors = new Float32Array(pointCount * 3);
     let x = 0, y = 0;
 
-    // Pre-calculate fern points
-    for (let i = 0; i < 50000; i++) {
+    for (let i = 0; i < pointCount; i++) {
       const r = Math.random();
       let t;
       if (r < transforms[0].p) t = transforms[0];
@@ -1810,292 +1909,466 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const nx = t.a * x + t.b * y + t.e;
       const ny = t.c * x + t.d * y + t.f;
       x = nx; y = ny;
-      fernPoints.push({ x, y });
+
+      // Scale and position
+      const scale = 0.5;
+      positions[i * 3] = x * scale + (Math.random() - 0.5) * 0.02;
+      positions[i * 3 + 1] = y * scale;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
+
+      // Color based on height
+      const heightRatio = y / 10;
+      const color = new THREE.Color().setHSL(hue / 360, 0.4 + heightRatio * 0.2, 0.35 + heightRatio * 0.25);
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
     }
+
+    const fernGeom = new THREE.BufferGeometry();
+    fernGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    fernGeom.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const fernMat = new THREE.PointsMaterial({
+      size: 0.025,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.7,
+      blending: THREE.AdditiveBlending
+    });
+
+    const fern = new THREE.Points(fernGeom, fernMat);
+    fernGroup.add(fern);
+
+    // Slow, contemplative touch interaction
+    let targetRotationY = 0;
+    let currentRotationY = 0;
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
+      const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const scale = canvas.height / 12;
-      const offsetX = canvas.width / 2;
-      const offsetY = canvas.height * 0.95;
-
-      // Sway with breath
-      const sway = Math.sin(elapsed * 0.3) * 15 * breath;
-
-      // Draw fern points with gradient
-      const pointsToDraw = Math.floor(fernPoints.length * (0.3 + breath * 0.7));
-      for (let i = 0; i < pointsToDraw; i++) {
-        const p = fernPoints[i];
-        let px = offsetX + p.x * scale + sway * (p.y / 10);
-        let py = offsetY - p.y * scale;
-
-        // Touch influence - fronds curl inward toward touch
-        const influence = getInteractionInfluence(px, py, 200);
-        if (influence.strength > 0) {
-          px += influence.x * 0.5;
-          py += influence.y * 0.5;
+      // Very slow touch response
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 1.5;
         }
-
-        // Color gradient from stem to tips
-        const t = p.y / 10;
-        const lightness = 30 + t * 35;
-        const saturation = 35 + t * 25;
-
-        const glowBoost = influence.strength * 0.3;
-        ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${0.3 + breath * 0.4 + glowBoost})`;
-        ctx.fillRect(px, py, 1.5 + influence.strength, 1.5 + influence.strength);
+      } else {
+        targetRotationY = Math.sin(elapsed * 0.08) * 0.3;
       }
 
-      // Draw touch ripples
-      drawRipples(ctx);
-    };
+      // Glacial interpolation
+      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
+      fernGroup.rotation.y = currentRotationY;
 
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Gentle breathing sway
+      const sway = Math.sin(elapsed * 0.2) * 0.05 * breath;
+      fernGroup.rotation.z = sway;
+
+      // Breathing scale
+      const breathScale = 0.95 + breath * 0.08;
+      fernGroup.scale.setScalar(breathScale);
+
+      // Opacity pulses with breath
+      fernMat.opacity = 0.5 + breath * 0.35;
+
+      renderer.render(scene, camera);
+    };
     animate();
 
-    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
     window.addEventListener('resize', handleResize);
-    return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode, getInteractionInfluence, drawRipples, hue]);
 
-  // ========== DANDELION MODE (Breath-synced seed release) ==========
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      fernGeom.dispose();
+      fernMat.dispose();
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== DANDELION MODE (3D with breath-synced seed release) ==========
   React.useEffect(() => {
-    if (currentMode !== 'dandelion' || !canvasRef.current) return;
+    if (currentMode !== 'dandelion' || !containerRef.current || typeof THREE === 'undefined') return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
+    camera.lookAt(0, 0, 0);
 
-    // Seeds still attached
-    const seedCount = 60;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const dandelionGroup = new THREE.Group();
+    scene.add(dandelionGroup);
+
+    // Stem
+    const stemGeom = new THREE.CylinderGeometry(0.02, 0.03, 3, 8);
+    const stemMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 30, 35),
+      transparent: true,
+      opacity: 0.6
+    });
+    const stem = new THREE.Mesh(stemGeom, stemMat);
+    stem.position.y = -1.5;
+    dandelionGroup.add(stem);
+
+    // Seed head core
+    const coreGeom = new THREE.SphereGeometry(0.15, 16, 16);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 25, 45),
+      transparent: true,
+      opacity: 0.7
+    });
+    const core = new THREE.Mesh(coreGeom, coreMat);
+    dandelionGroup.add(core);
+
+    // Seeds (attached)
+    const seedCount = 50;
     const seeds = [];
+    const floatingSeeds = [];
+
     for (let i = 0; i < seedCount; i++) {
-      const angle = (i / seedCount) * Math.PI * 2;
-      const layer = Math.floor(i / 20);
-      seeds.push({
-        angle,
-        layer,
-        length: 40 + layer * 15,
+      const phi = Math.acos(1 - 2 * (i + 0.5) / seedCount);
+      const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+
+      const seedGroup = new THREE.Group();
+
+      // Pappus (fluffy filaments)
+      const filamentCount = 8;
+      for (let j = 0; j < filamentCount; j++) {
+        const fTheta = (j / filamentCount) * Math.PI * 2;
+        const lineGeom = new THREE.BufferGeometry();
+        const points = [
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(Math.cos(fTheta) * 0.15, 0.08, Math.sin(fTheta) * 0.15)
+        ];
+        lineGeom.setFromPoints(points);
+        const lineMat = new THREE.LineBasicMaterial({
+          color: hslToHex(hue, 40, 70),
+          transparent: true,
+          opacity: 0.5
+        });
+        const line = new THREE.Line(lineGeom, lineMat);
+        seedGroup.add(line);
+      }
+
+      // Position on sphere
+      seedGroup.position.set(
+        Math.sin(phi) * Math.cos(theta) * 0.5,
+        Math.cos(phi) * 0.5,
+        Math.sin(phi) * Math.sin(theta) * 0.5
+      );
+      seedGroup.lookAt(0, 0, 0);
+      seedGroup.rotateX(Math.PI);
+
+      seedGroup.userData = {
         attached: true,
-        x: 0, y: 0, vx: 0, vy: 0,
-      });
+        phi, theta,
+        velocity: new THREE.Vector3(),
+        phase: Math.random() * Math.PI * 2
+      };
+
+      dandelionGroup.add(seedGroup);
+      seeds.push(seedGroup);
     }
 
-    // Floating seeds (detached)
-    const floatingSeeds = [];
     let lastExhale = 0;
+    let targetRotationY = 0;
+    let currentRotationY = 0;
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
+      const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
-      const isExhaling = breath < 0.5 && elapsed > 1;
+      const isExhaling = breath < 0.4 && elapsed > 2;
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Slow touch interaction
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 1.2;
 
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const coreRadius = 15;
+          // Release seeds when touched
+          seeds.forEach(seed => {
+            if (seed.userData.attached) {
+              const screenPos = seed.position.clone().applyMatrix4(dandelionGroup.matrixWorld);
+              screenPos.project(camera);
+              const screenX = (screenPos.x + 1) / 2 * window.innerWidth;
+              const screenY = (-screenPos.y + 1) / 2 * window.innerHeight;
+
+              const dx = activeTouch.x - screenX;
+              const dy = activeTouch.y - screenY;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+
+              if (dist < 80) {
+                seed.userData.attached = false;
+                seed.userData.velocity.set(
+                  (Math.random() - 0.5) * 0.02,
+                  0.01 + Math.random() * 0.01,
+                  (Math.random() - 0.5) * 0.02
+                );
+                floatingSeeds.push(seed);
+              }
+            }
+          });
+        }
+      } else {
+        targetRotationY = Math.sin(elapsed * 0.08) * 0.2;
+      }
+
+      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
+      dandelionGroup.rotation.y = currentRotationY;
 
       // Release seeds on exhale
-      if (isExhaling && elapsed - lastExhale > 2 && seeds.some(s => s.attached)) {
-        const toRelease = seeds.filter(s => s.attached).slice(0, 3);
+      if (isExhaling && elapsed - lastExhale > 3) {
+        const attached = seeds.filter(s => s.userData.attached);
+        const toRelease = attached.slice(0, 2);
         toRelease.forEach(seed => {
-          seed.attached = false;
-          const angle = seed.angle + Math.sin(elapsed) * 0.2;
-          seed.x = centerX + Math.cos(angle) * seed.length;
-          seed.y = centerY + Math.sin(angle) * seed.length;
-          seed.vx = (Math.random() - 0.5) * 0.5;
-          seed.vy = (-Math.random() * 0.8 - 0.3) * MOBILE_SPEED;
+          seed.userData.attached = false;
+          seed.userData.velocity.set(
+            (Math.random() - 0.5) * 0.015,
+            0.008 + Math.random() * 0.008,
+            (Math.random() - 0.5) * 0.015
+          );
           floatingSeeds.push(seed);
         });
         lastExhale = elapsed;
       }
 
-      // Draw stem
-      ctx.strokeStyle = 'rgba(100, 140, 100, 0.6)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
-      ctx.lineTo(centerX, canvas.height);
-      ctx.stroke();
+      // Breathing animation
+      const breathScale = 0.95 + breath * 0.1;
+      dandelionGroup.scale.setScalar(breathScale);
 
-      // Draw core (seed head)
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, coreRadius, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(180, 160, 120, 0.8)';
-      ctx.fill();
-
-      // Draw attached seeds and check for touch release
-      seeds.filter(s => s.attached).forEach(seed => {
-        const sway = Math.sin(elapsed * 0.5 + seed.angle) * 0.1;
-        const angle = seed.angle + sway;
-        const x = centerX + Math.cos(angle) * seed.length;
-        const y = centerY + Math.sin(angle) * seed.length;
-
-        // Touch influence - release seeds when touched
-        const influence = getInteractionInfluence(x, y, 80);
-        if (influence.strength > 0.5 && seed.attached) {
-          seed.attached = false;
-          seed.x = x;
-          seed.y = y;
-          // Launch in direction away from touch
-          seed.vx = (influence.x / 30) + (Math.random() - 0.5) * 0.5;
-          seed.vy = (-Math.random() * 1.5 - 0.5 + (influence.y / 30)) * MOBILE_SPEED;
-          floatingSeeds.push(seed);
-        }
-
-        // Pappus (fluffy part)
-        const glowBoost = influence.strength * 0.4;
-        ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 + breath * 0.3 + glowBoost})`;
-        ctx.lineWidth = 0.5;
-        for (let i = 0; i < 8; i++) {
-          const fAngle = (i / 8) * Math.PI * 2;
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x + Math.cos(fAngle) * 8, y + Math.sin(fAngle) * 8);
-          ctx.stroke();
-        }
-
-        // Stem to seed
-        ctx.strokeStyle = 'rgba(200, 200, 180, 0.4)';
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-      });
-
-      // Update and draw floating seeds
-      floatingSeeds.forEach((seed, i) => {
-        seed.x += seed.vx + Math.sin(elapsed + i) * 0.2;
-        seed.y += seed.vy;
-        seed.vy -= 0.002; // Gentle upward drift
-
-        // Draw floating seed
-        ctx.strokeStyle = `rgba(255, 255, 255, ${Math.max(0, 0.5 - Math.abs(seed.y - centerY) / canvas.height)})`;
-        ctx.lineWidth = 0.5;
-        for (let j = 0; j < 6; j++) {
-          const fAngle = (j / 6) * Math.PI * 2 + elapsed * 0.5;
-          ctx.beginPath();
-          ctx.moveTo(seed.x, seed.y);
-          ctx.lineTo(seed.x + Math.cos(fAngle) * 6, seed.y + Math.sin(fAngle) * 6);
-          ctx.stroke();
+      // Animate attached seeds - gentle sway
+      seeds.forEach(seed => {
+        if (seed.userData.attached) {
+          const sway = Math.sin(elapsed * 0.3 + seed.userData.phase) * 0.02;
+          seed.rotation.z = sway;
+          seed.children.forEach(child => {
+            if (child.material) {
+              child.material.opacity = 0.4 + breath * 0.3;
+            }
+          });
         }
       });
 
-      // Remove seeds that float off screen
-      for (let i = floatingSeeds.length - 1; i >= 0; i--) {
-        if (floatingSeeds[i].y < -50) floatingSeeds.splice(i, 1);
-      }
+      // Animate floating seeds - drift upward slowly
+      floatingSeeds.forEach(seed => {
+        seed.position.add(seed.userData.velocity);
+        seed.userData.velocity.y += 0.0001; // Gentle lift
+        seed.userData.velocity.x += Math.sin(elapsed + seed.userData.phase) * 0.0002;
+        seed.rotation.y += 0.01;
 
-      // Reset all seeds once they've all blown away
-      if (seeds.every(s => !s.attached) && floatingSeeds.length === 0) {
-        seeds.forEach((seed, i) => {
-          seed.attached = true;
-          seed.x = 0;
-          seed.y = 0;
-          seed.vx = 0;
-          seed.vy = 0;
+        // Fade out as they rise
+        const fadeStart = 2;
+        const opacity = Math.max(0, 0.5 - (seed.position.y - fadeStart) * 0.1);
+        seed.children.forEach(child => {
+          if (child.material) child.material.opacity = opacity;
         });
+      });
+
+      // Reset when all seeds gone
+      if (seeds.every(s => !s.userData.attached) && floatingSeeds.every(s => s.position.y > 5)) {
+        seeds.forEach((seed, i) => {
+          seed.userData.attached = true;
+          const phi = seed.userData.phi;
+          const theta = seed.userData.theta;
+          seed.position.set(
+            Math.sin(phi) * Math.cos(theta) * 0.5,
+            Math.cos(phi) * 0.5,
+            Math.sin(phi) * Math.sin(theta) * 0.5
+          );
+          seed.lookAt(0, 0, 0);
+          seed.rotateX(Math.PI);
+        });
+        floatingSeeds.length = 0;
       }
 
-      // Draw touch ripples
-      drawRipples(ctx);
+      renderer.render(scene, camera);
     };
-
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
     animate();
 
-    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
     window.addEventListener('resize', handleResize);
-    return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode, getInteractionInfluence, drawRipples]);
 
-  // ========== SUCCULENT SPIRAL (Fibonacci) ==========
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      stemGeom.dispose(); stemMat.dispose();
+      coreGeom.dispose(); coreMat.dispose();
+      seeds.forEach(s => s.children.forEach(c => { if (c.geometry) c.geometry.dispose(); if (c.material) c.material.dispose(); }));
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== SUCCULENT SPIRAL (3D Fibonacci) ==========
   React.useEffect(() => {
-    if (currentMode !== 'succulent' || !canvasRef.current) return;
+    if (currentMode !== 'succulent' || !containerRef.current || typeof THREE === 'undefined') return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 3, 4);
+    camera.lookAt(0, 0, 0);
 
-    const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // 137.5 degrees
-    const leafCount = 80;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const succulentGroup = new THREE.Group();
+    scene.add(succulentGroup);
+
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    const leafCount = 60;
+    const leaves = [];
+
+    for (let i = 0; i < leafCount; i++) {
+      const angle = i * goldenAngle;
+      const radius = Math.sqrt(i) * 0.12;
+      const height = i * 0.015;
+
+      // Leaf shape - elongated sphere
+      const t = i / leafCount;
+      const leafSize = 0.08 + (1 - t) * 0.06;
+      const leafGeom = new THREE.SphereGeometry(leafSize, 8, 6);
+      leafGeom.scale(0.6, 1, 0.4);
+
+      const leafMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 45 + (1 - t) * 15, 35 + (1 - t) * 25),
+        transparent: true,
+        opacity: 0.6,
+        wireframe: true
+      });
+
+      const leaf = new THREE.Mesh(leafGeom, leafMat);
+      leaf.position.set(
+        Math.cos(angle) * radius,
+        height,
+        Math.sin(angle) * radius
+      );
+      leaf.rotation.y = -angle;
+      leaf.rotation.x = 0.3 + t * 0.4;
+
+      leaf.userData = { angle, baseRadius: radius, baseHeight: height, phase: i * 0.1 };
+      succulentGroup.add(leaf);
+      leaves.push(leaf);
+    }
+
+    // Center core
+    const coreGeom = new THREE.SphereGeometry(0.08, 12, 12);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 50, 60),
+      transparent: true,
+      opacity: 0.7
+    });
+    const core = new THREE.Mesh(coreGeom, coreMat);
+    core.position.y = leafCount * 0.015 + 0.05;
+    succulentGroup.add(core);
+
+    let targetRotationY = 0;
+    let currentRotationY = 0;
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
-      const elapsed = (Date.now() - startTime) / 1000;
+      const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const rotation = elapsed * 0.02;
-
-      for (let i = leafCount; i > 0; i--) {
-        const angle = i * goldenAngle + rotation;
-        const radius = Math.sqrt(i) * 18 * (0.9 + breath * 0.1);
-        const x = centerX + Math.cos(angle) * radius;
-        const y = centerY + Math.sin(angle) * radius;
-
-        // Touch influence - leaves pulse/glow when touched
-        const influence = getInteractionInfluence(x, y, 150);
-        const leafSize = (8 + (leafCount - i) * 0.3) * (1 + influence.strength * 0.3);
-
-        // Leaf gradient from center (lighter) to edge (darker)
-        const t = i / leafCount;
-        const lightness = 40 + (1-t) * 25 + influence.strength * 15;
-        const saturation = 45 + (1-t) * 15 + influence.strength * 10;
-
-        // Draw leaf shape with touch displacement
-        ctx.save();
-        ctx.translate(x + influence.x * 0.2, y + influence.y * 0.2);
-        ctx.rotate(angle + Math.PI / 2);
-
-        ctx.beginPath();
-        ctx.ellipse(0, 0, leafSize * 0.6, leafSize, 0, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, ${0.6 + breath * 0.3 + influence.strength * 0.2})`;
-        ctx.fill();
-        ctx.strokeStyle = `hsla(${hue}, ${saturation + 10}%, ${lightness + 10}%, ${0.3 + influence.strength * 0.3})`;
-        ctx.lineWidth = 0.5 + influence.strength;
-        ctx.stroke();
-
-        ctx.restore();
+      // Slow touch interaction
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 2;
+        }
+      } else {
+        targetRotationY = elapsed * 0.05;
       }
 
-      // Center dot
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(200, 220, 200, 0.8)';
-      ctx.fill();
+      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
+      succulentGroup.rotation.y = currentRotationY;
 
-      // Draw touch ripples
-      drawRipples(ctx);
+      // Breathing - leaves expand outward
+      const breathScale = 0.95 + breath * 0.1;
+      leaves.forEach((leaf, i) => {
+        const t = i / leafCount;
+        const expandedRadius = leaf.userData.baseRadius * (1 + breath * 0.15);
+        const angle = leaf.userData.angle;
+
+        leaf.position.x = Math.cos(angle) * expandedRadius;
+        leaf.position.z = Math.sin(angle) * expandedRadius;
+
+        // Gentle pulse
+        const pulse = 1 + Math.sin(elapsed * 0.5 + leaf.userData.phase) * 0.03;
+        leaf.scale.setScalar(pulse * breathScale);
+
+        leaf.material.opacity = 0.4 + breath * 0.3;
+      });
+
+      core.scale.setScalar(0.9 + breath * 0.2);
+      coreMat.opacity = 0.5 + breath * 0.3;
+
+      renderer.render(scene, camera);
     };
-
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
     animate();
 
-    const handleResize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
     window.addEventListener('resize', handleResize);
-    return () => { window.removeEventListener('resize', handleResize); if (frameRef.current) cancelAnimationFrame(frameRef.current); };
-  }, [currentMode, getInteractionInfluence, drawRipples, hue]);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      leaves.forEach(l => { l.geometry.dispose(); l.material.dispose(); });
+      coreGeom.dispose(); coreMat.dispose();
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
 
   // ========== BREATH TREE (LUNGS) MODE ==========
   React.useEffect(() => {
@@ -4820,12 +5093,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'dmt') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'dmt' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent') && (
         <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       )}
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'dmt' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'dmt' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       )}
 
@@ -5467,9 +5740,6 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 // ============================================================================
 const musicTracks = [
   { name: 'Ambi', file: 'Ambi.wav' },
-  { name: 'Non-attachment', file: 'Non-attachment.wav' },
-  { name: 'Soundsleep', file: 'Soundsleep.wav' },
-  { name: 'You', file: 'You.wav' },
 ];
 
 function Still() {
