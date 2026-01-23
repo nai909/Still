@@ -9376,7 +9376,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         {/* Phase label */}
         <div style={{
           color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
-            ? 'rgba(255,215,100,0.7)'
+            ? 'rgba(255,255,255,0.7)'
             : `hsla(${primaryHue}, 52%, 68%, 0.65)`,
           fontSize: '0.85rem',
           fontFamily: '"Jost", sans-serif',
@@ -10672,16 +10672,16 @@ function Still() {
               height: `${140 + (breathSession.isActive ? breathSession.phaseProgress : 0.5) * 100}px`,
               borderRadius: '50%',
               background: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
-                ? 'radial-gradient(circle, rgba(255,215,100,0.12) 0%, rgba(255,215,100,0.04) 50%, transparent 70%)'
+                ? 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 50%, transparent 70%)'
                 : `radial-gradient(circle, hsla(${primaryHue}, 52%, 68%, 0.15) 0%, hsla(${primaryHue}, 52%, 68%, 0.05) 50%, transparent 70%)`,
-              border: `1.5px solid ${breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,215,100,0.35)' : `hsla(${primaryHue}, 52%, 68%, 0.3)`}`,
+              border: `1.5px solid ${breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,255,255,0.35)' : `hsla(${primaryHue}, 52%, 68%, 0.3)`}`,
               transition: 'width 0.15s ease-out, height 0.15s ease-out, background 0.3s ease, border-color 0.3s ease',
             }} />
 
             {/* Phase label */}
             <div style={{
               marginTop: '2.5rem',
-              color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,215,100,0.8)' : `hsla(${primaryHue}, 52%, 68%, 0.7)`,
+              color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty' ? 'rgba(255,255,255,0.8)' : `hsla(${primaryHue}, 52%, 68%, 0.7)`,
               fontSize: '0.9rem',
               fontFamily: '"Jost", sans-serif',
               letterSpacing: '0.2em',
