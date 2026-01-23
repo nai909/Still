@@ -7588,18 +7588,29 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         }}
       />
 
-      {/* Centered breath UI - inside torus hole */}
+      {/* Centered breath UI - inside torus hole, scales with breath */}
       <div style={{
         position: 'absolute',
         top: '50%',
         left: '50%',
-        transform: 'translate(-50%, -50%)',
+        transform: `translate(-50%, -50%) scale(${
+          breathSession.isActive
+            ? breathSession.phase === 'inhale'
+              ? 0.9 + breathSession.phaseProgress * 0.2
+              : breathSession.phase === 'holdFull'
+              ? 1.1
+              : breathSession.phase === 'exhale'
+              ? 1.1 - breathSession.phaseProgress * 0.2
+              : 0.9
+            : 1
+        })`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: '0.5rem',
         zIndex: 1,
         pointerEvents: 'none',
+        transition: 'transform 0.15s ease-out',
       }}>
         {/* Phase label */}
         <div
