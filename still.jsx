@@ -9398,25 +9398,22 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       const phaseProgress = breathSession.phaseProgress || 0.5;
       const isActive = breathSession.isActive;
 
-      // Calculate target scale based on breath phase
-      const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
-      const easedProgress = easeInOutSine(phaseProgress);
-
+      // Calculate target scale based on breath phase - simple linear, let smoothing handle easing
       let targetScale = 0.85; // Base scale
       if (!isActive) {
         targetScale = 0.9;
       } else if (phase === 'inhale') {
-        targetScale = 0.85 + easedProgress * 0.35; // Expand to 1.2
+        targetScale = 0.85 + phaseProgress * 0.35; // Expand to 1.2
       } else if (phase === 'holdFull') {
         targetScale = 1.2;
       } else if (phase === 'exhale') {
-        targetScale = 1.2 - easedProgress * 0.35; // Contract to 0.85
+        targetScale = 1.2 - phaseProgress * 0.35; // Contract to 0.85
       } else if (phase === 'holdEmpty') {
         targetScale = 0.85;
       }
 
-      // Smooth scale transition
-      scaleRef.current += (targetScale - scaleRef.current) * 0.08;
+      // Very smooth scale transition - slow lerp for fluid motion
+      scaleRef.current += (targetScale - scaleRef.current) * 0.04;
 
       if (meshRef.current) {
         // Slow rotation
