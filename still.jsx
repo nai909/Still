@@ -1698,29 +1698,32 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     createBranch(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0), 1.4, 0, 6);
 
-    // Slow, contemplative touch interaction
-    let targetRotationY = 0;
-    let currentRotationY = 0;
+    // Touch-responsive interaction like Torus
+    let touchInfluence = { x: 0, y: 0 };
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Very slow touch response - like touching water
+      // Direct touch response like Torus
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 1.2;
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          // Direct rotation influence
+          treeGroup.rotation.y += normalizedX * 0.015;
+          treeGroup.rotation.x += normalizedY * 0.008;
+          touchInfluence.x = normalizedX;
+          touchInfluence.y = normalizedY;
         }
       } else {
-        // Glacial drift when not touching
-        targetRotationY = Math.sin(elapsed * 0.08) * 0.25;
+        // Gentle auto-rotation when not touching
+        treeGroup.rotation.y += 0.001;
+        touchInfluence.x *= 0.95;
+        touchInfluence.y *= 0.95;
       }
-
-      // Very slow interpolation - contemplative
-      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
-      treeGroup.rotation.y = currentRotationY;
 
       // Gentle breathing scale
       const breathScale = 0.97 + breath * 0.06;
@@ -1830,9 +1833,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     createRipple();
 
-    let targetRotationY = 0;
-    let currentRotationY = 0;
-
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
@@ -1852,18 +1852,18 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
       });
 
-      // Slow touch rotation
+      // Direct touch response like Torus
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 0.5;
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          rippleGroup.rotation.y += normalizedX * 0.02;
+          rippleGroup.rotation.x += normalizedY * 0.01;
         }
       } else {
-        targetRotationY = Math.sin(elapsed * 0.05) * 0.1;
+        rippleGroup.rotation.y += 0.001;
       }
-
-      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
-      rippleGroup.rotation.y = currentRotationY;
 
       // Breathing core
       const coreScale = 0.8 + breath * 0.4;
@@ -2000,28 +2000,25 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const fern = new THREE.Points(fernGeom, fernMat);
     fernGroup.add(fern);
 
-    // Slow, contemplative touch interaction
-    let targetRotationY = 0;
-    let currentRotationY = 0;
-
+    // Touch-responsive interaction like Torus
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Very slow touch response
+      // Direct touch response like Torus
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 1.5;
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          fernGroup.rotation.y += normalizedX * 0.02;
+          fernGroup.rotation.x += normalizedY * 0.01;
         }
       } else {
-        targetRotationY = Math.sin(elapsed * 0.08) * 0.3;
+        // Gentle auto-rotation when not touching
+        fernGroup.rotation.y += 0.001;
       }
-
-      // Glacial interpolation
-      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
-      fernGroup.rotation.y = currentRotationY;
 
       // Gentle breathing sway
       const sway = Math.sin(elapsed * 0.2) * 0.05 * breath;
@@ -2157,8 +2154,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     }
 
     let lastExhale = 0;
-    let targetRotationY = 0;
-    let currentRotationY = 0;
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
@@ -2166,11 +2161,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const breath = getBreathPhase(elapsed);
       const isExhaling = breath < 0.4 && elapsed > 2;
 
-      // Slow touch interaction
+      // Direct touch response like Torus
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 1.2;
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          dandelionGroup.rotation.y += normalizedX * 0.02;
+          dandelionGroup.rotation.x += normalizedY * 0.01;
 
           // Release seeds when touched
           seeds.forEach(seed => {
@@ -2184,12 +2182,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
               const dy = activeTouch.y - screenY;
               const dist = Math.sqrt(dx * dx + dy * dy);
 
-              if (dist < 80) {
+              if (dist < 100) { // Larger touch radius
                 seed.userData.attached = false;
                 seed.userData.velocity.set(
-                  (Math.random() - 0.5) * 0.02,
-                  0.01 + Math.random() * 0.01,
-                  (Math.random() - 0.5) * 0.02
+                  (Math.random() - 0.5) * 0.03,
+                  0.015 + Math.random() * 0.015,
+                  (Math.random() - 0.5) * 0.03
                 );
                 floatingSeeds.push(seed);
               }
@@ -2197,11 +2195,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           });
         }
       } else {
-        targetRotationY = Math.sin(elapsed * 0.08) * 0.2;
+        // Gentle auto-rotation when not touching
+        dandelionGroup.rotation.y += 0.001;
       }
-
-      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
-      dandelionGroup.rotation.y = currentRotationY;
 
       // Release seeds on exhale
       if (isExhaling && elapsed - lastExhale > 3) {
@@ -2367,26 +2363,24 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     core.position.y = leafCount * 0.015 + 0.05;
     succulentGroup.add(core);
 
-    let targetRotationY = 0;
-    let currentRotationY = 0;
-
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Slow touch interaction
+      // Direct touch response like Torus
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          succulentGroup.rotation.y += normalizedX * 0.02;
+          succulentGroup.rotation.x += normalizedY * 0.01;
         }
       } else {
-        targetRotationY = elapsed * 0.05;
+        // Gentle auto-rotation when not touching
+        succulentGroup.rotation.y += 0.002;
       }
-
-      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
-      succulentGroup.rotation.y = currentRotationY;
 
       // Breathing - leaves expand outward
       const breathScale = 0.95 + breath * 0.1;
@@ -2540,26 +2534,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     createBranch(new THREE.Vector3(-0.3, startY, 0), new THREE.Vector3(-0.3, -1, 0).normalize(), 0.5, 0, 5, 'left');
     createBranch(new THREE.Vector3(0.3, startY, 0), new THREE.Vector3(0.3, -1, 0).normalize(), 0.5, 0, 5, 'right');
 
-    let targetRotationY = 0;
-    let currentRotationY = 0;
-
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Slow touch interaction
+      // Direct touch response like Torus
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 0.8;
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          lungsGroup.rotation.y += normalizedX * 0.02;
+          lungsGroup.rotation.x += normalizedY * 0.01;
         }
       } else {
-        targetRotationY = Math.sin(elapsed * 0.08) * 0.15;
+        lungsGroup.rotation.y += 0.001;
       }
-
-      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
-      lungsGroup.rotation.y = currentRotationY;
 
       // Breathing animation - lungs expand
       const breathScale = 0.9 + breath * 0.2;
@@ -4001,9 +3992,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     spawnInkDrop(-0.5, 0, 0, 80);
     spawnInkDrop(0.5, -0.3, 0, 80);
 
-    let targetRotationY = 0;
-    let currentRotationY = 0;
-
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
@@ -4027,18 +4015,18 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
       });
 
-      // Glacial touch rotation
+      // Direct touch response like Torus
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 0.5;
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          inkGroup.rotation.y += normalizedX * 0.02;
+          inkGroup.rotation.x += normalizedY * 0.01;
         }
       } else {
-        targetRotationY = Math.sin(elapsed * 0.05) * 0.15;
+        inkGroup.rotation.y += 0.001;
       }
-
-      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
-      inkGroup.rotation.y = currentRotationY;
 
       // Breath affects particle movement
       const breathForce = (breath - 0.5) * 0.002;
@@ -4245,38 +4233,24 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const spores = new THREE.Points(sporeGeom, sporeMat);
     scene.add(spores);
 
-    // Touch interaction state
-    let targetRotationY = 0;
-    let targetRotationX = 0;
-    let currentRotationY = 0;
-    let currentRotationX = 0;
-
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Touch influence - rotate entire mushroom cluster toward touch points
+      // Direct touch response like Torus
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
           const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          targetRotationY = normalizedX * 0.5;
-          targetRotationX = normalizedY * 0.3;
+          mushroomGroup.rotation.y += normalizedX * 0.02;
+          mushroomGroup.rotation.x += normalizedY * 0.01;
         }
       } else {
         // Gentle auto-rotation when not touching
-        targetRotationY = Math.sin(elapsed * 0.1) * 0.2;
-        targetRotationX = 0;
+        mushroomGroup.rotation.y += 0.001;
       }
-
-      // Smooth interpolation
-      currentRotationY += (targetRotationY - currentRotationY) * 0.05;
-      currentRotationX += (targetRotationX - currentRotationX) * 0.05;
-
-      mushroomGroup.rotation.y = currentRotationY;
-      mushroomGroup.rotation.x = currentRotationX * 0.5;
 
       // Animate individual mushrooms
       mushrooms.forEach((mushroom, idx) => {
@@ -4543,10 +4517,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     scene.add(particles);
 
     // Touch interaction state
-    let targetRotationY = 0;
-    let targetRotationX = 0;
-    let currentRotationY = 0;
-    let currentRotationX = 0;
     let touchStrength = 0;
 
     const animate = () => {
@@ -4554,29 +4524,20 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Touch influence
+      // Direct touch response like Torus
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
           const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          targetRotationY = normalizedX * Math.PI * 0.5;
-          targetRotationX = normalizedY * Math.PI * 0.3;
+          entityGroup.rotation.y += normalizedX * 0.025;
+          entityGroup.rotation.x += normalizedY * 0.015;
           touchStrength = Math.min(touchStrength + 0.05, 1);
         }
       } else {
-        targetRotationY = elapsed * 0.1;
-        targetRotationX = Math.sin(elapsed * 0.2) * 0.2;
+        entityGroup.rotation.y += 0.002;
         touchStrength = Math.max(touchStrength - 0.02, 0);
       }
-
-      // Smooth interpolation
-      currentRotationY += (targetRotationY - currentRotationY) * 0.03;
-      currentRotationX += (targetRotationX - currentRotationX) * 0.03;
-
-      // Animate central entity
-      entityGroup.rotation.y = currentRotationY;
-      entityGroup.rotation.x = currentRotationX;
 
       // Counter-rotate nested forms for hypnotic effect
       outer.rotation.x = elapsed * 0.1;
@@ -4814,32 +4775,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       rings.push(ring);
     }
 
-    let targetRotationY = 0;
-    let currentRotationY = 0;
-    let targetRotationX = 0.3;
-    let currentRotationX = 0.3;
-
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Glacial touch rotation
+      // Direct touch response like Torus
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 1.5;
-          targetRotationX = (activeTouch.y / window.innerHeight - 0.5) * 1.0;
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          gyroidGroup.rotation.y += normalizedX * 0.02;
+          gyroidGroup.rotation.x += normalizedY * 0.015;
         }
       } else {
-        targetRotationY += 0.002;
+        gyroidGroup.rotation.y += 0.002;
       }
-
-      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
-      currentRotationX += (targetRotationX - currentRotationX) * 0.02;
-
-      gyroidGroup.rotation.y = currentRotationY;
-      gyroidGroup.rotation.x = currentRotationX;
 
       // Breathing pulse
       const scale = 1 + breath * 0.1;
@@ -4999,9 +4951,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const particles = new THREE.Points(particleGeom, particleMat);
     rosslerGroup.add(particles);
 
-    let targetRotationY = 0;
-    let currentRotationY = 0;
-
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
@@ -5051,18 +5000,18 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
       particleGeom.attributes.position.needsUpdate = true;
 
-      // Glacial touch rotation
+      // Direct touch response like Torus
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          rosslerGroup.rotation.y += normalizedX * 0.02;
+          rosslerGroup.rotation.x += normalizedY * 0.015;
         }
       } else {
-        targetRotationY += 0.002;
+        rosslerGroup.rotation.y += 0.002;
       }
-
-      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
-      rosslerGroup.rotation.y = currentRotationY;
       rosslerGroup.rotation.x = Math.sin(elapsed * 0.1) * 0.2;
 
       tubeMat.opacity = 0.5 + breath * 0.3;
