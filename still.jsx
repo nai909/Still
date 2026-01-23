@@ -7588,24 +7588,6 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         }}
       />
 
-      {/* Current technique name - smaller, dimmer, top right */}
-      <div style={{
-        position: 'absolute',
-        top: '2rem',
-        right: '1.5rem',
-        zIndex: 1,
-      }}>
-        <span style={{
-          color: `hsla(${primaryHue}, 45%, 60%, 0.35)`,
-          fontSize: '0.6rem',
-          fontFamily: '"Jost", sans-serif',
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-        }}>
-          {breathTechniques[breathSession.technique]?.name || 'Calm'}
-        </span>
-      </div>
-
       {/* Centered breath UI - inside torus hole */}
       <div style={{
         position: 'absolute',
