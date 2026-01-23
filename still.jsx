@@ -38,12 +38,9 @@ const allQuotes = [
   { text: "Amor fati – love your fate.", author: "Friedrich Nietzsche", school: "Existentialism", era: "19th Century", themes: ["love", "meaning"] },
   { text: "Without music, life would be a mistake.", author: "Friedrich Nietzsche", school: "Existentialism", era: "19th Century", themes: ["joy", "meaning"] },
   { text: "There are no facts, only interpretations.", author: "Friedrich Nietzsche", school: "Existentialism", era: "19th Century", themes: ["truth", "wisdom"] },
-  { text: "He who fights with monsters should look to it that he himself does not become a monster.", author: "Friedrich Nietzsche", school: "Existentialism", era: "19th Century", themes: ["self", "wisdom"] },
-  { text: "And if you gaze long enough into an abyss, the abyss will gaze back into you.", author: "Friedrich Nietzsche", school: "Existentialism", era: "19th Century", themes: ["self", "truth"] },
   { text: "The higher we soar, the smaller we appear to those who cannot fly.", author: "Friedrich Nietzsche", school: "Existentialism", era: "19th Century", themes: ["self", "courage"] },
   { text: "You must have chaos within you to give birth to a dancing star.", author: "Friedrich Nietzsche", school: "Existentialism", era: "19th Century", themes: ["change", "joy"] },
   { text: "Man is condemned to be free.", author: "Jean-Paul Sartre", school: "Existentialism", era: "20th Century", themes: ["freedom", "meaning"] },
-  { text: "Hell is other people.", author: "Jean-Paul Sartre", school: "Existentialism", era: "20th Century", themes: ["love", "self"] },
   { text: "Freedom is what we do with what is done to us.", author: "Jean-Paul Sartre", school: "Existentialism", era: "20th Century", themes: ["freedom", "courage"] },
   { text: "Existence precedes essence.", author: "Jean-Paul Sartre", school: "Existentialism", era: "20th Century", themes: ["meaning", "self"] },
   { text: "We are our choices.", author: "Jean-Paul Sartre", school: "Existentialism", era: "20th Century", themes: ["self", "freedom"] },
@@ -204,7 +201,6 @@ const allQuotes = [
   { text: "Compassion is not a relationship between the healer and the wounded. It's a relationship between equals.", author: "Pema Chödrön", school: "Spiritual", era: "20th Century", themes: ["love", "wisdom"] },
   { text: "To be fully alive, fully human, and completely awake is to be continually thrown out of the nest.", author: "Pema Chödrön", school: "Spiritual", era: "20th Century", themes: ["courage", "change"] },
   { text: "The only reason we don't open our hearts and minds to other people is that they trigger confusion in us.", author: "Pema Chödrön", school: "Spiritual", era: "20th Century", themes: ["love", "self"] },
-  { text: "Rather than letting our negativity get the better of us, we could acknowledge that right now we feel like a piece of shit and not be squeamish about taking a good look.", author: "Pema Chödrön", school: "Spiritual", era: "20th Century", themes: ["self", "courage"] },
 
   // Mooji
   { text: "Step into the fire of self-discovery. This fire will not burn you, it will only burn what you are not.", author: "Mooji", school: "Spiritual", era: "21st Century", themes: ["self", "change"] },
@@ -290,7 +286,6 @@ const allQuotes = [
   { text: "Finish each day and be done with it. You have done what you could.", author: "Ralph Waldo Emerson", school: "Transcendentalism", era: "19th Century", themes: ["wisdom", "joy"] },
   { text: "Go confidently in the direction of your dreams! Live the life you've imagined.", author: "Henry David Thoreau", school: "Transcendentalism", era: "19th Century", themes: ["courage", "meaning"] },
   { text: "It's not what you look at that matters, it's what you see.", author: "Henry David Thoreau", school: "Transcendentalism", era: "19th Century", themes: ["wisdom", "truth"] },
-  { text: "The mass of men lead lives of quiet desperation.", author: "Henry David Thoreau", school: "Transcendentalism", era: "19th Century", themes: ["meaning", "suffering"] },
   { text: "Not until we are lost do we begin to understand ourselves.", author: "Henry David Thoreau", school: "Transcendentalism", era: "19th Century", themes: ["self", "change"] },
   { text: "I went to the woods because I wished to live deliberately.", author: "Henry David Thoreau", school: "Transcendentalism", era: "19th Century", themes: ["meaning", "freedom"] },
 
@@ -329,8 +324,6 @@ const allQuotes = [
   { text: "My humanity is bound up in yours, for we can only be human together.", author: "Desmond Tutu", school: "African Philosophy", era: "20th Century", themes: ["love", "truth"] },
   { text: "Do your little bit of good where you are; it's those little bits of good put together that overwhelm the world.", author: "Desmond Tutu", school: "African Philosophy", era: "20th Century", themes: ["courage", "love"] },
   { text: "Hope is being able to see that there is light despite all of the darkness.", author: "Desmond Tutu", school: "African Philosophy", era: "20th Century", themes: ["courage", "suffering"] },
-  { text: "If you are neutral in situations of injustice, you have chosen the side of the oppressor.", author: "Desmond Tutu", school: "African Philosophy", era: "20th Century", themes: ["truth", "courage"] },
-  { text: "A person with ubuntu is open and available to others, affirming of others.", author: "Desmond Tutu", school: "African Philosophy", era: "20th Century", themes: ["love", "self"] },
   { text: "Resentment and anger are bad for your blood pressure and your digestion.", author: "Desmond Tutu", school: "African Philosophy", era: "20th Century", themes: ["wisdom", "joy"] },
   { text: "The greatest glory in living lies not in never falling, but in rising every time we fall.", author: "Nelson Mandela", school: "African Philosophy", era: "20th Century", themes: ["courage", "change"] },
   { text: "It always seems impossible until it's done.", author: "Nelson Mandela", school: "African Philosophy", era: "20th Century", themes: ["courage", "meaning"] },
@@ -552,7 +545,6 @@ const allQuotes = [
   { text: "To be rooted is perhaps the most important and least recognized need of the human soul.", author: "Simone Weil", school: "Phenomenology", era: "20th Century", themes: ["meaning", "self"] },
 
   // MORE AFRICAN PROVERBS
-  { text: "The child who is not embraced by the village will burn it down to feel its warmth.", author: "African Proverb", school: "African Philosophy", era: "Traditional", themes: ["love", "suffering"] },
   { text: "A wise person will always find a way.", author: "African Proverb", school: "African Philosophy", era: "Traditional", themes: ["wisdom", "courage"] },
   { text: "Knowledge is like a garden: if it is not cultivated, it cannot be harvested.", author: "African Proverb", school: "African Philosophy", era: "Traditional", themes: ["wisdom", "change"] },
   { text: "The fool speaks, the wise man listens.", author: "Ethiopian Proverb", school: "African Philosophy", era: "Traditional", themes: ["wisdom", "truth"] },
@@ -696,10 +688,7 @@ const allQuotes = [
   { text: "Life is never made unbearable by circumstances, but only by lack of meaning and purpose.", author: "Viktor Frankl", school: "Existentialism", era: "20th Century", themes: ["meaning", "suffering"] },
 
   // MORE ALBERT CAMUS (The Myth of Sisyphus) - unique additions
-  { text: "There is but one truly serious philosophical problem, and that is suicide.", author: "Albert Camus", school: "Absurdism", era: "20th Century", themes: ["meaning", "death"] },
   { text: "The absurd is born of this confrontation between the human need and the unreasonable silence of the world.", author: "Albert Camus", school: "Absurdism", era: "20th Century", themes: ["truth", "meaning"] },
-  { text: "Should I kill myself, or have a cup of coffee?", author: "Albert Camus", school: "Absurdism", era: "20th Century", themes: ["meaning", "joy"] },
-  { text: "Nobody realizes that some people expend tremendous energy merely to be normal.", author: "Albert Camus", school: "Absurdism", era: "20th Century", themes: ["self", "suffering"] },
 
   // BARUCH SPINOZA (Ethics)
   { text: "A free man thinks of nothing less than of death, and his wisdom is a meditation, not on death, but on life.", author: "Baruch Spinoza", school: "Rationalism", era: "17th Century", themes: ["death", "wisdom"] },
@@ -857,7 +846,6 @@ const allQuotes = [
   { text: "No man ever steps in the same river twice, for it is not the same river and he is not the same man.", author: "Heraclitus", school: "Pre-Socratic", era: "5th Century BCE", themes: ["change", "truth"] },
   { text: "The soul is dyed the color of its thoughts.", author: "Heraclitus", school: "Pre-Socratic", era: "5th Century BCE", themes: ["self", "wisdom"] },
   { text: "Character is destiny.", author: "Heraclitus", school: "Pre-Socratic", era: "5th Century BCE", themes: ["self", "meaning"] },
-  { text: "Out of every hundred men, ten shouldn't even be there, eighty are just targets, nine are the real fighters. Ah, but the one—one is a warrior.", author: "Heraclitus", school: "Pre-Socratic", era: "5th Century BCE", themes: ["courage", "truth"] },
   { text: "Be kind, for everyone you meet is fighting a hard battle.", author: "Plato", school: "Classical Greek", era: "4th Century BCE", themes: ["love", "wisdom"] },
   { text: "The first and greatest victory is to conquer yourself.", author: "Plato", school: "Classical Greek", era: "4th Century BCE", themes: ["self", "courage"] },
   { text: "Wise men speak because they have something to say; fools because they have to say something.", author: "Plato", school: "Classical Greek", era: "4th Century BCE", themes: ["wisdom", "truth"] },
@@ -1161,7 +1149,7 @@ const breathTechniques = {
     name: 'Sitali Cooling',
     description: 'Cools body and mind',
     phases: [
-      { name: 'inhale', label: 'Inhale through tongue', duration: 4 },
+      { name: 'inhale', label: 'Roll tongue, inhale through mouth', duration: 4 },
       { name: 'holdFull', label: 'Hold', duration: 2 },
       { name: 'exhale', label: 'Nose exhale', duration: 6 },
     ],
@@ -1256,15 +1244,11 @@ const gazeModes = [
   { key: 'ink', name: 'Ink in Water' },
   { key: 'lava', name: 'Lava Lamp' },
   { key: 'aurora', name: 'Aurora' },
-  { key: 'lotus', name: 'Lotus' },
-  { key: 'smoke', name: 'Smoke' },
   { key: 'mandala', name: 'Mandala' },
   { key: 'stars', name: 'Starfield' },
   // New visuals
   { key: 'caustics', name: 'Caustics' },
-  { key: 'mandelbrot', name: 'Mandelbrot' },
   { key: 'nebula', name: 'Nebula' },
-  { key: 'moss', name: 'Moss' },
   { key: 'moon', name: 'Moon' },
   { key: 'kaleidoscope', name: 'Kaleidoscope' },
   { key: 'mushrooms', name: 'Mushrooms' },
@@ -2240,6 +2224,17 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         if (floatingSeeds[i].y < -50) floatingSeeds.splice(i, 1);
       }
 
+      // Reset all seeds once they've all blown away
+      if (seeds.every(s => !s.attached) && floatingSeeds.length === 0) {
+        seeds.forEach((seed, i) => {
+          seed.attached = true;
+          seed.x = 0;
+          seed.y = 0;
+          seed.vx = 0;
+          seed.vy = 0;
+        });
+      }
+
       // Draw touch ripples
       drawRipples(ctx);
     };
@@ -2995,7 +2990,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const isHoldingEmpty = phaseName === 'holdEmpty';
 
       // Dark background with subtle vignette
-      ctx.fillStyle = '#0a0a0f';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Vignette effect
@@ -3223,7 +3218,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       ctx.stroke();
     };
 
-    ctx.fillStyle = '#0a0a0f';
+    ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     animate();
 
@@ -3521,7 +3516,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       updateTiltFromTouch();
 
       // Clear main canvas
-      ctx.fillStyle = '#050508';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Draw bokeh (background)
@@ -4830,9 +4825,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Background gradient (dark, matching app theme)
       const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      bgGradient.addColorStop(0, '#080a0c');
-      bgGradient.addColorStop(0.5, '#040606');
-      bgGradient.addColorStop(1, '#020303');
+      bgGradient.addColorStop(0, '#000');
+      bgGradient.addColorStop(0.5, '#000');
+      bgGradient.addColorStop(1, '#000');
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -5400,9 +5395,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const drawEnvironment = (time, breath) => {
       // Night sky
       const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      skyGradient.addColorStop(0, '#05050f');
-      skyGradient.addColorStop(0.4, '#0a0a1a');
-      skyGradient.addColorStop(0.7, '#0f0f28');
+      skyGradient.addColorStop(0, '#000');
+      skyGradient.addColorStop(0.4, '#000');
+      skyGradient.addColorStop(0.7, '#000');
       skyGradient.addColorStop(1, '#151530');
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -5428,7 +5423,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       treelinePoints.forEach(p => ctx.lineTo(p.x, p.y));
       ctx.lineTo(canvas.width, canvas.height);
       ctx.closePath();
-      ctx.fillStyle = '#030308';
+      ctx.fillStyle = '#000';
       ctx.fill();
 
       // Grass at bottom
@@ -5441,7 +5436,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
       ctx.lineTo(canvas.width, canvas.height);
       ctx.closePath();
-      ctx.fillStyle = '#060610';
+      ctx.fillStyle = '#000';
       ctx.fill();
     };
 
@@ -5544,16 +5539,16 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     canvas.height = window.innerHeight;
     let startTime = Date.now();
 
-    // Lamp dimensions - classic proportions
+    // Lamp dimensions - minimal, zoomed in
     const centerX = canvas.width / 2;
-    const lampHeight = Math.min(canvas.height * 0.82, 680);
-    const lampWidth = lampHeight * 0.24;
+    const lampHeight = Math.min(canvas.height * 1.1, 900);
+    const lampWidth = lampHeight * 0.28;
     const lampTop = (canvas.height - lampHeight) / 2;
     const lampBottom = lampTop + lampHeight;
 
-    // Glass bottle dimensions (elegant tapered shape)
-    const glassTop = lampTop + lampHeight * 0.065;
-    const glassBottom = lampBottom - lampHeight * 0.105;
+    // Glass bottle dimensions - fills the view
+    const glassTop = lampTop + lampHeight * 0.02;
+    const glassBottom = lampBottom - lampHeight * 0.02;
     const glassHeight = glassBottom - glassTop;
     const bottleNeckTop = glassTop;
     const bottleNeckWidth = lampWidth * 0.30;
@@ -6301,7 +6296,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // Draw background
     const drawBackground = (breath) => {
       // Deep dark background
-      ctx.fillStyle = '#050508';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Ambient glow from lamp
@@ -6360,7 +6355,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Draw scene layers
       drawBackground(breath);
-      drawChromeBase(breath);
       drawGlassBottle();
       drawHeatShimmer(elapsed);
       drawCaustics(elapsed, breath);
@@ -6390,9 +6384,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       drawWaxPool(elapsed, breath);
       drawOrganicBlobs(elapsed, breath);
 
-      // Finish with glass overlay and cap
+      // Finish with glass overlay
       drawGlassOverlay(breath, elapsed);
-      drawChromeCap(breath);
       drawRipples(ctx);
     };
 
@@ -6541,10 +6534,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Night sky gradient
       const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      skyGradient.addColorStop(0, '#020208');
-      skyGradient.addColorStop(0.3, '#050510');
-      skyGradient.addColorStop(0.6, '#080815');
-      skyGradient.addColorStop(1, '#0a0a18');
+      skyGradient.addColorStop(0, '#000');
+      skyGradient.addColorStop(0.3, '#000');
+      skyGradient.addColorStop(0.6, '#000');
+      skyGradient.addColorStop(1, '#000');
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -6607,7 +6600,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
       ctx.lineTo(canvas.width, canvas.height);
       ctx.closePath();
-      ctx.fillStyle = '#03030a';
+      ctx.fillStyle = '#000';
       ctx.fill();
 
       // Snow-covered peaks
@@ -6624,7 +6617,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       ctx.lineTo(canvas.width, canvas.height - 60);
       ctx.lineTo(canvas.width, canvas.height);
       ctx.closePath();
-      ctx.fillStyle = '#04040c';
+      ctx.fillStyle = '#000';
       ctx.fill();
 
       drawRipples(ctx);
@@ -6899,265 +6892,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, drawRipples]);
 
-  // ========== LOTUS MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'lotus' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-
-    // Draw a single petal
-    const drawPetal = (ctx, x, y, width, height, angle, openness, color, shadowColor) => {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(angle);
-
-      // Apply opening transform
-      ctx.scale(1, 0.3 + openness * 0.7);
-
-      // Petal shape
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.bezierCurveTo(
-        -width * 0.5, -height * 0.3,
-        -width * 0.3, -height,
-        0, -height
-      );
-      ctx.bezierCurveTo(
-        width * 0.3, -height,
-        width * 0.5, -height * 0.3,
-        0, 0
-      );
-
-      // Gradient fill
-      const gradient = ctx.createLinearGradient(0, 0, 0, -height);
-      gradient.addColorStop(0, shadowColor);
-      gradient.addColorStop(0.4, color);
-      gradient.addColorStop(0.8, color);
-      gradient.addColorStop(1, `rgba(255, 255, 255, 0.3)`);
-      ctx.fillStyle = gradient;
-      ctx.fill();
-
-      // Subtle vein line
-      ctx.strokeStyle = `rgba(255, 255, 255, 0.15)`;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, -height * 0.1);
-      ctx.lineTo(0, -height * 0.85);
-      ctx.stroke();
-
-      ctx.restore();
-    };
-
-    // Water ripple class
-    class WaterRipple {
-      constructor() {
-        this.x = centerX + (Math.random() - 0.5) * canvas.width * 0.8;
-        this.y = centerY + (Math.random() - 0.5) * canvas.height * 0.4 + canvas.height * 0.15;
-        this.radius = 0;
-        this.maxRadius = 30 + Math.random() * 50;
-        this.speed = 0.3 + Math.random() * 0.2;
-        this.alpha = 0.3;
-      }
-
-      update() {
-        this.radius += this.speed;
-        this.alpha = 0.3 * (1 - this.radius / this.maxRadius);
-        return this.radius < this.maxRadius;
-      }
-
-      draw(ctx) {
-        ctx.strokeStyle = `hsla(${hue}, 52%, 68%, ${this.alpha})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.ellipse(this.x, this.y, this.radius, this.radius * 0.3, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-    }
-
-    const ripples = [];
-
-    // Lily pads
-    const lilyPads = [];
-    for (let i = 0; i < 5; i++) {
-      lilyPads.push({
-        x: centerX + (Math.random() - 0.5) * canvas.width * 0.7,
-        y: centerY + Math.random() * canvas.height * 0.3 + canvas.height * 0.1,
-        radius: 30 + Math.random() * 25,
-        rotation: Math.random() * Math.PI * 2,
-        notchAngle: Math.random() * Math.PI * 2,
-        phase: Math.random() * Math.PI * 2,
-      });
-    }
-
-    const drawLilyPad = (pad, time) => {
-      const wobble = Math.sin(time * 0.001 + pad.phase) * 0.02;
-
-      ctx.save();
-      ctx.translate(pad.x, pad.y);
-      ctx.rotate(pad.rotation + wobble);
-      ctx.scale(1, 0.4);
-
-      // Main pad
-      ctx.beginPath();
-      ctx.arc(0, 0, pad.radius, pad.notchAngle + 0.2, pad.notchAngle + Math.PI * 2 - 0.2);
-      ctx.lineTo(0, 0);
-      ctx.closePath();
-
-      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, pad.radius);
-      gradient.addColorStop(0, `hsla(${hue}, 30%, 30%, 0.8)`);
-      gradient.addColorStop(0.7, `hsla(${hue}, 28%, 22%, 0.7)`);
-      gradient.addColorStop(1, `hsla(${hue}, 25%, 15%, 0.6)`);
-      ctx.fillStyle = gradient;
-      ctx.fill();
-
-      ctx.restore();
-    };
-
-    let lastTime = Date.now();
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const now = Date.now();
-      const dt = Math.min(now - lastTime, 50);
-      lastTime = now;
-
-      const elapsed = (now - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-      const openness = breath; // Lotus opens with inhale
-
-      // Dark water background
-      const waterGradient = ctx.createRadialGradient(
-        centerX, centerY, 0,
-        centerX, centerY, Math.max(canvas.width, canvas.height) * 0.7
-      );
-      waterGradient.addColorStop(0, '#0a1520');
-      waterGradient.addColorStop(0.5, '#081218');
-      waterGradient.addColorStop(1, '#050a0f');
-      ctx.fillStyle = waterGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Add occasional ripples
-      if (Math.random() < 0.02) {
-        ripples.push(new WaterRipple());
-      }
-
-      // Touch interactions - spawn ripples at touch points
-      touchPointsRef.current.forEach(point => {
-        if (point.active && Math.random() < 0.15) {
-          const ripple = new WaterRipple();
-          ripple.x = point.x + (Math.random() - 0.5) * 30;
-          ripple.y = point.y + (Math.random() - 0.5) * 30;
-          ripple.maxRadius = 60 + Math.random() * 40;
-          ripples.push(ripple);
-        }
-      });
-
-      // Limit ripples
-      if (ripples.length > 30) ripples.splice(0, ripples.length - 30);
-
-      // Update and draw ripples
-      for (let i = ripples.length - 1; i >= 0; i--) {
-        if (!ripples[i].update()) {
-          ripples.splice(i, 1);
-        } else {
-          ripples[i].draw(ctx);
-        }
-      }
-
-      // Draw lily pads
-      lilyPads.forEach(pad => drawLilyPad(pad, now));
-
-      // Lotus center position (slightly bobbing)
-      const lotusY = centerY + Math.sin(now * 0.0008) * 8;
-      const lotusScale = Math.min(canvas.width, canvas.height) * 0.0015;
-
-      // Draw outer petals (3 layers) - using teal color scheme
-      const petalLayers = [
-        { count: 12, radius: 110 * lotusScale, size: { w: 35, h: 90 }, color: `hsla(${hue}, 45%, 72%, 0.9)`, shadow: `hsla(${hue - 10}, 50%, 50%, 0.8)` },
-        { count: 10, radius: 80 * lotusScale, size: { w: 30, h: 75 }, color: `hsla(${hue}, 48%, 76%, 0.9)`, shadow: `hsla(${hue - 10}, 45%, 55%, 0.8)` },
-        { count: 8, radius: 50 * lotusScale, size: { w: 25, h: 60 }, color: `hsla(${hue}, 50%, 82%, 0.95)`, shadow: `hsla(${hue - 10}, 40%, 60%, 0.85)` },
-      ];
-
-      petalLayers.forEach((layer, layerIndex) => {
-        const layerOpenness = Math.max(0, Math.min(1, openness * 1.5 - layerIndex * 0.2));
-
-        for (let i = 0; i < layer.count; i++) {
-          const angle = (i / layer.count) * Math.PI * 2 - Math.PI / 2;
-          const petalAngle = angle + Math.PI; // Point outward
-          const petalDist = layer.radius * (0.3 + layerOpenness * 0.7);
-          const px = centerX + Math.cos(angle) * petalDist;
-          const py = lotusY + Math.sin(angle) * petalDist * 0.4;
-
-          drawPetal(
-            ctx,
-            px, py,
-            layer.size.w * lotusScale,
-            layer.size.h * lotusScale * (0.7 + layerOpenness * 0.3),
-            petalAngle - Math.PI / 2 + (1 - layerOpenness) * (angle > 0 ? 0.3 : -0.3),
-            layerOpenness,
-            layer.color,
-            layer.shadow
-          );
-        }
-      });
-
-      // Center pistil/stamen
-      const centerSize = 25 * lotusScale;
-      const centerGradient = ctx.createRadialGradient(centerX, lotusY, 0, centerX, lotusY, centerSize);
-      centerGradient.addColorStop(0, 'rgba(255, 220, 100, 0.95)');
-      centerGradient.addColorStop(0.6, 'rgba(240, 180, 60, 0.9)');
-      centerGradient.addColorStop(1, 'rgba(200, 140, 40, 0.8)');
-      ctx.beginPath();
-      ctx.arc(centerX, lotusY, centerSize, 0, Math.PI * 2);
-      ctx.fillStyle = centerGradient;
-      ctx.fill();
-
-      // Stamen dots
-      for (let i = 0; i < 12; i++) {
-        const angle = (i / 12) * Math.PI * 2;
-        const dist = centerSize * 0.6;
-        const sx = centerX + Math.cos(angle) * dist;
-        const sy = lotusY + Math.sin(angle) * dist * 0.5;
-        ctx.beginPath();
-        ctx.arc(sx, sy, 2 * lotusScale, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(180, 120, 40, 0.8)';
-        ctx.fill();
-      }
-
-      // Glow around lotus
-      const glowGradient = ctx.createRadialGradient(centerX, lotusY, 0, centerX, lotusY, 200 * lotusScale);
-      glowGradient.addColorStop(0, `rgba(255, 200, 210, ${0.1 + breath * 0.1})`);
-      glowGradient.addColorStop(0.5, `rgba(255, 180, 190, ${0.05 + breath * 0.05})`);
-      glowGradient.addColorStop(1, 'transparent');
-      ctx.fillStyle = glowGradient;
-      ctx.beginPath();
-      ctx.arc(centerX, lotusY, 200 * lotusScale, 0, Math.PI * 2);
-      ctx.fill();
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, drawRipples]);
-
   // ========== CANDLE MODE ==========
   React.useEffect(() => {
     if (currentMode !== 'candle' || !canvasRef.current) return;
@@ -7413,8 +7147,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         centerX, candleBottom - 100, Math.max(canvas.width, canvas.height)
       );
       bgGradient.addColorStop(0, `rgba(40, 25, 15, ${0.95 + breath * 0.05})`);
-      bgGradient.addColorStop(0.3, '#0a0805');
-      bgGradient.addColorStop(1, '#050302');
+      bgGradient.addColorStop(0.3, '#000');
+      bgGradient.addColorStop(1, '#000');
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -7482,288 +7216,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Draw main flame (with touch wind effect)
       drawFlame(breath, isInhaling, now + touchWindX * 50);
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, drawRipples]);
-
-  // ========== SMOKE MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'smoke' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height * 0.85;
-
-    // Smoke tendril class
-    class SmokeTendril {
-      constructor(index) {
-        this.baseX = centerX + (index - 2) * 30;
-        this.reset();
-      }
-
-      reset() {
-        this.points = [];
-        const pointCount = 20;
-        for (let i = 0; i < pointCount; i++) {
-          this.points.push({
-            x: this.baseX,
-            y: centerY - i * 15,
-            vx: 0,
-            age: 0,
-          });
-        }
-        this.hue = hue + (Math.random() - 0.5) * 20;
-        this.width = 15 + Math.random() * 10;
-        this.phase = Math.random() * Math.PI * 2;
-        this.speed = 0.5 + Math.random() * 0.3;
-      }
-
-      update(dt, breath, isInhaling, time) {
-        // Move points upward
-        for (let i = this.points.length - 1; i >= 0; i--) {
-          const p = this.points[i];
-          p.age += dt * 0.001;
-
-          if (i === 0) {
-            // Base point stays at source
-            p.x = this.baseX + Math.sin(time * 0.002 + this.phase) * 5;
-          } else {
-            // Follow previous point with curl
-            const prev = this.points[i - 1];
-            const curl = Math.sin(time * 0.001 * this.speed + i * 0.3 + this.phase) * (3 + i * 0.5);
-
-            // Breath influence
-            const breathPush = isInhaling ? -1 : 1;
-            p.vx += breathPush * breath * 0.02;
-            p.vx *= 0.95;
-
-            p.x += p.vx + curl * 0.1;
-            p.y = prev.y - 12 - breath * 3;
-
-            // Spread as it rises
-            const spread = i * 0.8;
-            p.x = prev.x + p.vx + Math.sin(time * 0.001 + i * 0.2) * spread * 0.3;
-          }
-        }
-
-        // Reset if top point is off screen
-        if (this.points[this.points.length - 1].y < -50) {
-          this.reset();
-        }
-      }
-
-      draw(ctx, breath) {
-        if (this.points.length < 2) return;
-
-        // Draw as a flowing ribbon
-        ctx.beginPath();
-        ctx.moveTo(this.points[0].x - this.width / 2, this.points[0].y);
-
-        // Left edge
-        for (let i = 1; i < this.points.length; i++) {
-          const p = this.points[i];
-          const width = this.width * (1 - i / this.points.length) * (0.8 + breath * 0.2);
-          ctx.lineTo(p.x - width / 2, p.y);
-        }
-
-        // Right edge (reverse)
-        for (let i = this.points.length - 1; i >= 0; i--) {
-          const p = this.points[i];
-          const width = this.width * (1 - i / this.points.length) * (0.8 + breath * 0.2);
-          ctx.lineTo(p.x + width / 2, p.y);
-        }
-
-        ctx.closePath();
-
-        // Gradient fill
-        const gradient = ctx.createLinearGradient(0, centerY, 0, this.points[this.points.length - 1].y);
-        gradient.addColorStop(0, `hsla(${this.hue}, 30%, 60%, 0.4)`);
-        gradient.addColorStop(0.3, `hsla(${this.hue}, 25%, 55%, 0.25)`);
-        gradient.addColorStop(0.6, `hsla(${this.hue}, 20%, 50%, 0.15)`);
-        gradient.addColorStop(1, `hsla(${this.hue}, 15%, 45%, 0)`);
-
-        ctx.fillStyle = gradient;
-        ctx.fill();
-      }
-    }
-
-    // Floating particle class
-    class FloatingParticle {
-      constructor() {
-        this.reset();
-      }
-
-      reset() {
-        this.x = centerX + (Math.random() - 0.5) * 200;
-        this.y = centerY;
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = -0.5 - Math.random() * 1;
-        this.size = 2 + Math.random() * 4;
-        this.life = 1;
-        this.decay = 0.003 + Math.random() * 0.003;
-        this.hue = hue + (Math.random() - 0.5) * 30;
-      }
-
-      update(breath) {
-        this.x += this.vx + Math.sin(this.y * 0.01) * 0.5;
-        this.y += this.vy * (0.5 + breath * 0.5);
-        this.life -= this.decay;
-
-        if (this.life <= 0 || this.y < 0) this.reset();
-      }
-
-      draw(ctx) {
-        const alpha = this.life * 0.5;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
-        ctx.fillStyle = `hsla(${this.hue}, 40%, 70%, ${alpha})`;
-        ctx.fill();
-      }
-    }
-
-    // Initialize tendrils
-    const tendrils = [];
-    for (let i = 0; i < 5; i++) {
-      tendrils.push(new SmokeTendril(i));
-    }
-
-    // Initialize particles
-    const particles = [];
-    for (let i = 0; i < 50; i++) {
-      particles.push(new FloatingParticle());
-    }
-
-    // Incense holder
-    const drawIncenseHolder = () => {
-      // Bowl
-      ctx.beginPath();
-      ctx.ellipse(centerX, centerY + 10, 40, 15, 0, 0, Math.PI);
-      ctx.fillStyle = '#1a1a25';
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.ellipse(centerX, centerY + 10, 40, 15, 0, Math.PI, Math.PI * 2);
-      ctx.fillStyle = '#252530';
-      ctx.fill();
-
-      // Incense stick
-      ctx.strokeStyle = '#3a3530';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
-      ctx.lineTo(centerX, centerY - 30);
-      ctx.stroke();
-
-      // Glowing tip
-      const gradient = ctx.createRadialGradient(centerX, centerY - 30, 0, centerX, centerY - 30, 8);
-      gradient.addColorStop(0, 'rgba(255, 150, 100, 0.9)');
-      gradient.addColorStop(0.5, 'rgba(255, 100, 50, 0.5)');
-      gradient.addColorStop(1, 'transparent');
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY - 30, 8, 0, Math.PI * 2);
-      ctx.fill();
-    };
-
-    let lastTime = Date.now();
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const now = Date.now();
-      const dt = Math.min(now - lastTime, 50);
-      lastTime = now;
-
-      const elapsed = (now - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-      const isInhaling = Math.sin(elapsed * BREATH_SPEED) > 0;
-
-      // Dark background
-      ctx.fillStyle = '#05050c';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Ambient glow
-      const ambientGlow = ctx.createRadialGradient(
-        centerX, centerY - 100, 0,
-        centerX, centerY - 100, 300
-      );
-      ambientGlow.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.05 + breath * 0.03})`);
-      ambientGlow.addColorStop(1, 'transparent');
-      ctx.fillStyle = ambientGlow;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Touch interactions - disperse smoke
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          // Push particles away
-          particles.forEach(p => {
-            const dx = p.x - point.x;
-            const dy = p.y - point.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 100 && dist > 1) {
-              const force = (1 - dist / 100) * 3;
-              p.x += (dx / dist) * force;
-              p.vx += (dx / dist) * force * 0.1;
-            }
-          });
-          // Push tendril points away
-          tendrils.forEach(t => {
-            t.points.forEach(p => {
-              const dx = p.x - point.x;
-              const dy = p.y - point.y;
-              const dist = Math.sqrt(dx * dx + dy * dy);
-              if (dist < 80 && dist > 1) {
-                const force = (1 - dist / 80) * 4;
-                p.vx += (dx / dist) * force * 0.15;
-              }
-            });
-          });
-          // Draw touch swirl
-          ctx.strokeStyle = `hsla(${hue}, 52%, 68%, 0.15)`;
-          ctx.lineWidth = 1;
-          for (let i = 0; i < 3; i++) {
-            const angle = (now * 0.002) + (i * Math.PI * 2 / 3);
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 25 + i * 15, angle, angle + Math.PI * 0.6);
-            ctx.stroke();
-          }
-        }
-      });
-
-      // Update and draw particles (behind tendrils)
-      particles.forEach(p => {
-        p.update(breath);
-        p.draw(ctx);
-      });
-
-      // Update and draw tendrils
-      ctx.globalCompositeOperation = 'screen';
-      tendrils.forEach(t => {
-        t.update(dt, breath, isInhaling, now);
-        t.draw(ctx, breath);
-      });
-      ctx.globalCompositeOperation = 'source-over';
-
-      // Draw incense holder
-      drawIncenseHolder();
 
       drawRipples(ctx);
     };
@@ -7950,7 +7402,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const breath = getBreathPhase(elapsed);
 
       // Dark background
-      ctx.fillStyle = '#05050c';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Center glow
@@ -8170,7 +7622,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const speed = baseSpeed * (0.5 + breath * 0.5) * (dt / 16);
 
       // Very dark space background
-      ctx.fillStyle = '#020204';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Draw background stars with twinkle
@@ -8384,146 +7836,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       bloomGradient.addColorStop(0, `rgba(74, 144, 164, ${0.1 + breath * 0.05})`);
       bloomGradient.addColorStop(1, 'transparent');
       ctx.fillStyle = bloomGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.globalCompositeOperation = 'source-over';
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, drawRipples]);
-
-  // ========== MANDELBROT MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'mandelbrot' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    // Mandelbrot zoom state
-    let centerX = -0.745;
-    let centerY = 0.186;
-    let zoom = 0.005;
-    let targetZoom = zoom;
-    const maxIterations = 100;
-
-    // Color palette based on app colors
-    const getColor = (iter, maxIter) => {
-      if (iter === maxIter) return [5, 5, 12];
-      const t = iter / maxIter;
-      const palette = [
-        [123, 104, 238], // purple
-        [74, 144, 164],  // steel blue
-        [107, 142, 107], // sage
-        [212, 165, 116], // sand
-        [224, 123, 83],  // orange
-      ];
-      const idx = t * (palette.length - 1);
-      const i = Math.floor(idx);
-      const f = idx - i;
-      const c1 = palette[Math.min(i, palette.length - 1)];
-      const c2 = palette[Math.min(i + 1, palette.length - 1)];
-      return [
-        c1[0] + (c2[0] - c1[0]) * f,
-        c1[1] + (c2[1] - c1[1]) * f,
-        c1[2] + (c2[2] - c1[2]) * f,
-      ];
-    };
-
-    // Low-res buffer for performance
-    const bufferScale = 4;
-    const bufferWidth = Math.floor(canvas.width / bufferScale);
-    const bufferHeight = Math.floor(canvas.height / bufferScale);
-    const imageData = ctx.createImageData(bufferWidth, bufferHeight);
-
-    const renderMandelbrot = () => {
-      const aspect = canvas.width / canvas.height;
-
-      for (let py = 0; py < bufferHeight; py++) {
-        for (let px = 0; px < bufferWidth; px++) {
-          const x0 = centerX + (px / bufferWidth - 0.5) * zoom * aspect;
-          const y0 = centerY + (py / bufferHeight - 0.5) * zoom;
-
-          let x = 0, y = 0;
-          let iter = 0;
-
-          while (x * x + y * y <= 4 && iter < maxIterations) {
-            const xTemp = x * x - y * y + x0;
-            y = 2 * x * y + y0;
-            x = xTemp;
-            iter++;
-          }
-
-          const color = getColor(iter, maxIterations);
-          const idx = (py * bufferWidth + px) * 4;
-          imageData.data[idx] = color[0];
-          imageData.data[idx + 1] = color[1];
-          imageData.data[idx + 2] = color[2];
-          imageData.data[idx + 3] = 255;
-        }
-      }
-
-      // Draw scaled up
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = bufferWidth;
-      tempCanvas.height = bufferHeight;
-      tempCanvas.getContext('2d').putImageData(imageData, 0, 0);
-      ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
-    };
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const now = Date.now();
-      const elapsed = (now - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      // Auto zoom
-      targetZoom *= 0.998;
-      zoom += (targetZoom - zoom) * 0.1;
-
-      // Reset if too deep
-      if (zoom < 0.0000001) {
-        zoom = 0.005;
-        targetZoom = 0.005;
-        centerX = -0.745 + (Math.random() - 0.5) * 0.1;
-        centerY = 0.186 + (Math.random() - 0.5) * 0.1;
-      }
-
-      // Touch to change target
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          const aspect = canvas.width / canvas.height;
-          centerX += (point.x / canvas.width - 0.5) * zoom * aspect * 0.1;
-          centerY += (point.y / canvas.height - 0.5) * zoom * 0.1;
-        }
-      });
-
-      renderMandelbrot();
-
-      // Bloom glow
-      ctx.globalCompositeOperation = 'screen';
-      const glowGradient = ctx.createRadialGradient(
-        canvas.width / 2, canvas.height / 2, 0,
-        canvas.width / 2, canvas.height / 2, canvas.width * 0.5
-      );
-      glowGradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${0.1 + breath * 0.05})`);
-      glowGradient.addColorStop(1, 'transparent');
-      ctx.fillStyle = glowGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.globalCompositeOperation = 'source-over';
 
@@ -8838,7 +8150,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const breath = getBreathPhase(elapsed);
 
       // Dark space background
-      ctx.fillStyle = '#030308';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Draw stars
@@ -8874,150 +8186,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       glowGradient.addColorStop(1, 'transparent');
       ctx.fillStyle = glowGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      drawRipples(ctx);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [currentMode, drawRipples]);
-
-  // ========== MOSS MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'moss' || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    let startTime = Date.now();
-
-    // Grid for cellular automata
-    const cellSize = 6;
-    const cols = Math.ceil(canvas.width / cellSize);
-    const rows = Math.ceil(canvas.height / cellSize);
-    const grid = new Array(cols * rows).fill(0);
-
-    // Initial growth points
-    const seeds = 5;
-    for (let i = 0; i < seeds; i++) {
-      const x = Math.floor(Math.random() * cols);
-      const y = Math.floor(Math.random() * rows);
-      grid[y * cols + x] = 1;
-    }
-
-    // Growth function
-    const grow = () => {
-      const newGrowth = [];
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-          if (grid[y * cols + x] > 0) {
-            // Try to grow to neighbors
-            const neighbors = [
-              [x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1],
-              [x - 1, y - 1], [x + 1, y - 1], [x - 1, y + 1], [x + 1, y + 1],
-            ];
-            neighbors.forEach(([nx, ny]) => {
-              if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
-                if (grid[ny * cols + nx] === 0 && Math.random() < 0.002) {
-                  newGrowth.push([nx, ny]);
-                }
-              }
-            });
-          }
-        }
-      }
-      newGrowth.forEach(([x, y]) => {
-        grid[y * cols + x] = 0.1;
-      });
-
-      // Mature existing moss
-      for (let i = 0; i < grid.length; i++) {
-        if (grid[i] > 0 && grid[i] < 1) {
-          grid[i] = Math.min(1, grid[i] + 0.005);
-        }
-      }
-    };
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const now = Date.now();
-      const elapsed = (now - startTime) / 1000;
-      const breath = getBreathPhase(elapsed);
-
-      // Stone background
-      ctx.fillStyle = '#4a4a4a';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Stone texture
-      for (let x = 0; x < canvas.width; x += 30) {
-        for (let y = 0; y < canvas.height; y += 30) {
-          const noise = Math.sin(x * 0.1) * Math.cos(y * 0.1) * 0.5 + 0.5;
-          ctx.fillStyle = `rgba(80, 80, 80, ${noise * 0.3})`;
-          ctx.fillRect(x, y, 25, 25);
-        }
-      }
-
-      // Touch to plant new growth
-      touchPointsRef.current.forEach(point => {
-        if (point.active) {
-          const gx = Math.floor(point.x / cellSize);
-          const gy = Math.floor(point.y / cellSize);
-          if (gx >= 0 && gx < cols && gy >= 0 && gy < rows) {
-            // Plant in area around touch
-            for (let dx = -2; dx <= 2; dx++) {
-              for (let dy = -2; dy <= 2; dy++) {
-                const nx = gx + dx;
-                const ny = gy + dy;
-                if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
-                  if (grid[ny * cols + nx] === 0 && Math.random() < 0.3) {
-                    grid[ny * cols + nx] = 0.1;
-                  }
-                }
-              }
-            }
-          }
-        }
-      });
-
-      // Grow moss
-      grow();
-
-      // Draw moss
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-          const value = grid[y * cols + x];
-          if (value > 0) {
-            const maturity = value;
-            const mossHue = 130 + (1 - maturity) * 15;
-            const lightness = 30 + maturity * 15;
-            ctx.fillStyle = `hsla(${mossHue}, 45%, ${lightness}%, ${maturity * 0.9})`;
-            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-          }
-        }
-      }
-
-      // Subtle glow on moss
-      ctx.globalCompositeOperation = 'screen';
-      const glowGradient = ctx.createRadialGradient(
-        canvas.width / 2, canvas.height / 2, 0,
-        canvas.width / 2, canvas.height / 2, canvas.width * 0.5
-      );
-      glowGradient.addColorStop(0, `hsla(130, 15%, 49%, ${0.05 + breath * 0.02})`);
-      glowGradient.addColorStop(1, 'transparent');
-      ctx.fillStyle = glowGradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.globalCompositeOperation = 'source-over';
 
       drawRipples(ctx);
     };
@@ -9118,7 +8286,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const isExhaling = Math.sin(elapsed * BREATH_SPEED) < 0;
 
       // Dark background
-      ctx.fillStyle = '#05050c';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Touch to help untangle
@@ -9229,7 +8397,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Background - zen garden
       const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
       bgGradient.addColorStop(0, '#1a2520');
-      bgGradient.addColorStop(1, '#0a1510');
+      bgGradient.addColorStop(1, '#000');
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -9409,7 +8577,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const breath = getBreathPhase(elapsed);
 
       // Dark background
-      ctx.fillStyle = '#0a0a12';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Touch interactions
@@ -9649,7 +8817,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Warm dark background
       const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      bgGradient.addColorStop(0, '#0a0808');
+      bgGradient.addColorStop(0, '#000');
       bgGradient.addColorStop(1, '#151210');
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -9786,8 +8954,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Night sky
       const skyGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, canvas.width * 0.7);
-      skyGradient.addColorStop(0, '#0f0f20');
-      skyGradient.addColorStop(1, '#050510');
+      skyGradient.addColorStop(0, '#000');
+      skyGradient.addColorStop(1, '#000');
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -9928,7 +9096,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const breath = getBreathPhase(elapsed);
 
       // Dark background
-      ctx.fillStyle = '#05050c';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Touch influence
@@ -10155,8 +9323,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Forest floor background
       const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      bgGradient.addColorStop(0, '#0a0a10');
-      bgGradient.addColorStop(0.6, '#0f1015');
+      bgGradient.addColorStop(0, '#000');
+      bgGradient.addColorStop(0.6, '#000');
       bgGradient.addColorStop(1, '#15181d');
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -10307,8 +9475,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Night sky
       const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      skyGradient.addColorStop(0, '#05050f');
-      skyGradient.addColorStop(0.7, '#0a0a18');
+      skyGradient.addColorStop(0, '#000');
+      skyGradient.addColorStop(0.7, '#000');
       skyGradient.addColorStop(1, '#101025');
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -10421,7 +9589,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const breath = getBreathPhase(elapsed);
 
       // Dark background
-      ctx.fillStyle = '#05050c';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Touch to set rhythm for first heart
@@ -13547,7 +12715,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       const isActive = breathSession.isActive;
 
       // Dark background
-      ctx.fillStyle = '#0a0a0f';
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Vignette
@@ -14418,8 +13586,7 @@ function Still() {
   const [musicOpen, setMusicOpen] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const audioRef = useRef(null);
+    const audioRef = useRef(null);
   const audioRef2 = useRef(null); // Second audio element for crossfade
   const activeAudioRef = useRef(1); // Track which audio is currently active (1 or 2)
   const crossfadeRef = useRef(null); // Store crossfade interval
@@ -14508,13 +13675,6 @@ function Still() {
     }, stepDuration);
   }, []);
 
-  // Toggle mute
-  const toggleMute = useCallback(() => {
-    const newMuted = !isMuted;
-    setIsMuted(newMuted);
-    if (audioRef.current) audioRef.current.muted = newMuted;
-    if (audioRef2.current) audioRef2.current.muted = newMuted;
-  }, [isMuted]);
 
   // Autoplay music on app start
   useEffect(() => {
@@ -15701,7 +14861,7 @@ function Still() {
 
             {/* Music toggle button */}
             <button
-              onClick={() => setTimeout(() => setMusicOpen(!musicOpen), 80)}
+              onClick={() => setMusicOpen(!musicOpen)}
               style={{
                 position: 'fixed',
                 bottom: '1.5rem',
@@ -15730,13 +14890,14 @@ function Still() {
                 position: 'fixed',
                 bottom: '4.5rem',
                 left: '1.5rem',
-                background: 'rgba(0,0,0,0.9)',
-                border: `1px solid rgba(255,255,255,0.1)`,
+                background: 'rgba(0,0,0,0.95)',
+                border: `1px solid rgba(255,255,255,0.15)`,
                 borderRadius: '8px',
                 padding: '0.5rem',
                 zIndex: 150,
                 minWidth: '140px',
-                animation: 'fadeIn 0.5s ease',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
               }}>
                 {/* Stop button */}
                 {isPlaying && (
@@ -15758,28 +14919,6 @@ function Still() {
                     }}
                   >
                     ◼ Stop
-                  </button>
-                )}
-                {/* Mute button */}
-                {isPlaying && (
-                  <button
-                    onClick={toggleMute}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      background: 'none',
-                      border: 'none',
-                      color: isMuted ? primaryColor : 'rgba(255,255,255,0.5)',
-                      padding: '0.5rem 0.75rem',
-                      fontSize: '0.75rem',
-                      fontFamily: '"Jost", sans-serif',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid rgba(255,255,255,0.1)',
-                      marginBottom: '0.25rem',
-                    }}
-                  >
-                    {isMuted ? '◦ unmute' : '• mute'}
                   </button>
                 )}
                 {musicTracks.map((track, i) => (
