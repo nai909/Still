@@ -7615,17 +7615,20 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         pointerEvents: 'none',
       }}>
         {/* Phase label */}
-        <div style={{
-          color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
-            ? 'rgba(255,255,255,0.7)'
-            : `hsla(${primaryHue}, 52%, 68%, 0.65)`,
-          fontSize: '0.85rem',
-          fontFamily: '"Jost", sans-serif',
-          letterSpacing: '0.25em',
-          textTransform: 'uppercase',
-          transition: 'color 0.4s ease, opacity 0.3s ease',
-          opacity: breathSession.isActive ? 1 : 0.7,
-        }}>
+        <div
+          key={breathSession.phaseIndex}
+          style={{
+            color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
+              ? 'rgba(255,255,255,0.7)'
+              : `hsla(${primaryHue}, 52%, 68%, 0.65)`,
+            fontSize: '0.85rem',
+            fontFamily: '"Jost", sans-serif',
+            letterSpacing: '0.25em',
+            textTransform: 'uppercase',
+            transition: 'color 0.5s ease, opacity 0.5s ease',
+            opacity: breathSession.isActive ? 1 : 0.7,
+            animation: breathSession.isActive ? 'fadeInLabel 0.5s ease-out' : 'none',
+          }}>
           {breathSession.isActive
             ? breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label || ''
             : 'tap to begin'}
@@ -7639,6 +7642,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
             letterSpacing: '0.05em',
+            transition: 'opacity 0.3s ease',
           }}>
             {Math.ceil(breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.duration * (1 - breathSession.phaseProgress)) || ''}
           </div>
