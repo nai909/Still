@@ -9137,6 +9137,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
   const rendererRef = useRef(null);
   const meshRef = useRef(null);
   const scaleRef = useRef(1);
+  const scaleVelocityRef = useRef(0);
   const [showUI, setShowUI] = useState(false);
   const swipeStartRef = useRef(null);
   const wheelAccumRef = useRef(0);
@@ -9198,8 +9199,12 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         targetScale = 0.85;
       }
 
-      // Very smooth scale transition - slow lerp for fluid motion
-      scaleRef.current += (targetScale - scaleRef.current) * 0.04;
+      // Spring-damper smooth scale transition for fluid motion
+      const springStiffness = 0.015;
+      const damping = 0.85;
+      const force = (targetScale - scaleRef.current) * springStiffness;
+      scaleVelocityRef.current = scaleVelocityRef.current * damping + force;
+      scaleRef.current += scaleVelocityRef.current;
 
       if (meshRef.current) {
         // Slow rotation
