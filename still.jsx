@@ -3419,8 +3419,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     fogCanvas.height = canvas.height;
     const fogCtx = fogCanvas.getContext('2d');
 
-    // Initialize fog
-    fogCtx.fillStyle = 'rgba(180, 200, 210, 0.25)';
+    // Initialize fog - dark/subtle
+    fogCtx.fillStyle = 'rgba(10, 10, 15, 0.15)';
     fogCtx.fillRect(0, 0, fogCanvas.width, fogCanvas.height);
     for (let i = 0; i < 500; i++) {
       const x = Math.random() * fogCanvas.width;
@@ -3428,7 +3428,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const size = Math.random() * 40 + 15;
       fogCtx.beginPath();
       fogCtx.arc(x, y, size, 0, Math.PI * 2);
-      fogCtx.fillStyle = `rgba(180, 200, 210, ${Math.random() * 0.08})`;
+      fogCtx.fillStyle = `rgba(10, 10, 15, ${Math.random() * 0.05})`;
       fogCtx.fill();
     }
 
@@ -3515,22 +3515,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const breath = getBreathPhase(elapsed);
       updateTiltFromTouch();
 
-      // Clear main canvas
+      // Clear main canvas - pure black background
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw bokeh (background)
-      ctx.globalCompositeOperation = 'lighter';
-      bokehLights.forEach(light => {
-        light.update(now, tiltX, tiltY);
-        light.draw(ctx);
-      });
-      ctx.globalCompositeOperation = 'source-over';
-
-      // Apply blur to background
-      ctx.filter = 'blur(12px)';
-      ctx.drawImage(canvas, 0, 0);
-      ctx.filter = 'none';
 
       // Spawn and update drops
       spawnDrop(breath);
@@ -3557,8 +3544,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Draw drops
       drops.forEach(drop => drop.draw(ctx, breath));
 
-      // Regrow fog slowly
-      fogCtx.fillStyle = `rgba(180, 200, 210, 0.002)`;
+      // Regrow fog slowly - dark
+      fogCtx.fillStyle = `rgba(10, 10, 15, 0.001)`;
       fogCtx.fillRect(0, 0, fogCanvas.width, fogCanvas.height);
 
       // Handle touch - draw in fog and spawn drops
@@ -3592,8 +3579,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       fogCanvas.height = canvas.height;
       trailCanvas.width = canvas.width;
       trailCanvas.height = canvas.height;
-      // Reinitialize fog
-      fogCtx.fillStyle = 'rgba(180, 200, 210, 0.25)';
+      // Reinitialize fog - dark
+      fogCtx.fillStyle = 'rgba(10, 10, 15, 0.15)';
       fogCtx.fillRect(0, 0, fogCanvas.width, fogCanvas.height);
     };
     window.addEventListener('resize', handleResize);
