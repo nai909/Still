@@ -6519,6 +6519,31 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
+      {/* Visual name toast - appears briefly when switching visuals */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '2.5rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          pointerEvents: 'none',
+          opacity: showVisualToast ? 1 : 0,
+          transition: 'opacity 0.4s ease-in-out',
+        }}
+      >
+        <span
+          style={{
+            color: `hsla(${hue}, 52%, 68%, 0.7)`,
+            fontSize: '0.7rem',
+            fontFamily: '"Jost", sans-serif',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+          }}
+        >
+          {gazeModes.find(m => m.key === currentMode)?.name || ''}
+        </span>
+      </div>
+
       {/* DISABLED: Swipe hint removed - menu disabled for minimal experience */}
       {/* {!showUI && (
         <div style={{
