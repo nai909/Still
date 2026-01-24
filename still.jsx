@@ -4902,15 +4902,17 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const bodyGeom = new THREE.SphereGeometry(0.3, 16, 12);
       bodyGeom.scale(1.8, 0.5, 0.8);
 
-      // Alternate fish colors based on hue
-      const colorVariant = index % 3;
+      // Fish colors - variations of the primary hue
+      const colorVariant = index % 4;
       let bodyColor;
       if (colorVariant === 0) {
-        bodyColor = hslToHex(hue, 70, 55); // Primary color
+        bodyColor = hslToHex(hue, 70, 55); // Primary bright
       } else if (colorVariant === 1) {
-        bodyColor = hslToHex((hue + 30) % 360, 60, 60); // Complementary
+        bodyColor = hslToHex(hue, 50, 45); // Primary muted
+      } else if (colorVariant === 2) {
+        bodyColor = hslToHex(hue, 60, 65); // Primary light
       } else {
-        bodyColor = 0xffffff; // White koi
+        bodyColor = hslToHex(hue, 40, 35); // Primary dark
       }
 
       const bodyMat = new THREE.MeshBasicMaterial({
@@ -4990,9 +4992,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     for (let i = 0; i < numLilies; i++) {
       const lilyGeom = new THREE.CircleGeometry(0.25 + Math.random() * 0.15, 12);
       const lilyMat = new THREE.MeshBasicMaterial({
-        color: hslToHex((hue + 120) % 360, 50, 35),
+        color: hslToHex(hue, 30, 25),
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.4,
         side: THREE.DoubleSide
       });
       const lily = new THREE.Mesh(lilyGeom, lilyMat);
@@ -7053,10 +7055,8 @@ function Still() {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 2,
-            background: breathSession.isActive
-              ? breathTechniques[breathSession.technique]?.color?.[breathSession.phase] || currentTheme.bg
-              : currentTheme.bg,
-            transition: 'background 2s ease',
+            background: breathSession.isActive ? 'transparent' : currentTheme.bg,
+            transition: 'background 0.5s ease',
           }}>
             {/* Technique Selection (when not in session) */}
             {!breathSession.isActive && (
@@ -7132,85 +7132,34 @@ function Still() {
                 height: '100%',
                 position: 'relative',
               }}>
-                {/* Central Breath Circle */}
-                <div style={{
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  {/* Outer glow */}
-                  <div style={{
-                    position: 'absolute',
-                    width: `${120 + breathSession.phaseProgress * 80}px`,
-                    height: `${120 + breathSession.phaseProgress * 80}px`,
-                    borderRadius: '50%',
-                    background: `radial-gradient(circle, ${currentTheme.accent}15 0%, transparent 70%)`,
-                    transform: breathSession.phase === 'inhale' || breathSession.phase === 'holdFull'
-                      ? `scale(${0.8 + breathSession.phaseProgress * 0.6})`
-                      : `scale(${1.4 - breathSession.phaseProgress * 0.6})`,
-                    transition: 'transform 0.1s linear',
-                  }} />
+                {/* Ripples Visualization Background */}
+                <GazeMode
+                  theme={currentTheme}
+                  primaryHue={settings.primaryHue}
+                  backgroundMode={false}
+                  currentVisual="ripples"
+                />
 
-                  {/* Main circle */}
-                  <div style={{
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '50%',
-                    border: `2px solid ${currentTheme.accent}`,
-                    opacity: 0.6 + breathSession.phaseProgress * 0.3,
-                    transform: breathSession.phase === 'inhale' || breathSession.phase === 'holdFull'
-                      ? `scale(${0.7 + breathSession.phaseProgress * 0.6})`
-                      : `scale(${1.3 - breathSession.phaseProgress * 0.6})`,
-                    transition: 'transform 0.1s linear, opacity 0.3s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    {/* Inner circle */}
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      background: `${currentTheme.accent}30`,
-                      transform: breathSession.phase === 'inhale' || breathSession.phase === 'holdFull'
-                        ? `scale(${0.6 + breathSession.phaseProgress * 0.8})`
-                        : `scale(${1.4 - breathSession.phaseProgress * 0.8})`,
-                      transition: 'transform 0.1s linear',
-                    }} />
-                  </div>
-                </div>
-
-                {/* Phase Label */}
+                {/* Phase Label Overlay */}
                 <div style={{
-                  marginTop: '3rem',
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
                   textAlign: 'center',
+                  zIndex: 10,
+                  pointerEvents: 'none',
                 }}>
                   <div style={{
-                    fontSize: '1.5rem',
+                    fontSize: '1.8rem',
                     fontFamily: '"Jost", sans-serif',
                     color: currentTheme.text,
-                    opacity: 0.9,
-                    letterSpacing: '0.05em',
+                    opacity: 0.85,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    textShadow: '0 2px 10px rgba(0,0,0,0.3)',
                   }}>
                     {breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label}
-                  </div>
-
-                  {/* Progress bar for current phase */}
-                  <div style={{
-                    width: '200px',
-                    height: '2px',
-                    background: currentTheme.border,
-                    borderRadius: '1px',
-                    marginTop: '1rem',
-                    overflow: 'hidden',
-                  }}>
-                    <div style={{
-                      width: `${breathSession.phaseProgress * 100}%`,
-                      height: '100%',
-                      background: currentTheme.accent,
-                      transition: 'width 0.1s linear',
-                    }} />
                   </div>
                 </div>
 
@@ -7220,6 +7169,7 @@ function Still() {
                   bottom: '2rem',
                   display: 'flex',
                   gap: '1rem',
+                  zIndex: 10,
                 }}>
                   <button
                     onClick={togglePauseBreathSession}
