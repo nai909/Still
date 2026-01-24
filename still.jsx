@@ -6499,6 +6499,14 @@ const saveSettings = (settings) => {
 // BREATHWORK VIEW COMPONENT
 // ============================================================================
 
+// Convert number to Roman numeral
+const toRoman = (num) => {
+  if (num <= 0 || num > 20) return num.toString();
+  const numerals = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
+                    'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
+  return numerals[num] || num.toString();
+};
+
 function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', currentVisual = 'geometry', onVisualChange }) {
   const [showUI, setShowUI] = useState(false);
   const [showVisualToast, setShowVisualToast] = useState(false);
@@ -6702,12 +6710,11 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         {/* Countdown */}
         {breathSession.isActive && (
           <div style={{
-            color: 'rgba(255, 255, 255, 0.5)',
+            color: '#fff',
             fontSize: '2rem',
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
-            letterSpacing: '0.05em',
-            transition: 'opacity 0.3s ease',
+            letterSpacing: '0.2em',
           }}>
             {Math.ceil(breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.duration * (1 - breathSession.phaseProgress)) || ''}
           </div>
