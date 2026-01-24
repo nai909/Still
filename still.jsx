@@ -6890,6 +6890,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const wheelAccumXRef = useRef(0);
   const wheelAccumYRef = useRef(0);
   const wheelTimeoutRef = useRef(null);
+  const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
+  const lastTouchRef = useRef({ x: 0, y: 0 });
   const currentTextureRef = useRef(currentTexture);
   currentTextureRef.current = currentTexture;
   const pianoBufferRef = useRef(null);
@@ -7407,29 +7409,110 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 1500);
   }, []);
 
-  // Handle touch/click
-  const handlePointerDown = useCallback((e) => {
+  // Handle touch start
+  const handleTouchStart = useCallback((e) => {
     if (backgroundMode) return;
     if (!isInitialized) {
       initAudio();
       return;
     }
 
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientX = e.touches[0].clientX;
+    const clientY = e.touches[0].clientY;
+    touchStartRef.current = { x: clientX, y: clientY, time: Date.now() };
+    lastTouchRef.current = { x: clientX, y: clientY };
+  }, [backgroundMode, isInitialized, initAudio]);
+
+  // Handle touch move
+  const handleTouchMove = useCallback((e) => {
+    if (backgroundMode || !isInitialized) return;
+    lastTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, [backgroundMode, isInitialized]);
+
+  // Handle touch end - detect swipe vs tap
+  const handleTouchEnd = useCallback((e) => {
+    if (backgroundMode || !isInitialized) return;
+
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const deltaX = endX - touchStartRef.current.x;
+    const deltaY = endY - touchStartRef.current.y;
+    const deltaTime = Date.now() - touchStartRef.current.time;
+
+    const swipeThreshold = 50;
+    const isSwipe = Math.abs(deltaX) > swipeThreshold || Math.abs(deltaY) > swipeThreshold;
+
+    if (isSwipe && deltaTime < 500) {
+      // It's a swipe - change instrument or texture
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Horizontal swipe - change instrument
+        const dir = deltaX > 0 ? -1 : 1;
+        setCurrentInstrument(prev => (prev + dir + instruments.length) % instruments.length);
+        displayLabel();
+        haptic.tap();
+      } else {
+        // Vertical swipe - change texture
+        const dir = deltaY > 0 ? -1 : 1;
+        const newTexture = (currentTexture + dir + textures.length) % textures.length;
+        updateTexture(newTexture);
+        displayLabel();
+        haptic.tap();
+      }
+    } else {
+      // It's a tap - play instrument
+      const clientY = touchStartRef.current.y;
+      const clientX = touchStartRef.current.x;
+      const normalizedY = 1 - (clientY / window.innerHeight);
+      const noteIndex = Math.floor(normalizedY * scale.length);
+      const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
+
+      playInstrument(freq, 0.6 + breathValue * 0.4);
+
+      // Forward touch to GazeMode for ripples
+      externalTouchRef.current.push({
+        id: `drone-${Date.now()}`,
+        x: clientX,
+        y: clientY,
+        time: Date.now(),
+      });
+
+      // Create ripple
+      const container = e.target.closest('main');
+      if (container) {
+        const ripple = document.createElement('div');
+        ripple.style.cssText = `
+          position: absolute;
+          left: ${clientX}px;
+          top: ${clientY}px;
+          width: 100px;
+          height: 100px;
+          border: 1px solid hsla(${primaryHue}, 52%, 68%, 0.4);
+          border-radius: 50%;
+          pointer-events: none;
+          animation: droneRipple 1.5s ease-out forwards;
+          transform: translate(-50%, -50%) scale(0);
+        `;
+        container.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 1500);
+      }
+    }
+  }, [backgroundMode, isInitialized, playInstrument, breathValue, primaryHue, currentTexture, updateTexture, displayLabel]);
+
+  // Handle click (for desktop)
+  const handleClick = useCallback((e) => {
+    if (backgroundMode) return;
+    if (!isInitialized) {
+      initAudio();
+      return;
+    }
+
+    const clientY = e.clientY;
+    const clientX = e.clientX;
     const normalizedY = 1 - (clientY / window.innerHeight);
     const noteIndex = Math.floor(normalizedY * scale.length);
     const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
 
     playInstrument(freq, 0.6 + breathValue * 0.4);
-
-    // Forward touch to GazeMode for ripples
-    externalTouchRef.current.push({
-      id: `drone-${Date.now()}`,
-      x: clientX,
-      y: clientY,
-      time: Date.now(),
-    });
 
     // Create ripple
     const ripple = document.createElement('div');
@@ -7447,7 +7530,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     `;
     e.currentTarget.appendChild(ripple);
     setTimeout(() => ripple.remove(), 1500);
-  }, [isInitialized, initAudio, playInstrument, breathValue, primaryHue]);
+  }, [backgroundMode, isInitialized, initAudio, playInstrument, breathValue, primaryHue]);
 
   // Handle scroll for instrument/texture change
   useEffect(() => {
@@ -7520,8 +7603,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
   return (
     <main
-      onClick={handlePointerDown}
-      onTouchStart={handlePointerDown}
+      onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       style={{
         position: 'absolute',
         inset: 0,
