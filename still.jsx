@@ -6441,126 +6441,29 @@ const saveSettings = (settings) => {
 // BREATHWORK VIEW COMPONENT
 // ============================================================================
 
-function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
-  const containerRef = useRef(null);
-  const frameRef = useRef(null);
-  const rendererRef = useRef(null);
-  const meshRef = useRef(null);
-  const scaleRef = useRef(1);
-  const scaleVelocityRef = useRef(0);
+function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', currentVisual = 'geometry', onVisualChange }) {
   const [showUI, setShowUI] = useState(false);
+  const [showVisualToast, setShowVisualToast] = useState(false);
   const swipeStartRef = useRef(null);
   const wheelAccumRef = useRef(0);
   const wheelTimeoutRef = useRef(null);
+  const toastTimeoutRef = useRef(null);
 
-  // Initialize Torus visualization (mobile-friendly replacement for lung capillaries)
-  useEffect(() => {
-    if (!containerRef.current || typeof THREE === 'undefined') return;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5.5;
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'none';
-    rendererRef.current = renderer;
-
-    // Convert HSL hue to hex color for THREE.js
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    // Create Torus
-    const geometry = new THREE.TorusGeometry(1, 0.4, 16, 100);
-    const dynamicColor = hslToHex(primaryHue, 52, 68);
-    const material = new THREE.MeshBasicMaterial({ color: dynamicColor, wireframe: true, transparent: true, opacity: 0.8 });
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
-    meshRef.current = mesh;
-
-    const clock = new THREE.Clock();
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-
-      // Get breath state
-      const phase = breathSession.phase;
-      const phaseProgress = breathSession.phaseProgress || 0.5;
-      const isActive = breathSession.isActive;
-
-      // Calculate target scale based on breath phase - simple linear, let smoothing handle easing
-      let targetScale = 0.85; // Base scale
-      if (!isActive) {
-        targetScale = 0.9;
-      } else if (phase === 'inhale') {
-        targetScale = 0.85 + phaseProgress * 0.35; // Expand to 1.2
-      } else if (phase === 'holdFull') {
-        targetScale = 1.2;
-      } else if (phase === 'exhale') {
-        targetScale = 1.2 - phaseProgress * 0.35; // Contract to 0.85
-      } else if (phase === 'holdEmpty') {
-        targetScale = 0.85;
-      }
-
-      // Spring-damper smooth scale transition for fluid motion
-      const springStiffness = 0.015;
-      const damping = 0.85;
-      const force = (targetScale - scaleRef.current) * springStiffness;
-      scaleVelocityRef.current = scaleVelocityRef.current * damping + force;
-      scaleRef.current += scaleVelocityRef.current;
-
-      if (meshRef.current) {
-        // Slow rotation
-        meshRef.current.rotation.y += 0.002;
-        meshRef.current.rotation.x += 0.001;
-
-        // Apply breath-based scale
-        meshRef.current.scale.setScalar(scaleRef.current);
-
-        // Move toward viewer on inhale, away on exhale
-        // Map scale (0.85-1.2) to z position (-0.3 to 0.5)
-        const zOffset = (scaleRef.current - 0.85) * 2.3 - 0.3;
-        meshRef.current.position.z = zOffset;
-
-        // Opacity pulses with breath
-        const breathOpacity = isActive ? 0.5 + scaleRef.current * 0.3 : 0.6;
-        meshRef.current.material.opacity = breathOpacity;
-      }
-
-      renderer.render(scene, camera);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
-      }
-      geometry.dispose();
-      material.dispose();
-      renderer.dispose();
-    };
-  }, [primaryHue, breathSession.isActive, breathSession.phase, breathSession.phaseProgress]);
-
-  // NOTE: Complex lung capillaries visualization was removed for mobile performance
-  // The Torus visualization above is much simpler and works better on mobile devices
+  // Cycle through visuals
+  const cycleVisual = useCallback((direction) => {
+    const currentIndex = gazeModes.findIndex(m => m.key === currentVisual);
+    let newIndex;
+    if (direction > 0) {
+      newIndex = (currentIndex + 1) % gazeModes.length;
+    } else {
+      newIndex = (currentIndex - 1 + gazeModes.length) % gazeModes.length;
+    }
+    onVisualChange(gazeModes[newIndex].key);
+    setShowVisualToast(true);
+    haptic.tap();
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setShowVisualToast(false), 1500);
+  }, [currentVisual, onVisualChange]);
 
   // Handle swipe gestures
   const handleTouchStart = useCallback((e) => {
@@ -6592,8 +6495,13 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       setShowUI(false);
     }
 
+    // Horizontal swipe: cycle visuals (only when menu is closed)
+    if (!showUI && Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5 && deltaTime < maxSwipeTime) {
+      cycleVisual(deltaX < 0 ? 1 : -1); // Swipe left = next, swipe right = previous
+    }
+
     swipeStartRef.current = null;
-  }, [showUI]);
+  }, [showUI, cycleVisual]);
 
   // Two-finger swipe (wheel event on trackpad) to open/close menu
   const showUIRef = useRef(showUI);
@@ -6645,18 +6553,39 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         cursor: 'pointer',
       }}
     >
-      {/* Torus visualization container */}
+      {/* Visual background - uses GazeMode component */}
+      <GazeMode
+        primaryHue={primaryHue}
+        backgroundMode={true}
+        currentVisual={currentVisual}
+        onVisualChange={onVisualChange}
+      />
+
+      {/* Visual name toast - appears briefly when switching visuals */}
       <div
-        ref={containerRef}
         style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
+          top: '2rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
           pointerEvents: 'none',
+          opacity: showVisualToast ? 1 : 0,
+          transition: 'opacity 0.4s ease-in-out',
+          zIndex: 5,
         }}
-      />
+      >
+        <span
+          style={{
+            color: `hsla(${primaryHue}, 52%, 68%, 0.6)`,
+            fontSize: '0.65rem',
+            fontFamily: '"Jost", sans-serif',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+          }}
+        >
+          {gazeModes.find(m => m.key === currentVisual)?.name || ''}
+        </span>
+      </div>
 
       {/* Centered breath UI - inside torus hole, scales with breath */}
       <div style={{
@@ -6881,6 +6810,7 @@ function Still() {
   const [settings, setSettings] = useState(defaultSettings);
   const [showColorOverlay, setShowColorOverlay] = useState(false);
   const [gazeVisual, setGazeVisual] = useState('geometry');
+  const [breathVisual, setBreathVisual] = useState('geometry');
 
   // Music player state
   const [musicOpen, setMusicOpen] = useState(false);
@@ -8085,6 +8015,8 @@ function Still() {
             stopBreathSession={stopBreathSession}
             primaryHue={primaryHue}
             primaryColor={primaryColor}
+            currentVisual={breathVisual}
+            onVisualChange={setBreathVisual}
           />
         )}
         {false && view === 'breathwork-old' && (
