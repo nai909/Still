@@ -7049,7 +7049,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       panner.connect(masterGain);
 
       osc.start();
-      gain.gain.setTargetAtTime(layer.gain, ctx.currentTime, 2);
+      gain.gain.setTargetAtTime(layer.gain, ctx.currentTime, 0.3);
 
       droneOscillatorsRef.current.push({ osc, gain, baseGain: layer.gain });
     });
@@ -7277,13 +7277,13 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       modulator.stop(now + 4);
     } else if (type === 'singingBowl') {
       const bowlPartials = [
-        { ratio: 1.0, amp: 1.0, decay: 8 },
-        { ratio: 1.002, amp: 0.8, decay: 8 },
-        { ratio: 2.71, amp: 0.5, decay: 6 },
-        { ratio: 2.73, amp: 0.4, decay: 6 },
-        { ratio: 5.15, amp: 0.25, decay: 4 },
-        { ratio: 5.18, amp: 0.2, decay: 4 },
-        { ratio: 8.42, amp: 0.1, decay: 3 },
+        { ratio: 1.0, amp: 1.0, decay: 2 },
+        { ratio: 1.002, amp: 0.8, decay: 2 },
+        { ratio: 2.71, amp: 0.5, decay: 1.5 },
+        { ratio: 2.73, amp: 0.4, decay: 1.5 },
+        { ratio: 5.15, amp: 0.25, decay: 1 },
+        { ratio: 5.18, amp: 0.2, decay: 1 },
+        { ratio: 8.42, amp: 0.1, decay: 0.8 },
       ];
 
       bowlPartials.forEach((partial) => {
@@ -7291,15 +7291,15 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.value = freq * partial.ratio;
-        const amp = 0.04 * partial.amp * velocity;
+        const amp = 0.02 * partial.amp * velocity;
         gain.gain.value = 0;
         gain.gain.setTargetAtTime(amp, now, 0.01);
-        gain.gain.setTargetAtTime(amp * 0.7, now + 0.1, 0.3);
-        gain.gain.setTargetAtTime(0, now + 1, partial.decay);
+        gain.gain.setTargetAtTime(amp * 0.7, now + 0.1, 0.2);
+        gain.gain.setTargetAtTime(0, now + 0.5, partial.decay);
         osc.connect(gain);
         gain.connect(masterGain);
         osc.start(now);
-        osc.stop(now + partial.decay * 3 + 5);
+        osc.stop(now + partial.decay * 3 + 2);
       });
     } else if (type === 'musicBox') {
       const osc = ctx.createOscillator();
