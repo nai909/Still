@@ -5575,7 +5575,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
           const petalGeom = new THREE.ShapeGeometry(petalShape);
           const petalMat = new THREE.MeshBasicMaterial({
-            color: hslToHex((hue + layer * 15) % 360, 50, 55 + layer * 5),
+            color: hslToHex(hue, 50, 55 + layer * 5),
             wireframe: true,
             transparent: true,
             opacity: 0.35 - layer * 0.05,
@@ -5610,7 +5610,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Outer shell - icosahedron wireframe
       const outerGeom = new THREE.IcosahedronGeometry(0.8, 1);
       const outerMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(entityHue, 55, 65),
+        color: hslToHex(hue, 50, 60),
         wireframe: true,
         transparent: true,
         opacity: 0.5,
@@ -5621,7 +5621,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Middle layer - dodecahedron, counter-rotating
       const middleGeom = new THREE.DodecahedronGeometry(0.55, 0);
       const middleMat = new THREE.MeshBasicMaterial({
-        color: hslToHex((entityHue + 60) % 360, 50, 60),
+        color: hslToHex(hue, 55, 65),
         wireframe: true,
         transparent: true,
         opacity: 0.6,
@@ -5632,7 +5632,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Inner core - octahedron, pulsing
       const innerGeom = new THREE.OctahedronGeometry(0.35, 0);
       const innerMat = new THREE.MeshBasicMaterial({
-        color: hslToHex((entityHue + 120) % 360, 60, 70),
+        color: hslToHex(hue, 60, 70),
         wireframe: true,
         transparent: true,
         opacity: 0.7,
@@ -5640,10 +5640,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const innerMesh = new THREE.Mesh(innerGeom, innerMat);
       entityGroup.add(innerMesh);
 
-      // "Eye" at center - small bright sphere
+      // "Eye" at center - off-white neutral
       const eyeGeom = new THREE.SphereGeometry(0.08, 12, 12);
       const eyeMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(entityHue, 30, 90),
+        color: hslToHex(hue, 15, 88),
         transparent: true,
         opacity: 0.9,
       });
@@ -5666,9 +5666,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     // Create 4 entities at different positions
     entities.push(createEntity(new THREE.Vector3(2.2, 0.8, -3), hue));
-    entities.push(createEntity(new THREE.Vector3(-2.5, -0.6, -4), (hue + 40) % 360));
-    entities.push(createEntity(new THREE.Vector3(0, 2.2, -5), (hue + 80) % 360));
-    entities.push(createEntity(new THREE.Vector3(-1.5, 1.5, -6), (hue + 120) % 360));
+    entities.push(createEntity(new THREE.Vector3(-2.5, -0.6, -4), hue));
+    entities.push(createEntity(new THREE.Vector3(0, 2.2, -5), hue));
+    entities.push(createEntity(new THREE.Vector3(-1.5, 1.5, -6), hue));
 
     // === LAYER 3: TESSERACT PROJECTIONS (impossible geometry) ===
     const tesseracts = [];
@@ -5680,7 +5680,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Outer cube
       const outerGeom = new THREE.BoxGeometry(size, size, size);
       const outerMat = new THREE.MeshBasicMaterial({
-        color: hslToHex((hue + 180) % 360, 45, 55),
+        color: hslToHex(hue, 45, 55),
         wireframe: true,
         transparent: true,
         opacity: 0.4,
@@ -5692,7 +5692,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const innerSize = size * 0.5;
       const innerGeom = new THREE.BoxGeometry(innerSize, innerSize, innerSize);
       const innerMat = new THREE.MeshBasicMaterial({
-        color: hslToHex((hue + 200) % 360, 50, 60),
+        color: hslToHex(hue, 50, 65),
         wireframe: true,
         transparent: true,
         opacity: 0.5,
@@ -5716,7 +5716,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       lineGeom.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
 
       const lineMat = new THREE.LineBasicMaterial({
-        color: hslToHex((hue + 190) % 360, 40, 50),
+        color: hslToHex(hue, 20, 70),
         transparent: true,
         opacity: 0.3,
       });
@@ -5750,7 +5750,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Core tetrahedron
       const coreGeom = new THREE.TetrahedronGeometry(0.12);
       const coreMat = new THREE.MeshBasicMaterial({
-        color: hslToHex((hue + 90) % 360, 60, 70),
+        color: hslToHex(hue, 55, 68),
         wireframe: true,
         transparent: true,
         opacity: 0.7,
@@ -5758,12 +5758,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const core = new THREE.Mesh(coreGeom, coreMat);
       elfGroup.add(core);
 
-      // Orbiting elements
+      // Orbiting elements - alternating primary and neutral
       const orbiters = [];
       for (let i = 0; i < 4; i++) {
         const orbiterGeom = new THREE.OctahedronGeometry(0.04);
+        const isNeutral = i % 2 === 1;
         const orbiterMat = new THREE.MeshBasicMaterial({
-          color: hslToHex((hue + 90 + i * 30) % 360, 55, 65),
+          color: isNeutral ? hslToHex(hue, 15, 75) : hslToHex(hue, 50, 65),
           wireframe: true,
           transparent: true,
           opacity: 0.6,
@@ -5893,10 +5894,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
-
-      // Slowly shifting hue for "impossible colors" effect
-      const timeHueOffset = Math.sin(elapsed * 0.02) * 20;
-      const currentHue = (hue + timeHueOffset + 360) % 360;
 
       // === TOUCH INTERACTION ===
       if (touchPointsRef.current.length > 0) {
