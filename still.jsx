@@ -2886,7 +2886,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     if (THREE.OrbitControls) {
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
-      controls.dampingFactor = 0.08;
+      controls.dampingFactor = 0.12;
+      controls.rotateSpeed = 0.4; // Slower touch sensitivity
       controls.minDistance = 1;
       controls.maxDistance = 15;
       controls.enablePan = true;
@@ -5267,8 +5268,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const particles = new THREE.Points(particleGeom, particleMat);
     oceanGroup.add(particles);
 
-    // Off-white accent particles
-    const whiteParticleCount = 500;
+    // Subtle accent particles
+    const whiteParticleCount = 300;
     const whiteParticleGeom = new THREE.BufferGeometry();
     const whitePositions = new Float32Array(whiteParticleCount * 3);
     const whiteVelocities = new Float32Array(whiteParticleCount * 3);
@@ -5288,10 +5289,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     whiteParticleGeom.setAttribute('position', new THREE.BufferAttribute(whitePositions, 3));
 
     const whiteParticleMat = new THREE.PointsMaterial({
-      color: hslToHex(hue, 15, 85), // Off-white with subtle hue tint
-      size: 0.04,
+      color: hslToHex(hue, 30, 75), // Subtle tint of primary hue
+      size: 0.03,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.35,
       blending: THREE.AdditiveBlending
     });
 
@@ -5303,18 +5304,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const numOrbs = 12;
     for (let i = 0; i < numOrbs; i++) {
       const orbGeom = new THREE.SphereGeometry(0.15 + Math.random() * 0.1, 16, 16);
-      // Variations of primary hue
-      const variant = i % 4;
-      let orbColor;
-      if (variant === 0) {
-        orbColor = hslToHex(hue, 70, 55); // Primary bright
-      } else if (variant === 1) {
-        orbColor = hslToHex(hue, 50, 65); // Primary light
-      } else if (variant === 2) {
-        orbColor = hslToHex(hue, 60, 45); // Primary muted
-      } else {
-        orbColor = hslToHex(hue, 20, 80); // Off-white tinted
-      }
+      // Just two variations of primary hue for cohesion
+      const orbColor = i % 2 === 0
+        ? hslToHex(hue, 65, 55)  // Primary
+        : hslToHex(hue, 50, 65); // Lighter variant
       const orbMat = new THREE.MeshBasicMaterial({
         color: orbColor,
         transparent: true,
