@@ -6512,28 +6512,10 @@ const toRoman = (num) => {
 function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', currentVisual = 'geometry', onVisualChange }) {
   const [showUI, setShowUI] = useState(false);
   const [showVisualToast, setShowVisualToast] = useState(false);
-  const [showIntroPrompt, setShowIntroPrompt] = useState(false);
   const swipeStartRef = useRef(null);
   const wheelAccumRef = useRef(0);
   const wheelTimeoutRef = useRef(null);
   const toastTimeoutRef = useRef(null);
-  const introTimeoutRef = useRef(null);
-  const wasActiveRef = useRef(false);
-
-  // Show intro prompt briefly when session starts
-  useEffect(() => {
-    if (breathSession.isActive && !wasActiveRef.current) {
-      // Session just started
-      setShowIntroPrompt(true);
-      if (introTimeoutRef.current) clearTimeout(introTimeoutRef.current);
-      introTimeoutRef.current = setTimeout(() => setShowIntroPrompt(false), 4000);
-    }
-    wasActiveRef.current = breathSession.isActive;
-
-    return () => {
-      if (introTimeoutRef.current) clearTimeout(introTimeoutRef.current);
-    };
-  }, [breathSession.isActive]);
 
   // Cycle through visuals
   const cycleVisual = useCallback((direction) => {
@@ -6685,40 +6667,61 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       </div>
 
       {/* Centered breath UI */}
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '0.5rem',
-        zIndex: 1,
-        pointerEvents: 'none',
-      }}>
-        {/* Intro prompt - appears briefly when session starts */}
-        {breathSession.isActive && showIntroPrompt && (
+      {/* Dots countdown - shows remaining time in phase */}
+      {breathSession.isActive && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          display: 'flex',
+          gap: '0.5rem',
+          zIndex: 1,
+          pointerEvents: 'none',
+        }}>
+          {(() => {
+            const duration = breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.duration || 4;
+            const dots = Math.min(duration, 8); // Max 8 dots
+            const remaining = Math.ceil(dots * (1 - breathSession.phaseProgress));
+            return Array.from({ length: dots }, (_, i) => (
+              <div
+                key={i}
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, ' + (i < remaining ? '0.6' : '0.15') + ')',
+                  transition: 'background 0.3s ease',
+                }}
+              />
+            ));
+          })()}
+        </div>
+      )}
+
+      {/* Subtle phase text at bottom */}
+      {breathSession.isActive && (
+        <div style={{
+          position: 'absolute',
+          bottom: '4rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1,
+          pointerEvents: 'none',
+        }}>
           <div style={{
-            textAlign: 'center',
-            animation: 'fadeInLabel 0.5s ease-out',
+            color: 'rgba(255, 255, 255, 0.25)',
+            fontSize: '0.7rem',
+            fontFamily: '"Jost", sans-serif',
+            fontWeight: 300,
+            letterSpacing: '0.4em',
+            textTransform: 'lowercase',
           }}>
-            <div style={{
-              color: 'rgba(255, 255, 255, 0.6)',
-              fontSize: '0.85rem',
-              fontFamily: '"Jost", sans-serif',
-              fontWeight: 300,
-              letterSpacing: '0.15em',
-              textTransform: 'lowercase',
-              lineHeight: 1.8,
-            }}>
-              inhale as the visual nears<br />
-              hold as it holds<br />
-              exhale as it releases
-            </div>
+            {breathSession.phase === 'inhale' ? 'in' :
+             breathSession.phase === 'exhale' ? 'out' : 'hold'}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Swipe hint at bottom */}
       {!showUI && (
