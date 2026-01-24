@@ -2090,11 +2090,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clockRef.current.getElapsedTime();
+      const elapsed = clockRef.current.getElapsedTime() * bgSpeed;
       const breath = getBreathPhase(elapsed);
 
-      // Spawn ripple at breath peak
-      if (breath > 0.95 && elapsed - lastBreathPeak > 8) {
+      // Spawn ripple at breath peak (less frequently in background mode)
+      const spawnInterval = backgroundMode ? 16 : 8;
+      if (breath > 0.95 && elapsed - lastBreathPeak > spawnInterval) {
         createRipple();
         lastBreathPeak = elapsed;
       }
@@ -2107,23 +2108,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
       });
 
-      // Touch-responsive rotation
+      // Touch-responsive rotation (slower in background mode)
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
           const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          rippleGroup.rotation.y += normalizedX * 0.02;
-          rippleGroup.rotation.x += normalizedY * 0.01;
+          rippleGroup.rotation.y += normalizedX * 0.02 * bgSpeed;
+          rippleGroup.rotation.x += normalizedY * 0.01 * bgSpeed;
         }
       } else {
-        rippleGroup.rotation.y += 0.001;
+        rippleGroup.rotation.y += 0.0003 * bgSpeed;
       }
 
-      // Spring-damper scale physics for core
+      // Spring-damper scale physics for core (gentler in background mode)
       const targetScale = 0.85 + breath * 0.35;
-      const springStiffness = 0.015;
-      const damping = 0.85;
+      const springStiffness = backgroundMode ? 0.005 : 0.015;
+      const damping = backgroundMode ? 0.92 : 0.85;
       const force = (targetScale - localScale) * springStiffness;
       localScaleVelocity = localScaleVelocity * damping + force;
       localScale += localScaleVelocity;
@@ -2134,9 +2135,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const zOffset = (localScale - 0.85) * 2.0;
       rippleGroup.position.z = zOffset;
 
-      // Animate ripples expanding outward
+      // Animate ripples expanding outward (slower in background mode)
+      const realElapsed = clockRef.current.getElapsedTime();
       ripples.forEach(ripple => {
-        const age = elapsed - ripple.userData.born;
+        const age = (realElapsed - ripple.userData.born) * bgSpeed;
         const progress = age / ripple.userData.maxAge;
 
         if (progress < 1) {
@@ -2149,7 +2151,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Clean up old ripples
       for (let i = ripples.length - 1; i >= 0; i--) {
-        const age = elapsed - ripples[i].userData.born;
+        const age = (realElapsed - ripples[i].userData.born) * bgSpeed;
         if (age > ripples[i].userData.maxAge) {
           rippleGroup.remove(ripples[i]);
           ripples[i].geometry.dispose();
@@ -7334,7 +7336,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.value = freq * partial.ratio;
-        const amp = 0.12 * partial.amp * velocity;
+        const amp = 0.04 * partial.amp * velocity;
         gain.gain.value = 0;
         gain.gain.setTargetAtTime(amp, now, 0.01);
         gain.gain.setTargetAtTime(amp * 0.7, now + 0.1, 0.3);
@@ -7715,29 +7717,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           }}
         >
           tap to play · scroll to change
-        </div>
-      )}
-
-      {/* Breath phase indicator */}
-      {isInitialized && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '2.5rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            textAlign: 'center',
-            pointerEvents: 'none',
-          }}
-        >
-          <div style={{
-            fontSize: '0.65rem',
-            letterSpacing: '0.5em',
-            textTransform: 'uppercase',
-            color: `hsla(${primaryHue}, 52%, 68%, 0.35)`,
-          }}>
-            {breathPhase}
-          </div>
         </div>
       )}
 
