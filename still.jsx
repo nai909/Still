@@ -1205,7 +1205,7 @@ const gazeModes = [
   // Mathematical/Topological visuals
   { key: 'flowerOfLife', name: 'Flower of Life' },
   // Organic/Abstract visuals
-  { key: 'wax', name: 'Wax' },
+  { key: 'wax', name: 'Lava Lamp' },
   // Hyperdimensional visuals
   { key: 'realm', name: 'Realm' },
 ];
