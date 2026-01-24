@@ -5209,8 +5209,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const oceanGroup = new THREE.Group();
     scene.add(oceanGroup);
 
-    // Bioluminescent particles - like plankton
-    const particleCount = 2000;
+    // Bioluminescent particles - primary color
+    const particleCount = 1500;
     const particleGeom = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const velocities = new Float32Array(particleCount * 3);
@@ -5232,7 +5232,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     particleGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
     const particleMat = new THREE.PointsMaterial({
-      color: hslToHex(hue, 80, 60),
+      color: hslToHex(hue, 70, 55),
       size: 0.06,
       transparent: true,
       opacity: 0.7,
@@ -5242,13 +5242,56 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const particles = new THREE.Points(particleGeom, particleMat);
     oceanGroup.add(particles);
 
+    // Off-white accent particles
+    const whiteParticleCount = 500;
+    const whiteParticleGeom = new THREE.BufferGeometry();
+    const whitePositions = new Float32Array(whiteParticleCount * 3);
+    const whiteVelocities = new Float32Array(whiteParticleCount * 3);
+    const whitePhases = new Float32Array(whiteParticleCount);
+
+    for (let i = 0; i < whiteParticleCount; i++) {
+      const i3 = i * 3;
+      whitePositions[i3] = (Math.random() - 0.5) * 12;
+      whitePositions[i3 + 1] = (Math.random() - 0.5) * 8;
+      whitePositions[i3 + 2] = (Math.random() - 0.5) * 8;
+      whiteVelocities[i3] = (Math.random() - 0.5) * 0.008;
+      whiteVelocities[i3 + 1] = (Math.random() - 0.5) * 0.008;
+      whiteVelocities[i3 + 2] = (Math.random() - 0.5) * 0.008;
+      whitePhases[i] = Math.random() * Math.PI * 2;
+    }
+
+    whiteParticleGeom.setAttribute('position', new THREE.BufferAttribute(whitePositions, 3));
+
+    const whiteParticleMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 15, 85), // Off-white with subtle hue tint
+      size: 0.04,
+      transparent: true,
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending
+    });
+
+    const whiteParticles = new THREE.Points(whiteParticleGeom, whiteParticleMat);
+    oceanGroup.add(whiteParticles);
+
     // Larger glowing orbs - jellyfish-like creatures
     const orbs = [];
     const numOrbs = 12;
     for (let i = 0; i < numOrbs; i++) {
       const orbGeom = new THREE.SphereGeometry(0.15 + Math.random() * 0.1, 16, 16);
+      // Variations of primary hue
+      const variant = i % 4;
+      let orbColor;
+      if (variant === 0) {
+        orbColor = hslToHex(hue, 70, 55); // Primary bright
+      } else if (variant === 1) {
+        orbColor = hslToHex(hue, 50, 65); // Primary light
+      } else if (variant === 2) {
+        orbColor = hslToHex(hue, 60, 45); // Primary muted
+      } else {
+        orbColor = hslToHex(hue, 20, 80); // Off-white tinted
+      }
       const orbMat = new THREE.MeshBasicMaterial({
-        color: hslToHex((hue + i * 20) % 360, 70, 55),
+        color: orbColor,
         transparent: true,
         opacity: 0.5,
         blending: THREE.AdditiveBlending
@@ -5288,7 +5331,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       wispGeom.setAttribute('position', new THREE.BufferAttribute(wispPositions, 3));
 
       const wispMat = new THREE.LineBasicMaterial({
-        color: hslToHex((hue + 60) % 360, 60, 50),
+        color: hslToHex(hue, 40, 50),
         transparent: true,
         opacity: 0.3,
         blending: THREE.AdditiveBlending
@@ -5383,6 +5426,25 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       particleMat.opacity = 0.4 + breath * 0.4 + touchInfluence.strength * 0.2;
       particleMat.size = 0.05 + breath * 0.03;
 
+      // Animate white particles
+      const whiteParticlePositions = whiteParticleGeom.attributes.position.array;
+      for (let i = 0; i < whiteParticleCount; i++) {
+        const i3 = i * 3;
+        whiteParticlePositions[i3] += whiteVelocities[i3] + Math.sin(elapsed * 0.4 + whitePhases[i]) * 0.001;
+        whiteParticlePositions[i3 + 1] += whiteVelocities[i3 + 1] + Math.cos(elapsed * 0.25 + whitePhases[i]) * 0.001;
+        whiteParticlePositions[i3 + 2] += whiteVelocities[i3 + 2];
+
+        // Wrap around boundaries
+        if (whiteParticlePositions[i3] > 6) whiteParticlePositions[i3] = -6;
+        if (whiteParticlePositions[i3] < -6) whiteParticlePositions[i3] = 6;
+        if (whiteParticlePositions[i3 + 1] > 4) whiteParticlePositions[i3 + 1] = -4;
+        if (whiteParticlePositions[i3 + 1] < -4) whiteParticlePositions[i3 + 1] = 4;
+        if (whiteParticlePositions[i3 + 2] > 4) whiteParticlePositions[i3 + 2] = -4;
+        if (whiteParticlePositions[i3 + 2] < -4) whiteParticlePositions[i3 + 2] = 4;
+      }
+      whiteParticleGeom.attributes.position.needsUpdate = true;
+      whiteParticleMat.opacity = 0.3 + breath * 0.3;
+
       // Animate orbs
       orbs.forEach((orb, i) => {
         const data = orb.userData;
@@ -5446,6 +5508,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
       particleGeom.dispose();
       particleMat.dispose();
+      whiteParticleGeom.dispose();
+      whiteParticleMat.dispose();
       orbs.forEach(orb => {
         orb.geometry.dispose();
         orb.material.dispose();
