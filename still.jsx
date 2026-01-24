@@ -1356,22 +1356,24 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         return; // Don't process further
       }
 
-      // Detect vertical swipe UP: open mode selector (swipe must start in bottom third of screen)
-      const screenHeight = window.innerHeight;
-      if (deltaY < -minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime) {
-        if (swipeStartRef.current.y > screenHeight * 0.5) { // Started in bottom half
-          setShowUI(true);
-          swipeStartRef.current = null;
-          return;
-        }
-      }
-
-      // Detect vertical swipe DOWN: close mode selector
-      if (deltaY > minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime && showUI) {
-        setShowUI(false);
-        swipeStartRef.current = null;
-        return;
-      }
+      // DISABLED: Swipe-up menu removed for minimal experience (left/right swipe only)
+      // Uncomment to re-enable swipe-up menu:
+      // // Detect vertical swipe UP: open mode selector (swipe must start in bottom third of screen)
+      // const screenHeight = window.innerHeight;
+      // if (deltaY < -minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime) {
+      //   if (swipeStartRef.current.y > screenHeight * 0.5) { // Started in bottom half
+      //     setShowUI(true);
+      //     swipeStartRef.current = null;
+      //     return;
+      //   }
+      // }
+      //
+      // // Detect vertical swipe DOWN: close mode selector
+      // if (deltaY > minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime && showUI) {
+      //   setShowUI(false);
+      //   swipeStartRef.current = null;
+      //   return;
+      // }
 
       swipeStartRef.current = null;
     }
@@ -1423,12 +1425,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         wheelAccumXRef.current = 0;
         wheelAccumRef.current = 0;
       }
-      // Vertical swipe UP = open menu
-      else if (wheelAccumRef.current > threshold) {
-        e.preventDefault();
-        setShowUI(true);
-        wheelAccumRef.current = 0;
-      }
+      // DISABLED: Swipe-up menu removed for minimal experience
+      // // Vertical swipe UP = open menu
+      // else if (wheelAccumRef.current > threshold) {
+      //   e.preventDefault();
+      //   setShowUI(true);
+      //   wheelAccumRef.current = 0;
+      // }
     };
 
     window.addEventListener('wheel', handleWheel, { passive: false });
@@ -1506,22 +1509,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           return;
         }
 
-        // Detect vertical swipe UP: open mode selector
-        const screenHeight = window.innerHeight;
-        if (deltaY < -minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime) {
-          if (swipeStartRef.current.y > screenHeight * 0.5) {
-            setShowUI(true);
-            swipeStartRef.current = null;
-            return;
-          }
-        }
-
-        // Detect vertical swipe DOWN: close mode selector
-        if (deltaY > minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime && showUIRef.current) {
-          setShowUI(false);
-          swipeStartRef.current = null;
-          return;
-        }
+        // DISABLED: Swipe-up menu removed for minimal experience
+        // // Detect vertical swipe UP: open mode selector
+        // const screenHeight = window.innerHeight;
+        // if (deltaY < -minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime) {
+        //   if (swipeStartRef.current.y > screenHeight * 0.5) {
+        //     setShowUI(true);
+        //     swipeStartRef.current = null;
+        //     return;
+        //   }
+        // }
+        //
+        // // Detect vertical swipe DOWN: close mode selector
+        // if (deltaY > minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime && showUIRef.current) {
+        //   setShowUI(false);
+        //   swipeStartRef.current = null;
+        //   return;
+        // }
 
         swipeStartRef.current = null;
       }
@@ -5581,8 +5585,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
-      {/* Swipe hint at bottom - only show briefly on first load or after inactivity */}
-      {!showUI && (
+      {/* DISABLED: Swipe hint removed - menu disabled for minimal experience */}
+      {/* {!showUI && (
         <div style={{
           position: 'absolute',
           bottom: '1.5rem',
@@ -5602,12 +5606,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
             borderRadius: '1px',
           }} />
         </div>
-      )}
+      )} */}
 
-      {/* Visual selector - bottom drawer */}
-      {showUI && (
+      {/* DISABLED: Visual selector drawer - menu disabled for minimal experience (left/right swipe only) */}
+      {/* To re-enable: uncomment this block and the swipe-up gesture handlers above */}
+      {/* {showUI && (
         <>
-          {/* Backdrop - tap to close */}
           <div
             onClick={() => setShowUI(false)}
             style={{
@@ -5618,7 +5622,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
               animation: 'fadeIn 0.5s ease-out',
             }}
           />
-          {/* Bottom drawer */}
           <div style={{
             position: 'absolute',
             bottom: 0,
@@ -5635,7 +5638,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
             display: 'flex',
             flexDirection: 'column',
           }}>
-            {/* Drawer handle */}
             <div style={{
               display: 'flex',
               justifyContent: 'center',
@@ -5649,8 +5651,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
                 borderRadius: '2px',
               }} />
             </div>
-
-            {/* Title */}
             <div style={{
               textAlign: 'center',
               padding: '0.75rem 1rem',
@@ -5664,8 +5664,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
                 textTransform: 'uppercase',
               }}>Visuals</span>
             </div>
-
-            {/* Scrollable list */}
             <div style={{
               overflowY: 'auto',
               padding: '0.5rem 0',
@@ -5705,7 +5703,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
             </div>
           </div>
         </>
-      )}
+      )} */}
       <style>{`
         @keyframes slideUpDrawer {
           from { transform: translateY(100%); }
