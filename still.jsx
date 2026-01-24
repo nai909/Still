@@ -1206,6 +1206,8 @@ const gazeModes = [
   { key: 'bioluminescent', name: 'Bioluminescent' },
   // Mathematical/Topological visuals
   { key: 'flowerOfLife', name: 'Flower of Life' },
+  // Organic/Abstract visuals
+  { key: 'wax', name: 'Wax' },
 ];
 
 const gazeShapes = [
@@ -5540,6 +5542,319 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
+  // ========== WAX MODE (Hyperelastic lava lamp blobs) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'wax' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Simple 3D noise function (simplex-like)
+    const noise3D = (x, y, z) => {
+      const p = [151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,134,139,48,27,166,77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,102,143,54,65,25,63,161,1,216,80,73,209,76,132,187,208,89,18,169,200,196,135,130,116,188,159,86,164,100,109,198,173,186,3,64,52,217,226,250,124,123,5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,223,183,170,213,119,248,152,2,44,154,163,70,221,153,101,155,167,43,172,9,129,22,39,253,19,98,108,110,79,113,224,232,178,185,112,104,218,246,97,228,251,34,242,193,238,210,144,12,191,179,162,241,81,51,145,235,249,14,239,107,49,192,214,31,181,199,106,157,184,84,204,176,115,121,50,45,127,4,150,254,138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180];
+      const perm = [...p, ...p];
+      const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
+      const lerp = (t, a, b) => a + t * (b - a);
+      const grad = (hash, x, y, z) => {
+        const h = hash & 15;
+        const u = h < 8 ? x : y;
+        const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
+        return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+      };
+      const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
+      x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
+      const u = fade(x), v = fade(y), w = fade(z);
+      const A = perm[X] + Y, AA = perm[A] + Z, AB = perm[A + 1] + Z;
+      const B = perm[X + 1] + Y, BA = perm[B] + Z, BB = perm[B + 1] + Z;
+      return lerp(w, lerp(v, lerp(u, grad(perm[AA], x, y, z), grad(perm[BA], x-1, y, z)),
+        lerp(u, grad(perm[AB], x, y-1, z), grad(perm[BB], x-1, y-1, z))),
+        lerp(v, lerp(u, grad(perm[AA+1], x, y, z-1), grad(perm[BA+1], x-1, y, z-1)),
+          lerp(u, grad(perm[AB+1], x, y-1, z-1), grad(perm[BB+1], x-1, y-1, z-1))));
+    };
+
+    const waxGroup = new THREE.Group();
+    scene.add(waxGroup);
+
+    // Create organic blobs
+    const blobs = [];
+    const numBlobs = 6;
+
+    for (let i = 0; i < numBlobs; i++) {
+      // Create icosahedron for smooth organic shape
+      const baseRadius = 0.35 + Math.random() * 0.25;
+      const geometry = new THREE.IcosahedronGeometry(baseRadius, 4);
+
+      // Store original positions for displacement
+      const originalPositions = geometry.attributes.position.array.slice();
+      geometry.userData = { originalPositions };
+
+      // Wireframe material matching torus aesthetic
+      const material = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 52, 68),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.75,
+      });
+
+      const mesh = new THREE.Mesh(geometry, material);
+
+      // Initial position - spread in void
+      mesh.position.set(
+        (Math.random() - 0.5) * 2.5,
+        (Math.random() - 0.5) * 3.5,
+        (Math.random() - 0.5) * 1.5
+      );
+
+      const blob = {
+        mesh,
+        baseRadius,
+        position: mesh.position.clone(),
+        velocity: new THREE.Vector3(0, 0, 0),
+        phase: Math.random() * Math.PI * 2,
+        floatSpeed: 0.15 + Math.random() * 0.15,
+        wobbleSpeed: 0.3 + Math.random() * 0.2,
+        wobbleIntensity: 0.12 + Math.random() * 0.08,
+      };
+
+      blobs.push(blob);
+      waxGroup.add(mesh);
+    }
+
+    // Add subtle ambient glow particles around blobs
+    const glowParticleCount = 200;
+    const glowGeom = new THREE.BufferGeometry();
+    const glowPositions = new Float32Array(glowParticleCount * 3);
+    const glowVelocities = [];
+
+    for (let i = 0; i < glowParticleCount; i++) {
+      const i3 = i * 3;
+      glowPositions[i3] = (Math.random() - 0.5) * 6;
+      glowPositions[i3 + 1] = (Math.random() - 0.5) * 6;
+      glowPositions[i3 + 2] = (Math.random() - 0.5) * 3;
+      glowVelocities.push({
+        x: (Math.random() - 0.5) * 0.005,
+        y: (Math.random() - 0.5) * 0.005,
+        z: (Math.random() - 0.5) * 0.003,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    glowGeom.setAttribute('position', new THREE.BufferAttribute(glowPositions, 3));
+
+    const glowMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 45, 60),
+      size: 0.02,
+      transparent: true,
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending
+    });
+
+    const glowParticles = new THREE.Points(glowGeom, glowMat);
+    waxGroup.add(glowParticles);
+
+    // Touch influence tracking
+    let touchInfluence = { x: 0, y: 0, z: 0, strength: 0 };
+
+    // Spring physics state
+    let localScale = 1;
+    let localScaleVelocity = 0;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clockRef.current.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Touch-responsive rotation
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          waxGroup.rotation.y += normalizedX * 0.02;
+          waxGroup.rotation.x += normalizedY * 0.01;
+
+          // Track touch for blob attraction
+          touchInfluence.x = normalizedX * 3;
+          touchInfluence.y = -normalizedY * 2.5;
+          touchInfluence.z = 0.5;
+          touchInfluence.strength = Math.min(1, touchInfluence.strength + 0.08);
+        }
+      } else {
+        // Gentle auto-rotation when not touching
+        waxGroup.rotation.y += 0.0008;
+        touchInfluence.strength *= 0.92;
+      }
+
+      // Spring-damper scale physics
+      const targetScale = 0.85 + breath * 0.35;
+      const springStiffness = 0.015;
+      const damping = 0.85;
+      const force = (targetScale - localScale) * springStiffness;
+      localScaleVelocity = localScaleVelocity * damping + force;
+      localScale += localScaleVelocity;
+      waxGroup.scale.setScalar(localScale);
+
+      // Z-position breathing - move toward camera on inhale
+      waxGroup.position.z = (localScale - 0.85) * 2.3 - 0.3;
+
+      // Animate each blob
+      blobs.forEach((blob, index) => {
+        // Lava lamp physics - vertical oscillation
+        const verticalOsc = Math.sin(elapsed * blob.floatSpeed + blob.phase) * 0.4;
+        blob.position.y += (verticalOsc - (blob.position.y - blob.mesh.position.y)) * 0.02;
+
+        // Gentle horizontal drift
+        blob.position.x += Math.sin(elapsed * 0.08 + blob.phase * 1.5) * 0.001;
+        blob.position.z += Math.cos(elapsed * 0.06 + blob.phase * 0.7) * 0.0005;
+
+        // Apply velocity
+        blob.position.add(blob.velocity);
+        blob.velocity.multiplyScalar(0.98); // Damping
+
+        // Soft boundary limits
+        if (blob.position.y > 2.2) blob.velocity.y -= 0.0003;
+        if (blob.position.y < -2.2) blob.velocity.y += 0.0003;
+        if (blob.position.x > 1.8) blob.velocity.x -= 0.0002;
+        if (blob.position.x < -1.8) blob.velocity.x += 0.0002;
+        if (blob.position.z > 1) blob.velocity.z -= 0.0001;
+        if (blob.position.z < -1) blob.velocity.z += 0.0001;
+
+        // Touch attraction - blobs drawn to touch like heat source
+        if (touchInfluence.strength > 0.1) {
+          const touchVec = new THREE.Vector3(touchInfluence.x, touchInfluence.y, touchInfluence.z);
+          const dist = blob.position.distanceTo(touchVec);
+          if (dist < 3) {
+            const attractForce = touchVec.clone().sub(blob.position).normalize();
+            blob.velocity.add(attractForce.multiplyScalar(0.0008 * (3 - dist) * touchInfluence.strength));
+          }
+        }
+
+        // Breath sync - rise on inhale
+        const breathLift = breath * 0.25;
+        blob.mesh.position.x = blob.position.x;
+        blob.mesh.position.y = blob.position.y + breathLift;
+        blob.mesh.position.z = blob.position.z;
+
+        // Hyperelastic deformation - noise-based vertex displacement
+        const geometry = blob.mesh.geometry;
+        const positions = geometry.attributes.position.array;
+        const originalPositions = geometry.userData.originalPositions;
+        const normal = new THREE.Vector3();
+
+        for (let i = 0; i < positions.length; i += 3) {
+          // Get original vertex position
+          const ox = originalPositions[i];
+          const oy = originalPositions[i + 1];
+          const oz = originalPositions[i + 2];
+
+          // Calculate normal direction
+          normal.set(ox, oy, oz).normalize();
+
+          // 4D noise for smooth time-based displacement
+          const noiseVal = noise3D(
+            ox * 1.5 + blob.phase,
+            oy * 1.5 + elapsed * blob.wobbleSpeed,
+            oz * 1.5 + elapsed * 0.15
+          );
+
+          // Apply displacement along normal
+          const displacement = noiseVal * blob.wobbleIntensity * (0.8 + breath * 0.4);
+          positions[i] = ox + normal.x * displacement;
+          positions[i + 1] = oy + normal.y * displacement;
+          positions[i + 2] = oz + normal.z * displacement;
+        }
+
+        geometry.attributes.position.needsUpdate = true;
+        geometry.computeVertexNormals();
+
+        // Stretch in direction of movement (hyperelastic)
+        const speed = blob.velocity.length();
+        if (speed > 0.0001) {
+          const stretchFactor = 1 + speed * 15;
+          // Get velocity direction
+          const velDir = blob.velocity.clone().normalize();
+          // Create stretch matrix aligned to velocity
+          const baseScale = 0.9 + breath * 0.15;
+          blob.mesh.scale.set(
+            baseScale * (1 + Math.abs(velDir.x) * (stretchFactor - 1) * 0.3),
+            baseScale * (1 + Math.abs(velDir.y) * (stretchFactor - 1) * 0.5),
+            baseScale * (1 + Math.abs(velDir.z) * (stretchFactor - 1) * 0.3)
+          );
+        } else {
+          const baseScale = 0.9 + breath * 0.15;
+          blob.mesh.scale.setScalar(baseScale);
+        }
+
+        // Opacity with breath
+        blob.mesh.material.opacity = 0.5 + breath * 0.35 + touchInfluence.strength * 0.1;
+      });
+
+      // Animate glow particles
+      const glowPositionsArr = glowGeom.attributes.position.array;
+      for (let i = 0; i < glowParticleCount; i++) {
+        const i3 = i * 3;
+        const vel = glowVelocities[i];
+
+        glowPositionsArr[i3] += vel.x + Math.sin(elapsed * 0.3 + vel.phase) * 0.002;
+        glowPositionsArr[i3 + 1] += vel.y + Math.cos(elapsed * 0.2 + vel.phase) * 0.002;
+        glowPositionsArr[i3 + 2] += vel.z;
+
+        // Wrap around
+        if (glowPositionsArr[i3] > 3) glowPositionsArr[i3] = -3;
+        if (glowPositionsArr[i3] < -3) glowPositionsArr[i3] = 3;
+        if (glowPositionsArr[i3 + 1] > 3) glowPositionsArr[i3 + 1] = -3;
+        if (glowPositionsArr[i3 + 1] < -3) glowPositionsArr[i3 + 1] = 3;
+        if (glowPositionsArr[i3 + 2] > 1.5) glowPositionsArr[i3 + 2] = -1.5;
+        if (glowPositionsArr[i3 + 2] < -1.5) glowPositionsArr[i3 + 2] = 1.5;
+      }
+      glowGeom.attributes.position.needsUpdate = true;
+      glowMat.opacity = 0.25 + breath * 0.25;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      blobs.forEach(blob => {
+        blob.mesh.geometry.dispose();
+        blob.mesh.material.dispose();
+      });
+      glowGeom.dispose();
+      glowMat.dispose();
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
   return (
     <div
       style={{
@@ -5565,7 +5880,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'dmt' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'bioluminescent') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'dmt' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'bioluminescent' || currentMode === 'wax') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -5574,7 +5889,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       )}
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'dmt' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'bioluminescent' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'dmt' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'bioluminescent' && currentMode !== 'wax' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
