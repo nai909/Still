@@ -6510,10 +6510,28 @@ const toRoman = (num) => {
 function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', currentVisual = 'geometry', onVisualChange }) {
   const [showUI, setShowUI] = useState(false);
   const [showVisualToast, setShowVisualToast] = useState(false);
+  const [showIntroPrompt, setShowIntroPrompt] = useState(false);
   const swipeStartRef = useRef(null);
   const wheelAccumRef = useRef(0);
   const wheelTimeoutRef = useRef(null);
   const toastTimeoutRef = useRef(null);
+  const introTimeoutRef = useRef(null);
+  const wasActiveRef = useRef(false);
+
+  // Show intro prompt briefly when session starts
+  useEffect(() => {
+    if (breathSession.isActive && !wasActiveRef.current) {
+      // Session just started
+      setShowIntroPrompt(true);
+      if (introTimeoutRef.current) clearTimeout(introTimeoutRef.current);
+      introTimeoutRef.current = setTimeout(() => setShowIntroPrompt(false), 4000);
+    }
+    wasActiveRef.current = breathSession.isActive;
+
+    return () => {
+      if (introTimeoutRef.current) clearTimeout(introTimeoutRef.current);
+    };
+  }, [breathSession.isActive]);
 
   // Cycle through visuals
   const cycleVisual = useCallback((direction) => {
@@ -6664,59 +6682,53 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         </span>
       </div>
 
-      {/* Centered breath UI - inside torus hole, scales with breath */}
+      {/* Centered breath UI */}
       <div style={{
         position: 'absolute',
         top: '50%',
         left: '50%',
-        transform: `translate(-50%, -50%) scale(${
-          breathSession.isActive
-            ? breathSession.phase === 'inhale'
-              ? 0.9 + breathSession.phaseProgress * 0.2
-              : breathSession.phase === 'holdFull'
-              ? 1.1
-              : breathSession.phase === 'exhale'
-              ? 1.1 - breathSession.phaseProgress * 0.2
-              : 0.9
-            : 1
-        })`,
+        transform: 'translate(-50%, -50%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         gap: '0.5rem',
         zIndex: 1,
         pointerEvents: 'none',
-        transition: 'transform 0.15s ease-out',
       }}>
-        {/* Phase label */}
-        <div
-          key={breathSession.phaseIndex}
-          style={{
+        {/* Tap to begin - only when not active */}
+        {!breathSession.isActive && (
+          <div style={{
             color: '#fff',
             fontSize: '2rem',
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
             letterSpacing: '0.3em',
             textTransform: 'lowercase',
-            transition: 'color 0.5s ease, opacity 0.5s ease',
-            opacity: breathSession.isActive ? 1 : 0.7,
-            animation: breathSession.isActive ? 'fadeInLabel 0.5s ease-out' : 'none',
+            opacity: 0.7,
           }}>
-          {breathSession.isActive
-            ? breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label || ''
-            : 'tap to begin'}
-        </div>
+            tap to begin
+          </div>
+        )}
 
-        {/* Countdown */}
-        {breathSession.isActive && (
+        {/* Intro prompt - appears briefly when session starts */}
+        {breathSession.isActive && showIntroPrompt && (
           <div style={{
-            color: '#fff',
-            fontSize: '2rem',
-            fontFamily: '"Jost", sans-serif',
-            fontWeight: 300,
-            letterSpacing: '0.2em',
+            textAlign: 'center',
+            animation: 'fadeInLabel 0.5s ease-out',
           }}>
-            {Math.ceil(breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.duration * (1 - breathSession.phaseProgress)) || ''}
+            <div style={{
+              color: 'rgba(255, 255, 255, 0.6)',
+              fontSize: '0.85rem',
+              fontFamily: '"Jost", sans-serif',
+              fontWeight: 300,
+              letterSpacing: '0.15em',
+              textTransform: 'lowercase',
+              lineHeight: 1.8,
+            }}>
+              inhale as the visual nears<br />
+              hold as it holds<br />
+              exhale as it releases
+            </div>
           </div>
         )}
       </div>
