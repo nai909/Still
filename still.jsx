@@ -6913,10 +6913,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
   const textures = [
     { name: 'silence', noise: 0, foley: false },
     { name: 'room tone', noise: 0.008, foley: false },
-    { name: 'rain', noise: 0.015, foley: true, foleyType: 'rain' },
-    { name: 'forest', noise: 0.006, foley: true, foleyType: 'forest' },
-    { name: 'water', noise: 0.004, foley: true, foleyType: 'water' },
-    { name: 'night', noise: 0.005, foley: true, foleyType: 'night' }
+    { name: 'rain', noise: 0, foley: true, foleyType: 'rain' },
+    { name: 'forest', noise: 0, foley: true, foleyType: 'forest' },
+    { name: 'water', noise: 0, foley: true, foleyType: 'water' },
+    { name: 'night', noise: 0, foley: true, foleyType: 'night' }
   ];
 
   // A minor pentatonic scale (A2 to A5)
@@ -7246,10 +7246,16 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
       source.start(now);
     } else if (type === 'sampledGuitar') {
       // Sampled guitar - pitch shift from base note (C3 = 130.81Hz)
+      // Limit range to ~1.5 octaves up to keep it sounding natural
       if (!guitarBufferRef.current) return;
 
       const baseFreq = 130.81; // C3
-      const playbackRate = freq / baseFreq;
+      let adjustedFreq = freq;
+      // If note is too high, drop it down an octave (or two)
+      while (adjustedFreq / baseFreq > 2.5) {
+        adjustedFreq = adjustedFreq / 2;
+      }
+      const playbackRate = adjustedFreq / baseFreq;
 
       const source = ctx.createBufferSource();
       source.buffer = guitarBufferRef.current;
