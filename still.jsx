@@ -1257,11 +1257,11 @@ const MOBILE_SPEED = isMobile ? 0.6 : 1;  // Slower animations on mobile
 const MOBILE_PARTICLES = isMobile ? 0.4 : 1;  // Fewer particles on mobile
 const MOBILE_PIXEL_RATIO = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2);
 
-function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false, currentVisual, onVisualChange }) {
+function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false, currentVisual, onVisualChange, breathSession = null, externalTouchRef = null }) {
   // Use primaryHue throughout for consistent color scheme
   const hue = primaryHue;
   // Background mode: dimmer, slower, no interaction
-  const bgOpacity = backgroundMode ? 0.3 : 1;
+  const bgOpacity = 1; // Always full opacity
   const bgSpeed = backgroundMode ? 0.3 : 1;
   const containerRef = React.useRef(null);
   const canvasRef = React.useRef(null);
@@ -1274,6 +1274,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   // Spring physics for fluid breathing animation
   const scaleRef = React.useRef(1);
   const scaleVelocityRef = React.useRef(0);
+
+  // Keep external breathSession prop in a ref for access in animation loops
+  const externalBreathSessionRef = React.useRef(breathSession);
+  externalBreathSessionRef.current = breathSession;
 
   // Use prop if provided, otherwise use internal state
   const [internalMode, setInternalMode] = React.useState('geometry');
@@ -1301,6 +1305,40 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   const swipeStartRef = React.useRef(null);
   const wheelAccumRef = React.useRef(0);
   const wheelTimeoutRef = React.useRef(null);
+
+  // Merge external touches (from parent component like DroneMode)
+  React.useEffect(() => {
+    if (!externalTouchRef) return;
+    const interval = setInterval(() => {
+      const touches = externalTouchRef.current || [];
+      touches.forEach(touch => {
+        const existing = touchPointsRef.current.find(p => p.id === touch.id);
+        if (!existing) {
+          touchPointsRef.current.push({
+            id: touch.id,
+            x: touch.x,
+            y: touch.y,
+            startX: touch.x,
+            startY: touch.y,
+            velocity: { x: 0, y: 0 },
+            active: true,
+            startTime: Date.now(),
+          });
+          // Create ripple for external touches
+          ripplesRef.current.push({
+            x: touch.x,
+            y: touch.y,
+            startTime: Date.now(),
+            duration: 1500,
+            maxRadius: 100,
+          });
+        }
+      });
+      // Mark old external touches as inactive
+      externalTouchRef.current = touches.filter(t => Date.now() - t.time < 100);
+    }, 16);
+    return () => clearInterval(interval);
+  }, [externalTouchRef]);
 
   // Cycle to next/previous visual
   const cycleVisual = React.useCallback((direction) => {
@@ -1679,7 +1717,25 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   }, [selectedTechnique]);
 
   // Simple phase getter for visuals (returns 0-1)
+  // When breathSession is provided (from BreathworkView), use it instead of internal timing
   const getBreathPhase = React.useCallback((elapsed) => {
+    // Use external breathSession if provided and active (access via ref for animation loops)
+    const session = externalBreathSessionRef.current;
+    if (session && session.isActive) {
+      const { phase, phaseProgress } = session;
+      // Convert phase name to visual phase (0-1)
+      if (phase === 'inhale') {
+        return phaseProgress; // 0 -> 1
+      } else if (phase === 'holdFull') {
+        return 1;
+      } else if (phase === 'exhale') {
+        return 1 - phaseProgress; // 1 -> 0
+      } else if (phase === 'holdEmpty') {
+        return 0;
+      }
+      return 0.5;
+    }
+    // Otherwise use internal breath calculation
     return getBreathInfo(elapsed).phase;
   }, [getBreathInfo]);
 
@@ -6208,30 +6264,32 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
-      {/* Visual name toast - appears briefly when switching visuals */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '2.5rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          pointerEvents: 'none',
-          opacity: showVisualToast ? 1 : 0,
-          transition: 'opacity 0.4s ease-in-out',
-        }}
-      >
-        <span
+      {/* Visual name toast - appears briefly when switching visuals (hidden in background mode) */}
+      {!backgroundMode && (
+        <div
           style={{
-            color: `hsla(${hue}, 52%, 68%, 0.7)`,
-            fontSize: '0.7rem',
-            fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
+            position: 'absolute',
+            bottom: '2.5rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            pointerEvents: 'none',
+            opacity: showVisualToast ? 1 : 0,
+            transition: 'opacity 0.4s ease-in-out',
           }}
         >
-          {gazeModes.find(m => m.key === currentMode)?.name || ''}
-        </span>
-      </div>
+          <span
+            style={{
+              color: `hsla(${hue}, 52%, 68%, 0.7)`,
+              fontSize: '0.7rem',
+              fontFamily: '"Jost", sans-serif',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {gazeModes.find(m => m.key === currentMode)?.name || ''}
+          </span>
+        </div>
+      )}
 
       {/* DISABLED: Swipe hint removed - menu disabled for minimal experience */}
       {/* {!showUI && (
@@ -6503,9 +6561,10 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
     swipeStartRef.current = null;
   }, [showUI, cycleVisual]);
 
-  // Two-finger swipe (wheel event on trackpad) to open/close menu
+  // Two-finger swipe (wheel event on trackpad) to cycle visuals or open menu
   const showUIRef = useRef(showUI);
   showUIRef.current = showUI;
+  const wheelAccumXRef = useRef(0);
 
   useEffect(() => {
     const handleWheel = (e) => {
@@ -6513,16 +6572,25 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       if (showUIRef.current) return;
 
       wheelAccumRef.current += e.deltaY;
+      wheelAccumXRef.current += e.deltaX;
 
       clearTimeout(wheelTimeoutRef.current);
       wheelTimeoutRef.current = setTimeout(() => {
         wheelAccumRef.current = 0;
+        wheelAccumXRef.current = 0;
       }, 200);
 
       const threshold = 50;
 
+      // Horizontal swipe = change visual
+      if (Math.abs(wheelAccumXRef.current) > threshold) {
+        e.preventDefault();
+        cycleVisual(wheelAccumXRef.current > 0 ? 1 : -1);
+        wheelAccumXRef.current = 0;
+        wheelAccumRef.current = 0;
+      }
       // Swipe UP = open menu
-      if (wheelAccumRef.current > threshold) {
+      else if (wheelAccumRef.current > threshold) {
         e.preventDefault();
         setShowUI(true);
         wheelAccumRef.current = 0;
@@ -6531,7 +6599,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 
     window.addEventListener('wheel', handleWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleWheel);
-  }, []);
+  }, [cycleVisual]);
 
   return (
     <main
@@ -6559,13 +6627,14 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         backgroundMode={true}
         currentVisual={currentVisual}
         onVisualChange={onVisualChange}
+        breathSession={breathSession}
       />
 
       {/* Visual name toast - appears briefly when switching visuals */}
       <div
         style={{
           position: 'absolute',
-          top: '2rem',
+          bottom: '6rem',
           left: '50%',
           transform: 'translateX(-50%)',
           pointerEvents: 'none',
@@ -6576,11 +6645,11 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       >
         <span
           style={{
-            color: `hsla(${primaryHue}, 52%, 68%, 0.6)`,
-            fontSize: '0.65rem',
+            color: 'rgba(255, 255, 255, 0.5)',
+            fontSize: '0.9rem',
             fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
+            letterSpacing: '0.3em',
+            textTransform: 'lowercase',
           }}
         >
           {gazeModes.find(m => m.key === currentVisual)?.name || ''}
@@ -6615,13 +6684,12 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         <div
           key={breathSession.phaseIndex}
           style={{
-            color: breathSession.phase === 'holdFull' || breathSession.phase === 'holdEmpty'
-              ? 'rgba(255,255,255,0.7)'
-              : `hsla(${primaryHue}, 52%, 68%, 0.65)`,
-            fontSize: '0.85rem',
+            color: '#fff',
+            fontSize: '2rem',
             fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.25em',
-            textTransform: 'uppercase',
+            fontWeight: 300,
+            letterSpacing: '0.3em',
+            textTransform: 'lowercase',
             transition: 'color 0.5s ease, opacity 0.5s ease',
             opacity: breathSession.isActive ? 1 : 0.7,
             animation: breathSession.isActive ? 'fadeInLabel 0.5s ease-out' : 'none',
@@ -6634,7 +6702,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         {/* Countdown */}
         {breathSession.isActive && (
           <div style={{
-            color: `hsla(${primaryHue}, 40%, 70%, 0.5)`,
+            color: 'rgba(255, 255, 255, 0.5)',
             fontSize: '2rem',
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
@@ -6779,6 +6847,787 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         @keyframes fadeInBreath {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+      `}</style>
+    </main>
+  );
+}
+
+// ============================================================================
+// DRONE MODE COMPONENT
+// ============================================================================
+
+function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [currentInstrument, setCurrentInstrument] = useState(0);
+  const [currentTexture, setCurrentTexture] = useState(0);
+  const [showLabel, setShowLabel] = useState(false);
+  const [breathPhase, setBreathPhase] = useState('inhale');
+  const [breathValue, setBreathValue] = useState(0);
+
+  // Touch ref for forwarding to GazeMode ripples
+  const externalTouchRef = useRef([]);
+
+  const ctxRef = useRef(null);
+  const masterGainRef = useRef(null);
+  const reverbNodeRef = useRef(null);
+  const reverbGainRef = useRef(null);
+  const dryGainRef = useRef(null);
+  const droneOscillatorsRef = useRef([]);
+  const noiseNodeRef = useRef(null);
+  const noiseGainRef = useRef(null);
+  const foleyIntervalRef = useRef(null);
+  const breathStartTimeRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const labelTimeoutRef = useRef(null);
+  const wheelAccumXRef = useRef(0);
+  const wheelAccumYRef = useRef(0);
+  const wheelTimeoutRef = useRef(null);
+  const currentTextureRef = useRef(currentTexture);
+  currentTextureRef.current = currentTexture;
+  const pianoBufferRef = useRef(null);
+  const guitarBufferRef = useRef(null);
+  const harpBufferRef = useRef(null);
+  const celloBufferRef = useRef(null);
+
+  // Breath pattern (4-7-8)
+  const breathPattern = { inhale: 4, hold: 7, exhale: 8 };
+
+  const instruments = [
+    { name: 'piano', type: 'sampledPiano' },
+    { name: 'guitar', type: 'sampledGuitar' },
+    { name: 'synth', type: 'feltPiano' },
+    { name: 'singing bowl', type: 'singingBowl' },
+    { name: 'music box', type: 'musicBox' },
+    { name: 'harp', type: 'sampledHarp' },
+    { name: 'cello', type: 'sampledCello' }
+  ];
+
+  const textures = [
+    { name: 'silence', noise: 0, foley: false },
+    { name: 'room tone', noise: 0.008, foley: false },
+    { name: 'rain', noise: 0.015, foley: true, foleyType: 'rain' },
+    { name: 'forest', noise: 0.006, foley: true, foleyType: 'forest' },
+    { name: 'water', noise: 0.004, foley: true, foleyType: 'water' },
+    { name: 'night', noise: 0.005, foley: true, foleyType: 'night' }
+  ];
+
+  // A minor pentatonic scale (A2 to A5)
+  const scale = [
+    110.00, 130.81, 146.83, 164.81, 196.00, 220.00,
+    261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 659.25, 880.00
+  ];
+
+  // Initialize audio context
+  const initAudio = useCallback(() => {
+    if (ctxRef.current) return;
+
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    ctxRef.current = ctx;
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.value = 0.7;
+    masterGainRef.current = masterGain;
+
+    // Create reverb
+    const reverbNode = ctx.createConvolver();
+    const reverbLength = 6;
+    const sampleRate = ctx.sampleRate;
+    const length = sampleRate * reverbLength;
+    const impulse = ctx.createBuffer(2, length, sampleRate);
+
+    for (let ch = 0; ch < 2; ch++) {
+      const data = impulse.getChannelData(ch);
+      for (let i = 0; i < length; i++) {
+        const t = i / sampleRate;
+        const earlyDecay = Math.exp(-t * 3) * 0.3;
+        const lateDecay = Math.exp(-t * 0.8) * 0.7;
+        data[i] = (Math.random() * 2 - 1) * (earlyDecay + lateDecay);
+      }
+    }
+    reverbNode.buffer = impulse;
+    reverbNodeRef.current = reverbNode;
+
+    const reverbGain = ctx.createGain();
+    reverbGain.gain.value = 0.5;
+    reverbGainRef.current = reverbGain;
+
+    const dryGain = ctx.createGain();
+    dryGain.gain.value = 0.6;
+    dryGainRef.current = dryGain;
+
+    masterGain.connect(dryGain);
+    dryGain.connect(ctx.destination);
+    masterGain.connect(reverbNode);
+    reverbNode.connect(reverbGain);
+    reverbGain.connect(ctx.destination);
+
+    // Load piano sample (C3 = 130.81Hz base note)
+    fetch('piano.mp3')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        pianoBufferRef.current = audioBuffer;
+      })
+      .catch(err => console.log('Piano sample not loaded:', err));
+
+    // Load guitar sample (C3 = 130.81Hz base note)
+    fetch('guitar.mp3')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        guitarBufferRef.current = audioBuffer;
+      })
+      .catch(err => console.log('Guitar sample not loaded:', err));
+
+    // Load harp sample (C3 = 130.81Hz base note)
+    fetch('harp.mp3')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        harpBufferRef.current = audioBuffer;
+      })
+      .catch(err => console.log('Harp sample not loaded:', err));
+
+    // Load cello sample (C3 = 130.81Hz base note)
+    fetch('cello.mp3')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        celloBufferRef.current = audioBuffer;
+      })
+      .catch(err => console.log('Cello sample not loaded:', err));
+
+    // Start drone
+    startDrone(ctx, masterGain);
+
+    // Start textures
+    startTextures(ctx, masterGain);
+
+    // Start breath loop
+    breathStartTimeRef.current = performance.now();
+    const updateBreath = (timestamp) => {
+      if (!breathStartTimeRef.current) breathStartTimeRef.current = timestamp;
+
+      const totalCycle = breathPattern.inhale + breathPattern.hold + breathPattern.exhale;
+      const elapsed = ((timestamp - breathStartTimeRef.current) / 1000) % totalCycle;
+
+      let phase, value;
+      if (elapsed < breathPattern.inhale) {
+        phase = 'inhale';
+        value = elapsed / breathPattern.inhale;
+      } else if (elapsed < breathPattern.inhale + breathPattern.hold) {
+        phase = 'hold';
+        value = 1;
+      } else {
+        phase = 'exhale';
+        value = 1 - (elapsed - breathPattern.inhale - breathPattern.hold) / breathPattern.exhale;
+      }
+
+      setBreathPhase(phase);
+      setBreathValue(value);
+
+      // Modulate drone
+      droneOscillatorsRef.current.forEach(node => {
+        const target = node.baseGain * (0.4 + value * 0.6);
+        node.gain.gain.setTargetAtTime(target, ctx.currentTime, 0.5);
+      });
+
+      animationFrameRef.current = requestAnimationFrame(updateBreath);
+    };
+    animationFrameRef.current = requestAnimationFrame(updateBreath);
+
+    setIsInitialized(true);
+  }, []);
+
+  // Start drone oscillators
+  const startDrone = (ctx, masterGain) => {
+    const baseFreq = 55; // A1
+    const layers = [
+      { ratio: 1, type: 'sine', gain: 0.15, detune: 0 },
+      { ratio: 2, type: 'sine', gain: 0.12, detune: 3 },
+      { ratio: 1.5, type: 'sine', gain: 0.08, detune: -2 },
+      { ratio: 3, type: 'sine', gain: 0.05, detune: 5 },
+      { ratio: 4, type: 'sine', gain: 0.03, detune: -4 },
+      { ratio: 0.5, type: 'sine', gain: 0.1, detune: 0 },
+      { ratio: 2.01, type: 'sine', gain: 0.04, detune: 0 },
+      { ratio: 1.498, type: 'sine', gain: 0.03, detune: 0 }
+    ];
+
+    layers.forEach(layer => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const panner = ctx.createStereoPanner();
+
+      osc.type = layer.type;
+      osc.frequency.value = baseFreq * layer.ratio;
+      osc.detune.value = layer.detune;
+
+      gain.gain.value = 0;
+      panner.pan.value = (Math.random() - 0.5) * 0.3;
+
+      osc.connect(gain);
+      gain.connect(panner);
+      panner.connect(masterGain);
+
+      osc.start();
+      gain.gain.setTargetAtTime(layer.gain, ctx.currentTime, 2);
+
+      droneOscillatorsRef.current.push({ osc, gain, baseGain: layer.gain });
+    });
+  };
+
+  // Start texture noise
+  const startTextures = (ctx, masterGain) => {
+    const bufferSize = ctx.sampleRate * 2;
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const noiseNode = ctx.createBufferSource();
+    noiseNode.buffer = noiseBuffer;
+    noiseNode.loop = true;
+    noiseNodeRef.current = noiseNode;
+
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'lowpass';
+    noiseFilter.frequency.value = 2000;
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.value = textures[0].noise;
+    noiseGainRef.current = noiseGain;
+
+    noiseNode.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(masterGain);
+    noiseNode.start();
+
+    // Foley interval - use ref to get current texture value
+    foleyIntervalRef.current = setInterval(() => {
+      const tex = textures[currentTextureRef.current];
+      if (tex && tex.foley) {
+        playFoley(ctx, masterGain, tex.foleyType);
+      }
+    }, 1500 + Math.random() * 2000);
+  };
+
+  // Foley sounds
+  const playFoley = (ctx, masterGain, type) => {
+    if (Math.random() > 0.4) return;
+    const now = ctx.currentTime;
+
+    if (type === 'rain') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 1000 + Math.random() * 500;
+      osc.frequency.setTargetAtTime(400 + Math.random() * 200, now, 0.02);
+      gain.gain.value = 0.015;
+      gain.gain.setTargetAtTime(0, now, 0.08);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === 'forest') {
+      if (Math.random() > 0.5) {
+        // Bird chirp
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        const baseFreq = 2000 + Math.random() * 1500;
+        osc.frequency.value = baseFreq;
+        osc.frequency.setTargetAtTime(baseFreq * 1.2, now, 0.03);
+        osc.frequency.setTargetAtTime(baseFreq * 0.9, now + 0.05, 0.02);
+        gain.gain.value = 0;
+        gain.gain.setTargetAtTime(0.02, now, 0.01);
+        gain.gain.setTargetAtTime(0, now + 0.08, 0.03);
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else {
+        // Leaf rustle
+        const noise = ctx.createBufferSource();
+        const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < data.length; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.03));
+        }
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 3000;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.01;
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(masterGain);
+        noise.start(now);
+      }
+    } else if (type === 'water') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 200 + Math.random() * 150;
+      osc.frequency.setTargetAtTime(400 + Math.random() * 200, now, 0.03);
+      gain.gain.value = 0.015;
+      gain.gain.setTargetAtTime(0, now, 0.1);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === 'night') {
+      if (Math.random() > 0.7) {
+        // Cricket
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 4000 + Math.random() * 1000;
+        lfo.frequency.value = 30 + Math.random() * 20;
+        lfoGain.gain.value = 0.01;
+        lfo.connect(lfoGain);
+        lfoGain.connect(gain.gain);
+        gain.gain.value = 0.01;
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(now);
+        lfo.start(now);
+        osc.stop(now + 0.1 + Math.random() * 0.1);
+        lfo.stop(now + 0.2);
+      }
+    }
+  };
+
+  // Play instrument
+  const playInstrument = useCallback((freq, velocity = 0.8) => {
+    const ctx = ctxRef.current;
+    const masterGain = masterGainRef.current;
+    if (!ctx || !masterGain) return;
+
+    const type = instruments[currentInstrument].type;
+    const now = ctx.currentTime;
+
+    if (type === 'sampledPiano') {
+      // Sampled piano - pitch shift from base note (C3 = 130.81Hz)
+      // Limit range to ~1.5 octaves up to keep it sounding natural
+      if (!pianoBufferRef.current) return;
+
+      const baseFreq = 130.81; // C3 - middle of the sample range
+      let adjustedFreq = freq;
+      // If note is too high, drop it down an octave (or two)
+      while (adjustedFreq / baseFreq > 2.5) {
+        adjustedFreq = adjustedFreq / 2;
+      }
+      const playbackRate = adjustedFreq / baseFreq;
+
+      const source = ctx.createBufferSource();
+      source.buffer = pianoBufferRef.current;
+      source.playbackRate.value = playbackRate;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.8 * velocity, now, 0.01);
+      gain.gain.setTargetAtTime(0.5 * velocity, now + 0.1, 0.3);
+      gain.gain.setTargetAtTime(0, now + 0.5, 2.0);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start(now);
+    } else if (type === 'sampledGuitar') {
+      // Sampled guitar - pitch shift from base note (C3 = 130.81Hz)
+      if (!guitarBufferRef.current) return;
+
+      const baseFreq = 130.81; // C3
+      const playbackRate = freq / baseFreq;
+
+      const source = ctx.createBufferSource();
+      source.buffer = guitarBufferRef.current;
+      source.playbackRate.value = playbackRate;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.8 * velocity, now, 0.01);
+      gain.gain.setTargetAtTime(0.5 * velocity, now + 0.15, 0.4);
+      gain.gain.setTargetAtTime(0, now + 0.8, 2.5);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start(now);
+    } else if (type === 'feltPiano') {
+      // FM synthesis for warm character
+      const carrier = ctx.createOscillator();
+      const modulator = ctx.createOscillator();
+      const modGain = ctx.createGain();
+      const mainGain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      modulator.frequency.value = freq * 2;
+      modGain.gain.value = freq * 0.5;
+      modulator.connect(modGain);
+      modGain.connect(carrier.frequency);
+
+      carrier.type = 'triangle';
+      carrier.frequency.value = freq;
+
+      filter.type = 'lowpass';
+      filter.frequency.value = freq * 4;
+      filter.Q.value = 0.5;
+      filter.frequency.setTargetAtTime(freq * 1.5, now, 0.3);
+
+      mainGain.gain.value = 0;
+      mainGain.gain.setTargetAtTime(0.25 * velocity, now, 0.01);
+      mainGain.gain.setTargetAtTime(0.15 * velocity, now + 0.1, 0.2);
+      mainGain.gain.setTargetAtTime(0, now + 0.3, 1.5);
+
+      carrier.connect(filter);
+      filter.connect(mainGain);
+      mainGain.connect(masterGain);
+
+      carrier.start(now);
+      modulator.start(now);
+      carrier.stop(now + 4);
+      modulator.stop(now + 4);
+    } else if (type === 'singingBowl') {
+      const bowlPartials = [
+        { ratio: 1.0, amp: 1.0, decay: 8 },
+        { ratio: 1.002, amp: 0.8, decay: 8 },
+        { ratio: 2.71, amp: 0.5, decay: 6 },
+        { ratio: 2.73, amp: 0.4, decay: 6 },
+        { ratio: 5.15, amp: 0.25, decay: 4 },
+        { ratio: 5.18, amp: 0.2, decay: 4 },
+        { ratio: 8.42, amp: 0.1, decay: 3 },
+      ];
+
+      bowlPartials.forEach((partial) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq * partial.ratio;
+        const amp = 0.12 * partial.amp * velocity;
+        gain.gain.value = 0;
+        gain.gain.setTargetAtTime(amp, now, 0.01);
+        gain.gain.setTargetAtTime(amp * 0.7, now + 0.1, 0.3);
+        gain.gain.setTargetAtTime(0, now + 1, partial.decay);
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + partial.decay * 3 + 5);
+      });
+    } else if (type === 'musicBox') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq * 2;
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.2 * velocity, now, 0.001);
+      gain.gain.setTargetAtTime(0, now + 0.1, 0.6);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 2);
+    } else if (type === 'sampledHarp') {
+      // Sampled harp - pitch shift from base note (C3 = 130.81Hz)
+      if (!harpBufferRef.current) return;
+
+      const baseFreq = 130.81; // C3
+      const playbackRate = freq / baseFreq;
+
+      const source = ctx.createBufferSource();
+      source.buffer = harpBufferRef.current;
+      source.playbackRate.value = playbackRate;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.5 * velocity, now, 0.01);
+      gain.gain.setTargetAtTime(0.35 * velocity, now + 0.1, 0.3);
+      gain.gain.setTargetAtTime(0, now + 0.5, 3.0);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start(now);
+    } else if (type === 'sampledCello') {
+      // Sampled cello - pitch shift from base note (C3 = 130.81Hz)
+      if (!celloBufferRef.current) return;
+
+      const baseFreq = 130.81; // C3
+      let adjustedFreq = freq;
+      // Limit range for natural sound
+      while (adjustedFreq / baseFreq > 2.5) {
+        adjustedFreq = adjustedFreq / 2;
+      }
+      const playbackRate = adjustedFreq / baseFreq;
+
+      const source = ctx.createBufferSource();
+      source.buffer = celloBufferRef.current;
+      source.playbackRate.value = playbackRate;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.7 * velocity, now, 0.02);
+      gain.gain.setTargetAtTime(0.5 * velocity, now + 0.2, 0.5);
+      gain.gain.setTargetAtTime(0, now + 1.0, 3.5);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start(now);
+    }
+
+    haptic.tap();
+  }, [currentInstrument]);
+
+  // Update texture
+  const updateTexture = useCallback((newTexture) => {
+    setCurrentTexture(newTexture);
+    if (noiseGainRef.current && ctxRef.current) {
+      noiseGainRef.current.gain.setTargetAtTime(textures[newTexture].noise, ctxRef.current.currentTime, 0.5);
+    }
+  }, []);
+
+  // Show label
+  const displayLabel = useCallback(() => {
+    setShowLabel(true);
+    if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
+    labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 1500);
+  }, []);
+
+  // Handle touch/click
+  const handlePointerDown = useCallback((e) => {
+    if (!isInitialized) {
+      initAudio();
+      return;
+    }
+
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const normalizedY = 1 - (clientY / window.innerHeight);
+    const noteIndex = Math.floor(normalizedY * scale.length);
+    const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
+
+    playInstrument(freq, 0.6 + breathValue * 0.4);
+
+    // Forward touch to GazeMode for ripples
+    externalTouchRef.current.push({
+      id: `drone-${Date.now()}`,
+      x: clientX,
+      y: clientY,
+      time: Date.now(),
+    });
+
+    // Create ripple
+    const ripple = document.createElement('div');
+    ripple.style.cssText = `
+      position: absolute;
+      left: ${clientX}px;
+      top: ${clientY}px;
+      width: 100px;
+      height: 100px;
+      border: 1px solid hsla(${primaryHue}, 52%, 68%, 0.4);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: droneRipple 1.5s ease-out forwards;
+      transform: translate(-50%, -50%) scale(0);
+    `;
+    e.currentTarget.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 1500);
+  }, [isInitialized, initAudio, playInstrument, breathValue, primaryHue]);
+
+  // Handle scroll for instrument/texture change
+  useEffect(() => {
+    const handleWheel = (e) => {
+      if (!isInitialized) return;
+
+      wheelAccumXRef.current += e.deltaX;
+      wheelAccumYRef.current += e.deltaY;
+
+      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+      wheelTimeoutRef.current = setTimeout(() => {
+        wheelAccumXRef.current = 0;
+        wheelAccumYRef.current = 0;
+      }, 200);
+
+      const threshold = 30;
+
+      if (Math.abs(wheelAccumXRef.current) > Math.abs(wheelAccumYRef.current)) {
+        // Horizontal: change instrument
+        if (Math.abs(wheelAccumXRef.current) > threshold) {
+          e.preventDefault();
+          const dir = wheelAccumXRef.current > 0 ? 1 : -1;
+          setCurrentInstrument(prev => (prev + dir + instruments.length) % instruments.length);
+          displayLabel();
+          haptic.tap();
+          wheelAccumXRef.current = 0;
+          wheelAccumYRef.current = 0;
+        }
+      } else {
+        // Vertical: change texture
+        if (Math.abs(wheelAccumYRef.current) > threshold) {
+          e.preventDefault();
+          const dir = wheelAccumYRef.current > 0 ? 1 : -1;
+          const newTexture = (currentTexture + dir + textures.length) % textures.length;
+          updateTexture(newTexture);
+          displayLabel();
+          haptic.tap();
+          wheelAccumXRef.current = 0;
+          wheelAccumYRef.current = 0;
+        }
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, [isInitialized, currentTexture, updateTexture, displayLabel]);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      if (foleyIntervalRef.current) clearInterval(foleyIntervalRef.current);
+      if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
+      droneOscillatorsRef.current.forEach(node => {
+        try { node.osc.stop(); } catch {}
+      });
+      if (noiseNodeRef.current) {
+        try { noiseNodeRef.current.stop(); } catch {}
+      }
+      if (ctxRef.current) {
+        try { ctxRef.current.close(); } catch {}
+      }
+    };
+  }, []);
+
+  return (
+    <main
+      onClick={handlePointerDown}
+      onTouchStart={handlePointerDown}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        background: '#000',
+        touchAction: 'none',
+        userSelect: 'none',
+        cursor: 'pointer',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Ripples visual background */}
+      <GazeMode
+        primaryHue={primaryHue}
+        backgroundMode={true}
+        currentVisual="ripples"
+        breathSession={{
+          isActive: isInitialized,
+          phase: breathPhase,
+          phaseProgress: breathValue,
+        }}
+        externalTouchRef={externalTouchRef}
+      />
+
+      {/* Center label */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          textAlign: 'center',
+          pointerEvents: 'none',
+          opacity: showLabel ? 1 : 0,
+          transition: 'opacity 0.5s ease',
+        }}
+      >
+        <div style={{
+          fontSize: '2rem',
+          letterSpacing: '0.3em',
+          textTransform: 'lowercase',
+          color: '#fff',
+          marginBottom: '0.5rem',
+          fontWeight: 300,
+        }}>
+          {instruments[currentInstrument].name}
+        </div>
+        <div style={{
+          fontSize: '0.9rem',
+          letterSpacing: '0.3em',
+          textTransform: 'lowercase',
+          color: 'rgba(255, 255, 255, 0.5)',
+        }}>
+          {textures[currentTexture].name}
+        </div>
+      </div>
+
+      {/* Hint text */}
+      {!isInitialized && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            textAlign: 'center',
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{
+            fontSize: '0.75rem',
+            letterSpacing: '0.3em',
+            textTransform: 'uppercase',
+            color: `hsla(${primaryHue}, 52%, 68%, 0.5)`,
+          }}>
+            tap to begin
+          </div>
+        </div>
+      )}
+
+      {isInitialized && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '5.5rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontSize: '0.45rem',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            color: `hsla(${primaryHue}, 52%, 68%, 0.2)`,
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          tap to play · scroll to change
+        </div>
+      )}
+
+      {/* Breath phase indicator */}
+      {isInitialized && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '2.5rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            textAlign: 'center',
+            pointerEvents: 'none',
+          }}
+        >
+          <div style={{
+            fontSize: '0.65rem',
+            letterSpacing: '0.5em',
+            textTransform: 'uppercase',
+            color: `hsla(${primaryHue}, 52%, 68%, 0.35)`,
+          }}>
+            {breathPhase}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes droneRipple {
+          0% { transform: translate(-50%, -50%) scale(0); opacity: 0.4; }
+          100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
         }
       `}</style>
     </main>
@@ -7473,6 +8322,7 @@ function Still() {
               { key: 'scroll', icon: '☰', label: 'Read' },
               { key: 'gaze', icon: '◯', label: 'Gaze' },
               { key: 'breathwork', icon: '◎', label: 'Breathe' },
+              { key: 'drone', icon: '∿', label: 'Drone' },
             ].map(({ key, icon, label }) => {
               const isActive = key === 'scroll'
                 ? (view === 'scroll' || view === 'filter')
@@ -7504,8 +8354,8 @@ function Still() {
               );
             })}
 
-            {/* Music button in nav */}
-            {musicTracks.length > 0 && (
+            {/* DISABLED: Music button in nav - uncomment to re-enable */}
+            {/* {musicTracks.length > 0 && (
               <div style={{ position: 'relative' }}>
                 <button
                   onClick={() => setMusicOpen(!musicOpen)}
@@ -7533,7 +8383,6 @@ function Still() {
                   <span className="nav-label">Music</span>
                 </button>
 
-                {/* Track list dropdown */}
                 {musicOpen && (
                   <div style={{
                     position: 'absolute',
@@ -7549,7 +8398,6 @@ function Still() {
                     backdropFilter: 'blur(10px)',
                     WebkitBackdropFilter: 'blur(10px)',
                   }}>
-                    {/* Stop button */}
                     {isPlaying && (
                       <button
                         onClick={stopWithFade}
@@ -7599,7 +8447,7 @@ function Still() {
                   </div>
                 )}
               </div>
-            )}
+            )} */}
           </nav>
         </header>
 
@@ -8019,6 +8867,14 @@ function Still() {
             onVisualChange={setBreathVisual}
           />
         )}
+
+        {/* Drone Mode - Generative ambient soundscape */}
+        {view === 'drone' && (
+          <DroneMode
+            primaryHue={primaryHue}
+            primaryColor={primaryColor}
+          />
+        )}
         {false && view === 'breathwork-old' && (
           <main
             onClick={() => !breathSession.isActive && startBreathSession(breathSession.technique)}
@@ -8244,8 +9100,8 @@ function Still() {
           </div>
         )}
 
-        {/* Hidden audio elements for music crossfade */}
-        {musicTracks.length > 0 && (
+        {/* DISABLED: Hidden audio elements for music crossfade - uncomment to re-enable */}
+        {/* {musicTracks.length > 0 && (
           <>
             <audio
               ref={audioRef}
@@ -8260,7 +9116,7 @@ function Still() {
               onEnded={() => { if (activeAudioRef.current === 2 && currentTrack !== null) crossfadeToTrack((currentTrack + 1) % musicTracks.length); }}
             />
           </>
-        )}
+        )} */}
 
         {/* Color Overlay - triggered by tapping STILL logo */}
         {showColorOverlay && (
