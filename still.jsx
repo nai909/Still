@@ -919,6 +919,7 @@ const breathTechniques = {
   calm: {
     name: 'Gentle Calm',
     description: 'Simple, soothing rhythm',
+    recommendedCycles: 8, // ~1.5 min - gentle intro
     phases: [
       { name: 'inhale', label: 'breathe in', duration: 5 },
       { name: 'exhale', label: 'breathe out', duration: 6 },
@@ -928,6 +929,7 @@ const breathTechniques = {
   relaxation: {
     name: '4-7-8 Sleep',
     description: 'Deep relaxation for sleep',
+    recommendedCycles: 4, // Dr. Weil: max 4 cycles for beginners
     phases: [
       { name: 'inhale', label: 'inhale', duration: 4 },
       { name: 'holdFull', label: 'hold', duration: 7 },
@@ -938,6 +940,7 @@ const breathTechniques = {
   coherent: {
     name: 'Heart Coherence',
     description: '5 breaths per minute',
+    recommendedCycles: 15, // ~3 min - HRV research suggests 5-10 min
     phases: [
       { name: 'inhale', label: 'inhale', duration: 6 },
       { name: 'exhale', label: 'exhale', duration: 6 },
@@ -947,6 +950,7 @@ const breathTechniques = {
   box: {
     name: 'Box Breathing',
     description: 'Navy SEAL calm focus',
+    recommendedCycles: 8, // ~2 min - Navy SEAL standard session
     phases: [
       { name: 'inhale', label: 'inhale', duration: 4 },
       { name: 'holdFull', label: 'hold', duration: 4 },
@@ -958,6 +962,7 @@ const breathTechniques = {
   extended: {
     name: 'Extended Exhale',
     description: 'Long exhale activates rest',
+    recommendedCycles: 10, // ~2 min - parasympathetic activation
     phases: [
       { name: 'inhale', label: 'inhale', duration: 4 },
       { name: 'exhale', label: 'exhale slowly', duration: 8 },
@@ -967,6 +972,7 @@ const breathTechniques = {
   ocean: {
     name: 'Ocean Breath',
     description: 'Slow, wave-like rhythm',
+    recommendedCycles: 8, // ~2.4 min - Ujjayi pranayama
     phases: [
       { name: 'inhale', label: 'Inhale', duration: 6 },
       { name: 'holdFull', label: 'Pause', duration: 2 },
@@ -978,6 +984,7 @@ const breathTechniques = {
   resonance: {
     name: 'Resonance',
     description: 'Syncs heart and breath',
+    recommendedCycles: 15, // ~2.5 min - HRV training
     phases: [
       { name: 'inhale', label: 'Inhale', duration: 5 },
       { name: 'exhale', label: 'Exhale', duration: 5 },
@@ -990,6 +997,7 @@ const breathTechniques = {
   physiologicalSigh: {
     name: 'Physiological Sigh',
     description: 'Fastest way to calm (Huberman)',
+    recommendedCycles: 10, // Huberman: 5 min for lasting benefit
     phases: [
       { name: 'inhale', label: 'Inhale', duration: 2 },
       { name: 'inhale', label: 'Sip more air', duration: 1 },
@@ -1002,6 +1010,7 @@ const breathTechniques = {
   twoToOne: {
     name: '2:1 Breathing',
     description: 'Exhale double the inhale',
+    recommendedCycles: 10, // ~2 min
     phases: [
       { name: 'inhale', label: 'Inhale', duration: 4 },
       { name: 'exhale', label: 'Slow exhale', duration: 8 },
@@ -1012,6 +1021,7 @@ const breathTechniques = {
   fourSixBreath: {
     name: '4-6 Anxiety Relief',
     description: 'Quick parasympathetic shift',
+    recommendedCycles: 10, // ~1.6 min - quick relief
     phases: [
       { name: 'inhale', label: 'Inhale', duration: 4 },
       { name: 'exhale', label: 'Exhale', duration: 6 },
@@ -1022,6 +1032,7 @@ const breathTechniques = {
   deepBelly: {
     name: 'Diaphragmatic',
     description: 'Deep belly breathing',
+    recommendedCycles: 8, // ~1.7 min
     phases: [
       { name: 'inhale', label: 'Fill belly', duration: 5 },
       { name: 'holdFull', label: 'Pause', duration: 2 },
@@ -1033,6 +1044,7 @@ const breathTechniques = {
   pursedLip: {
     name: 'Pursed Lip',
     description: 'Calms acute anxiety',
+    recommendedCycles: 8, // ~1.2 min - acute relief
     phases: [
       { name: 'inhale', label: 'Nose inhale', duration: 3 },
       { name: 'exhale', label: 'Pursed lips out', duration: 6 },
@@ -1043,6 +1055,7 @@ const breathTechniques = {
   vagalTone: {
     name: 'Vagal Toning',
     description: 'Activates vagus nerve',
+    recommendedCycles: 6, // ~1.8 min - vagus activation
     phases: [
       { name: 'inhale', label: 'Deep inhale', duration: 4 },
       { name: 'holdFull', label: 'Brief hold', duration: 2 },
@@ -1055,6 +1068,7 @@ const breathTechniques = {
   alternate: {
     name: 'Alternate Nostril',
     description: 'Nadi Shodhana - balances',
+    recommendedCycles: 5, // ~2 min - traditional practice
     phases: [
       { name: 'inhale', label: 'Left nostril in', duration: 4 },
       { name: 'holdFull', label: 'Hold', duration: 4 },
@@ -1069,6 +1083,7 @@ const breathTechniques = {
   threeSixFive: {
     name: '365 Method',
     description: '3x daily, 6 breaths/min, 5 min',
+    recommendedCycles: 30, // 5 min as prescribed by the method
     phases: [
       { name: 'inhale', label: 'Inhale', duration: 5 },
       { name: 'exhale', label: 'Exhale', duration: 5 },
@@ -1079,6 +1094,7 @@ const breathTechniques = {
   softBelly: {
     name: 'Soft Belly',
     description: 'Mindful belly softening',
+    recommendedCycles: 10, // ~1.6 min
     phases: [
       { name: 'inhale', label: 'Soft...', duration: 4 },
       { name: 'exhale', label: 'Belly...', duration: 6 },
@@ -1089,6 +1105,7 @@ const breathTechniques = {
   cooling: {
     name: 'Sitali Cooling',
     description: 'Cools body and mind',
+    recommendedCycles: 8, // ~1.6 min
     phases: [
       { name: 'inhale', label: 'Roll tongue, inhale through mouth', duration: 4 },
       { name: 'holdFull', label: 'Hold', duration: 2 },
@@ -1100,6 +1117,7 @@ const breathTechniques = {
   moonBreath: {
     name: 'Chandra Bhedana',
     description: 'Left nostril only - calming',
+    recommendedCycles: 8, // ~1.6 min
     phases: [
       { name: 'inhale', label: 'Left nostril in', duration: 4 },
       { name: 'holdFull', label: 'Hold gently', duration: 2 },
@@ -1111,6 +1129,7 @@ const breathTechniques = {
   relaxingBreath: {
     name: 'Relaxing 5-2-7',
     description: 'Gentle sleep preparation',
+    recommendedCycles: 8, // ~1.9 min
     phases: [
       { name: 'inhale', label: 'Gentle inhale', duration: 5 },
       { name: 'holdFull', label: 'Soft hold', duration: 2 },
@@ -1122,6 +1141,7 @@ const breathTechniques = {
   triangle: {
     name: 'Triangle Breath',
     description: 'Equal inhale-hold-exhale',
+    recommendedCycles: 8, // ~1.6 min
     phases: [
       { name: 'inhale', label: 'Inhale', duration: 4 },
       { name: 'holdFull', label: 'Hold', duration: 4 },
@@ -1133,6 +1153,7 @@ const breathTechniques = {
   antiAnxiety: {
     name: 'Anti-Anxiety',
     description: 'Long exhale with pause',
+    recommendedCycles: 8, // ~2 min
     phases: [
       { name: 'inhale', label: 'Gentle inhale', duration: 3 },
       { name: 'exhale', label: 'Extended exhale', duration: 9 },
@@ -6372,6 +6393,7 @@ function Still() {
     technique: 'calm',
     isActive: false,
     isPaused: false,
+    isComplete: false,
     phase: 'inhale',
     phaseIndex: 0,
     phaseProgress: 0,  // 0-1 through current phase
@@ -6443,17 +6465,18 @@ function Still() {
       technique: techniqueName,
       isActive: true,
       isPaused: false,
+      isComplete: false,
       phase: technique.phases[0].name,
       phaseIndex: 0,
       phaseProgress: 0,
       cycleCount: 0,
       sessionTime: 0,
-      totalCycles: 10,
+      totalCycles: technique.recommendedCycles || 10,
     });
   }, []);
 
   const stopBreathSession = useCallback(() => {
-    setBreathSession(prev => ({ ...prev, isActive: false, isPaused: false }));
+    setBreathSession(prev => ({ ...prev, isActive: false, isPaused: false, isComplete: false }));
     if (breathSessionRef.current) {
       cancelAnimationFrame(breathSessionRef.current);
     }
@@ -6497,6 +6520,18 @@ function Still() {
         // Count cycle when we return to first phase
         if (currentPhaseIndex === 0) {
           currentCycleCount++;
+
+          // Check if session is complete
+          if (currentCycleCount >= breathSession.totalCycles) {
+            setBreathSession(prev => ({
+              ...prev,
+              isActive: false,
+              isComplete: true,
+              cycleCount: currentCycleCount,
+              sessionTime: Math.floor(sessionTime),
+            }));
+            return; // Stop animation
+          }
         }
       }
 
@@ -6516,7 +6551,7 @@ function Still() {
     return () => {
       if (breathSessionRef.current) cancelAnimationFrame(breathSessionRef.current);
     };
-  }, [breathSession.isActive, breathSession.isPaused, breathSession.technique]);
+  }, [breathSession.isActive, breathSession.isPaused, breathSession.technique, breathSession.totalCycles]);
 
   // Get current theme and color
   const currentTheme = themes[settings.theme] || themes.void;
@@ -7268,6 +7303,102 @@ function Still() {
                 </div>
               </div>
             )}
+
+            {/* Session Complete Screen */}
+            {breathSession.isComplete && (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                height: '100%',
+                position: 'relative',
+                padding: '2rem',
+                textAlign: 'center',
+              }}>
+                {/* Soft glow background */}
+                <div style={{
+                  position: 'absolute',
+                  width: '300px',
+                  height: '300px',
+                  borderRadius: '50%',
+                  background: `radial-gradient(circle, ${currentTheme.accent}15 0%, transparent 70%)`,
+                  animation: 'pulse 4s ease-in-out infinite',
+                }} />
+
+                <div style={{
+                  fontSize: '0.7rem',
+                  letterSpacing: '0.25em',
+                  textTransform: 'uppercase',
+                  color: currentTheme.textMuted,
+                  marginBottom: '1rem',
+                }}>
+                  Session Complete
+                </div>
+
+                <div style={{
+                  fontSize: '1.1rem',
+                  fontFamily: '"Jost", sans-serif',
+                  color: currentTheme.text,
+                  marginBottom: '0.5rem',
+                  opacity: 0.9,
+                }}>
+                  {breathSession.cycleCount} breaths · {Math.floor(breathSession.sessionTime / 60)}:{String(breathSession.sessionTime % 60).padStart(2, '0')}
+                </div>
+
+                <div style={{
+                  fontSize: '1rem',
+                  fontFamily: '"Jost", sans-serif',
+                  color: currentTheme.textMuted,
+                  maxWidth: '280px',
+                  lineHeight: 1.6,
+                  marginTop: '2rem',
+                  marginBottom: '3rem',
+                }}>
+                  Consider setting your phone aside and carrying this calm with you.
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                  width: '100%',
+                  maxWidth: '200px',
+                }}>
+                  <button
+                    onClick={() => startBreathSession(breathSession.technique)}
+                    style={{
+                      background: currentTheme.cardBg,
+                      border: `1px solid ${currentTheme.border}`,
+                      color: currentTheme.text,
+                      padding: '0.85rem 1.5rem',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontFamily: '"Jost", sans-serif',
+                    }}
+                  >
+                    Breathe Again
+                  </button>
+                  <button
+                    onClick={stopBreathSession}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: currentTheme.textMuted,
+                      padding: '0.75rem 1.5rem',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      fontFamily: '"Jost", sans-serif',
+                      opacity: 0.7,
+                    }}
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
           </main>
         )}
 
@@ -7602,6 +7733,7 @@ function Still() {
           @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
           @keyframes colorOverlayIn { from { opacity: 0; } to { opacity: 1; } }
           @keyframes colorWordIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 0.8; } }
           ::-webkit-scrollbar { width: 4px; }
           ::-webkit-scrollbar-track { background: transparent; }
           ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 2px; }
