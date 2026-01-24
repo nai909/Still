@@ -1242,6 +1242,11 @@ const gazeModes = [
   { key: 'realm', name: 'Realm' },
 ];
 
+// Filtered visuals for breathwork mode (excludes busy visuals that interfere with text)
+const breathworkModes = gazeModes.filter(m =>
+  !['fern', 'succulent', 'ripples', 'jellyfish', 'jellyfish2d', 'mushrooms', 'koiPond', 'flowerOfLife'].includes(m.key)
+);
+
 const gazeShapes = [
   { key: 'torus', name: 'Torus', create: () => new THREE.TorusGeometry(1, 0.4, 16, 100) },
   { key: 'torusKnot', name: 'Knot', create: () => new THREE.TorusKnotGeometry(0.7, 0.25, 100, 16) },
@@ -6517,16 +6522,16 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
   const wheelTimeoutRef = useRef(null);
   const toastTimeoutRef = useRef(null);
 
-  // Cycle through visuals
+  // Cycle through visuals (using filtered breathworkModes)
   const cycleVisual = useCallback((direction) => {
-    const currentIndex = gazeModes.findIndex(m => m.key === currentVisual);
+    const currentIndex = breathworkModes.findIndex(m => m.key === currentVisual);
     let newIndex;
     if (direction > 0) {
-      newIndex = (currentIndex + 1) % gazeModes.length;
+      newIndex = (currentIndex + 1) % breathworkModes.length;
     } else {
-      newIndex = (currentIndex - 1 + gazeModes.length) % gazeModes.length;
+      newIndex = (currentIndex - 1 + breathworkModes.length) % breathworkModes.length;
     }
-    onVisualChange(gazeModes[newIndex].key);
+    onVisualChange(breathworkModes[newIndex].key);
     setShowVisualToast(true);
     haptic.tap();
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -6662,7 +6667,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
             textTransform: 'lowercase',
           }}
         >
-          {gazeModes.find(m => m.key === currentVisual)?.name || ''}
+          {breathworkModes.find(m => m.key === currentVisual)?.name || ''}
         </span>
       </div>
 
