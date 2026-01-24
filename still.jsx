@@ -6864,10 +6864,10 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 // DRONE MODE COMPONENT
 // ============================================================================
 
-function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
+function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [currentInstrument, setCurrentInstrument] = useState(0);
-  const [currentTexture, setCurrentTexture] = useState(0);
+  const [currentTexture, setCurrentTexture] = useState(3); // forest
   const [showLabel, setShowLabel] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathValue, setBreathValue] = useState(0);
@@ -7409,6 +7409,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
 
   // Handle touch/click
   const handlePointerDown = useCallback((e) => {
+    if (backgroundMode) return;
     if (!isInitialized) {
       initAudio();
       return;
@@ -7512,6 +7513,11 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
     };
   }, []);
 
+  // In background mode, just keep audio alive without UI
+  if (backgroundMode) {
+    return null;
+  }
+
   return (
     <main
       onClick={handlePointerDown}
@@ -7585,10 +7591,11 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
           }}
         >
           <div style={{
-            fontSize: '0.75rem',
+            fontSize: '2rem',
             letterSpacing: '0.3em',
-            textTransform: 'uppercase',
-            color: `hsla(${primaryHue}, 52%, 68%, 0.5)`,
+            textTransform: 'lowercase',
+            fontWeight: 300,
+            color: 'rgba(255, 255, 255, 0.7)',
           }}>
             tap to begin
           </div>
@@ -7664,7 +7671,7 @@ function Still() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [savedQuotes, setSavedQuotes] = useState([]);
   const [shuffledQuotes, setShuffledQuotes] = useState([]);
-  const [view, setView] = useState('scroll');
+  const [view, setView] = useState('drone');
   const [selectedSchools, setSelectedSchools] = useState(new Set());
   const [selectedThemes, setSelectedThemes] = useState(new Set());
   const [showSavedOnly, setShowSavedOnly] = useState(false);
@@ -7816,6 +7823,7 @@ function Still() {
   const isAnimating = useRef(false);
   const touchHistory = useRef([]);
   const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
   const lastTouchY = useRef(0);
   const containerRef = useRef(null);
 
@@ -8118,8 +8126,9 @@ function Still() {
   const handleTouchStart = useCallback((e) => {
     if (view !== 'scroll') return;
     touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
     lastTouchY.current = e.touches[0].clientY;
-    touchHistory.current = [{ y: e.touches[0].clientY, time: Date.now() }];
+    touchHistory.current = [{ y: e.touches[0].clientY, x: e.touches[0].clientX, time: Date.now() }];
   }, [view]);
 
   const handleTouchMove = useCallback((e) => {
@@ -8140,10 +8149,13 @@ function Still() {
     lastTouchY.current = touchY;
   }, [view]);
 
-  const handleTouchEnd = useCallback(() => {
+  const handleTouchEnd = useCallback((e) => {
     if (view !== 'scroll' || isAnimating.current) return;
 
-    const totalDelta = touchStartY.current - lastTouchY.current;
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const deltaX = endX - touchStartX.current;
+    const deltaY = touchStartY.current - endY;
 
     // Calculate velocity from recent touches
     const recent = touchHistory.current;
@@ -8155,18 +8167,31 @@ function Still() {
       if (dt > 0) velocity = (first.y - last.y) / dt;
     }
 
-    // Decide based on distance + velocity
-    const dominated = Math.abs(totalDelta) > 50 || Math.abs(velocity) > 0.5;
+    // Check for horizontal swipe first (to change visual)
+    const swipeThreshold = 80;
+    if (Math.abs(deltaX) > swipeThreshold && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+      // Horizontal swipe detected - change visual
+      const direction = deltaX > 0 ? -1 : 1;
+      const currentIndex = gazeModes.findIndex(m => m.key === gazeVisual);
+      const newIndex = (currentIndex + direction + gazeModes.length) % gazeModes.length;
+      setGazeVisual(gazeModes[newIndex].key);
+      haptic.tap();
+      setDisplayProgress(0);
+      return;
+    }
 
-    if (dominated && (totalDelta > 30 || velocity > 0.3)) {
+    // Vertical swipe - change quote
+    const dominated = Math.abs(deltaY) > 50 || Math.abs(velocity) > 0.5;
+
+    if (dominated && (deltaY > 30 || velocity > 0.3)) {
       goToQuote(1);
-    } else if (dominated && (totalDelta < -30 || velocity < -0.3)) {
+    } else if (dominated && (deltaY < -30 || velocity < -0.3)) {
       goToQuote(-1);
     } else {
       // Snap back
       setDisplayProgress(0);
     }
-  }, [view, goToQuote]);
+  }, [view, goToQuote, gazeVisual, setGazeVisual]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -8881,13 +8906,12 @@ function Still() {
           />
         )}
 
-        {/* Drone Mode - Generative ambient soundscape */}
-        {view === 'drone' && (
-          <DroneMode
-            primaryHue={primaryHue}
-            primaryColor={primaryColor}
-          />
-        )}
+        {/* Drone Mode - Generative ambient soundscape (always mounted to keep audio playing) */}
+        <DroneMode
+          primaryHue={primaryHue}
+          primaryColor={primaryColor}
+          backgroundMode={view !== 'drone'}
+        />
         {false && view === 'breathwork-old' && (
           <main
             onClick={() => !breathSession.isActive && startBreathSession(breathSession.technique)}
