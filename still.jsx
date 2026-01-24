@@ -6666,55 +6666,22 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         </span>
       </div>
 
-      {/* Centered breath UI */}
-      {/* Dots countdown - shows remaining time in phase */}
+      {/* Phase text - centered */}
       {breathSession.isActive && (
         <div style={{
           position: 'absolute',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          display: 'flex',
-          gap: '0.5rem',
-          zIndex: 1,
-          pointerEvents: 'none',
-        }}>
-          {(() => {
-            const duration = breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.duration || 4;
-            const dots = Math.min(duration, 8); // Max 8 dots
-            const remaining = Math.ceil(dots * (1 - breathSession.phaseProgress));
-            return Array.from({ length: dots }, (_, i) => (
-              <div
-                key={i}
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, ' + (i < remaining ? '0.6' : '0.15') + ')',
-                  transition: 'background 0.3s ease',
-                }}
-              />
-            ));
-          })()}
-        </div>
-      )}
-
-      {/* Subtle phase text at bottom */}
-      {breathSession.isActive && (
-        <div style={{
-          position: 'absolute',
-          bottom: '4rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
           zIndex: 1,
           pointerEvents: 'none',
         }}>
           <div style={{
-            color: 'rgba(255, 255, 255, 0.25)',
-            fontSize: '0.7rem',
+            color: 'rgba(255, 255, 255, 0.7)',
+            fontSize: '2rem',
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
-            letterSpacing: '0.4em',
+            letterSpacing: '0.3em',
             textTransform: 'lowercase',
           }}>
             {breathSession.phase === 'inhale' ? 'in' :
