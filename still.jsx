@@ -6678,14 +6678,15 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         }}>
           <div style={{
             color: 'rgba(255, 255, 255, 0.7)',
-            fontSize: '2rem',
+            fontSize: '1.5rem',
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
-            letterSpacing: '0.3em',
+            letterSpacing: '0.2em',
             textTransform: 'lowercase',
+            textAlign: 'center',
+            maxWidth: '80vw',
           }}>
-            {breathSession.phase === 'inhale' ? 'in' :
-             breathSession.phase === 'exhale' ? 'out' : 'hold'}
+            {breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label || 'breathe'}
           </div>
         </div>
       )}
