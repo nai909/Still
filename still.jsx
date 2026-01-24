@@ -1188,6 +1188,38 @@ const PALETTE = {
   }
 };
 
+// ============================================================================
+// HAPTIC FEEDBACK - Subtle vibration patterns for key moments
+// ============================================================================
+const haptic = {
+  // Check if vibration is supported
+  supported: typeof navigator !== 'undefined' && 'vibrate' in navigator,
+
+  // Gentle tap for UI interactions
+  tap: () => haptic.supported && navigator.vibrate(10),
+
+  // Soft pulse for breath phase start
+  soft: () => haptic.supported && navigator.vibrate(15),
+
+  // Medium pulse for transitions
+  medium: () => haptic.supported && navigator.vibrate(25),
+
+  // Double tap for hold phases
+  double: () => haptic.supported && navigator.vibrate([12, 50, 12]),
+
+  // Success pattern for session complete
+  success: () => haptic.supported && navigator.vibrate([15, 80, 15, 80, 30]),
+
+  // Inhale pattern - gentle rising
+  inhale: () => haptic.supported && navigator.vibrate(20),
+
+  // Exhale pattern - soft release
+  exhale: () => haptic.supported && navigator.vibrate(15),
+
+  // Hold pattern - subtle reminder
+  hold: () => haptic.supported && navigator.vibrate([8, 60, 8]),
+};
+
 const gazeModes = [
   { key: 'geometry', name: 'Torus' },
   { key: 'tree', name: 'Fractal Tree' },
@@ -1282,6 +1314,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     }
     setCurrentMode(gazeModes[newIndex].key);
     setShowVisualToast(true);
+    haptic.tap(); // Haptic feedback on visual change
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     toastTimeoutRef.current = setTimeout(() => setShowVisualToast(false), 1500);
   }, [currentMode, backgroundMode]);
@@ -7074,6 +7107,8 @@ function Still() {
     const technique = breathTechniques[techniqueName];
     if (!technique) return;
 
+    haptic.medium(); // Haptic feedback on session start
+
     setBreathSession({
       technique: techniqueName,
       isActive: true,
@@ -7130,12 +7165,23 @@ function Still() {
         currentPhaseIndex = (currentPhaseIndex + 1) % technique.phases.length;
         phaseStartTime = now;
 
+        // Haptic feedback for phase transition
+        const newPhaseName = technique.phases[currentPhaseIndex].name.toLowerCase();
+        if (newPhaseName.includes('inhale') || newPhaseName.includes('in')) {
+          haptic.inhale();
+        } else if (newPhaseName.includes('exhale') || newPhaseName.includes('out')) {
+          haptic.exhale();
+        } else if (newPhaseName.includes('hold')) {
+          haptic.hold();
+        }
+
         // Count cycle when we return to first phase
         if (currentPhaseIndex === 0) {
           currentCycleCount++;
 
           // Check if session is complete
           if (currentCycleCount >= breathSession.totalCycles) {
+            haptic.success(); // Haptic feedback on session complete
             setBreathSession(prev => ({
               ...prev,
               isActive: false,
