@@ -6697,21 +6697,6 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         zIndex: 1,
         pointerEvents: 'none',
       }}>
-        {/* Tap to begin - only when not active */}
-        {!breathSession.isActive && (
-          <div style={{
-            color: '#fff',
-            fontSize: '2rem',
-            fontFamily: '"Jost", sans-serif',
-            fontWeight: 300,
-            letterSpacing: '0.3em',
-            textTransform: 'lowercase',
-            opacity: 0.7,
-          }}>
-            tap to begin
-          </div>
-        )}
-
         {/* Intro prompt - appears briefly when session starts */}
         {breathSession.isActive && showIntroPrompt && (
           <div style={{
@@ -7682,7 +7667,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         <div
           style={{
             position: 'absolute',
-            top: '50%',
+            top: '65%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center',
