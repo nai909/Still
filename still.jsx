@@ -8198,18 +8198,19 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       {/* Played note indicator */}
       {playedNote && (
         <div
-          key={Date.now()}
+          key={playedNote + Date.now()}
           style={{
             position: 'absolute',
-            bottom: '4rem',
+            top: '35%',
             left: '50%',
-            transform: 'translateX(-50%)',
-            fontSize: '1.2rem',
+            transform: 'translate(-50%, -50%)',
+            fontSize: '1.5rem',
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
-            letterSpacing: '0.2em',
+            letterSpacing: '0.3em',
             color: `hsl(${primaryHue}, 52%, 68%)`,
             pointerEvents: 'none',
+            zIndex: 5,
             animation: 'noteFade 2s ease-in-out forwards',
           }}
         >
