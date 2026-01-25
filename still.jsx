@@ -6279,6 +6279,24 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
+      {/* Gaze text - fades in and out (hidden in background mode) */}
+      {!backgroundMode && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          fontSize: '2rem',
+          color: '#fff',
+          fontFamily: '"Jost", sans-serif',
+          fontWeight: 300,
+          letterSpacing: '0.3em',
+          textTransform: 'lowercase',
+          pointerEvents: 'none',
+          animation: 'gazeTextPulse 8s ease-in-out infinite',
+        }}>gaze</div>
+      )}
+
       {/* Visual name toast - appears briefly when switching visuals (hidden in background mode) */}
       {!backgroundMode && (
         <div
@@ -6433,6 +6451,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+        @keyframes gazeTextPulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
         }
       `}</style>
     </div>
@@ -6707,6 +6729,24 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         </div>
       )}
 
+      {/* Breathe text - fades in and out when session not active */}
+      {!breathSession.isActive && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          fontSize: '2rem',
+          color: '#fff',
+          fontFamily: '"Jost", sans-serif',
+          fontWeight: 300,
+          letterSpacing: '0.3em',
+          textTransform: 'lowercase',
+          pointerEvents: 'none',
+          animation: 'breathTextPulse 8s ease-in-out infinite',
+        }}>breathe</div>
+      )}
+
       {/* Swipe up arrow hint - fades out after first use */}
       {!showUI && !hasOpenedUI && (
         <div style={{
@@ -6858,6 +6898,10 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         @keyframes fadeInBreath {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+        @keyframes breathTextPulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
         }
       `}</style>
     </main>
@@ -7182,7 +7226,7 @@ function ZenWaterBoard({ primaryHue = 162 }) {
 
       <style>{`
         @keyframes zenTextPulse {
-          0%, 100% { opacity: 0.15; }
+          0%, 100% { opacity: 1; }
           50% { opacity: 0; }
         }
       `}</style>
