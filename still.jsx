@@ -1797,19 +1797,24 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const breath = getBreathPhase(elapsed);
 
       if (meshRef.current) {
-        // Touch-responsive rotation
-        if (touchPointsRef.current.length > 0) {
-          const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-          if (activeTouch) {
-            const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-            const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-            meshRef.current.rotation.y += normalizedX * 0.02;
-            meshRef.current.rotation.x += normalizedY * 0.02;
+        // Skip rotation in breathwork mode to keep text visible in torus hole
+        const isBreathworkActive = externalBreathSessionRef.current?.isActive;
+
+        if (!isBreathworkActive) {
+          // Touch-responsive rotation
+          if (touchPointsRef.current.length > 0) {
+            const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+            if (activeTouch) {
+              const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+              const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+              meshRef.current.rotation.y += normalizedX * 0.02;
+              meshRef.current.rotation.x += normalizedY * 0.02;
+            }
+          } else {
+            // Gentle auto-rotation when not touching
+            meshRef.current.rotation.y += 0.001;
+            meshRef.current.rotation.x += 0.0005;
           }
-        } else {
-          // Gentle auto-rotation when not touching
-          meshRef.current.rotation.y += 0.001;
-          meshRef.current.rotation.x += 0.0005;
         }
 
         // Spring-damper scale physics (fluid, not robotic)
@@ -7603,11 +7608,11 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         overflow: 'hidden',
       }}
     >
-      {/* Ripples visual background */}
+      {/* Lava lamp visual background */}
       <GazeMode
         primaryHue={primaryHue}
         backgroundMode={true}
-        currentVisual="ripples"
+        currentVisual="wax"
         breathSession={{
           isActive: isInitialized,
           phase: breathPhase,
