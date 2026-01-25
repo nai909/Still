@@ -8169,15 +8169,17 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         <div
           style={{
             position: 'absolute',
-            top: '58%',
+            top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            fontSize: '1.5rem',
+            fontSize: '2rem',
+            fontFamily: '"Jost", sans-serif',
             letterSpacing: '0.3em',
             textTransform: 'lowercase',
             fontWeight: 300,
-            color: 'rgba(255, 255, 255, 0.6)',
+            color: '#fff',
             pointerEvents: 'none',
+            animation: 'droneTextPulse 4s ease-in-out forwards',
           }}
         >
           begin
@@ -8230,6 +8232,12 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         @keyframes droneRipple {
           0% { transform: translate(-50%, -50%) scale(0); opacity: 0.4; }
           100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+        @keyframes droneTextPulse {
+          0% { opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { opacity: 0; }
         }
       `}</style>
     </main>
