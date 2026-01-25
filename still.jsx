@@ -7638,30 +7638,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         </div>
       </div>
 
-      {/* Hint text */}
-      {!isInitialized && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '65%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            pointerEvents: 'none',
-          }}
-        >
-          <div style={{
-            fontSize: '2rem',
-            letterSpacing: '0.3em',
-            textTransform: 'lowercase',
-            fontWeight: 300,
-            color: 'rgba(255, 255, 255, 0.7)',
-          }}>
-            tap to begin
-          </div>
-        </div>
-      )}
-
       {isInitialized && (
         <div
           style={{
