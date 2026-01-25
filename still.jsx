@@ -6865,274 +6865,184 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 }
 
 // ============================================================================
-// ZEN WATER BOARD - Draw with water on stone, watch it evaporate
+// ZEN WATER BOARD - Draw with water, watch it evaporate
 // ============================================================================
 
 function ZenWaterBoard({ primaryHue = 162 }) {
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
-  const strokesRef = useRef([]); // Array of stroke objects with points and timestamps
+  const strokesRef = useRef([]);
   const isDrawingRef = useRef(false);
-  const lastPointRef = useRef(null);
+  const currentPointsRef = useRef([]);
   const animationFrameRef = useRef(null);
-  const audioCtxRef = useRef(null);
+  const [showHint, setShowHint] = useState(true);
 
-  // Settings
-  const FADE_DURATION = 15000; // 15 seconds to fully evaporate
-  const BRUSH_SIZE = 20;
-  const MIN_BRUSH_SIZE = 8;
-  const WATER_COLOR = { r: 60, g: 65, b: 70 }; // Dark wet stone color
-  const STONE_COLOR = { r: 35, g: 38, b: 42 }; // Dry stone color
+  const FADE_DURATION = 10000;
+  const BASE_SIZE = 18;
 
-  // Initialize canvas
+  // Setup canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    ctxRef.current = ctx;
-
-    // Handle resize
-    const handleResize = () => {
+    const setup = () => {
+      const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
+      const ctx = canvas.getContext('2d');
       ctx.scale(dpr, dpr);
+      ctxRef.current = ctx;
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Play subtle water sound
-  const playWaterSound = useCallback(() => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    const ctx = audioCtxRef.current;
-    if (ctx.state === 'suspended') ctx.resume();
-
-    // Create a soft water drop sound
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-
-    filter.type = 'lowpass';
-    filter.frequency.value = 400;
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(200 + Math.random() * 100, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.1);
-
-    gain.gain.setValueAtTime(0.03, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.15);
+    setup();
+    window.addEventListener('resize', setup);
+    return () => window.removeEventListener('resize', setup);
   }, []);
 
   // Get point from event
   const getPoint = useCallback((e) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-
-    if (e.touches) {
-      return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top,
-        pressure: e.touches[0].force || 0.5
-      };
-    }
+    const touch = e.touches?.[0];
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-      pressure: 0.5
+      x: (touch?.clientX || e.clientX) - rect.left,
+      y: (touch?.clientY || e.clientY) - rect.top,
+      time: Date.now()
     };
   }, []);
 
-  // Start drawing
+  // Start stroke
   const startDrawing = useCallback((e) => {
     e.preventDefault();
     isDrawingRef.current = true;
-    const point = getPoint(e);
-    lastPointRef.current = point;
-
-    // Start new stroke
-    strokesRef.current.push({
-      points: [{ ...point, time: Date.now() }],
-      startTime: Date.now()
-    });
-
-    playWaterSound();
+    currentPointsRef.current = [getPoint(e)];
+    if (showHint) setShowHint(false);
     haptic.tap();
-  }, [getPoint, playWaterSound]);
+  }, [getPoint, showHint]);
 
-  // Continue drawing
+  // Continue stroke
   const draw = useCallback((e) => {
     if (!isDrawingRef.current) return;
     e.preventDefault();
+    currentPointsRef.current.push(getPoint(e));
+  }, [getPoint]);
 
-    const point = getPoint(e);
-    const lastPoint = lastPointRef.current;
-
-    if (!lastPoint) {
-      lastPointRef.current = point;
-      return;
-    }
-
-    // Calculate distance for brush dynamics
-    const dx = point.x - lastPoint.x;
-    const dy = point.y - lastPoint.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const speed = Math.min(distance / 5, 3);
-
-    // Add point to current stroke
-    const currentStroke = strokesRef.current[strokesRef.current.length - 1];
-    if (currentStroke) {
-      currentStroke.points.push({
-        ...point,
-        time: Date.now(),
-        size: Math.max(MIN_BRUSH_SIZE, BRUSH_SIZE - speed * 4)
+  // End stroke
+  const stopDrawing = useCallback(() => {
+    if (!isDrawingRef.current) return;
+    isDrawingRef.current = false;
+    if (currentPointsRef.current.length > 1) {
+      strokesRef.current.push({
+        points: [...currentPointsRef.current],
+        createdAt: Date.now()
       });
     }
-
-    // Occasional water sound
-    if (Math.random() < 0.05) {
-      playWaterSound();
-    }
-
-    lastPointRef.current = point;
-  }, [getPoint, playWaterSound]);
-
-  // Stop drawing
-  const stopDrawing = useCallback(() => {
-    isDrawingRef.current = false;
-    lastPointRef.current = null;
+    currentPointsRef.current = [];
   }, []);
 
-  // Animation loop - render strokes with fade
+  // Render loop
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = ctxRef.current;
-    if (!canvas || !ctx) return;
-
     const render = () => {
+      const ctx = ctxRef.current;
+      const canvas = canvasRef.current;
+      if (!ctx || !canvas) {
+        animationFrameRef.current = requestAnimationFrame(render);
+        return;
+      }
+
       const rect = canvas.getBoundingClientRect();
       const now = Date.now();
 
-      // Clear canvas with stone color
-      ctx.fillStyle = `rgb(${STONE_COLOR.r}, ${STONE_COLOR.g}, ${STONE_COLOR.b})`;
+      // Black background
+      ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, rect.width, rect.height);
 
-      // Add subtle stone texture noise
-      const imageData = ctx.getImageData(0, 0, rect.width, rect.height);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        const noise = (Math.random() - 0.5) * 8;
-        data[i] = Math.max(0, Math.min(255, data[i] + noise));
-        data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noise));
-        data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noise));
-      }
-      ctx.putImageData(imageData, 0, 0);
+      // Helper to draw smooth stroke
+      const drawStroke = (points, opacity) => {
+        if (points.length < 2) return;
 
-      // Draw all strokes with fade based on age
-      strokesRef.current = strokesRef.current.filter(stroke => {
-        const oldestPoint = stroke.points[0];
-        const age = now - oldestPoint.time;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
 
-        // Remove fully faded strokes
-        if (age > FADE_DURATION + 2000) return false;
+        for (let i = 1; i < points.length; i++) {
+          const p0 = points[i - 1];
+          const p1 = points[i];
 
-        // Draw stroke points
-        stroke.points.forEach((point, i) => {
-          const pointAge = now - point.time;
-          const fadeProgress = Math.min(1, pointAge / FADE_DURATION);
+          // Calculate speed for brush dynamics
+          const dx = p1.x - p0.x;
+          const dy = p1.y - p0.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const dt = Math.max(1, p1.time - p0.time);
+          const speed = dist / dt;
 
-          if (fadeProgress >= 1) return;
+          // Slower = thicker, faster = thinner
+          const size = BASE_SIZE * Math.max(0.4, Math.min(1.2, 1.1 - speed * 0.08));
 
-          // Calculate opacity (starts solid, fades out)
-          const opacity = 1 - fadeProgress;
-
-          // Interpolate color from wet to dry
-          const r = Math.round(WATER_COLOR.r + (STONE_COLOR.r - WATER_COLOR.r) * fadeProgress);
-          const g = Math.round(WATER_COLOR.g + (STONE_COLOR.g - WATER_COLOR.g) * fadeProgress);
-          const b = Math.round(WATER_COLOR.b + (STONE_COLOR.b - WATER_COLOR.b) * fadeProgress);
-
-          const size = point.size || BRUSH_SIZE;
-          // Strokes shrink slightly as they evaporate
-          const currentSize = size * (1 - fadeProgress * 0.3);
-
+          // Main stroke
           ctx.beginPath();
-          ctx.arc(point.x, point.y, currentSize / 2, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity * 0.8})`;
-          ctx.fill();
+          ctx.moveTo(p0.x, p0.y);
 
-          // Draw connecting line to previous point for smooth strokes
-          if (i > 0) {
-            const prev = stroke.points[i - 1];
-            const prevAge = now - prev.time;
-            const prevFade = Math.min(1, prevAge / FADE_DURATION);
-
-            if (prevFade < 1) {
-              ctx.beginPath();
-              ctx.moveTo(prev.x, prev.y);
-              ctx.lineTo(point.x, point.y);
-              ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${opacity * 0.6})`;
-              ctx.lineWidth = currentSize * 0.8;
-              ctx.lineCap = 'round';
-              ctx.stroke();
-            }
+          // Use quadratic curve for smoothness
+          if (i < points.length - 1) {
+            const p2 = points[i + 1];
+            const midX = (p1.x + p2.x) / 2;
+            const midY = (p1.y + p2.y) / 2;
+            ctx.quadraticCurveTo(p1.x, p1.y, midX, midY);
+          } else {
+            ctx.lineTo(p1.x, p1.y);
           }
-        });
 
+          ctx.strokeStyle = `hsla(${primaryHue}, 50%, 60%, ${opacity * 0.85})`;
+          ctx.lineWidth = size;
+          ctx.stroke();
+
+          // Soft glow layer
+          ctx.beginPath();
+          ctx.moveTo(p0.x, p0.y);
+          if (i < points.length - 1) {
+            const p2 = points[i + 1];
+            ctx.quadraticCurveTo(p1.x, p1.y, (p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+          } else {
+            ctx.lineTo(p1.x, p1.y);
+          }
+          ctx.strokeStyle = `hsla(${primaryHue}, 60%, 70%, ${opacity * 0.15})`;
+          ctx.lineWidth = size * 2.5;
+          ctx.stroke();
+        }
+      };
+
+      // Draw fading strokes
+      strokesRef.current = strokesRef.current.filter(stroke => {
+        const age = now - stroke.createdAt;
+        if (age > FADE_DURATION) return false;
+
+        const progress = age / FADE_DURATION;
+        const opacity = Math.pow(1 - progress, 2);
+        drawStroke(stroke.points, opacity);
         return true;
       });
+
+      // Draw current stroke
+      if (isDrawingRef.current && currentPointsRef.current.length > 1) {
+        drawStroke(currentPointsRef.current, 1);
+      }
 
       animationFrameRef.current = requestAnimationFrame(render);
     };
 
     render();
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, []);
-
-  // Cleanup audio context
-  useEffect(() => {
-    return () => {
-      if (audioCtxRef.current) {
-        audioCtxRef.current.close();
-      }
-    };
-  }, []);
+    return () => cancelAnimationFrame(animationFrameRef.current);
+  }, [primaryHue]);
 
   return (
-    <main
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 2,
-        background: `rgb(${STONE_COLOR.r}, ${STONE_COLOR.g}, ${STONE_COLOR.b})`,
-        overflow: 'hidden',
-        touchAction: 'none',
-      }}
-    >
+    <main style={{
+      position: 'absolute',
+      inset: 0,
+      zIndex: 2,
+      background: '#000',
+      touchAction: 'none',
+    }}>
       <canvas
         ref={canvasRef}
         onMouseDown={startDrawing}
@@ -7142,42 +7052,24 @@ function ZenWaterBoard({ primaryHue = 162 }) {
         onTouchStart={startDrawing}
         onTouchMove={draw}
         onTouchEnd={stopDrawing}
-        style={{
-          width: '100%',
-          height: '100%',
-          cursor: 'crosshair',
-        }}
+        style={{ width: '100%', height: '100%', cursor: 'crosshair' }}
       />
-
-      {/* Subtle hint text - fades after first stroke */}
-      {strokesRef.current.length === 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '2rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            color: `hsla(${primaryHue}, 20%, 50%, 0.3)`,
-            fontSize: '0.85rem',
-            fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.2em',
-            textTransform: 'lowercase',
-            pointerEvents: 'none',
-            animation: 'zenHintFade 4s ease-out forwards',
-          }}
-        >
+      {showHint && (
+        <div style={{
+          position: 'absolute',
+          bottom: '2rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          color: `hsla(${primaryHue}, 30%, 55%, 0.5)`,
+          fontSize: '0.85rem',
+          fontFamily: '"Jost", sans-serif',
+          letterSpacing: '0.2em',
+          textTransform: 'lowercase',
+          pointerEvents: 'none',
+        }}>
           draw · let go
         </div>
       )}
-
-      <style>{`
-        @keyframes zenHintFade {
-          0% { opacity: 0; }
-          20% { opacity: 1; }
-          80% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-      `}</style>
     </main>
   );
 }
