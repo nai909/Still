@@ -7228,13 +7228,13 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       source.start(now);
     } else if (type === 'sampledGuitar') {
       // Sampled guitar - pitch shift from base note (C3 = 130.81Hz)
-      // Limit range to ~1.5 octaves up to keep it sounding natural
+      // Limit range to keep it sounding natural (drop high notes down)
       if (!guitarBufferRef.current) return;
 
       const baseFreq = 130.81; // C3
       let adjustedFreq = freq;
-      // If note is too high, drop it down an octave (or two)
-      while (adjustedFreq / baseFreq > 2.5) {
+      // If note is too high, drop it down an octave (or more)
+      while (adjustedFreq / baseFreq > 1.5) {
         adjustedFreq = adjustedFreq / 2;
       }
       const playbackRate = adjustedFreq / baseFreq;
@@ -7641,25 +7641,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           {textures[currentTexture].name}
         </div>
       </div>
-
-      {isInitialized && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '5.5rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            fontSize: '0.45rem',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: `hsla(${primaryHue}, 52%, 68%, 0.2)`,
-            pointerEvents: 'none',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          tap to play · scroll to change
-        </div>
-      )}
 
       <style>{`
         @keyframes droneRipple {
