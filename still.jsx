@@ -6525,6 +6525,7 @@ const toRoman = (num) => {
 function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', currentVisual = 'geometry', onVisualChange }) {
   const [showUI, setShowUI] = useState(false);
   const [showVisualToast, setShowVisualToast] = useState(false);
+  const [hasOpenedUI, setHasOpenedUI] = useState(false);
   const swipeStartRef = useRef(null);
   const wheelAccumRef = useRef(0);
   const wheelTimeoutRef = useRef(null);
@@ -6569,6 +6570,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
     if (deltaY < -minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime) {
       if (swipeStartRef.current.y > screenHeight * 0.5) {
         setShowUI(true);
+        setHasOpenedUI(true);
       }
     }
     // Vertical swipe DOWN: close technique selector
@@ -6616,6 +6618,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       else if (wheelAccumRef.current > threshold) {
         e.preventDefault();
         setShowUI(true);
+        setHasOpenedUI(true);
         wheelAccumRef.current = 0;
       }
     };
@@ -6704,8 +6707,8 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         </div>
       )}
 
-      {/* Swipe hint at bottom */}
-      {!showUI && (
+      {/* Swipe up arrow hint - fades out after first use */}
+      {!showUI && !hasOpenedUI && (
         <div style={{
           position: 'absolute',
           bottom: '1.5rem',
@@ -6714,19 +6717,37 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '0.3rem',
-          opacity: 0.25,
           pointerEvents: 'none',
           zIndex: 1,
+          animation: 'breathworkArrowFade 3s ease-out forwards',
         }}>
-          <div style={{
-            width: '2px',
-            height: '24px',
-            background: `linear-gradient(to top, hsla(${primaryHue}, 52%, 68%, 0.5), transparent)`,
-            borderRadius: '1px',
-          }} />
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            style={{
+              animation: 'breathworkArrowBounce 2s ease-in-out infinite',
+            }}
+          >
+            <path
+              d="M10 4L4 12H16L10 4Z"
+              fill={`hsla(${primaryHue}, 52%, 68%, 0.4)`}
+            />
+          </svg>
         </div>
       )}
+      <style>{`
+        @keyframes breathworkArrowBounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
+        }
+        @keyframes breathworkArrowFade {
+          0% { opacity: 0.5; }
+          70% { opacity: 0.5; }
+          100% { opacity: 0; }
+        }
+      `}</style>
 
       {/* Technique selector - bottom drawer */}
       {showUI && (
@@ -6882,7 +6903,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const harpBufferRef = useRef(null);
   const celloBufferRef = useRef(null);
   const handpanBufferRef = useRef(null);
-  const mandolinBufferRef = useRef(null);
   const dulcimerBufferRef = useRef(null);
 
   // Breath pattern (4-7-8)
@@ -6896,7 +6916,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     { name: 'harp', type: 'sampledHarp' },
     { name: 'cello', type: 'sampledCello' },
     { name: 'handpan', type: 'sampledHandpan' },
-    { name: 'mandolin', type: 'sampledMandolin' },
     { name: 'dulcimer', type: 'sampledDulcimer' }
   ];
 
@@ -7008,15 +7027,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         handpanBufferRef.current = audioBuffer;
       })
       .catch(err => console.log('Handpan sample not loaded:', err));
-
-    // Load mandolin sample (C3 = 130.81Hz base note)
-    fetch('mandolin.wav')
-      .then(response => response.arrayBuffer())
-      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
-      .then(audioBuffer => {
-        mandolinBufferRef.current = audioBuffer;
-      })
-      .catch(err => console.log('Mandolin sample not loaded:', err));
 
     // Load dulcimer sample (C3 = 130.81Hz base note)
     fetch('dulcimer.wav')
@@ -7410,30 +7420,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       source.connect(gain);
       gain.connect(masterGain);
       source.start(now);
-    } else if (type === 'sampledMandolin') {
-      // Sampled mandolin - quick attack, medium decay
-      if (!mandolinBufferRef.current) return;
-
-      const baseFreq = 130.81; // C3
-      let adjustedFreq = freq;
-      while (adjustedFreq / baseFreq > 2.5) {
-        adjustedFreq = adjustedFreq / 2;
-      }
-      const playbackRate = adjustedFreq / baseFreq;
-
-      const source = ctx.createBufferSource();
-      source.buffer = mandolinBufferRef.current;
-      source.playbackRate.value = playbackRate;
-
-      const gain = ctx.createGain();
-      gain.gain.value = 0;
-      gain.gain.setTargetAtTime(0.35 * velocity, now, 0.005);
-      gain.gain.setTargetAtTime(0.2 * velocity, now + 0.1, 0.3);
-      gain.gain.setTargetAtTime(0, now + 0.5, 2);
-
-      source.connect(gain);
-      gain.connect(masterGain);
-      source.start(now);
     } else if (type === 'sampledDulcimer') {
       // Sampled dulcimer - soft attack, long sustain
       if (!dulcimerBufferRef.current) return;
@@ -7717,7 +7703,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         <div
           style={{
             position: 'absolute',
-            top: '50%',
+            top: '58%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
             fontSize: '1.5rem',
