@@ -6841,7 +6841,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 
 function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }) {
   const [isInitialized, setIsInitialized] = useState(false);
-  const [currentInstrument, setCurrentInstrument] = useState(0);
+  const [currentInstrument, setCurrentInstrument] = useState(2); // synth
   const [currentTexture, setCurrentTexture] = useState(3); // forest
   const [showLabel, setShowLabel] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
@@ -6908,6 +6908,11 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     ctxRef.current = ctx;
+
+    // Resume context (required for mobile browsers)
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
 
     const masterGain = ctx.createGain();
     masterGain.gain.value = 0.7;
