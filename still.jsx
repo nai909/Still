@@ -7052,7 +7052,7 @@ function ZenWaterBoard({ primaryHue = 162 }) {
         onTouchStart={startDrawing}
         onTouchMove={draw}
         onTouchEnd={stopDrawing}
-        style={{ width: '100%', height: '100%', cursor: 'crosshair' }}
+        style={{ width: '100%', height: '100%', cursor: 'none' }}
       />
       {showHint && (
         <div style={{
