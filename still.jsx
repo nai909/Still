@@ -6293,7 +6293,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           letterSpacing: '0.3em',
           textTransform: 'lowercase',
           pointerEvents: 'none',
-          animation: 'gazeTextPulse 8s ease-in-out infinite',
+          animation: 'gazeTextPulse 4s ease-in-out forwards',
         }}>gaze</div>
       )}
 
@@ -6453,8 +6453,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           to { opacity: 1; }
         }
         @keyframes gazeTextPulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
+          0% { opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { opacity: 0; }
         }
       `}</style>
     </div>
@@ -6743,7 +6745,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
           letterSpacing: '0.3em',
           textTransform: 'lowercase',
           pointerEvents: 'none',
-          animation: 'breathTextPulse 8s ease-in-out infinite',
+          animation: 'breathTextPulse 4s ease-in-out forwards',
         }}>breathe</div>
       )}
 
@@ -6900,8 +6902,10 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
           to { opacity: 1; }
         }
         @keyframes breathTextPulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
+          0% { opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { opacity: 0; }
         }
       `}</style>
     </main>
@@ -7207,7 +7211,7 @@ function ZenWaterBoard({ primaryHue = 162 }) {
         position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
         fontSize: '2rem', color: '#fff', fontFamily: '"Jost", sans-serif', fontWeight: 300,
         letterSpacing: '0.3em', textTransform: 'lowercase', pointerEvents: 'none',
-        animation: 'zenTextPulse 8s ease-in-out infinite'
+        animation: 'zenTextPulse 4s ease-in-out forwards'
       }}>impermanence</div>
 
       <div style={{
@@ -7226,8 +7230,10 @@ function ZenWaterBoard({ primaryHue = 162 }) {
 
       <style>{`
         @keyframes zenTextPulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
+          0% { opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { opacity: 0; }
         }
       `}</style>
     </main>
@@ -8155,7 +8161,7 @@ function Still() {
   const [toast, setToast] = useState(null);
   const [settings, setSettings] = useState(defaultSettings);
   const [showColorOverlay, setShowColorOverlay] = useState(false);
-  const [gazeVisual, setGazeVisual] = useState('geometry');
+  const [gazeVisual, setGazeVisual] = useState('wax');
   const [breathVisual, setBreathVisual] = useState('geometry');
 
   // Music player state
