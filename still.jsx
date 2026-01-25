@@ -7298,9 +7298,28 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathValue, setBreathValue] = useState(0);
+  const [playedNote, setPlayedNote] = useState(null);
+  const noteTimeoutRef = useRef(null);
 
   // Generate current scale based on key and scale type
   const scale = generateScale(KEYS[currentKey], SCALE_TYPES[currentScaleType]);
+
+  // Convert frequency to note name
+  const freqToNoteName = useCallback((freq) => {
+    const A4 = 440;
+    const semitones = Math.round(12 * Math.log2(freq / A4));
+    const noteIndex = ((semitones % 12) + 12) % 12;
+    const noteNames = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#'];
+    return noteNames[noteIndex];
+  }, []);
+
+  // Show note and fade it
+  const showPlayedNote = useCallback((freq) => {
+    const noteName = freqToNoteName(freq);
+    setPlayedNote(noteName);
+    if (noteTimeoutRef.current) clearTimeout(noteTimeoutRef.current);
+    noteTimeoutRef.current = setTimeout(() => setPlayedNote(null), 800);
+  }, [freqToNoteName]);
 
   // Touch ref for forwarding to GazeMode ripples
   const externalTouchRef = useRef([]);
@@ -7958,6 +7977,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
 
       playInstrument(freq, 0.6 + breathValue * 0.4);
+      showPlayedNote(freq);
 
       // Forward touch to GazeMode for ripples
       externalTouchRef.current.push({
@@ -8004,6 +8024,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
 
     playInstrument(freq, 0.6 + breathValue * 0.4);
+    showPlayedNote(freq);
 
     // Create ripple
     const ripple = document.createElement('div');
@@ -8021,7 +8042,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     `;
     e.currentTarget.appendChild(ripple);
     setTimeout(() => ripple.remove(), 1500);
-  }, [backgroundMode, isInitialized, initAudio, playInstrument, breathValue, primaryHue]);
+  }, [backgroundMode, isInitialized, initAudio, playInstrument, breathValue, primaryHue, showPlayedNote]);
 
   // Handle scroll for instrument/texture/key/scale change
   useEffect(() => {
@@ -8171,6 +8192,28 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           }}
         >
           begin
+        </div>
+      )}
+
+      {/* Played note indicator */}
+      {playedNote && (
+        <div
+          key={Date.now()}
+          style={{
+            position: 'absolute',
+            bottom: '4rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontSize: '1.2rem',
+            fontFamily: '"Jost", sans-serif',
+            fontWeight: 300,
+            letterSpacing: '0.2em',
+            color: `hsl(${primaryHue}, 52%, 68%)`,
+            pointerEvents: 'none',
+            animation: 'noteFade 0.8s ease-out forwards',
+          }}
+        >
+          {playedNote}
         </div>
       )}
 
@@ -8412,6 +8455,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         @keyframes droneArrowBounce {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-4px); }
+        }
+        @keyframes noteFade {
+          0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+          100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
         }
       `}</style>
     </main>
