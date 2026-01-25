@@ -7157,6 +7157,15 @@ function ZenWaterBoard({ primaryHue = 162 }) {
         onPointerLeave={handlePointerUp}
         onPointerCancel={handlePointerUp}
       />
+
+      {/* Impermanence text - fades in and out */}
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+        fontSize: '2rem', color: '#fff', fontFamily: '"Jost", sans-serif', fontWeight: 300,
+        letterSpacing: '0.3em', textTransform: 'lowercase', pointerEvents: 'none',
+        animation: 'zenTextPulse 8s ease-in-out infinite'
+      }}>impermanence</div>
+
       <div style={{
         position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
         fontSize: 'clamp(1rem, 2.5vw, 1.35rem)', color: `hsla(${primaryHue}, 50%, 65%, 0.4)`,
@@ -7170,6 +7179,13 @@ function ZenWaterBoard({ primaryHue = 162 }) {
         letterSpacing: '0.3em', textTransform: 'lowercase', opacity: boardEmpty && !showQuote ? 1 : 0,
         transition: 'opacity 1.5s ease', pointerEvents: 'none'
       }}>draw · watch it fade · begin again</div>
+
+      <style>{`
+        @keyframes zenTextPulse {
+          0%, 100% { opacity: 0; }
+          50% { opacity: 0.15; }
+        }
+      `}</style>
     </main>
   );
 }
