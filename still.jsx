@@ -6870,324 +6870,306 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 
 function ZenWaterBoard({ primaryHue = 162 }) {
   const canvasRef = useRef(null);
-  const ctxRef = useRef(null);
   const strokesRef = useRef([]);
   const isDrawingRef = useRef(false);
-  const currentPointsRef = useRef([]);
+  const currentStrokeRef = useRef(null);
   const animationFrameRef = useRef(null);
-  const [showHint, setShowHint] = useState(true);
+  const lastPointRef = useRef(null);
+  const velocityBufferRef = useRef([]);
+  const [boardEmpty, setBoardEmpty] = useState(true);
+  const [showQuote, setShowQuote] = useState(false);
+  const [currentQuote, setCurrentQuote] = useState('');
 
-  const FADE_DURATION = 12000;
-  const BASE_SIZE = 22;
-  const BRISTLE_COUNT = 5;
+  const FADE_DURATION = 45000;
 
-  // Setup canvas
+  const quotes = [
+    "begin again.",
+    "this moment is enough.",
+    "let go.",
+    "nothing lasts. nothing is finished. nothing is perfect.",
+    "the obstacle is the path.",
+    "flow like water.",
+  ];
+
+  const hslToRgba = (h, s, l, a) => `hsla(${h}, ${s}%, ${l}%, ${a})`;
+  const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  const catmullRom = (p0, p1, p2, p3, t) => {
+    const t2 = t * t, t3 = t2 * t;
+    return {
+      x: 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3),
+      y: 0.5 * ((2 * p1.y) + (-p0.y + p2.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3)
+    };
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const setup = () => {
+    const ctx = canvas.getContext('2d');
+    const resize = () => {
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
-      const ctx = canvas.getContext('2d');
       ctx.scale(dpr, dpr);
-      ctxRef.current = ctx;
     };
-
-    setup();
-    window.addEventListener('resize', setup);
-    return () => window.removeEventListener('resize', setup);
+    resize();
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
   }, []);
 
-  // Get point from event
-  const getPoint = useCallback((e) => {
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches?.[0];
-    return {
-      x: (touch?.clientX || e.clientX) - rect.left,
-      y: (touch?.clientY || e.clientY) - rect.top,
-      pressure: touch?.force || 0.5,
-      time: Date.now()
-    };
-  }, []);
+  const drawBrushStroke = useCallback((ctx, points, opacity) => {
+    if (points.length < 2) return;
 
-  // Start stroke
-  const startDrawing = useCallback((e) => {
-    e.preventDefault();
-    isDrawingRef.current = true;
-    const point = getPoint(e);
-    // Generate random bristle offsets for this stroke
-    point.bristles = Array.from({ length: BRISTLE_COUNT }, () => ({
-      offset: (Math.random() - 0.5) * 0.8,
-      width: 0.3 + Math.random() * 0.7
-    }));
-    currentPointsRef.current = [point];
-    if (showHint) setShowHint(false);
-    haptic.tap();
-  }, [getPoint, showHint]);
-
-  // Continue stroke
-  const draw = useCallback((e) => {
-    if (!isDrawingRef.current) return;
-    e.preventDefault();
-    const point = getPoint(e);
-    // Inherit bristle pattern from first point
-    if (currentPointsRef.current.length > 0) {
-      point.bristles = currentPointsRef.current[0].bristles;
-    }
-    currentPointsRef.current.push(point);
-  }, [getPoint]);
-
-  // End stroke
-  const stopDrawing = useCallback(() => {
-    if (!isDrawingRef.current) return;
-    isDrawingRef.current = false;
-    if (currentPointsRef.current.length > 1) {
-      strokesRef.current.push({
-        points: [...currentPointsRef.current],
-        createdAt: Date.now(),
-        seed: Math.random() * 1000
-      });
-    }
-    currentPointsRef.current = [];
-  }, []);
-
-  // Render loop
-  useEffect(() => {
-    const render = () => {
-      const ctx = ctxRef.current;
-      const canvas = canvasRef.current;
-      if (!ctx || !canvas) {
-        animationFrameRef.current = requestAnimationFrame(render);
-        return;
+    const path = [];
+    for (let i = 0; i < points.length; i++) {
+      const p0 = points[Math.max(0, i - 1)];
+      const p1 = points[i];
+      const p2 = points[Math.min(points.length - 1, i + 1)];
+      const p3 = points[Math.min(points.length - 1, i + 2)];
+      const steps = i === points.length - 1 ? 1 : 6;
+      for (let t = 0; t < steps; t++) {
+        const pos = steps === 1 ? p1 : catmullRom(p0, p1, p2, p3, t / steps);
+        const width = steps === 1 ? p1.width : lerp(p1.width, p2.width, t / steps);
+        const progress = (i + t / steps) / points.length;
+        let taper = 1;
+        if (progress < 0.08) taper = 0.15 + 0.85 * Math.pow(progress / 0.08, 0.4);
+        else if (progress > 0.82) taper = Math.pow(1 - (progress - 0.82) / 0.18, 1.2);
+        const bristleVar = 1 + Math.sin(progress * 25 + i) * 0.08 + Math.sin(progress * 47) * 0.05;
+        path.push({ x: pos.x, y: pos.y, width: width * taper * bristleVar, progress });
       }
+    }
+    if (path.length < 2) return;
 
-      const rect = canvas.getBoundingClientRect();
-      const now = Date.now();
+    const leftEdge = [], rightEdge = [];
+    const seed = points[0].x * 1000 + points[0].y;
+    const seededRandom = (i) => { const x = Math.sin(seed + i * 9999) * 10000; return x - Math.floor(x); };
 
-      // Black background
+    for (let i = 0; i < path.length; i++) {
+      const curr = path[i], prev = path[Math.max(0, i - 1)], next = path[Math.min(path.length - 1, i + 1)];
+      let dx = next.x - prev.x, dy = next.y - prev.y;
+      const len = Math.sqrt(dx * dx + dy * dy) || 1;
+      dx /= len; dy /= len;
+      const nx = -dy, ny = dx, halfWidth = curr.width / 2;
+      const wobble = Math.sin(i * 0.4 + seededRandom(i) * 2) * curr.width * 0.06 + Math.sin(i * 0.15) * curr.width * 0.04 + Math.sin(i * 0.8 + 2) * curr.width * 0.03;
+      leftEdge.push({ x: curr.x + nx * (halfWidth + wobble + seededRandom(i * 2) * curr.width * 0.03), y: curr.y + ny * (halfWidth + wobble + seededRandom(i * 2) * curr.width * 0.03) });
+      rightEdge.push({ x: curr.x - nx * (halfWidth - wobble * 0.7 + seededRandom(i * 2 + 1) * curr.width * 0.03), y: curr.y - ny * (halfWidth - wobble * 0.7 + seededRandom(i * 2 + 1) * curr.width * 0.03) });
+    }
+
+    // Outer glow
+    for (let g = 4; g >= 0; g--) {
+      const glowOpacity = opacity * 0.06 * (1 - g * 0.18);
+      ctx.beginPath();
+      ctx.moveTo(leftEdge[0].x, leftEdge[0].y);
+      for (let i = 1; i < leftEdge.length; i++) ctx.quadraticCurveTo(leftEdge[i - 1].x, leftEdge[i - 1].y, (leftEdge[i - 1].x + leftEdge[i].x) / 2, (leftEdge[i - 1].y + leftEdge[i].y) / 2);
+      ctx.lineTo(path[path.length - 1].x, path[path.length - 1].y);
+      for (let i = rightEdge.length - 1; i >= 0; i--) ctx.quadraticCurveTo(rightEdge[i].x, rightEdge[i].y, (rightEdge[i].x + rightEdge[Math.max(0, i - 1)].x) / 2, (rightEdge[i].y + rightEdge[Math.max(0, i - 1)].y) / 2);
+      ctx.closePath();
+      ctx.fillStyle = hslToRgba(primaryHue, 60, 70, glowOpacity);
+      ctx.fill();
+    }
+
+    // Ink bleed
+    for (let i = 0; i < path.length; i += 3) {
+      const p = path[i];
+      if (p.width < 3) continue;
+      for (let b = 0; b < Math.floor(seededRandom(i * 3) * 3); b++) {
+        const angle = seededRandom(i * 10 + b) * Math.PI * 2;
+        const dist = p.width * 0.4 + seededRandom(i * 10 + b + 100) * p.width * 0.3;
+        ctx.beginPath();
+        ctx.arc(p.x + Math.cos(angle) * dist, p.y + Math.sin(angle) * dist, 1 + seededRandom(i * 10 + b + 200) * 3, 0, Math.PI * 2);
+        ctx.fillStyle = hslToRgba(primaryHue, 50, 65, opacity * 0.15 * seededRandom(i + b));
+        ctx.fill();
+      }
+    }
+
+    // Main body
+    ctx.beginPath();
+    ctx.moveTo(leftEdge[0].x, leftEdge[0].y);
+    ctx.quadraticCurveTo(path[0].x, path[0].y - path[0].width * 0.3, rightEdge[0].x, rightEdge[0].y);
+    for (let i = 1; i < rightEdge.length; i++) ctx.quadraticCurveTo(rightEdge[i - 1].x, rightEdge[i - 1].y, (rightEdge[i - 1].x + rightEdge[i].x) / 2, (rightEdge[i - 1].y + rightEdge[i].y) / 2);
+    const endMid = path[path.length - 1], prevEnd = path[path.length - 2];
+    const endDx = endMid.x - prevEnd.x, endDy = endMid.y - prevEnd.y, endLen = Math.sqrt(endDx * endDx + endDy * endDy) || 1;
+    ctx.lineTo(rightEdge[rightEdge.length - 1].x, rightEdge[rightEdge.length - 1].y);
+    ctx.quadraticCurveTo(endMid.x + (endDx / endLen) * endMid.width * 0.5, endMid.y + (endDy / endLen) * endMid.width * 0.5, leftEdge[leftEdge.length - 1].x, leftEdge[leftEdge.length - 1].y);
+    for (let i = leftEdge.length - 2; i >= 0; i--) ctx.quadraticCurveTo(leftEdge[i + 1].x, leftEdge[i + 1].y, (leftEdge[i + 1].x + leftEdge[i].x) / 2, (leftEdge[i + 1].y + leftEdge[i].y) / 2);
+    ctx.closePath();
+
+    const gradient = ctx.createLinearGradient(path[0].x, path[0].y, path[path.length - 1].x, path[path.length - 1].y);
+    gradient.addColorStop(0, hslToRgba(primaryHue, 50, 65, opacity * 0.85));
+    gradient.addColorStop(0.3, hslToRgba(primaryHue, 50, 65, opacity * 0.95));
+    gradient.addColorStop(0.7, hslToRgba(primaryHue, 45, 55, opacity * 0.9));
+    gradient.addColorStop(1, hslToRgba(primaryHue, 45, 55, opacity * 0.75));
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    // Bristle texture
+    ctx.save();
+    ctx.clip();
+    for (let b = 0; b < 5 + Math.floor(points[0].width / 4); b++) {
+      const offset = (b / (5 + Math.floor(points[0].width / 4)) - 0.5) * 0.7;
+      ctx.beginPath();
+      for (let i = 0; i < path.length; i += 2) {
+        const p = path[i], prev = path[Math.max(0, i - 2)], next = path[Math.min(path.length - 1, i + 2)];
+        let dx = next.x - prev.x, dy = next.y - prev.y;
+        const len = Math.sqrt(dx * dx + dy * dy) || 1;
+        const wander = Math.sin(i * 0.3 + b * 2) * p.width * 0.05;
+        const bx = p.x + (-dy / len) * (p.width * offset + wander), by = p.y + (dx / len) * (p.width * offset + wander);
+        i === 0 ? ctx.moveTo(bx, by) : ctx.lineTo(bx, by);
+      }
+      ctx.strokeStyle = `rgba(0,0,0,${opacity * (0.08 + seededRandom(b) * 0.1)})`;
+      ctx.lineWidth = 0.5 + seededRandom(b + 50);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Ink pool at start
+    ctx.beginPath();
+    ctx.ellipse(path[0].x, path[0].y, path[0].width * 0.4, path[0].width * 0.35, 0, 0, Math.PI * 2);
+    const poolGrad = ctx.createRadialGradient(path[0].x, path[0].y, 0, path[0].x, path[0].y, path[0].width * 0.4);
+    poolGrad.addColorStop(0, hslToRgba(primaryHue, 50, 65, opacity * 0.25));
+    poolGrad.addColorStop(1, hslToRgba(primaryHue, 50, 65, 0));
+    ctx.fillStyle = poolGrad;
+    ctx.fill();
+
+    // Center highlight
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    for (let i = 1; i < path.length; i++) {
+      const wobble = Math.sin(i * 0.5) * path[i].width * 0.02;
+      ctx.quadraticCurveTo(path[i - 1].x + wobble, path[i - 1].y + wobble, (path[i - 1].x + path[i].x) / 2 + wobble, (path[i - 1].y + path[i].y) / 2 + wobble);
+    }
+    ctx.strokeStyle = `rgba(255,255,255,${opacity * 0.2})`;
+    ctx.lineWidth = 0.75;
+    ctx.stroke();
+  }, [primaryHue]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+
+    const render = () => {
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, rect.width, rect.height);
+      const now = Date.now();
+      let hasVisible = false;
 
-      // Seeded random for consistent bristle wobble
-      const seededRandom = (seed) => {
-        const x = Math.sin(seed) * 10000;
-        return x - Math.floor(x);
-      };
-
-      // Draw ink brush stroke
-      const drawStroke = (points, opacity, seed = 0) => {
-        if (points.length < 2) return;
-
-        const bristles = points[0].bristles || [{ offset: 0, width: 1 }];
-
-        // Calculate speeds for all points first
-        const speeds = points.map((p, i) => {
-          if (i === 0) return 0;
-          const prev = points[i - 1];
-          const dx = p.x - prev.x;
-          const dy = p.y - prev.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const dt = Math.max(1, p.time - prev.time);
-          return dist / dt;
-        });
-
-        // Smooth the speeds
-        const smoothedSpeeds = speeds.map((s, i) => {
-          const prev = speeds[i - 1] || s;
-          const next = speeds[i + 1] || s;
-          return (prev + s + next) / 3;
-        });
-
-        // Draw each bristle as a separate line
-        bristles.forEach((bristle, bristleIndex) => {
-          ctx.beginPath();
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-
-          for (let i = 0; i < points.length; i++) {
-            const p = points[i];
-            const speed = smoothedSpeeds[i];
-
-            // Taper at start and end
-            const startTaper = Math.min(1, i / 8);
-            const endTaper = Math.min(1, (points.length - 1 - i) / 8);
-            const taper = Math.min(startTaper, endTaper);
-
-            // Speed affects width: slower = wider
-            const speedFactor = Math.max(0.3, Math.min(1.3, 1.2 - speed * 0.1));
-
-            // Base size with taper and speed
-            const size = BASE_SIZE * speedFactor * taper * bristle.width;
-
-            // Add subtle wobble for organic feel
-            const wobble = seededRandom(seed + i * 0.1 + bristleIndex) * 2 - 1;
-            const wobbleAmount = size * 0.15;
-
-            // Calculate perpendicular offset for this bristle
-            let perpX = 0, perpY = 0;
-            if (i < points.length - 1) {
-              const next = points[i + 1];
-              const dx = next.x - p.x;
-              const dy = next.y - p.y;
-              const len = Math.sqrt(dx * dx + dy * dy) || 1;
-              perpX = -dy / len;
-              perpY = dx / len;
-            } else if (i > 0) {
-              const prev = points[i - 1];
-              const dx = p.x - prev.x;
-              const dy = p.y - prev.y;
-              const len = Math.sqrt(dx * dx + dy * dy) || 1;
-              perpX = -dy / len;
-              perpY = dx / len;
-            }
-
-            const offsetAmount = bristle.offset * size + wobble * wobbleAmount;
-            const x = p.x + perpX * offsetAmount;
-            const y = p.y + perpY * offsetAmount;
-
-            if (i === 0) {
-              ctx.moveTo(x, y);
-            } else {
-              // Use bezier for smooth curves
-              const prev = points[i - 1];
-              const prevSpeed = smoothedSpeeds[i - 1];
-              const prevTaper = Math.min(Math.min(1, (i - 1) / 8), Math.min(1, (points.length - i) / 8));
-              const prevSize = BASE_SIZE * Math.max(0.3, Math.min(1.3, 1.2 - prevSpeed * 0.1)) * prevTaper * bristle.width;
-              const prevWobble = seededRandom(seed + (i - 1) * 0.1 + bristleIndex) * 2 - 1;
-              const prevOffsetAmount = bristle.offset * prevSize + prevWobble * prevSize * 0.15;
-
-              let prevPerpX = 0, prevPerpY = 0;
-              if (i > 1) {
-                const pp = points[i - 2];
-                const dx = prev.x - pp.x;
-                const dy = prev.y - pp.y;
-                const len = Math.sqrt(dx * dx + dy * dy) || 1;
-                prevPerpX = -dy / len;
-                prevPerpY = dx / len;
-              } else {
-                prevPerpX = perpX;
-                prevPerpY = perpY;
-              }
-
-              const prevX = prev.x + prevPerpX * prevOffsetAmount;
-              const prevY = prev.y + prevPerpY * prevOffsetAmount;
-              const midX = (prevX + x) / 2;
-              const midY = (prevY + y) / 2;
-
-              ctx.quadraticCurveTo(prevX, prevY, midX, midY);
-            }
-          }
-
-          // Stroke with varying opacity per bristle
-          const bristleOpacity = opacity * (0.6 + bristle.width * 0.4);
-          ctx.strokeStyle = `hsla(${primaryHue}, 40%, 55%, ${bristleOpacity * 0.7})`;
-          ctx.lineWidth = Math.max(1, BASE_SIZE * 0.15 * bristle.width);
-          ctx.stroke();
-        });
-
-        // Add ink wash/bleed effect
-        ctx.globalCompositeOperation = 'lighter';
-        for (let i = 1; i < points.length; i++) {
-          const p = points[i];
-          const prev = points[i - 1];
-          const speed = smoothedSpeeds[i];
-          const taper = Math.min(Math.min(1, i / 8), Math.min(1, (points.length - 1 - i) / 8));
-          const size = BASE_SIZE * Math.max(0.3, Math.min(1.3, 1.2 - speed * 0.1)) * taper;
-
-          // Soft glow underneath
-          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 1.5);
-          gradient.addColorStop(0, `hsla(${primaryHue}, 50%, 60%, ${opacity * 0.08})`);
-          gradient.addColorStop(0.5, `hsla(${primaryHue}, 50%, 60%, ${opacity * 0.03})`);
-          gradient.addColorStop(1, `hsla(${primaryHue}, 50%, 60%, 0)`);
-
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, size * 1.5, 0, Math.PI * 2);
-          ctx.fillStyle = gradient;
-          ctx.fill();
-        }
-        ctx.globalCompositeOperation = 'source-over';
-
-        // Ink splatter at stroke start
-        if (points.length > 2 && opacity > 0.5) {
-          const start = points[0];
-          const splatCount = 3 + Math.floor(seededRandom(seed) * 4);
-          for (let i = 0; i < splatCount; i++) {
-            const angle = seededRandom(seed + i) * Math.PI * 2;
-            const dist = seededRandom(seed + i + 0.5) * BASE_SIZE * 0.8;
-            const size = 1 + seededRandom(seed + i + 0.3) * 2;
-            const x = start.x + Math.cos(angle) * dist;
-            const y = start.y + Math.sin(angle) * dist;
-
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fillStyle = `hsla(${primaryHue}, 40%, 55%, ${opacity * 0.4})`;
-            ctx.fill();
-          }
-        }
-      };
-
-      // Draw fading strokes
       strokesRef.current = strokesRef.current.filter(stroke => {
         const age = now - stroke.createdAt;
-        if (age > FADE_DURATION) return false;
-
-        const progress = age / FADE_DURATION;
-        const opacity = Math.pow(1 - progress, 1.5);
-        drawStroke(stroke.points, opacity, stroke.seed);
+        const dur = FADE_DURATION * (0.5 + stroke.wetness * 0.5);
+        if (age > dur) return false;
+        hasVisible = true;
+        const opacity = 1 - easeOutQuart(age / dur);
+        if (opacity <= 0.01) return false;
+        drawBrushStroke(ctx, stroke.points, opacity);
         return true;
       });
 
-      // Draw current stroke
-      if (isDrawingRef.current && currentPointsRef.current.length > 1) {
-        drawStroke(currentPointsRef.current, 1, 0);
+      if (currentStrokeRef.current?.points.length > 1) {
+        drawBrushStroke(ctx, currentStrokeRef.current.points, 1);
+        hasVisible = true;
+      }
+
+      if (!hasVisible && !boardEmpty) {
+        setBoardEmpty(true);
+        if (Math.random() > 0.6) {
+          setCurrentQuote(quotes[Math.floor(Math.random() * quotes.length)]);
+          setShowQuote(true);
+          setTimeout(() => setShowQuote(false), 4500);
+        }
+      } else if (hasVisible && boardEmpty) {
+        setBoardEmpty(false);
+        setShowQuote(false);
       }
 
       animationFrameRef.current = requestAnimationFrame(render);
     };
-
     render();
     return () => cancelAnimationFrame(animationFrameRef.current);
-  }, [primaryHue]);
+  }, [drawBrushStroke, boardEmpty]);
+
+  const getPressure = (e) => (e.pressure && e.pressure > 0 && e.pressure !== 0.5) ? e.pressure : (e.touches?.[0]?.force || 0.5);
+  const getPosition = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    return { x: (e.clientX ?? e.touches?.[0]?.clientX ?? 0) - rect.left, y: (e.clientY ?? e.touches?.[0]?.clientY ?? 0) - rect.top };
+  };
+  const getSmoothedVelocity = (curr, last, dt) => {
+    if (!last || dt === 0) return 0;
+    const v = Math.sqrt(Math.pow(curr.x - last.x, 2) + Math.pow(curr.y - last.y, 2)) / Math.max(dt, 1);
+    velocityBufferRef.current.push(v);
+    if (velocityBufferRef.current.length > 5) velocityBufferRef.current.shift();
+    return velocityBufferRef.current.reduce((a, b) => a + b, 0) / velocityBufferRef.current.length;
+  };
+
+  const handlePointerDown = (e) => {
+    e.preventDefault();
+    isDrawingRef.current = true;
+    velocityBufferRef.current = [];
+    const pos = getPosition(e), pressure = getPressure(e);
+    currentStrokeRef.current = {
+      points: [{ ...pos, pressure, width: (4 + pressure * 28) * 0.4, timestamp: Date.now(), velocity: 0 }],
+      createdAt: Date.now(),
+      wetness: 0.7 + Math.random() * 0.5
+    };
+    lastPointRef.current = { ...pos, timestamp: Date.now() };
+    haptic.tap();
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDrawingRef.current || !currentStrokeRef.current) return;
+    e.preventDefault();
+    const pos = getPosition(e), pressure = getPressure(e), now = Date.now();
+    const timeDelta = now - (lastPointRef.current?.timestamp || now);
+    const velocity = getSmoothedVelocity(pos, lastPointRef.current, timeDelta);
+    if (lastPointRef.current && Math.sqrt(Math.pow(pos.x - lastPointRef.current.x, 2) + Math.pow(pos.y - lastPointRef.current.y, 2)) < 1.5) return;
+    const baseWidth = 4 + pressure * 28;
+    const targetWidth = baseWidth * Math.max(0.35, Math.min(1.3, 1.4 - velocity * 0.12));
+    const prevWidth = currentStrokeRef.current.points[currentStrokeRef.current.points.length - 1]?.width || targetWidth;
+    currentStrokeRef.current.points.push({ ...pos, pressure, width: lerp(prevWidth, targetWidth, 0.35), timestamp: now, velocity });
+    currentStrokeRef.current.wetness = Math.min(1.6, currentStrokeRef.current.wetness + pressure * 0.008);
+    lastPointRef.current = { ...pos, timestamp: now };
+  };
+
+  const handlePointerUp = () => {
+    if (currentStrokeRef.current?.points.length > 1) {
+      const last = currentStrokeRef.current.points[currentStrokeRef.current.points.length - 1];
+      const prev = currentStrokeRef.current.points[currentStrokeRef.current.points.length - 2];
+      const dx = last.x - prev.x, dy = last.y - prev.y;
+      currentStrokeRef.current.points.push({ x: last.x + dx * 0.3, y: last.y + dy * 0.3, width: last.width * 0.4, pressure: last.pressure * 0.5, timestamp: Date.now() });
+      currentStrokeRef.current.points.push({ x: last.x + dx * 0.5, y: last.y + dy * 0.5, width: last.width * 0.1, pressure: last.pressure * 0.2, timestamp: Date.now() });
+      strokesRef.current.push(currentStrokeRef.current);
+    }
+    isDrawingRef.current = false;
+    currentStrokeRef.current = null;
+    lastPointRef.current = null;
+    velocityBufferRef.current = [];
+  };
 
   return (
-    <main style={{
-      position: 'absolute',
-      inset: 0,
-      zIndex: 2,
-      background: '#000',
-      touchAction: 'none',
-    }}>
+    <main style={{ position: 'absolute', inset: 0, zIndex: 2, background: '#000', touchAction: 'none' }}>
       <canvas
         ref={canvasRef}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        onTouchStart={startDrawing}
-        onTouchMove={draw}
-        onTouchEnd={stopDrawing}
-        style={{ width: '100%', height: '100%', cursor: 'none' }}
+        style={{ width: '100%', height: '100%', cursor: 'none', touchAction: 'none' }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        onPointerCancel={handlePointerUp}
       />
-      {showHint && (
-        <div style={{
-          position: 'absolute',
-          bottom: '2rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          color: `hsla(${primaryHue}, 30%, 55%, 0.4)`,
-          fontSize: '0.85rem',
-          fontFamily: '"Jost", sans-serif',
-          letterSpacing: '0.2em',
-          textTransform: 'lowercase',
-          pointerEvents: 'none',
-        }}>
-          draw · let go
-        </div>
-      )}
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+        fontSize: 'clamp(1rem, 2.5vw, 1.35rem)', color: `hsla(${primaryHue}, 50%, 65%, 0.4)`,
+        fontFamily: '"Jost", sans-serif', fontWeight: 300, letterSpacing: '0.15em', textAlign: 'center',
+        padding: '2rem', opacity: showQuote ? 1 : 0, transition: 'opacity 3s ease-in-out',
+        pointerEvents: 'none', textTransform: 'lowercase'
+      }}>{currentQuote}</div>
+      <div style={{
+        position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)',
+        color: `hsla(${primaryHue}, 40%, 60%, 0.2)`, fontSize: '0.7rem', fontFamily: '"Jost", sans-serif',
+        letterSpacing: '0.3em', textTransform: 'lowercase', opacity: boardEmpty && !showQuote ? 1 : 0,
+        transition: 'opacity 1.5s ease', pointerEvents: 'none'
+      }}>draw · watch it fade · begin again</div>
     </main>
   );
 }
