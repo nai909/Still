@@ -6928,7 +6928,7 @@ function ZenWaterBoard({ primaryHue = 162 }) {
   const [showQuote, setShowQuote] = useState(false);
   const [currentQuote, setCurrentQuote] = useState('');
 
-  const FADE_DURATION = 45000;
+  const FADE_DURATION = 15000;
 
   const quotes = [
     "begin again.",
