@@ -7221,7 +7221,7 @@ function ZenWaterBoard({ primaryHue = 162 }) {
         padding: '2rem', opacity: showQuote ? 1 : 0, transition: 'opacity 3s ease-in-out',
         pointerEvents: 'none', textTransform: 'lowercase'
       }}>{currentQuote}</div>
-      <div style={{
+      <div className="zen-hint-text" style={{
         position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)',
         color: `hsla(${primaryHue}, 40%, 60%, 0.2)`, fontSize: '0.7rem', fontFamily: '"Jost", sans-serif',
         letterSpacing: '0.3em', textTransform: 'lowercase', opacity: boardEmpty && !showQuote ? 1 : 0,
@@ -7234,6 +7234,9 @@ function ZenWaterBoard({ primaryHue = 162 }) {
           20% { opacity: 1; }
           80% { opacity: 1; }
           100% { opacity: 0; }
+        }
+        @media (max-width: 768px) {
+          .zen-hint-text { display: none !important; }
         }
       `}</style>
     </main>
