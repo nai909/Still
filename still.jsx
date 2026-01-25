@@ -7318,7 +7318,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     const noteName = freqToNoteName(freq);
     setPlayedNote(noteName);
     if (noteTimeoutRef.current) clearTimeout(noteTimeoutRef.current);
-    noteTimeoutRef.current = setTimeout(() => setPlayedNote(null), 800);
+    noteTimeoutRef.current = setTimeout(() => setPlayedNote(null), 2000);
   }, [freqToNoteName]);
 
   // Touch ref for forwarding to GazeMode ripples
@@ -8210,7 +8210,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
             letterSpacing: '0.2em',
             color: `hsl(${primaryHue}, 52%, 68%)`,
             pointerEvents: 'none',
-            animation: 'noteFade 0.8s ease-out forwards',
+            animation: 'noteFade 2s ease-in-out forwards',
           }}
         >
           {playedNote}
@@ -8457,8 +8457,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           50% { transform: translateY(-4px); }
         }
         @keyframes noteFade {
-          0% { opacity: 1; transform: translateX(-50%) translateY(0); }
-          100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+          0% { opacity: 0; transform: translateX(-50%); }
+          15% { opacity: 0.7; transform: translateX(-50%); }
+          70% { opacity: 0.7; transform: translateX(-50%); }
+          100% { opacity: 0; transform: translateX(-50%); }
         }
       `}</style>
     </main>
