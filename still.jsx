@@ -8216,6 +8216,37 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         </div>
       </div>
 
+      {/* Swipe up arrow hint */}
+      {!showScaleSelector && isInitialized && (
+        <div style={{
+          position: 'absolute',
+          bottom: '1.5rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          pointerEvents: 'none',
+          zIndex: 1,
+          animation: 'droneArrowPulse 2s ease-in-out infinite',
+        }}>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            style={{
+              animation: 'droneArrowBounce 2s ease-in-out infinite',
+            }}
+          >
+            <path
+              d="M10 4L4 12H16L10 4Z"
+              fill={`hsla(${primaryHue}, 52%, 68%, 0.5)`}
+            />
+          </svg>
+        </div>
+      )}
+
       {/* Scale selector drawer */}
       {showScaleSelector && (
         <>
@@ -8373,6 +8404,14 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         @keyframes slideUpScale {
           from { transform: translateY(100%); }
           to { transform: translateY(0); }
+        }
+        @keyframes droneArrowPulse {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+        @keyframes droneArrowBounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-4px); }
         }
       `}</style>
     </main>
