@@ -6881,6 +6881,9 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const guitarBufferRef = useRef(null);
   const harpBufferRef = useRef(null);
   const celloBufferRef = useRef(null);
+  const handpanBufferRef = useRef(null);
+  const mandolinBufferRef = useRef(null);
+  const dulcimerBufferRef = useRef(null);
 
   // Breath pattern (4-7-8)
   const breathPattern = { inhale: 4, hold: 7, exhale: 8 };
@@ -6892,7 +6895,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     { name: 'singing bowl', type: 'singingBowl' },
     { name: 'music box', type: 'musicBox' },
     { name: 'harp', type: 'sampledHarp' },
-    { name: 'cello', type: 'sampledCello' }
+    { name: 'cello', type: 'sampledCello' },
+    { name: 'handpan', type: 'sampledHandpan' },
+    { name: 'mandolin', type: 'sampledMandolin' },
+    { name: 'dulcimer', type: 'sampledDulcimer' }
   ];
 
   const textures = [
@@ -6969,7 +6975,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       .catch(err => console.log('Piano sample not loaded:', err));
 
     // Load guitar sample (C3 = 130.81Hz base note)
-    fetch('guitar.mp3')
+    fetch('guitar.wav')
       .then(response => response.arrayBuffer())
       .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
       .then(audioBuffer => {
@@ -6994,6 +7000,33 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         celloBufferRef.current = audioBuffer;
       })
       .catch(err => console.log('Cello sample not loaded:', err));
+
+    // Load handpan sample (C3 = 130.81Hz base note)
+    fetch('handpan.wav')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        handpanBufferRef.current = audioBuffer;
+      })
+      .catch(err => console.log('Handpan sample not loaded:', err));
+
+    // Load mandolin sample (C3 = 130.81Hz base note)
+    fetch('mandolin.wav')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        mandolinBufferRef.current = audioBuffer;
+      })
+      .catch(err => console.log('Mandolin sample not loaded:', err));
+
+    // Load dulcimer sample (C3 = 130.81Hz base note)
+    fetch('dulcimer.wav')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        dulcimerBufferRef.current = audioBuffer;
+      })
+      .catch(err => console.log('Dulcimer sample not loaded:', err));
 
     // Start drone
     startDrone(ctx, masterGain);
@@ -7376,6 +7409,78 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       gain.gain.setTargetAtTime(0.7 * velocity, now, 0.02);
       gain.gain.setTargetAtTime(0.5 * velocity, now + 0.2, 0.5);
       gain.gain.setTargetAtTime(0, now + 1.0, 3.5);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start(now);
+    } else if (type === 'sampledHandpan') {
+      // Sampled handpan - resonant, long decay
+      if (!handpanBufferRef.current) return;
+
+      const baseFreq = 130.81; // C3
+      let adjustedFreq = freq;
+      while (adjustedFreq / baseFreq > 2.5) {
+        adjustedFreq = adjustedFreq / 2;
+      }
+      const playbackRate = adjustedFreq / baseFreq;
+
+      const source = ctx.createBufferSource();
+      source.buffer = handpanBufferRef.current;
+      source.playbackRate.value = playbackRate;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.6 * velocity, now, 0.01);
+      gain.gain.setTargetAtTime(0.4 * velocity, now + 0.3, 0.8);
+      gain.gain.setTargetAtTime(0, now + 1.5, 4);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start(now);
+    } else if (type === 'sampledMandolin') {
+      // Sampled mandolin - quick attack, medium decay
+      if (!mandolinBufferRef.current) return;
+
+      const baseFreq = 130.81; // C3
+      let adjustedFreq = freq;
+      while (adjustedFreq / baseFreq > 2.5) {
+        adjustedFreq = adjustedFreq / 2;
+      }
+      const playbackRate = adjustedFreq / baseFreq;
+
+      const source = ctx.createBufferSource();
+      source.buffer = mandolinBufferRef.current;
+      source.playbackRate.value = playbackRate;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.7 * velocity, now, 0.005);
+      gain.gain.setTargetAtTime(0.4 * velocity, now + 0.1, 0.3);
+      gain.gain.setTargetAtTime(0, now + 0.5, 2);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start(now);
+    } else if (type === 'sampledDulcimer') {
+      // Sampled dulcimer - soft attack, long sustain
+      if (!dulcimerBufferRef.current) return;
+
+      const baseFreq = 130.81; // C3
+      let adjustedFreq = freq;
+      while (adjustedFreq / baseFreq > 2.5) {
+        adjustedFreq = adjustedFreq / 2;
+      }
+      const playbackRate = adjustedFreq / baseFreq;
+
+      const source = ctx.createBufferSource();
+      source.buffer = dulcimerBufferRef.current;
+      source.playbackRate.value = playbackRate;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.6 * velocity, now, 0.02);
+      gain.gain.setTargetAtTime(0.5 * velocity, now + 0.2, 0.6);
+      gain.gain.setTargetAtTime(0, now + 1.0, 3);
 
       source.connect(gain);
       gain.connect(masterGain);
