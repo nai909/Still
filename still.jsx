@@ -7244,13 +7244,59 @@ function ZenWaterBoard({ primaryHue = 162 }) {
 // DRONE MODE COMPONENT
 // ============================================================================
 
+// Musical keys and scales (like Ableton)
+const KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const KEY_FREQUENCIES = {
+  'C': 130.81, 'C#': 138.59, 'D': 146.83, 'D#': 155.56, 'E': 164.81, 'F': 174.61,
+  'F#': 185.00, 'G': 196.00, 'G#': 207.65, 'A': 220.00, 'A#': 233.08, 'B': 246.94
+};
+
+const SCALE_TYPES = [
+  { name: 'major', intervals: [0, 2, 4, 5, 7, 9, 11] },
+  { name: 'minor', intervals: [0, 2, 3, 5, 7, 8, 10] },
+  { name: 'dorian', intervals: [0, 2, 3, 5, 7, 9, 10] },
+  { name: 'phrygian', intervals: [0, 1, 3, 5, 7, 8, 10] },
+  { name: 'lydian', intervals: [0, 2, 4, 6, 7, 9, 11] },
+  { name: 'mixolydian', intervals: [0, 2, 4, 5, 7, 9, 10] },
+  { name: 'locrian', intervals: [0, 1, 3, 5, 6, 8, 10] },
+  { name: 'harmonic minor', intervals: [0, 2, 3, 5, 7, 8, 11] },
+  { name: 'melodic minor', intervals: [0, 2, 3, 5, 7, 9, 11] },
+  { name: 'pentatonic major', intervals: [0, 2, 4, 7, 9] },
+  { name: 'pentatonic minor', intervals: [0, 3, 5, 7, 10] },
+  { name: 'blues', intervals: [0, 3, 5, 6, 7, 10] },
+  { name: 'whole tone', intervals: [0, 2, 4, 6, 8, 10] },
+  { name: 'japanese', intervals: [0, 1, 5, 7, 8] },
+  { name: 'arabic', intervals: [0, 1, 4, 5, 7, 8, 11] },
+  { name: 'hungarian minor', intervals: [0, 2, 3, 6, 7, 8, 11] },
+];
+
+// Generate scale frequencies from key and scale type
+const generateScale = (keyName, scaleType, octaves = 3) => {
+  const baseFreq = KEY_FREQUENCIES[keyName];
+  const intervals = scaleType.intervals;
+  const frequencies = [];
+
+  for (let octave = 0; octave < octaves; octave++) {
+    for (const interval of intervals) {
+      const freq = baseFreq * Math.pow(2, octave + interval / 12);
+      if (freq < 1200) frequencies.push(freq); // Cap at reasonable frequency
+    }
+  }
+  return frequencies;
+};
+
 function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [currentInstrument, setCurrentInstrument] = useState(2); // synth
   const [currentTexture, setCurrentTexture] = useState(3); // forest
+  const [currentKey, setCurrentKey] = useState(9); // A
+  const [currentScaleType, setCurrentScaleType] = useState(10); // pentatonic minor
   const [showLabel, setShowLabel] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathValue, setBreathValue] = useState(0);
+
+  // Generate current scale based on key and scale type
+  const scale = generateScale(KEYS[currentKey], SCALE_TYPES[currentScaleType]);
 
   // Touch ref for forwarding to GazeMode ripples
   const externalTouchRef = useRef([]);
@@ -7272,6 +7318,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const wheelTimeoutRef = useRef(null);
   const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
   const lastTouchRef = useRef({ x: 0, y: 0 });
+  const lastTapTimeRef = useRef(0);
   const currentTextureRef = useRef(currentTexture);
   currentTextureRef.current = currentTexture;
   const pianoBufferRef = useRef(null);
@@ -7304,11 +7351,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     { name: 'night', noise: 0, foley: true, foleyType: 'night' }
   ];
 
-  // A minor pentatonic scale (A2 to A5)
-  const scale = [
-    110.00, 130.81, 146.83, 164.81, 196.00, 220.00,
-    261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 659.25, 880.00
-  ];
 
   // Initialize audio context
   const initAudio = useCallback(() => {
@@ -7880,11 +7922,19 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     const isSwipe = Math.abs(deltaX) > swipeThreshold || Math.abs(deltaY) > swipeThreshold;
 
     if (isSwipe && deltaTime < 500) {
-      // It's a swipe - change instrument or texture
+      // It's a swipe - change settings based on position and direction
+      const inTopThird = touchStartRef.current.y < window.innerHeight / 3;
+
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        // Horizontal swipe - change instrument
+        // Horizontal swipe
         const dir = deltaX > 0 ? -1 : 1;
-        setCurrentInstrument(prev => (prev + dir + instruments.length) % instruments.length);
+        if (inTopThird) {
+          // Top third: change key
+          setCurrentKey(prev => (prev + dir + KEYS.length) % KEYS.length);
+        } else {
+          // Bottom two-thirds: change instrument
+          setCurrentInstrument(prev => (prev + dir + instruments.length) % instruments.length);
+        }
         displayLabel();
         haptic.tap();
       } else {
@@ -7896,41 +7946,54 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         haptic.tap();
       }
     } else {
-      // It's a tap - play instrument
-      const clientY = touchStartRef.current.y;
-      const clientX = touchStartRef.current.x;
-      const normalizedY = 1 - (clientY / window.innerHeight);
-      const noteIndex = Math.floor(normalizedY * scale.length);
-      const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
+      // It's a tap - check for double-tap to cycle scale
+      const now = Date.now();
+      const timeSinceLastTap = now - lastTapTimeRef.current;
 
-      playInstrument(freq, 0.6 + breathValue * 0.4);
+      if (timeSinceLastTap < 300) {
+        // Double tap - cycle scale type
+        setCurrentScaleType(prev => (prev + 1) % SCALE_TYPES.length);
+        displayLabel();
+        haptic.tap();
+        lastTapTimeRef.current = 0; // Reset to prevent triple-tap
+      } else {
+        // Single tap - play instrument
+        const clientY = touchStartRef.current.y;
+        const clientX = touchStartRef.current.x;
+        const normalizedY = 1 - (clientY / window.innerHeight);
+        const noteIndex = Math.floor(normalizedY * scale.length);
+        const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
 
-      // Forward touch to GazeMode for ripples
-      externalTouchRef.current.push({
-        id: `drone-${Date.now()}`,
-        x: clientX,
-        y: clientY,
-        time: Date.now(),
-      });
+        playInstrument(freq, 0.6 + breathValue * 0.4);
+        lastTapTimeRef.current = now;
 
-      // Create ripple
-      const container = e.target.closest('main');
-      if (container) {
-        const ripple = document.createElement('div');
-        ripple.style.cssText = `
-          position: absolute;
-          left: ${clientX}px;
-          top: ${clientY}px;
-          width: 100px;
-          height: 100px;
-          border: 1px solid hsla(${primaryHue}, 52%, 68%, 0.4);
-          border-radius: 50%;
-          pointer-events: none;
-          animation: droneRipple 1.5s ease-out forwards;
-          transform: translate(-50%, -50%) scale(0);
-        `;
-        container.appendChild(ripple);
-        setTimeout(() => ripple.remove(), 1500);
+        // Forward touch to GazeMode for ripples
+        externalTouchRef.current.push({
+          id: `drone-${Date.now()}`,
+          x: clientX,
+          y: clientY,
+          time: Date.now(),
+        });
+
+        // Create ripple
+        const container = e.target.closest('main');
+        if (container) {
+          const ripple = document.createElement('div');
+          ripple.style.cssText = `
+            position: absolute;
+            left: ${clientX}px;
+            top: ${clientY}px;
+            width: 100px;
+            height: 100px;
+            border: 1px solid hsla(${primaryHue}, 52%, 68%, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: droneRipple 1.5s ease-out forwards;
+            transform: translate(-50%, -50%) scale(0);
+          `;
+          container.appendChild(ripple);
+          setTimeout(() => ripple.remove(), 1500);
+        }
       }
     }
   }, [backgroundMode, playInstrument, breathValue, primaryHue, currentTexture, updateTexture, displayLabel]);
@@ -7969,7 +8032,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     setTimeout(() => ripple.remove(), 1500);
   }, [backgroundMode, isInitialized, initAudio, playInstrument, breathValue, primaryHue]);
 
-  // Handle scroll for instrument/texture change
+  // Handle scroll for instrument/texture/key/scale change
   useEffect(() => {
     const handleWheel = (e) => {
       if (!isInitialized) return;
@@ -7985,28 +8048,52 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
       const threshold = 30;
 
-      if (Math.abs(wheelAccumXRef.current) > Math.abs(wheelAccumYRef.current)) {
-        // Horizontal: change instrument
-        if (Math.abs(wheelAccumXRef.current) > threshold) {
-          e.preventDefault();
-          const dir = wheelAccumXRef.current > 0 ? 1 : -1;
-          setCurrentInstrument(prev => (prev + dir + instruments.length) % instruments.length);
-          displayLabel();
-          haptic.tap();
-          wheelAccumXRef.current = 0;
-          wheelAccumYRef.current = 0;
+      if (e.shiftKey) {
+        // Shift held: change key (horizontal) or scale type (vertical)
+        if (Math.abs(wheelAccumXRef.current) > Math.abs(wheelAccumYRef.current)) {
+          if (Math.abs(wheelAccumXRef.current) > threshold) {
+            e.preventDefault();
+            const dir = wheelAccumXRef.current > 0 ? 1 : -1;
+            setCurrentKey(prev => (prev + dir + KEYS.length) % KEYS.length);
+            displayLabel();
+            haptic.tap();
+            wheelAccumXRef.current = 0;
+            wheelAccumYRef.current = 0;
+          }
+        } else {
+          if (Math.abs(wheelAccumYRef.current) > threshold) {
+            e.preventDefault();
+            const dir = wheelAccumYRef.current > 0 ? 1 : -1;
+            setCurrentScaleType(prev => (prev + dir + SCALE_TYPES.length) % SCALE_TYPES.length);
+            displayLabel();
+            haptic.tap();
+            wheelAccumXRef.current = 0;
+            wheelAccumYRef.current = 0;
+          }
         }
       } else {
-        // Vertical: change texture
-        if (Math.abs(wheelAccumYRef.current) > threshold) {
-          e.preventDefault();
-          const dir = wheelAccumYRef.current > 0 ? 1 : -1;
-          const newTexture = (currentTexture + dir + textures.length) % textures.length;
-          updateTexture(newTexture);
-          displayLabel();
-          haptic.tap();
-          wheelAccumXRef.current = 0;
-          wheelAccumYRef.current = 0;
+        // Normal scroll: change instrument (horizontal) or texture (vertical)
+        if (Math.abs(wheelAccumXRef.current) > Math.abs(wheelAccumYRef.current)) {
+          if (Math.abs(wheelAccumXRef.current) > threshold) {
+            e.preventDefault();
+            const dir = wheelAccumXRef.current > 0 ? 1 : -1;
+            setCurrentInstrument(prev => (prev + dir + instruments.length) % instruments.length);
+            displayLabel();
+            haptic.tap();
+            wheelAccumXRef.current = 0;
+            wheelAccumYRef.current = 0;
+          }
+        } else {
+          if (Math.abs(wheelAccumYRef.current) > threshold) {
+            e.preventDefault();
+            const dir = wheelAccumYRef.current > 0 ? 1 : -1;
+            const newTexture = (currentTexture + dir + textures.length) % textures.length;
+            updateTexture(newTexture);
+            displayLabel();
+            haptic.tap();
+            wheelAccumXRef.current = 0;
+            wheelAccumYRef.current = 0;
+          }
         }
       }
     };
@@ -8124,6 +8211,15 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           color: 'rgba(255, 255, 255, 0.5)',
         }}>
           {textures[currentTexture].name}
+        </div>
+        <div style={{
+          fontSize: '0.75rem',
+          letterSpacing: '0.2em',
+          textTransform: 'lowercase',
+          color: 'rgba(255, 255, 255, 0.35)',
+          marginTop: '0.75rem',
+        }}>
+          {KEYS[currentKey].toLowerCase()} {SCALE_TYPES[currentScaleType].name}
         </div>
       </div>
 
