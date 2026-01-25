@@ -1244,7 +1244,7 @@ const gazeModes = [
 
 // Filtered visuals for breathwork mode (excludes busy visuals that interfere with text)
 const breathworkModes = gazeModes.filter(m =>
-  !['fern', 'succulent', 'ripples', 'jellyfish', 'jellyfish2d', 'mushrooms', 'koiPond', 'flowerOfLife'].includes(m.key)
+  !['fern', 'succulent', 'ripples', 'jellyfish', 'jellyfish2d', 'mushrooms', 'koiPond', 'flowerOfLife', 'dandelion', 'bioluminescent'].includes(m.key)
 );
 
 const gazeShapes = [
@@ -8145,10 +8145,25 @@ function Still() {
   // INPUT HANDLERS - Simple and direct
   // ============================================================================
 
+  const wheelAccumX = useRef(0);
+
   const handleWheel = useCallback((e) => {
     if (view !== 'scroll' || isAnimating.current) return;
     e.preventDefault();
 
+    // Horizontal scroll - change visual
+    wheelAccumX.current += e.deltaX;
+    if (Math.abs(wheelAccumX.current) > SCROLL_THRESHOLD) {
+      const direction = wheelAccumX.current > 0 ? 1 : -1;
+      const currentIndex = gazeModes.findIndex(m => m.key === gazeVisual);
+      const newIndex = (currentIndex + direction + gazeModes.length) % gazeModes.length;
+      setGazeVisual(gazeModes[newIndex].key);
+      haptic.tap();
+      wheelAccumX.current = 0;
+      return;
+    }
+
+    // Vertical scroll - change quote
     scrollAccum.current += e.deltaY * settings.scrollSpeed;
 
     if (scrollAccum.current > SCROLL_THRESHOLD) {
@@ -8158,7 +8173,7 @@ function Still() {
       scrollAccum.current = 0;
       goToQuote(-1);
     }
-  }, [view, settings.scrollSpeed, goToQuote]);
+  }, [view, settings.scrollSpeed, goToQuote, gazeVisual, setGazeVisual]);
 
   const handleTouchStart = useCallback((e) => {
     if (view !== 'scroll') return;
