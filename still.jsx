@@ -920,8 +920,8 @@ const breathTechniques = {
     description: 'Simple, soothing rhythm',
     recommendedCycles: 8, // ~1.5 min - gentle intro
     phases: [
-      { name: 'inhale', label: 'breathe in', duration: 5 },
-      { name: 'exhale', label: 'breathe out', duration: 6 },
+      { name: 'inhale', label: 'inhale', duration: 5 },
+      { name: 'exhale', label: 'exhale', duration: 6 },
     ],
     color: { inhale: '#1a3a4a', exhale: '#2a3a4a' },
   },
@@ -1244,7 +1244,7 @@ const gazeModes = [
 
 // Filtered visuals for breathwork mode (excludes busy visuals that interfere with text)
 const breathworkModes = gazeModes.filter(m =>
-  !['fern', 'succulent', 'ripples', 'jellyfish', 'jellyfish2d', 'mushrooms', 'koiPond', 'flowerOfLife', 'dandelion', 'bioluminescent', 'realm'].includes(m.key)
+  !['fern', 'succulent', 'ripples', 'jellyfish', 'jellyfish2d', 'mushrooms', 'koiPond', 'flowerOfLife', 'dandelion', 'bioluminescent', 'realm', 'tree'].includes(m.key)
 );
 
 const gazeShapes = [
@@ -1302,7 +1302,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   });
 
   // State for breath indicator display
-  const [breathDisplay, setBreathDisplay] = React.useState({ phase: 0.5, phaseLabel: 'breathe in', isHolding: false });
+  const [breathDisplay, setBreathDisplay] = React.useState({ phase: 0.5, phaseLabel: 'inhale', isHolding: false });
 
   // ========== TOUCH INTERACTION SYSTEM ==========
   const touchPointsRef = React.useRef([]);
@@ -1687,7 +1687,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const technique = breathTechniques[selectedTechnique];
     if (!technique) {
       const phase = Math.sin(elapsed * BREATH_SPEED) * 0.5 + 0.5;
-      return { phase, phaseName: phase > 0.5 ? 'inhale' : 'exhale', phaseLabel: phase > 0.5 ? 'breathe in' : 'breathe out', isInhaling: phase > 0.5 };
+      return { phase, phaseName: phase > 0.5 ? 'inhale' : 'exhale', phaseLabel: phase > 0.5 ? 'inhale' : 'exhale', isInhaling: phase > 0.5 };
     }
 
     const phases = technique.phases;
@@ -1718,7 +1718,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
       accumulatedTime += p.duration;
     }
-    return { phase: 0.5, phaseName: 'inhale', phaseLabel: 'breathe in', isInhaling: true };
+    return { phase: 0.5, phaseName: 'inhale', phaseLabel: 'inhale', isInhaling: true };
   }, [selectedTechnique]);
 
   // Simple phase getter for visuals (returns 0-1)
