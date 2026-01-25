@@ -1244,7 +1244,7 @@ const gazeModes = [
 
 // Filtered visuals for breathwork mode (excludes busy visuals that interfere with text)
 const breathworkModes = gazeModes.filter(m =>
-  !['fern', 'succulent', 'ripples', 'jellyfish', 'jellyfish2d', 'mushrooms', 'koiPond', 'flowerOfLife', 'dandelion', 'bioluminescent'].includes(m.key)
+  !['fern', 'succulent', 'ripples', 'jellyfish', 'jellyfish2d', 'mushrooms', 'koiPond', 'flowerOfLife', 'dandelion', 'bioluminescent', 'realm'].includes(m.key)
 );
 
 const gazeShapes = [
