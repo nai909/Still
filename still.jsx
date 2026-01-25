@@ -7298,8 +7298,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathValue, setBreathValue] = useState(0);
-  const [playedNote, setPlayedNote] = useState(null);
-  const noteTimeoutRef = useRef(null);
 
   // Generate current scale based on key and scale type
   const scale = generateScale(KEYS[currentKey], SCALE_TYPES[currentScaleType]);
@@ -7313,12 +7311,52 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     return noteNames[noteIndex];
   }, []);
 
-  // Show note and fade it
-  const showPlayedNote = useCallback((freq) => {
+  // Show note and fade it using DOM manipulation (more reliable than state)
+  const showPlayedNote = useCallback((freq, primaryHueVal) => {
     const noteName = freqToNoteName(freq);
-    setPlayedNote(noteName);
-    if (noteTimeoutRef.current) clearTimeout(noteTimeoutRef.current);
-    noteTimeoutRef.current = setTimeout(() => setPlayedNote(null), 2000);
+
+    // Inject keyframes if not already present
+    if (!document.getElementById('note-fade-style')) {
+      const style = document.createElement('style');
+      style.id = 'note-fade-style';
+      style.textContent = `
+        @keyframes noteFadeDOM {
+          0% { opacity: 0; }
+          15% { opacity: 1; }
+          70% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Remove any existing note display
+    const existing = document.getElementById('played-note-display');
+    if (existing) existing.remove();
+
+    // Create new note display element
+    const noteEl = document.createElement('div');
+    noteEl.id = 'played-note-display';
+    noteEl.textContent = noteName;
+    noteEl.style.cssText = `
+      position: fixed;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.5rem;
+      font-family: "Jost", sans-serif;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      color: hsl(${primaryHueVal}, 52%, 68%);
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0;
+      animation: noteFadeDOM 2s ease-in-out forwards;
+    `;
+    document.body.appendChild(noteEl);
+
+    // Remove after animation completes
+    setTimeout(() => noteEl.remove(), 2000);
   }, [freqToNoteName]);
 
   // Touch ref for forwarding to GazeMode ripples
@@ -7977,7 +8015,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
 
       playInstrument(freq, 0.6 + breathValue * 0.4);
-      showPlayedNote(freq);
+      showPlayedNote(freq, primaryHue);
 
       // Forward touch to GazeMode for ripples
       externalTouchRef.current.push({
@@ -8007,7 +8045,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         setTimeout(() => ripple.remove(), 1500);
       }
     }
-  }, [backgroundMode, playInstrument, breathValue, primaryHue, currentTexture, updateTexture, displayLabel]);
+  }, [backgroundMode, playInstrument, breathValue, primaryHue, currentTexture, updateTexture, displayLabel, showPlayedNote, scale]);
 
   // Handle click (for desktop)
   const handleClick = useCallback((e) => {
@@ -8024,7 +8062,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
 
     playInstrument(freq, 0.6 + breathValue * 0.4);
-    showPlayedNote(freq);
+    showPlayedNote(freq, primaryHue);
 
     // Create ripple
     const ripple = document.createElement('div');
@@ -8042,7 +8080,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     `;
     e.currentTarget.appendChild(ripple);
     setTimeout(() => ripple.remove(), 1500);
-  }, [backgroundMode, isInitialized, initAudio, playInstrument, breathValue, primaryHue, showPlayedNote]);
+  }, [backgroundMode, isInitialized, initAudio, playInstrument, breathValue, primaryHue, showPlayedNote, scale]);
 
   // Handle scroll for instrument/texture/key/scale change
   useEffect(() => {
@@ -8195,28 +8233,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         </div>
       )}
 
-      {/* Played note indicator */}
-      {playedNote && (
-        <div
-          key={playedNote + Date.now()}
-          style={{
-            position: 'absolute',
-            top: '35%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            fontSize: '1.5rem',
-            fontFamily: '"Jost", sans-serif',
-            fontWeight: 300,
-            letterSpacing: '0.3em',
-            color: `hsl(${primaryHue}, 52%, 68%)`,
-            pointerEvents: 'none',
-            zIndex: 5,
-            animation: 'noteFade 2s ease-in-out forwards',
-          }}
-        >
-          {playedNote}
-        </div>
-      )}
+      {/* Note display is handled via DOM manipulation in showPlayedNote */}
 
       {/* Center label */}
       <div
@@ -8458,6 +8475,12 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           50% { transform: translateY(-4px); }
         }
         @keyframes noteFade {
+          0% { opacity: 0; }
+          15% { opacity: 1; }
+          70% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        @keyframes noteFadeDOM {
           0% { opacity: 0; }
           15% { opacity: 1; }
           70% { opacity: 1; }
