@@ -7269,16 +7269,16 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       source.start(now);
     } else if (type === 'sampledGuitar') {
       // Sampled guitar - pitch shift from base note (C3 = 130.81Hz)
-      // Use the same pentatonic scale notes but in low octave
+      // Keep notes in C3-C4 range (one octave ascending from sample pitch)
       if (!guitarBufferRef.current) return;
 
       const baseFreq = 130.81; // C3 (the sample's pitch)
-      // Drop the note down to the A2-A3 range (one low octave)
       let adjustedFreq = freq;
-      while (adjustedFreq > 220) { // Keep below A3
+      // Keep notes between C3 (130.81) and C4 (261.63)
+      while (adjustedFreq > 261.63) {
         adjustedFreq = adjustedFreq / 2;
       }
-      while (adjustedFreq < 82) { // Keep above E2
+      while (adjustedFreq < 130.81) {
         adjustedFreq = adjustedFreq * 2;
       }
       const playbackRate = adjustedFreq / baseFreq;
