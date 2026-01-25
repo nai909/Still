@@ -7236,15 +7236,19 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       source.start(now);
     } else if (type === 'sampledGuitar') {
       // Sampled guitar - pitch shift from base note (C3 = 130.81Hz)
-      // Limit range to keep it sounding natural (drop high notes down)
+      // Use a dedicated low range for natural guitar sound
       if (!guitarBufferRef.current) return;
 
-      const baseFreq = 130.81; // C3
-      let adjustedFreq = freq;
-      // If note is too high, drop it down an octave (or more)
-      while (adjustedFreq / baseFreq > 1.5) {
-        adjustedFreq = adjustedFreq / 2;
-      }
+      const baseFreq = 130.81; // C3 (the sample's pitch)
+      // Map to guitar-friendly range: E2 (82Hz) to E3 (165Hz)
+      const minFreq = 82.41;  // E2
+      const maxFreq = 164.81; // E3
+      // Find where the input freq falls in the scale (0-1)
+      const scaleMin = 110;   // A2
+      const scaleMax = 880;   // A5
+      const normalizedPos = Math.log2(freq / scaleMin) / Math.log2(scaleMax / scaleMin);
+      // Map to guitar range
+      const adjustedFreq = minFreq * Math.pow(maxFreq / minFreq, Math.max(0, Math.min(1, normalizedPos)));
       const playbackRate = adjustedFreq / baseFreq;
 
       const source = ctx.createBufferSource();
