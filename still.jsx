@@ -7295,6 +7295,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const [currentKey, setCurrentKey] = useState(9); // A
   const [currentScaleType, setCurrentScaleType] = useState(10); // pentatonic minor
   const [showLabel, setShowLabel] = useState(false);
+  const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathValue, setBreathValue] = useState(0);
 
@@ -7924,20 +7925,20 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     const swipeThreshold = 50;
     const isSwipe = Math.abs(deltaX) > swipeThreshold || Math.abs(deltaY) > swipeThreshold;
 
-    if (isSwipe && deltaTime < 500) {
-      // It's a swipe - change settings based on position and direction
-      const inTopThird = touchStartRef.current.y < window.innerHeight / 3;
+    // Check for swipe up from bottom to open scale selector
+    const startedFromBottom = touchStartRef.current.y > window.innerHeight * 0.85;
+    const isSwipeUp = deltaY < -swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX);
 
+    if (isSwipeUp && startedFromBottom && deltaTime < 500) {
+      // Swipe up from bottom - open scale selector
+      setShowScaleSelector(true);
+      haptic.tap();
+    } else if (isSwipe && deltaTime < 500) {
+      // Regular swipe - change instrument or texture
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        // Horizontal swipe
+        // Horizontal swipe - change instrument
         const dir = deltaX > 0 ? -1 : 1;
-        if (inTopThird) {
-          // Top third: change key
-          setCurrentKey(prev => (prev + dir + KEYS.length) % KEYS.length);
-        } else {
-          // Bottom two-thirds: change instrument
-          setCurrentInstrument(prev => (prev + dir + instruments.length) % instruments.length);
-        }
+        setCurrentInstrument(prev => (prev + dir + instruments.length) % instruments.length);
         displayLabel();
         haptic.tap();
       } else {
@@ -7949,54 +7950,41 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         haptic.tap();
       }
     } else {
-      // It's a tap - check for double-tap to cycle scale
-      const now = Date.now();
-      const timeSinceLastTap = now - lastTapTimeRef.current;
+      // It's a tap - play instrument
+      const clientY = touchStartRef.current.y;
+      const clientX = touchStartRef.current.x;
+      const normalizedY = 1 - (clientY / window.innerHeight);
+      const noteIndex = Math.floor(normalizedY * scale.length);
+      const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
 
-      if (timeSinceLastTap < 300) {
-        // Double tap - cycle scale type
-        setCurrentScaleType(prev => (prev + 1) % SCALE_TYPES.length);
-        displayLabel();
-        haptic.tap();
-        lastTapTimeRef.current = 0; // Reset to prevent triple-tap
-      } else {
-        // Single tap - play instrument
-        const clientY = touchStartRef.current.y;
-        const clientX = touchStartRef.current.x;
-        const normalizedY = 1 - (clientY / window.innerHeight);
-        const noteIndex = Math.floor(normalizedY * scale.length);
-        const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
+      playInstrument(freq, 0.6 + breathValue * 0.4);
 
-        playInstrument(freq, 0.6 + breathValue * 0.4);
-        lastTapTimeRef.current = now;
+      // Forward touch to GazeMode for ripples
+      externalTouchRef.current.push({
+        id: `drone-${Date.now()}`,
+        x: clientX,
+        y: clientY,
+        time: Date.now(),
+      });
 
-        // Forward touch to GazeMode for ripples
-        externalTouchRef.current.push({
-          id: `drone-${Date.now()}`,
-          x: clientX,
-          y: clientY,
-          time: Date.now(),
-        });
-
-        // Create ripple
-        const container = e.target.closest('main');
-        if (container) {
-          const ripple = document.createElement('div');
-          ripple.style.cssText = `
-            position: absolute;
-            left: ${clientX}px;
-            top: ${clientY}px;
-            width: 100px;
-            height: 100px;
-            border: 1px solid hsla(${primaryHue}, 52%, 68%, 0.4);
-            border-radius: 50%;
-            pointer-events: none;
-            animation: droneRipple 1.5s ease-out forwards;
-            transform: translate(-50%, -50%) scale(0);
-          `;
-          container.appendChild(ripple);
-          setTimeout(() => ripple.remove(), 1500);
-        }
+      // Create ripple
+      const container = e.target.closest('main');
+      if (container) {
+        const ripple = document.createElement('div');
+        ripple.style.cssText = `
+          position: absolute;
+          left: ${clientX}px;
+          top: ${clientY}px;
+          width: 100px;
+          height: 100px;
+          border: 1px solid hsla(${primaryHue}, 52%, 68%, 0.4);
+          border-radius: 50%;
+          pointer-events: none;
+          animation: droneRipple 1.5s ease-out forwards;
+          transform: translate(-50%, -50%) scale(0);
+        `;
+        container.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 1500);
       }
     }
   }, [backgroundMode, playInstrument, breathValue, primaryHue, currentTexture, updateTexture, displayLabel]);
@@ -8213,7 +8201,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           fontSize: '0.9rem',
           letterSpacing: '0.3em',
           textTransform: 'lowercase',
-          color: 'rgba(255, 255, 255, 0.5)',
+          color: '#fff',
         }}>
           {textures[currentTexture].name}
         </div>
@@ -8221,12 +8209,151 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           fontSize: '0.75rem',
           letterSpacing: '0.2em',
           textTransform: 'lowercase',
-          color: 'rgba(255, 255, 255, 0.35)',
+          color: '#fff',
           marginTop: '0.75rem',
         }}>
           {KEYS[currentKey].toLowerCase()} {SCALE_TYPES[currentScaleType].name}
         </div>
       </div>
+
+      {/* Scale selector drawer */}
+      {showScaleSelector && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setShowScaleSelector(false)}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.6)',
+              zIndex: 10,
+              animation: 'fadeInScale 0.3s ease',
+            }}
+          />
+          {/* Drawer */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: 'rgba(0, 0, 0, 0.95)',
+              borderTop: `1px solid hsla(${primaryHue}, 52%, 68%, 0.2)`,
+              borderRadius: '1.5rem 1.5rem 0 0',
+              zIndex: 11,
+              animation: 'slideUpScale 0.3s ease',
+              maxHeight: '70vh',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Header */}
+            <div style={{
+              padding: '1rem 1.5rem 0.75rem',
+              textAlign: 'center',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              <span style={{
+                color: `hsla(${primaryHue}, 52%, 68%, 0.7)`,
+                fontSize: '0.6rem',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+              }}>Scale Selection</span>
+            </div>
+
+            {/* Two column layout */}
+            <div style={{
+              display: 'flex',
+              maxHeight: 'calc(70vh - 3rem)',
+            }}>
+              {/* Keys column */}
+              <div style={{
+                flex: 1,
+                borderRight: '1px solid rgba(255,255,255,0.06)',
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+              }}>
+                <div style={{
+                  padding: '0.5rem 0.75rem',
+                  fontSize: '0.55rem',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontFamily: '"Jost", sans-serif',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                }}>Key</div>
+                {KEYS.map((key, index) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setCurrentKey(index);
+                      displayLabel();
+                      haptic.tap();
+                    }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      background: currentKey === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
+                      border: 'none',
+                      borderLeft: currentKey === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
+                      color: currentKey === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      padding: '0.7rem 1rem',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      fontFamily: '"Jost", sans-serif',
+                      textAlign: 'left',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {key}
+                  </button>
+                ))}
+              </div>
+
+              {/* Scales column */}
+              <div style={{
+                flex: 2,
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+              }}>
+                <div style={{
+                  padding: '0.5rem 0.75rem',
+                  fontSize: '0.55rem',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontFamily: '"Jost", sans-serif',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                }}>Scale</div>
+                {SCALE_TYPES.map((scaleType, index) => (
+                  <button
+                    key={scaleType.name}
+                    onClick={() => {
+                      setCurrentScaleType(index);
+                      displayLabel();
+                      haptic.tap();
+                    }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      background: currentScaleType === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
+                      border: 'none',
+                      borderLeft: currentScaleType === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
+                      color: currentScaleType === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      padding: '0.7rem 1rem',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontFamily: '"Jost", sans-serif',
+                      textAlign: 'left',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {scaleType.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       <style>{`
         @keyframes droneRipple {
@@ -8238,6 +8365,14 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           20% { opacity: 1; }
           80% { opacity: 1; }
           100% { opacity: 0; }
+        }
+        @keyframes fadeInScale {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUpScale {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
         }
       `}</style>
     </main>
