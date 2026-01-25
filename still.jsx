@@ -7389,6 +7389,13 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 1500);
   }, []);
 
+  // Show label when drone initializes
+  useEffect(() => {
+    if (isInitialized && !backgroundMode) {
+      displayLabel();
+    }
+  }, [isInitialized, backgroundMode, displayLabel]);
+
   // Handle touch start
   const handleTouchStart = useCallback((e) => {
     if (backgroundMode) return;
