@@ -9138,7 +9138,7 @@ function Still() {
           <nav style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             {/* Main mode buttons - always visible */}
             {[
-              { key: 'zenboard', icon: '○', label: 'Draw' },
+              { key: 'zenboard', icon: '∞', label: 'Draw' },
               { key: 'gaze', icon: '◯', label: 'Gaze' },
               { key: 'breathwork', icon: '◎', label: 'Breathe' },
               { key: 'drone', icon: '∿', label: 'Drone' },
