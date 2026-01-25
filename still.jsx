@@ -6877,8 +6877,9 @@ function ZenWaterBoard({ primaryHue = 162 }) {
   const animationFrameRef = useRef(null);
   const [showHint, setShowHint] = useState(true);
 
-  const FADE_DURATION = 10000;
-  const BASE_SIZE = 18;
+  const FADE_DURATION = 12000;
+  const BASE_SIZE = 22;
+  const BRISTLE_COUNT = 5;
 
   // Setup canvas
   useEffect(() => {
@@ -6908,6 +6909,7 @@ function ZenWaterBoard({ primaryHue = 162 }) {
     return {
       x: (touch?.clientX || e.clientX) - rect.left,
       y: (touch?.clientY || e.clientY) - rect.top,
+      pressure: touch?.force || 0.5,
       time: Date.now()
     };
   }, []);
@@ -6916,7 +6918,13 @@ function ZenWaterBoard({ primaryHue = 162 }) {
   const startDrawing = useCallback((e) => {
     e.preventDefault();
     isDrawingRef.current = true;
-    currentPointsRef.current = [getPoint(e)];
+    const point = getPoint(e);
+    // Generate random bristle offsets for this stroke
+    point.bristles = Array.from({ length: BRISTLE_COUNT }, () => ({
+      offset: (Math.random() - 0.5) * 0.8,
+      width: 0.3 + Math.random() * 0.7
+    }));
+    currentPointsRef.current = [point];
     if (showHint) setShowHint(false);
     haptic.tap();
   }, [getPoint, showHint]);
@@ -6925,7 +6933,12 @@ function ZenWaterBoard({ primaryHue = 162 }) {
   const draw = useCallback((e) => {
     if (!isDrawingRef.current) return;
     e.preventDefault();
-    currentPointsRef.current.push(getPoint(e));
+    const point = getPoint(e);
+    // Inherit bristle pattern from first point
+    if (currentPointsRef.current.length > 0) {
+      point.bristles = currentPointsRef.current[0].bristles;
+    }
+    currentPointsRef.current.push(point);
   }, [getPoint]);
 
   // End stroke
@@ -6935,7 +6948,8 @@ function ZenWaterBoard({ primaryHue = 162 }) {
     if (currentPointsRef.current.length > 1) {
       strokesRef.current.push({
         points: [...currentPointsRef.current],
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        seed: Math.random() * 1000
       });
     }
     currentPointsRef.current = [];
@@ -6958,57 +6972,161 @@ function ZenWaterBoard({ primaryHue = 162 }) {
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, rect.width, rect.height);
 
-      // Helper to draw smooth stroke
-      const drawStroke = (points, opacity) => {
+      // Seeded random for consistent bristle wobble
+      const seededRandom = (seed) => {
+        const x = Math.sin(seed) * 10000;
+        return x - Math.floor(x);
+      };
+
+      // Draw ink brush stroke
+      const drawStroke = (points, opacity, seed = 0) => {
         if (points.length < 2) return;
 
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
+        const bristles = points[0].bristles || [{ offset: 0, width: 1 }];
 
-        for (let i = 1; i < points.length; i++) {
-          const p0 = points[i - 1];
-          const p1 = points[i];
-
-          // Calculate speed for brush dynamics
-          const dx = p1.x - p0.x;
-          const dy = p1.y - p0.y;
+        // Calculate speeds for all points first
+        const speeds = points.map((p, i) => {
+          if (i === 0) return 0;
+          const prev = points[i - 1];
+          const dx = p.x - prev.x;
+          const dy = p.y - prev.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          const dt = Math.max(1, p1.time - p0.time);
-          const speed = dist / dt;
+          const dt = Math.max(1, p.time - prev.time);
+          return dist / dt;
+        });
 
-          // Slower = thicker, faster = thinner
-          const size = BASE_SIZE * Math.max(0.4, Math.min(1.2, 1.1 - speed * 0.08));
+        // Smooth the speeds
+        const smoothedSpeeds = speeds.map((s, i) => {
+          const prev = speeds[i - 1] || s;
+          const next = speeds[i + 1] || s;
+          return (prev + s + next) / 3;
+        });
 
-          // Main stroke
+        // Draw each bristle as a separate line
+        bristles.forEach((bristle, bristleIndex) => {
           ctx.beginPath();
-          ctx.moveTo(p0.x, p0.y);
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
 
-          // Use quadratic curve for smoothness
-          if (i < points.length - 1) {
-            const p2 = points[i + 1];
-            const midX = (p1.x + p2.x) / 2;
-            const midY = (p1.y + p2.y) / 2;
-            ctx.quadraticCurveTo(p1.x, p1.y, midX, midY);
-          } else {
-            ctx.lineTo(p1.x, p1.y);
+          for (let i = 0; i < points.length; i++) {
+            const p = points[i];
+            const speed = smoothedSpeeds[i];
+
+            // Taper at start and end
+            const startTaper = Math.min(1, i / 8);
+            const endTaper = Math.min(1, (points.length - 1 - i) / 8);
+            const taper = Math.min(startTaper, endTaper);
+
+            // Speed affects width: slower = wider
+            const speedFactor = Math.max(0.3, Math.min(1.3, 1.2 - speed * 0.1));
+
+            // Base size with taper and speed
+            const size = BASE_SIZE * speedFactor * taper * bristle.width;
+
+            // Add subtle wobble for organic feel
+            const wobble = seededRandom(seed + i * 0.1 + bristleIndex) * 2 - 1;
+            const wobbleAmount = size * 0.15;
+
+            // Calculate perpendicular offset for this bristle
+            let perpX = 0, perpY = 0;
+            if (i < points.length - 1) {
+              const next = points[i + 1];
+              const dx = next.x - p.x;
+              const dy = next.y - p.y;
+              const len = Math.sqrt(dx * dx + dy * dy) || 1;
+              perpX = -dy / len;
+              perpY = dx / len;
+            } else if (i > 0) {
+              const prev = points[i - 1];
+              const dx = p.x - prev.x;
+              const dy = p.y - prev.y;
+              const len = Math.sqrt(dx * dx + dy * dy) || 1;
+              perpX = -dy / len;
+              perpY = dx / len;
+            }
+
+            const offsetAmount = bristle.offset * size + wobble * wobbleAmount;
+            const x = p.x + perpX * offsetAmount;
+            const y = p.y + perpY * offsetAmount;
+
+            if (i === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              // Use bezier for smooth curves
+              const prev = points[i - 1];
+              const prevSpeed = smoothedSpeeds[i - 1];
+              const prevTaper = Math.min(Math.min(1, (i - 1) / 8), Math.min(1, (points.length - i) / 8));
+              const prevSize = BASE_SIZE * Math.max(0.3, Math.min(1.3, 1.2 - prevSpeed * 0.1)) * prevTaper * bristle.width;
+              const prevWobble = seededRandom(seed + (i - 1) * 0.1 + bristleIndex) * 2 - 1;
+              const prevOffsetAmount = bristle.offset * prevSize + prevWobble * prevSize * 0.15;
+
+              let prevPerpX = 0, prevPerpY = 0;
+              if (i > 1) {
+                const pp = points[i - 2];
+                const dx = prev.x - pp.x;
+                const dy = prev.y - pp.y;
+                const len = Math.sqrt(dx * dx + dy * dy) || 1;
+                prevPerpX = -dy / len;
+                prevPerpY = dx / len;
+              } else {
+                prevPerpX = perpX;
+                prevPerpY = perpY;
+              }
+
+              const prevX = prev.x + prevPerpX * prevOffsetAmount;
+              const prevY = prev.y + prevPerpY * prevOffsetAmount;
+              const midX = (prevX + x) / 2;
+              const midY = (prevY + y) / 2;
+
+              ctx.quadraticCurveTo(prevX, prevY, midX, midY);
+            }
           }
 
-          ctx.strokeStyle = `hsla(${primaryHue}, 50%, 60%, ${opacity * 0.85})`;
-          ctx.lineWidth = size;
+          // Stroke with varying opacity per bristle
+          const bristleOpacity = opacity * (0.6 + bristle.width * 0.4);
+          ctx.strokeStyle = `hsla(${primaryHue}, 40%, 55%, ${bristleOpacity * 0.7})`;
+          ctx.lineWidth = Math.max(1, BASE_SIZE * 0.15 * bristle.width);
           ctx.stroke();
+        });
 
-          // Soft glow layer
+        // Add ink wash/bleed effect
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 1; i < points.length; i++) {
+          const p = points[i];
+          const prev = points[i - 1];
+          const speed = smoothedSpeeds[i];
+          const taper = Math.min(Math.min(1, i / 8), Math.min(1, (points.length - 1 - i) / 8));
+          const size = BASE_SIZE * Math.max(0.3, Math.min(1.3, 1.2 - speed * 0.1)) * taper;
+
+          // Soft glow underneath
+          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size * 1.5);
+          gradient.addColorStop(0, `hsla(${primaryHue}, 50%, 60%, ${opacity * 0.08})`);
+          gradient.addColorStop(0.5, `hsla(${primaryHue}, 50%, 60%, ${opacity * 0.03})`);
+          gradient.addColorStop(1, `hsla(${primaryHue}, 50%, 60%, 0)`);
+
           ctx.beginPath();
-          ctx.moveTo(p0.x, p0.y);
-          if (i < points.length - 1) {
-            const p2 = points[i + 1];
-            ctx.quadraticCurveTo(p1.x, p1.y, (p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
-          } else {
-            ctx.lineTo(p1.x, p1.y);
+          ctx.arc(p.x, p.y, size * 1.5, 0, Math.PI * 2);
+          ctx.fillStyle = gradient;
+          ctx.fill();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+
+        // Ink splatter at stroke start
+        if (points.length > 2 && opacity > 0.5) {
+          const start = points[0];
+          const splatCount = 3 + Math.floor(seededRandom(seed) * 4);
+          for (let i = 0; i < splatCount; i++) {
+            const angle = seededRandom(seed + i) * Math.PI * 2;
+            const dist = seededRandom(seed + i + 0.5) * BASE_SIZE * 0.8;
+            const size = 1 + seededRandom(seed + i + 0.3) * 2;
+            const x = start.x + Math.cos(angle) * dist;
+            const y = start.y + Math.sin(angle) * dist;
+
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${primaryHue}, 40%, 55%, ${opacity * 0.4})`;
+            ctx.fill();
           }
-          ctx.strokeStyle = `hsla(${primaryHue}, 60%, 70%, ${opacity * 0.15})`;
-          ctx.lineWidth = size * 2.5;
-          ctx.stroke();
         }
       };
 
@@ -7018,14 +7136,14 @@ function ZenWaterBoard({ primaryHue = 162 }) {
         if (age > FADE_DURATION) return false;
 
         const progress = age / FADE_DURATION;
-        const opacity = Math.pow(1 - progress, 2);
-        drawStroke(stroke.points, opacity);
+        const opacity = Math.pow(1 - progress, 1.5);
+        drawStroke(stroke.points, opacity, stroke.seed);
         return true;
       });
 
       // Draw current stroke
       if (isDrawingRef.current && currentPointsRef.current.length > 1) {
-        drawStroke(currentPointsRef.current, 1);
+        drawStroke(currentPointsRef.current, 1, 0);
       }
 
       animationFrameRef.current = requestAnimationFrame(render);
@@ -7060,7 +7178,7 @@ function ZenWaterBoard({ primaryHue = 162 }) {
           bottom: '2rem',
           left: '50%',
           transform: 'translateX(-50%)',
-          color: `hsla(${primaryHue}, 30%, 55%, 0.5)`,
+          color: `hsla(${primaryHue}, 30%, 55%, 0.4)`,
           fontSize: '0.85rem',
           fontFamily: '"Jost", sans-serif',
           letterSpacing: '0.2em',
