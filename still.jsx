@@ -8347,12 +8347,14 @@ function Still() {
       >
         {/* Background visual for scroll mode - very dim, slow */}
         {(view === 'scroll' || view === 'filter') && (
-          <GazeMode
-            theme={currentTheme}
-            primaryHue={settings.primaryHue}
-            backgroundMode={true}
-            currentVisual={gazeVisual}
-          />
+          <div style={{ opacity: 0.4 }}>
+            <GazeMode
+              theme={currentTheme}
+              primaryHue={settings.primaryHue}
+              backgroundMode={true}
+              currentVisual={gazeVisual}
+            />
+          </div>
         )}
 
         {/* Vignette */}
