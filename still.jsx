@@ -7182,8 +7182,8 @@ function ZenWaterBoard({ primaryHue = 162 }) {
 
       <style>{`
         @keyframes zenTextPulse {
-          0%, 100% { opacity: 0; }
-          50% { opacity: 0.15; }
+          0%, 100% { opacity: 0.15; }
+          50% { opacity: 0; }
         }
       `}</style>
     </main>
