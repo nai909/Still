@@ -5565,9 +5565,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           blob.mesh.scale.setScalar(baseScale);
         }
 
-        // Opacity with breath
-        blob.mesh.material.opacity = 0.5 + breath * 0.35 + touchInfluence.strength * 0.1;
+        // Opacity with breath - light up on touch
+        blob.mesh.material.opacity = 0.5 + breath * 0.35 + touchInfluence.strength * 0.4;
       });
+
+      // Glow particles light up on touch
+      glowMat.opacity = 0.4 + touchInfluence.strength * 0.5;
 
       // Animate glow particles
       const glowPositionsArr = glowGeom.attributes.position.array;
