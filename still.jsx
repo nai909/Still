@@ -6785,8 +6785,8 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
           50% { transform: translateY(-4px); }
         }
         @keyframes breathworkArrowFade {
-          0% { opacity: 0.8; }
-          70% { opacity: 0.8; }
+          0% { opacity: 1; }
+          70% { opacity: 1; }
           100% { opacity: 0; }
         }
       `}</style>
