@@ -7609,17 +7609,24 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       }}
     >
       {/* Lava lamp visual background */}
-      <GazeMode
-        primaryHue={primaryHue}
-        backgroundMode={true}
-        currentVisual="wax"
-        breathSession={{
-          isActive: isInitialized,
-          phase: breathPhase,
-          phaseProgress: breathValue,
-        }}
-        externalTouchRef={externalTouchRef}
-      />
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        opacity: isInitialized ? 1 : 0.3,
+        transition: 'opacity 1s ease',
+      }}>
+        <GazeMode
+          primaryHue={primaryHue}
+          backgroundMode={true}
+          currentVisual="wax"
+          breathSession={{
+            isActive: isInitialized,
+            phase: breathPhase,
+            phaseProgress: breathValue,
+          }}
+          externalTouchRef={externalTouchRef}
+        />
+      </div>
 
       {/* Center label */}
       <div
