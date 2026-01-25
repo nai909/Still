@@ -7389,7 +7389,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     if (backgroundMode) return;
     if (!isInitialized) {
       initAudio();
-      return;
     }
 
     const clientX = e.touches[0].clientX;
@@ -7406,7 +7405,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
   // Handle touch end - detect swipe vs tap
   const handleTouchEnd = useCallback((e) => {
-    if (backgroundMode || !isInitialized) return;
+    if (backgroundMode || !ctxRef.current) return;
 
     const endX = e.changedTouches[0].clientX;
     const endY = e.changedTouches[0].clientY;
@@ -7471,15 +7470,15 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         setTimeout(() => ripple.remove(), 1500);
       }
     }
-  }, [backgroundMode, isInitialized, playInstrument, breathValue, primaryHue, currentTexture, updateTexture, displayLabel]);
+  }, [backgroundMode, playInstrument, breathValue, primaryHue, currentTexture, updateTexture, displayLabel]);
 
   // Handle click (for desktop)
   const handleClick = useCallback((e) => {
     if (backgroundMode) return;
     if (!isInitialized) {
       initAudio();
-      return;
     }
+    if (!ctxRef.current) return;
 
     const clientY = e.clientY;
     const clientX = e.clientX;
