@@ -8457,10 +8457,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           50% { transform: translateY(-4px); }
         }
         @keyframes noteFade {
-          0% { opacity: 0; transform: translateX(-50%); }
-          15% { opacity: 0.7; transform: translateX(-50%); }
-          70% { opacity: 0.7; transform: translateX(-50%); }
-          100% { opacity: 0; transform: translateX(-50%); }
+          0% { opacity: 0; }
+          15% { opacity: 1; }
+          70% { opacity: 1; }
+          100% { opacity: 0; }
         }
       `}</style>
     </main>
