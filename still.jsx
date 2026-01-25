@@ -6892,7 +6892,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     { name: 'piano', type: 'sampledPiano' },
     { name: 'guitar', type: 'sampledGuitar' },
     { name: 'synth', type: 'feltPiano' },
-    { name: 'singing bowl', type: 'singingBowl' },
     { name: 'music box', type: 'musicBox' },
     { name: 'harp', type: 'sampledHarp' },
     { name: 'cello', type: 'sampledCello' },
@@ -7330,32 +7329,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       modulator.start(now);
       carrier.stop(now + 4);
       modulator.stop(now + 4);
-    } else if (type === 'singingBowl') {
-      const bowlPartials = [
-        { ratio: 1.0, amp: 1.0, decay: 2 },
-        { ratio: 1.002, amp: 0.8, decay: 2 },
-        { ratio: 2.71, amp: 0.5, decay: 1.5 },
-        { ratio: 2.73, amp: 0.4, decay: 1.5 },
-        { ratio: 5.15, amp: 0.25, decay: 1 },
-        { ratio: 5.18, amp: 0.2, decay: 1 },
-        { ratio: 8.42, amp: 0.1, decay: 0.8 },
-      ];
-
-      bowlPartials.forEach((partial) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq * partial.ratio;
-        const amp = 0.02 * partial.amp * velocity;
-        gain.gain.value = 0;
-        gain.gain.setTargetAtTime(amp, now, 0.01);
-        gain.gain.setTargetAtTime(amp * 0.7, now + 0.1, 0.2);
-        gain.gain.setTargetAtTime(0, now + 0.5, partial.decay);
-        osc.connect(gain);
-        gain.connect(masterGain);
-        osc.start(now);
-        osc.stop(now + partial.decay * 3 + 2);
-      });
     } else if (type === 'musicBox') {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -7454,8 +7427,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
       const gain = ctx.createGain();
       gain.gain.value = 0;
-      gain.gain.setTargetAtTime(0.7 * velocity, now, 0.005);
-      gain.gain.setTargetAtTime(0.4 * velocity, now + 0.1, 0.3);
+      gain.gain.setTargetAtTime(0.35 * velocity, now, 0.005);
+      gain.gain.setTargetAtTime(0.2 * velocity, now + 0.1, 0.3);
       gain.gain.setTargetAtTime(0, now + 0.5, 2);
 
       source.connect(gain);
