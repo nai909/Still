@@ -1,0 +1,26 @@
+{
+  "name": "still-meditation",
+  "version": "1.0.0",
+  "description": "A meditation and philosophy app with ambient soundscapes and breathwork",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "ios": "npm run build && npx cap sync ios && npx cap open ios",
+    "ios:dev": "npm run build && npx cap sync ios"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "three": "^0.160.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.4.18",
+    "@capacitor/cli": "^6.0.0"
+  }
+}

@@ -5,75 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Still</title>
   <meta name="theme-color" content="#000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body, #root { height: 100%; overflow: hidden; background: #000; overscroll-behavior: none; }
-    html { position: fixed; width: 100%; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
-    .loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; color: #7FDBCA; font-family: 'Jost', sans-serif; font-size: 2rem; letter-spacing: 0.2em; }
-    .loading::after { content: 'φ'; animation: pulse 2s ease-in-out infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
-    @keyframes twinkle { 0%, 100% { opacity: 0.1; } 50% { opacity: 0.6; } }
-    @keyframes aurora {
-      0%, 100% { transform: translateX(-5%) scaleY(1); opacity: 0.15; }
-      25% { transform: translateX(5%) scaleY(1.1); opacity: 0.2; }
-      50% { transform: translateX(-3%) scaleY(0.95); opacity: 0.12; }
-      75% { transform: translateX(8%) scaleY(1.05); opacity: 0.18; }
-    }
-    @keyframes scrollPulse {
-      0%, 100% { opacity: 0.3; transform: scaleY(1); }
-      50% { opacity: 0.8; transform: scaleY(1.2); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-      to { opacity: 1; transform: translateX(-50%) translateY(0); }
-    }
-    @keyframes fadeInLabel {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    /* Subtle button hover enhancement */
-    button { transition: all 0.2s ease !important; }
-    button:hover { filter: brightness(1.1); }
-    button:active { transform: scale(0.98); }
-  </style>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 <body>
   <div id="root"><div class="loading"></div></div>
-
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
-  <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-  <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-  <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-  <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-  <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-  <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-  <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
-  <script src="https://unpkg.com/three@0.128.0/examples/js/objects/MarchingCubes.js"></script>
-
-  <script>
-    // Fetch and compile JSX since Babel standalone doesn't reliably handle external src
-    fetch('still.jsx')
-      .then(res => res.text())
-      .then(jsx => {
-        const compiled = Babel.transform(jsx + '\nconst root = ReactDOM.createRoot(document.getElementById("root"));\nroot.render(React.createElement(Still));', {
-          presets: ['react']
-        }).code;
-        eval(compiled);
-      })
-      .catch(err => {
-        console.error('Failed to load app:', err);
-        document.getElementById('root').innerHTML = '<div style="color:red;padding:2rem;">Error loading app: ' + err.message + '</div>';
-      });
-  </script>
+  <style>
+    .loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; color: #7FDBCA; font-family: 'Jost', sans-serif; font-size: 2rem; letter-spacing: 0.2em; }
+    .loading::after { content: 'φ'; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+  </style>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
