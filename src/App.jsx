@@ -7550,7 +7550,7 @@ const generateScale = (keyName, scaleType, octaves = 3) => {
   return frequencies.sort((a, b) => a - b);
 };
 
-function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }) {
+function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false, hintsShown = false, onHintsShown }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [currentInstrument, setCurrentInstrument] = useState(2); // synth
   const [currentTexture, setCurrentTexture] = useState(3); // forest
@@ -7560,7 +7560,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathValue, setBreathValue] = useState(0);
-  const [showGestureHints, setShowGestureHints] = useState(true);
+  const [showGestureHints, setShowGestureHints] = useState(!hintsShown);
   const [gestureHintsFadingOut, setGestureHintsFadingOut] = useState(false);
 
   // Generate current scale based on key and scale type (memoized to prevent stale closures)
@@ -8714,6 +8714,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           onClick={() => {
             if (!gestureHintsFadingOut) {
               setGestureHintsFadingOut(true);
+              onHintsShown?.();
               setTimeout(() => setShowGestureHints(false), 2500);
             }
           }}
@@ -9209,6 +9210,7 @@ function Still() {
   // Track which modes have shown gesture hints this session
   const [gazeHintsShown, setGazeHintsShown] = useState(false);
   const [breathHintsShown, setBreathHintsShown] = useState(false);
+  const [droneHintsShown, setDroneHintsShown] = useState(false);
 
   // Music player state
   const [musicOpen, setMusicOpen] = useState(false);
@@ -10467,6 +10469,8 @@ function Still() {
           primaryHue={primaryHue}
           primaryColor={primaryColor}
           backgroundMode={view !== 'drone'}
+          hintsShown={droneHintsShown}
+          onHintsShown={() => setDroneHintsShown(true)}
         />
         {false && view === 'breathwork-old' && (
           <main
