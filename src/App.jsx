@@ -1070,12 +1070,12 @@ const breathTechniques = {
     description: 'Nadi Shodhana - balances',
     recommendedCycles: 5, // ~2 min - traditional practice
     phases: [
-      { name: 'inhale', label: 'Close right, inhale left', duration: 4 },
-      { name: 'holdFull', label: 'Close both, hold', duration: 4 },
-      { name: 'exhale', label: 'Close left, exhale right', duration: 4 },
-      { name: 'inhale', label: 'Close left, inhale right', duration: 4 },
-      { name: 'holdFull', label: 'Close both, hold', duration: 4 },
-      { name: 'exhale', label: 'Close right, exhale left', duration: 4 },
+      { name: 'inhale', label: 'Left in', duration: 4 },
+      { name: 'holdFull', label: 'Hold', duration: 4 },
+      { name: 'exhale', label: 'Right out', duration: 4 },
+      { name: 'inhale', label: 'Right in', duration: 4 },
+      { name: 'holdFull', label: 'Hold', duration: 4 },
+      { name: 'exhale', label: 'Left out', duration: 4 },
     ],
     color: { inhale: '#1a3a5a', holdFull: '#2a4a4a', exhale: '#1a2a4a' },
   },
@@ -1098,9 +1098,9 @@ const breathTechniques = {
     description: 'Left nostril only - calming',
     recommendedCycles: 8, // ~1.6 min
     phases: [
-      { name: 'inhale', label: 'Close right, inhale left', duration: 4 },
-      { name: 'holdFull', label: 'Close both, hold', duration: 2 },
-      { name: 'exhale', label: 'Close left, exhale right', duration: 6 },
+      { name: 'inhale', label: 'Left in', duration: 4 },
+      { name: 'holdFull', label: 'Hold', duration: 2 },
+      { name: 'exhale', label: 'Right out', duration: 6 },
     ],
     color: { inhale: '#1a2a4a', holdFull: '#2a3a5a', exhale: '#1a2a3a' },
   },
