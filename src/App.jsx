@@ -926,37 +926,6 @@ const ThemeContext = createContext(themes.void);
 // ============================================================================
 
 const breathTechniques = {
-  calm: {
-    name: 'Gentle Calm',
-    description: 'Simple, soothing rhythm',
-    recommendedCycles: 8, // ~1.5 min - gentle intro
-    phases: [
-      { name: 'inhale', label: 'inhale', duration: 5 },
-      { name: 'exhale', label: 'exhale', duration: 6 },
-    ],
-    color: { inhale: '#1a3a4a', exhale: '#2a3a4a' },
-  },
-  relaxation: {
-    name: '4-7-8 Sleep',
-    description: 'Deep relaxation for sleep',
-    recommendedCycles: 4, // Dr. Weil: max 4 cycles for beginners
-    phases: [
-      { name: 'inhale', label: 'inhale', duration: 4 },
-      { name: 'holdFull', label: 'hold', duration: 7 },
-      { name: 'exhale', label: 'exhale', duration: 8 },
-    ],
-    color: { inhale: '#1a3a5a', holdFull: '#3a4a4a', exhale: '#2a2a4a' },
-  },
-  coherent: {
-    name: 'Heart Coherence',
-    description: '5 breaths per minute',
-    recommendedCycles: 15, // ~3 min - HRV research suggests 5-10 min
-    phases: [
-      { name: 'inhale', label: 'inhale', duration: 6 },
-      { name: 'exhale', label: 'exhale', duration: 6 },
-    ],
-    color: { inhale: '#1a4a4a', exhale: '#2a3a5a' },
-  },
   box: {
     name: 'Box Breathing',
     description: 'Navy SEAL calm focus',
@@ -1041,16 +1010,6 @@ const breathTechniques = {
     color: { inhale: '#1a4a3a', holdFull: '#2a4a4a', exhale: '#1a3a3a' },
   },
 
-  pursedLip: {
-    name: 'Pursed Lip',
-    description: 'Calms acute anxiety',
-    recommendedCycles: 8, // ~1.2 min - acute relief
-    phases: [
-      { name: 'inhale', label: 'Nose inhale', duration: 3 },
-      { name: 'exhale', label: 'Pursed lips out', duration: 6 },
-    ],
-    color: { inhale: '#2a3a4a', exhale: '#1a2a4a' },
-  },
 
   vagalTone: {
     name: 'Vagal Toning',
@@ -6730,10 +6689,22 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
   const [showVisualToast, setShowVisualToast] = useState(false);
   const [showGestureHints, setShowGestureHints] = useState(!hintsShown);
   const [gestureHintsFadingOut, setGestureHintsFadingOut] = useState(false);
+  const [showLabel, setShowLabel] = useState(true);
   const swipeStartRef = useRef(null);
   const wheelAccumRef = useRef(0);
   const wheelTimeoutRef = useRef(null);
   const toastTimeoutRef = useRef(null);
+  const labelTimeoutRef = useRef(null);
+
+  // Reset breath session and show label when view opens
+  useEffect(() => {
+    stopBreathSession();
+    setShowLabel(true);
+    labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 2000);
+    return () => {
+      if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
+    };
+  }, []);
 
   // Cycle through visuals (using filtered breathworkModes)
   const cycleVisual = useCallback((direction) => {
@@ -6774,7 +6745,6 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
     if (deltaY < -minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX) * 1.5 && deltaTime < maxSwipeTime) {
       if (swipeStartRef.current.y > screenHeight * 0.5) {
         setShowUI(true);
-        setHasOpenedUI(true);
       }
     }
     // Vertical swipe DOWN: close technique selector
@@ -6822,7 +6792,6 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       else if (wheelAccumRef.current > threshold) {
         e.preventDefault();
         setShowUI(true);
-        setHasOpenedUI(true);
         wheelAccumRef.current = 0;
       }
     };
@@ -6911,23 +6880,22 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         </div>
       )}
 
-      {/* Breathe text - fades in and out when session not active */}
-      {!breathSession.isActive && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          fontSize: '2rem',
-          color: '#fff',
-          fontFamily: '"Jost", sans-serif',
-          fontWeight: 300,
-          letterSpacing: '0.3em',
-          textTransform: 'lowercase',
-          pointerEvents: 'none',
-          animation: 'breathTextPulse 4s ease-in-out forwards',
-        }}>breathe</div>
-      )}
+      {/* Breathe label - shows on open then fades */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        fontSize: '2rem',
+        color: '#fff',
+        fontFamily: '"Jost", sans-serif',
+        fontWeight: 300,
+        letterSpacing: '0.3em',
+        textTransform: 'lowercase',
+        pointerEvents: 'none',
+        opacity: showLabel && !breathSession.isActive ? 1 : 0,
+        transition: 'opacity 0.5s ease',
+      }}>breathe</div>
 
       {/* Gesture hints overlay */}
       {!showUI && showGestureHints && (
@@ -7562,6 +7530,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const [breathValue, setBreathValue] = useState(0);
   const [showGestureHints, setShowGestureHints] = useState(!hintsShown);
   const [gestureHintsFadingOut, setGestureHintsFadingOut] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
 
   // Generate current scale based on key and scale type (memoized to prevent stale closures)
   const scale = React.useMemo(() =>
@@ -8292,7 +8261,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     } else if (type === 'organicFlute') {
       // Flute synthesis - focus on the breathy "edge tone" character
 
-      const duration = 1.2;
+      const duration = 0.7;
 
       // === MAIN TONE (triangle for hollow quality) ===
       const osc = ctx.createOscillator();
@@ -8301,22 +8270,21 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
       // Pitch scoop - start slightly flat, rise to pitch
       osc.frequency.setValueAtTime(freq * 0.97, now);
-      osc.frequency.exponentialRampToValueAtTime(freq, now + 0.08);
+      osc.frequency.exponentialRampToValueAtTime(freq, now + 0.15);
 
       // Gentle vibrato (delayed onset)
       const vibrato = ctx.createOscillator();
       const vibGain = ctx.createGain();
       vibrato.frequency.value = 5;
       vibGain.gain.setValueAtTime(0, now);
-      vibGain.gain.setTargetAtTime(freq * 0.006, now + 0.3, 0.2);
+      vibGain.gain.setTargetAtTime(freq * 0.004, now + 0.2, 0.1);
       vibrato.connect(vibGain);
       vibGain.connect(osc.frequency);
 
-      // Tone envelope - shorter, quieter
+      // Tone envelope - soft attack, short decay
       oscGain.gain.setValueAtTime(0, now);
-      oscGain.gain.linearRampToValueAtTime(0.05 * velocity, now + 0.08);
-      oscGain.gain.setTargetAtTime(0.04 * velocity, now + 0.2, 0.15);
-      oscGain.gain.setTargetAtTime(0, now + duration - 0.3, 0.2);
+      oscGain.gain.linearRampToValueAtTime(0.05 * velocity, now + 0.18);
+      oscGain.gain.setTargetAtTime(0, now + 0.25, 0.12);
 
       // === SECOND HARMONIC (octave) ===
       const osc2 = ctx.createOscillator();
@@ -8324,9 +8292,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       osc2.type = 'sine';
       osc2.frequency.value = freq * 2;
       osc2Gain.gain.setValueAtTime(0, now);
-      osc2Gain.gain.linearRampToValueAtTime(0.01 * velocity, now + 0.1);
-      osc2Gain.gain.setTargetAtTime(0.0075 * velocity, now + 0.3, 0.15);
-      osc2Gain.gain.setTargetAtTime(0, now + duration - 0.3, 0.15);
+      osc2Gain.gain.linearRampToValueAtTime(0.01 * velocity, now + 0.2);
+      osc2Gain.gain.setTargetAtTime(0, now + 0.3, 0.1);
 
       // === BREATH/AIR NOISE ===
       const noiseLen = ctx.sampleRate * duration;
@@ -8350,12 +8317,11 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       airBand.frequency.value = 2000;
 
       const noiseGain = ctx.createGain();
-      // Chiff attack - burst of air, then settle (quieter)
-      noiseGain.gain.setValueAtTime(0.04 * velocity, now);
-      noiseGain.gain.linearRampToValueAtTime(0.06 * velocity, now + 0.03);
-      noiseGain.gain.exponentialRampToValueAtTime(0.015 * velocity, now + 0.1);
-      noiseGain.gain.setTargetAtTime(0.01 * velocity, now + 0.3, 0.15);
-      noiseGain.gain.setTargetAtTime(0, now + duration - 0.2, 0.15);
+      // Soft breath attack, quick fade
+      noiseGain.gain.setValueAtTime(0, now);
+      noiseGain.gain.linearRampToValueAtTime(0.04 * velocity, now + 0.1);
+      noiseGain.gain.setTargetAtTime(0.02 * velocity, now + 0.15, 0.08);
+      noiseGain.gain.setTargetAtTime(0, now + 0.25, 0.1);
 
       // === OUTPUT FILTER (warm, not shrill) ===
       const lpf = ctx.createBiquadFilter();
@@ -8472,7 +8438,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
 
       playInstrument(freq, 0.6 + breathValue * 0.4);
-      showPlayedNote(freq, primaryHue);
+      if (showNotes) showPlayedNote(freq, primaryHue);
 
       // Forward touch to GazeMode for ripples
       externalTouchRef.current.push({
@@ -8523,7 +8489,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
 
     playInstrument(freq, 0.6 + breathValue * 0.4);
-    showPlayedNote(freq, primaryHue);
+    if (showNotes) showPlayedNote(freq, primaryHue);
 
     // Create ripple
     const ripple = document.createElement('div');
@@ -8998,6 +8964,50 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Show notes toggle */}
+            <div style={{
+              padding: '0.75rem 1rem',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <div style={{
+                fontSize: '0.55rem',
+                color: 'rgba(255,255,255,0.4)',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}>Show Notes</div>
+              <button
+                onClick={() => {
+                  setShowNotes(prev => !prev);
+                  haptic.tap();
+                }}
+                style={{
+                  width: '44px',
+                  height: '24px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: showNotes ? `hsla(${primaryHue}, 52%, 68%, 0.4)` : 'rgba(255,255,255,0.1)',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  transition: 'background 0.2s ease',
+                }}
+              >
+                <div style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  background: showNotes ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.5)',
+                  position: 'absolute',
+                  top: '3px',
+                  left: showNotes ? '23px' : '3px',
+                  transition: 'all 0.2s ease',
+                }} />
+              </button>
             </div>
 
             {/* Two column layout */}
