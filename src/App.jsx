@@ -1239,7 +1239,6 @@ const gazeModes = [
   { key: 'dandelion', name: 'Dandelion' },
   { key: 'lungs', name: 'Breath Tree' },
   { key: 'ripples', name: 'Ripples' },
-  { key: 'jellyfish', name: 'Jellyfish 3D' },
   { key: 'jellyfish2d', name: 'Deep Sea' },
   { key: 'mushrooms', name: 'Mushrooms' },
   // Water/Ocean visuals
@@ -1255,7 +1254,7 @@ const gazeModes = [
 
 // Filtered visuals for breathwork mode (excludes busy visuals that interfere with text)
 const breathworkModes = gazeModes.filter(m =>
-  !['fern', 'succulent', 'ripples', 'jellyfish', 'jellyfish2d', 'mushrooms', 'koiPond', 'flowerOfLife', 'dandelion', 'bioluminescent', 'realm', 'tree'].includes(m.key)
+  !['fern', 'succulent', 'ripples', 'jellyfish2d', 'mushrooms', 'koiPond', 'flowerOfLife', 'dandelion', 'bioluminescent', 'realm', 'tree', 'wax'].includes(m.key)
 );
 
 const gazeShapes = [
@@ -1281,6 +1280,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   const bgSpeed = backgroundMode ? 0.3 : 1;
   const containerRef = React.useRef(null);
   const canvasRef = React.useRef(null);
+  const particleCanvasRef = React.useRef(null);
+  const particlesRef = React.useRef([]);
   const frameRef = React.useRef(null);
   const sceneRef = React.useRef(null);
   const rendererRef = React.useRef(null);
@@ -1776,7 +1777,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5.5;
+    camera.position.z = 8;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1823,8 +1824,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
             }
           } else {
             // Gentle auto-rotation when not touching
-            meshRef.current.rotation.y += 0.001;
-            meshRef.current.rotation.x += 0.0005;
+            meshRef.current.rotation.y += 0.0004;
+            meshRef.current.rotation.x += 0.0002;
           }
         }
 
@@ -1874,7 +1875,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 2.5, 7);
+    camera.position.set(0, 3, 10);
     camera.lookAt(0, 2, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -1982,7 +1983,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
       } else {
         // Gentle auto-rotation when not touching
-        treeGroup.rotation.y += 0.001;
+        treeGroup.rotation.y += 0.0004;
       }
 
       // Spring-damper scale physics
@@ -2043,7 +2044,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 2.5, 3.5);
+    camera.position.set(0, 2.5, 5);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -2139,7 +2140,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           rippleGroup.rotation.x += normalizedY * 0.01 * bgSpeed;
         }
       } else {
-        rippleGroup.rotation.y += 0.0003 * bgSpeed;
+        rippleGroup.rotation.y += 0.00015 * bgSpeed;
       }
 
       // Spring-damper scale physics for core (gentler in background mode)
@@ -2211,7 +2212,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 2.5, 6);
+    camera.position.set(0, 3, 9);
     camera.lookAt(0, 2.5, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -2308,7 +2309,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
       } else {
         // Gentle auto-rotation when not touching
-        fernGroup.rotation.y += 0.001;
+        fernGroup.rotation.y += 0.0004;
       }
 
       // Gentle breathing sway
@@ -2361,7 +2362,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 5);
+    camera.position.set(0, 0, 8);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -2501,7 +2502,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
       } else {
         // Gentle auto-rotation when not touching
-        dandelionGroup.rotation.y += 0.001;
+        dandelionGroup.rotation.y += 0.0004;
       }
 
       // Release seeds on exhale
@@ -2551,7 +2552,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         seed.position.add(seed.userData.velocity);
         seed.userData.velocity.y += 0.0001; // Gentle lift
         seed.userData.velocity.x += Math.sin(elapsed + seed.userData.phase) * 0.0002;
-        seed.rotation.y += 0.01;
+        seed.rotation.y += 0.004;
 
         // Fade out as they rise
         const fadeStart = 2;
@@ -2609,7 +2610,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 3, 4);
+    camera.position.set(0, 4, 7);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -2698,7 +2699,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
       } else {
         // Gentle auto-rotation when not touching
-        succulentGroup.rotation.y += 0.002;
+        succulentGroup.rotation.y += 0.0008;
       }
 
       // Spring-damper scale physics
@@ -2761,7 +2762,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 6);
+    camera.position.set(0, 0, 9);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -2883,7 +2884,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           lungsGroup.rotation.x += normalizedY * 0.01;
         }
       } else {
-        lungsGroup.rotation.y += 0.001;
+        lungsGroup.rotation.y += 0.0004;
       }
 
       // Spring-damper scale physics
@@ -2984,7 +2985,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     scene.background = COLORS.background;
 
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 0, 5);
+    camera.position.set(0, 0, 8);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({
@@ -2994,6 +2995,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
 
     // === ORBIT CONTROLS ===
     let controls = null;
@@ -3478,6 +3480,21 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         setBreathePhase('exhale', (breathCycle - 0.55) / 0.45);
       }
 
+      // Touch-responsive rotation (using parent's touchPointsRef)
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          jellyfishGroup.rotation.y += normalizedX * 0.03;
+          jellyfishGroup.rotation.x += normalizedY * 0.02;
+        }
+        lastInteractionTime = Date.now();
+      } else {
+        // Gentle auto-rotation when not touching
+        jellyfishGroup.rotation.y += 0.001;
+      }
+
       updateJellyfish(deltaTime, elapsed);
       if (controls) controls.update();
       renderer.render(scene, camera);
@@ -3485,10 +3502,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     // === EVENT LISTENERS ===
     window.addEventListener('resize', onResize);
-    renderer.domElement.addEventListener('mousemove', onMouseMove);
-    renderer.domElement.addEventListener('touchmove', onTouchMove, { passive: true });
-    renderer.domElement.addEventListener('click', onClick);
-    renderer.domElement.addEventListener('dblclick', onDoubleClick);
     window.addEventListener('keydown', onKeyDown);
 
     // Start animation
@@ -3498,10 +3511,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', onResize);
-      renderer.domElement.removeEventListener('mousemove', onMouseMove);
-      renderer.domElement.removeEventListener('touchmove', onTouchMove);
-      renderer.domElement.removeEventListener('click', onClick);
-      renderer.domElement.removeEventListener('dblclick', onDoubleClick);
       window.removeEventListener('keydown', onKeyDown);
 
       // Dispose geometries and materials
@@ -4260,7 +4269,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 1, 6);
+    camera.position.set(0, 1.5, 9);
     camera.lookAt(0, 0.5, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -4420,7 +4429,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
       } else {
         // Gentle auto-rotation when not touching
-        mushroomGroup.rotation.y += 0.001;
+        mushroomGroup.rotation.y += 0.0004;
       }
 
       // Spring-damper scale physics
@@ -4529,7 +4538,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
+    camera.position.z = 8;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -4619,9 +4628,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           }
         } else {
           // Gentle auto-rotation when not touching
-          meshRef.current.rotation.y += 0.001;
-          meshRef.current.rotation.x += 0.0005;
-          meshRef.current.rotation.z += 0.0003;
+          meshRef.current.rotation.y += 0.0004;
+          meshRef.current.rotation.x += 0.0002;
+          meshRef.current.rotation.z += 0.00012;
         }
 
         // Spring-damper scale physics
@@ -4670,7 +4679,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 5, 4);
+    camera.position.set(0, 6, 7);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -4859,7 +4868,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           }
         }
       } else {
-        pondGroup.rotation.y += 0.0005;
+        pondGroup.rotation.y += 0.0002;
       }
 
       // Spring-damper scale physics
@@ -4989,7 +4998,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 5);
+    camera.position.set(0, 0, 8);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -5166,7 +5175,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           touchInfluence.strength = Math.min(1, touchInfluence.strength + 0.05);
         }
       } else {
-        oceanGroup.rotation.y += 0.0008;
+        oceanGroup.rotation.y += 0.0003;
         touchInfluence.strength *= 0.95;
       }
 
@@ -5322,7 +5331,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 6);
+    camera.position.set(0, 0, 9);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -5472,14 +5481,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
       } else {
         // Gentle auto-rotation when not touching
-        waxGroup.rotation.y += 0.0008;
+        waxGroup.rotation.y += 0.0003;
         touchInfluence.strength *= 0.92;
       }
 
-      // Spring-damper scale physics
+      // Spring-damper scale physics (smoother for breath transitions)
       const targetScale = 0.85 + breath * 0.35;
-      const springStiffness = 0.015;
-      const damping = 0.85;
+      const springStiffness = 0.008;
+      const damping = 0.92;
       const force = (targetScale - localScale) * springStiffness;
       localScaleVelocity = localScaleVelocity * damping + force;
       localScale += localScaleVelocity;
@@ -5640,7 +5649,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 5);
+    camera.position.set(0, 0, 8);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -6027,7 +6036,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
       } else {
         // Very slow auto-rotation
-        realmGroup.rotation.y += 0.0003;
+        realmGroup.rotation.y += 0.00015;
         touchInfluence.strength *= 0.95;
       }
 
@@ -6048,9 +6057,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       scene.fog.density = 0.05 + (1 - breath) * 0.02;
 
       // === CHRYSANTHEMUM ANIMATION ===
-      chrysanthemumGroup.rotation.z += 0.0002;
+      chrysanthemumGroup.rotation.z += 0.0001;
       chrysanthemumGroup.children.forEach((layerGroup, layerIndex) => {
-        layerGroup.rotation.z += 0.0001 * (layerIndex + 1);
+        layerGroup.rotation.z += 0.00005 * (layerIndex + 1);
         layerGroup.children.forEach((petal) => {
           // Petals fold with breath
           const foldAmount = (1 - breath) * 0.15 * (petal.userData.layer + 1) * 0.2;
@@ -6069,14 +6078,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // === ENTITY ANIMATION ===
       entities.forEach((entity, i) => {
         // Nested counter-rotations
-        entity.outer.rotation.x += 0.0008;
-        entity.outer.rotation.y += 0.0012;
+        entity.outer.rotation.x += 0.0003;
+        entity.outer.rotation.y += 0.0005;
 
-        entity.middle.rotation.x -= 0.0006;
-        entity.middle.rotation.z += 0.0009;
+        entity.middle.rotation.x -= 0.00025;
+        entity.middle.rotation.z += 0.0004;
 
-        entity.inner.rotation.y += 0.0015;
-        entity.inner.rotation.z -= 0.001;
+        entity.inner.rotation.y += 0.0006;
+        entity.inner.rotation.z -= 0.0004;
 
         // Inner pulses with breath
         const innerScale = 0.7 + breath * 0.5;
@@ -6109,11 +6118,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // === TESSERACT ANIMATION ===
       tesseracts.forEach((tesseract) => {
-        tesseract.outer.rotation.x += 0.0005;
-        tesseract.outer.rotation.y += 0.0007;
+        tesseract.outer.rotation.x += 0.0002;
+        tesseract.outer.rotation.y += 0.0003;
 
-        tesseract.inner.rotation.x -= 0.0008;
-        tesseract.inner.rotation.z += 0.001;
+        tesseract.inner.rotation.x -= 0.0003;
+        tesseract.inner.rotation.z += 0.0004;
 
         // Pulse inner cube with breath
         const innerPulse = 0.9 + breath * 0.2;
@@ -6133,8 +6142,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           1 + Math.sin(morphPhase * 1.3) * 0.25,
           1 + Math.sin(morphPhase * 0.7) * 0.25
         );
-        elf.core.rotation.x += 0.003;
-        elf.core.rotation.y += 0.004;
+        elf.core.rotation.x += 0.0012;
+        elf.core.rotation.y += 0.0016;
 
         // Orbiters circle
         elf.orbiters.forEach((orbiter) => {
@@ -6144,8 +6153,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
             Math.sin(elapsed * 0.1 + orbiter.verticalPhase) * orbiter.radius * orbiter.tilt,
             Math.sin(orbiter.angle) * orbiter.radius
           );
-          orbiter.mesh.rotation.x += 0.01;
-          orbiter.mesh.rotation.y += 0.015;
+          orbiter.mesh.rotation.x += 0.004;
+          orbiter.mesh.rotation.y += 0.006;
         });
 
         // Elves drift away from touch (shy)
@@ -6176,7 +6185,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // === GRID ANIMATION ===
       gridMaterial.opacity = 0.1 + breath * 0.08;
-      gridGroup.rotation.z += 0.00005;
+      gridGroup.rotation.z += 0.00002;
 
       // === PARTICLE ANIMATION ===
       const positions = particleGeom.attributes.position.array;
@@ -6252,6 +6261,81 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
+  // Floating particles animation (stars in space effect)
+  React.useEffect(() => {
+    const canvas = particleCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio, 2);
+
+    const resize = () => {
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.scale(dpr, dpr);
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Initialize particles
+    const particleCount = 120;
+    const particles = [];
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2,
+        size: Math.random() * 1.2 + 0.3,
+        opacity: Math.random() * 0.4 + 0.1,
+        phase: Math.random() * Math.PI * 2,
+        twinkleSpeed: Math.random() * 0.015 + 0.005,
+      });
+    }
+    particlesRef.current = particles;
+
+    let animationId;
+    const animate = () => {
+      animationId = requestAnimationFrame(animate);
+
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+      const time = Date.now() * 0.001;
+
+      particles.forEach(p => {
+        // Gentle floating motion
+        p.x += p.vx + Math.sin(time * 0.3 + p.phase) * 0.05;
+        p.y += p.vy + Math.cos(time * 0.2 + p.phase) * 0.05;
+
+        // Wrap around edges
+        if (p.x < 0) p.x = window.innerWidth;
+        if (p.x > window.innerWidth) p.x = 0;
+        if (p.y < 0) p.y = window.innerHeight;
+        if (p.y > window.innerHeight) p.y = 0;
+
+        // Twinkle effect
+        const twinkle = 0.5 + Math.sin(time * p.twinkleSpeed * 10 + p.phase) * 0.5;
+        const currentOpacity = p.opacity * twinkle;
+
+        // Draw particle as soft glow
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+        gradient.addColorStop(0, `hsla(${hue}, 52%, 68%, ${currentOpacity})`);
+        gradient.addColorStop(1, `hsla(${hue}, 52%, 68%, 0)`);
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      });
+    };
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', resize);
+    };
+  }, [hue]);
+
   return (
     <div
       style={{
@@ -6281,9 +6365,22 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
-          pointerEvents: currentMode === 'jellyfish' ? 'auto' : 'none'
+          pointerEvents: 'none'
         }} />
       )}
+
+      {/* Floating particles overlay (stars in space) */}
+      <canvas
+        ref={particleCanvasRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          opacity: 0.5,
+        }}
+      />
 
       {/* Canvas for 2D modes */}
       {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'bioluminescent' && currentMode !== 'wax' && currentMode !== 'realm' && (
@@ -6313,21 +6410,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         <div
           style={{
             position: 'absolute',
-            bottom: '2.5rem',
+            top: 'calc(4rem + env(safe-area-inset-top, 0px))',
             left: '50%',
             transform: 'translateX(-50%)',
             pointerEvents: 'none',
             opacity: showVisualToast ? 1 : 0,
             transition: 'opacity 0.4s ease-in-out',
+            zIndex: 100,
           }}
         >
           <span
             style={{
-              color: `hsla(${hue}, 52%, 68%, 0.7)`,
-              fontSize: '0.7rem',
+              color: `hsla(${hue}, 52%, 68%, 0.85)`,
+              fontSize: '0.85rem',
               fontFamily: '"Jost", sans-serif',
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
+              textShadow: '0 2px 10px rgba(0,0,0,0.5)',
             }}
           >
             {gazeModes.find(m => m.key === currentMode)?.name || ''}
@@ -6766,7 +6865,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
           onClick={(e) => { e.stopPropagation(); setShowUI(true); setHasOpenedUI(true); }}
           style={{
             position: 'absolute',
-            bottom: '1rem',
+            bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))',
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
@@ -6775,21 +6874,27 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
             pointerEvents: 'auto',
             cursor: 'pointer',
             padding: '1rem 2rem',
-            zIndex: 1,
-            animation: 'breathworkArrowPulse 2s ease-in-out infinite',
+            zIndex: 100,
           }}>
+          <span style={{
+            fontSize: '0.75rem',
+            color: `hsla(${primaryHue}, 52%, 68%, 0.85)`,
+            marginBottom: '0.35rem',
+            letterSpacing: '0.1em',
+            animation: 'techniquesFadeOut 3s ease-out forwards',
+          }}>techniques</span>
           <svg
-            width="20"
-            height="20"
+            width="28"
+            height="28"
             viewBox="0 0 20 20"
             fill="none"
             style={{
-              animation: 'breathworkArrowBounce 2s ease-in-out infinite',
+              animation: 'breathworkArrowBounce 2s ease-in-out infinite, breathworkArrowPulse 2s ease-in-out infinite',
             }}
           >
             <path
               d="M10 4L4 12H16L10 4Z"
-              fill={`hsla(${primaryHue}, 52%, 68%, 0.4)`}
+              fill={`hsla(${primaryHue}, 52%, 68%, 0.85)`}
             />
           </svg>
         </div>
@@ -6800,8 +6905,14 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
           50% { transform: translateY(-4px); }
         }
         @keyframes breathworkArrowPulse {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.7; }
+          0%, 100% { opacity: 0.7; }
+          50% { opacity: 1; }
+        }
+        @keyframes techniquesFadeOut {
+          0% { opacity: 0; }
+          15% { opacity: 0.85; }
+          50% { opacity: 0.85; }
+          100% { opacity: 0; }
         }
       `}</style>
 
@@ -6820,22 +6931,27 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
             }}
           />
           {/* Bottom drawer */}
-          <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            maxHeight: '50vh',
-            background: 'rgba(10,10,15,0.95)',
-            borderRadius: '20px 20px 0 0',
-            backdropFilter: 'blur(20px)',
-            border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.12)`,
-            borderBottom: 'none',
-            zIndex: 11,
-            animation: 'slideUpBreath 0.5s ease-out',
-            display: 'flex',
-            flexDirection: 'column',
-          }}>
+          <div
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              maxHeight: '50vh',
+              background: 'rgba(10,10,15,0.95)',
+              borderRadius: '20px 20px 0 0',
+              backdropFilter: 'blur(20px)',
+              border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.12)`,
+              borderBottom: 'none',
+              zIndex: 11,
+              animation: 'slideUpBreath 0.5s ease-out',
+              display: 'flex',
+              flexDirection: 'column',
+              touchAction: 'auto',
+            }}>
             {/* Drawer handle */}
             <div style={{
               display: 'flex',
@@ -6867,11 +6983,15 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
             </div>
 
             {/* Scrollable list */}
-            <div style={{
-              overflowY: 'auto',
-              padding: '0.5rem 0',
-              WebkitOverflowScrolling: 'touch',
-            }}>
+            <div
+              onTouchMove={(e) => e.stopPropagation()}
+              style={{
+                overflowY: 'auto',
+                padding: '0.5rem 0',
+                WebkitOverflowScrolling: 'touch',
+                touchAction: 'pan-y',
+                overscrollBehavior: 'contain',
+              }}>
               {Object.entries(breathTechniques).map(([key, tech]) => (
                 <button
                   key={key}
@@ -6902,6 +7022,8 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
                   <div style={{ fontSize: '0.7rem', opacity: 0.6, marginTop: '0.25rem' }}>{tech.description || ''}</div>
                 </button>
               ))}
+              {/* Bottom spacer for scroll */}
+              <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom, 0px))', flexShrink: 0 }} />
             </div>
           </div>
         </>
@@ -7299,7 +7421,8 @@ const generateScale = (keyName, scaleType, octaves = 3) => {
       if (freq < 1200) frequencies.push(freq); // Cap at reasonable frequency
     }
   }
-  return frequencies;
+  // Sort ascending to ensure low notes at bottom, high notes at top
+  return frequencies.sort((a, b) => a - b);
 };
 
 function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }) {
@@ -7312,9 +7435,14 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathValue, setBreathValue] = useState(0);
+  const [showGestureHints, setShowGestureHints] = useState(true);
+  const [gestureHintsFadingOut, setGestureHintsFadingOut] = useState(false);
 
-  // Generate current scale based on key and scale type
-  const scale = generateScale(KEYS[currentKey], SCALE_TYPES[currentScaleType]);
+  // Generate current scale based on key and scale type (memoized to prevent stale closures)
+  const scale = React.useMemo(() =>
+    generateScale(KEYS[currentKey], SCALE_TYPES[currentScaleType]),
+    [currentKey, currentScaleType]
+  );
 
   // Convert frequency to note name
   const freqToNoteName = useCallback((freq) => {
@@ -7398,6 +7526,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   currentTextureRef.current = currentTexture;
   const pianoBufferRef = useRef(null);
   const guitarBufferRef = useRef(null);
+  const particleCanvasRef = useRef(null);
+  const particlesRef = useRef([]);
   const harpBufferRef = useRef(null);
   const celloBufferRef = useRef(null);
   const handpanBufferRef = useRef(null);
@@ -7623,6 +7753,109 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     });
   }, [currentKey, isInitialized]);
 
+  // Resume audio context when app returns from background (iOS)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && ctxRef.current) {
+        // Resume suspended audio context
+        if (ctxRef.current.state === 'suspended') {
+          ctxRef.current.resume();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Also handle iOS-specific resume on touch after returning
+    const handleTouchResume = () => {
+      if (ctxRef.current && ctxRef.current.state === 'suspended') {
+        ctxRef.current.resume();
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchResume, { once: false });
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('touchstart', handleTouchResume);
+    };
+  }, []);
+
+  // Floating particles animation (like stars in space)
+  useEffect(() => {
+    const canvas = particleCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio, 2);
+
+    const resize = () => {
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.scale(dpr, dpr);
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Initialize particles
+    const particleCount = 150;
+    const particles = [];
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        size: Math.random() * 1.5 + 0.5,
+        opacity: Math.random() * 0.5 + 0.2,
+        phase: Math.random() * Math.PI * 2,
+        twinkleSpeed: Math.random() * 0.02 + 0.01,
+      });
+    }
+    particlesRef.current = particles;
+
+    let animationId;
+    const animate = () => {
+      animationId = requestAnimationFrame(animate);
+
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+      const time = Date.now() * 0.001;
+
+      particles.forEach(p => {
+        // Gentle floating motion
+        p.x += p.vx + Math.sin(time * 0.5 + p.phase) * 0.1;
+        p.y += p.vy + Math.cos(time * 0.3 + p.phase) * 0.1;
+
+        // Wrap around edges
+        if (p.x < 0) p.x = window.innerWidth;
+        if (p.x > window.innerWidth) p.x = 0;
+        if (p.y < 0) p.y = window.innerHeight;
+        if (p.y > window.innerHeight) p.y = 0;
+
+        // Twinkle effect
+        const twinkle = 0.5 + Math.sin(time * p.twinkleSpeed * 10 + p.phase) * 0.5;
+        const currentOpacity = p.opacity * twinkle;
+
+        // Draw particle as soft glow
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+        gradient.addColorStop(0, `hsla(${primaryHue}, 52%, 68%, ${currentOpacity})`);
+        gradient.addColorStop(1, `hsla(${primaryHue}, 52%, 68%, 0)`);
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      });
+    };
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', resize);
+    };
+  }, [primaryHue]);
+
   // Start texture noise
   const startTextures = (ctx, masterGain) => {
     const bufferSize = ctx.sampleRate * 2;
@@ -7763,12 +7996,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       if (!pianoBufferRef.current) return;
 
       const baseFreq = 130.81; // C3 - middle of the sample range
-      let adjustedFreq = freq;
-      // If note is too high, drop it down an octave (or two)
-      while (adjustedFreq / baseFreq > 2.5) {
-        adjustedFreq = adjustedFreq / 2;
-      }
-      const playbackRate = adjustedFreq / baseFreq;
+      // Allow full 3-octave range (up to 8x playback rate)
+      const playbackRate = freq / baseFreq;
 
       const source = ctx.createBufferSource();
       source.buffer = pianoBufferRef.current;
@@ -7789,15 +8018,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       if (!guitarBufferRef.current) return;
 
       const baseFreq = 130.81; // C3 (the sample's pitch)
-      let adjustedFreq = freq;
-      // Keep notes between C3 (130.81) and C4 (261.63)
-      while (adjustedFreq > 261.63) {
-        adjustedFreq = adjustedFreq / 2;
-      }
-      while (adjustedFreq < 130.81) {
-        adjustedFreq = adjustedFreq * 2;
-      }
-      const playbackRate = adjustedFreq / baseFreq;
+      // Allow full 3-octave range
+      const playbackRate = freq / baseFreq;
 
       const source = ctx.createBufferSource();
       source.buffer = guitarBufferRef.current;
@@ -7883,12 +8105,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       if (!celloBufferRef.current) return;
 
       const baseFreq = 130.81; // C3
-      let adjustedFreq = freq;
-      // Limit range for natural sound
-      while (adjustedFreq / baseFreq > 2.5) {
-        adjustedFreq = adjustedFreq / 2;
-      }
-      const playbackRate = adjustedFreq / baseFreq;
+      // Allow full 3-octave range
+      const playbackRate = freq / baseFreq;
 
       const source = ctx.createBufferSource();
       source.buffer = celloBufferRef.current;
@@ -7908,11 +8126,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       if (!handpanBufferRef.current) return;
 
       const baseFreq = 130.81; // C3
-      let adjustedFreq = freq;
-      while (adjustedFreq / baseFreq > 2.5) {
-        adjustedFreq = adjustedFreq / 2;
-      }
-      const playbackRate = adjustedFreq / baseFreq;
+      // Allow full 3-octave range
+      const playbackRate = freq / baseFreq;
 
       const source = ctx.createBufferSource();
       source.buffer = handpanBufferRef.current;
@@ -7932,11 +8147,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       if (!dulcimerBufferRef.current) return;
 
       const baseFreq = 130.81; // C3
-      let adjustedFreq = freq;
-      while (adjustedFreq / baseFreq > 2.5) {
-        adjustedFreq = adjustedFreq / 2;
-      }
-      const playbackRate = adjustedFreq / baseFreq;
+      // Allow full 3-octave range
+      const playbackRate = freq / baseFreq;
 
       const source = ctx.createBufferSource();
       source.buffer = dulcimerBufferRef.current;
@@ -8010,15 +8222,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     const swipeThreshold = 50;
     const isSwipe = Math.abs(deltaX) > swipeThreshold || Math.abs(deltaY) > swipeThreshold;
 
-    // Check for swipe up from bottom to open scale selector
-    const startedFromBottom = touchStartRef.current.y > window.innerHeight * 0.85;
-    const isSwipeUp = deltaY < -swipeThreshold && Math.abs(deltaY) > Math.abs(deltaX);
-
-    if (isSwipeUp && startedFromBottom && deltaTime < 500) {
-      // Swipe up from bottom - open scale selector
-      setShowScaleSelector(true);
-      haptic.tap();
-    } else if (isSwipe && deltaTime < 500) {
+    if (isSwipe && deltaTime < 500) {
       // Regular swipe - change instrument or texture
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
         // Horizontal swipe - change instrument
@@ -8027,19 +8231,20 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         displayLabel();
         haptic.tap();
       } else {
-        // Vertical swipe - change texture
-        const dir = deltaY > 0 ? -1 : 1;
-        const newTexture = (currentTexture + dir + textures.length) % textures.length;
-        updateTexture(newTexture);
-        displayLabel();
+        // Vertical swipe - open scale selector
+        setShowScaleSelector(true);
         haptic.tap();
       }
     } else {
       // It's a tap - play instrument
       const clientY = touchStartRef.current.y;
       const clientX = touchStartRef.current.x;
-      const normalizedY = 1 - (clientY / window.innerHeight);
-      const noteIndex = Math.floor(normalizedY * scale.length);
+      // Use actual container bounds for reliable mapping on iOS
+      const rect = e.currentTarget.getBoundingClientRect();
+      const relativeY = clientY - rect.top;
+      const normalizedY = 1 - (relativeY / rect.height);
+      const clampedNormalizedY = Math.max(0, Math.min(1, normalizedY));
+      const noteIndex = Math.floor(clampedNormalizedY * scale.length);
       const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
 
       playInstrument(freq, 0.6 + breathValue * 0.4);
@@ -8085,8 +8290,12 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
     const clientY = e.clientY;
     const clientX = e.clientX;
-    const normalizedY = 1 - (clientY / window.innerHeight);
-    const noteIndex = Math.floor(normalizedY * scale.length);
+    // Use actual container bounds for reliable mapping
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relativeY = clientY - rect.top;
+    const normalizedY = 1 - (relativeY / rect.height);
+    const clampedNormalizedY = Math.max(0, Math.min(1, normalizedY));
+    const noteIndex = Math.floor(clampedNormalizedY * scale.length);
     const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
 
     playInstrument(freq, 0.6 + breathValue * 0.4);
@@ -8219,7 +8428,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         overflow: 'hidden',
       }}
     >
-      {/* Lava lamp visual background */}
+      {/* Ripples visual background */}
       <div style={{
         position: 'absolute',
         inset: 0,
@@ -8238,6 +8447,20 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           externalTouchRef={externalTouchRef}
         />
       </div>
+
+      {/* Floating particles overlay */}
+      <canvas
+        ref={particleCanvasRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          opacity: isInitialized ? 0.6 : 0.3,
+          transition: 'opacity 2s ease',
+        }}
+      />
 
       {/* Begin prompt */}
       {!isInitialized && (
@@ -8261,6 +8484,116 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         </div>
       )}
 
+      {/* Gesture hints overlay */}
+      {isInitialized && showGestureHints && (
+        <div
+          onClick={() => {
+            if (!gestureHintsFadingOut) {
+              setGestureHintsFadingOut(true);
+              setTimeout(() => setShowGestureHints(false), 2500);
+            }
+          }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            zIndex: 50,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            animation: gestureHintsFadingOut ? 'gestureHintsFadeOut 2.5s ease forwards' : 'gestureHintsFadeIn 3s ease',
+            cursor: 'pointer',
+          }}
+        >
+          <div style={{
+            color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
+            fontSize: '0.7rem',
+            fontFamily: '"Jost", sans-serif',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            marginBottom: '2rem',
+            animation: gestureHintsFadingOut ? 'gestureHintsFadeOut 2.5s ease forwards' : 'gestureHintsFadeIn 3.5s ease',
+          }}>
+            gestures
+          </div>
+
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1.25rem',
+            maxWidth: '280px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{
+                width: '50px',
+                height: '50px',
+                border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M4 12H20M4 12L8 8M4 12L8 16M20 12L16 8M20 12L16 16" stroke={`hsla(${primaryHue}, 52%, 68%, 0.8)`} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontFamily: '"Jost", sans-serif', fontSize: '0.85rem' }}>
+                swipe horizontal to change instrument
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{
+                width: '50px',
+                height: '50px',
+                border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 4V20M12 4L8 8M12 4L16 8M12 20L8 16M12 20L16 16" stroke={`hsla(${primaryHue}, 52%, 68%, 0.8)`} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontFamily: '"Jost", sans-serif', fontSize: '0.85rem' }}>
+                swipe vertical to open settings
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{
+                width: '50px',
+                height: '50px',
+                border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="4" stroke={`hsla(${primaryHue}, 52%, 68%, 0.8)`} strokeWidth="1.5"/>
+                </svg>
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontFamily: '"Jost", sans-serif', fontSize: '0.85rem' }}>
+                tap to play - pitch follows position
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            marginTop: '2.5rem',
+            color: 'rgba(255,255,255,0.4)',
+            fontSize: '0.7rem',
+            fontFamily: '"Jost", sans-serif',
+            letterSpacing: '0.1em',
+          }}>
+            tap to dismiss
+          </div>
+        </div>
+      )}
+
       {/* Note display is handled via DOM manipulation in showPlayedNote */}
 
       {/* Center label */}
@@ -8274,6 +8607,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           pointerEvents: 'none',
           opacity: showLabel ? 1 : 0,
           transition: 'opacity 0.5s ease',
+          zIndex: 10,
         }}
       >
         <div style={{
@@ -8311,30 +8645,36 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           onClick={(e) => { e.stopPropagation(); setShowScaleSelector(true); haptic.tap(); }}
           style={{
             position: 'absolute',
-            bottom: '1rem',
+            bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))',
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             pointerEvents: 'auto',
-            zIndex: 1,
+            zIndex: 200,
             cursor: 'pointer',
             padding: '1rem 2rem',
-            animation: 'droneArrowPulse 2s ease-in-out infinite',
           }}>
+          <span style={{
+            fontSize: '0.75rem',
+            color: `hsla(${primaryHue}, 52%, 68%, 0.85)`,
+            marginBottom: '0.35rem',
+            letterSpacing: '0.1em',
+            animation: 'settingsFadeOut 3s ease-out forwards',
+          }}>settings</span>
           <svg
-            width="20"
-            height="20"
+            width="28"
+            height="28"
             viewBox="0 0 20 20"
             fill="none"
             style={{
-              animation: 'droneArrowBounce 2s ease-in-out infinite',
+              animation: 'droneArrowBounce 2s ease-in-out infinite, droneArrowPulse 2s ease-in-out infinite',
             }}
           >
             <path
               d="M10 4L4 12H16L10 4Z"
-              fill={`hsla(${primaryHue}, 52%, 68%, 0.5)`}
+              fill={`hsla(${primaryHue}, 52%, 68%, 0.85)`}
             />
           </svg>
         </div>
@@ -8356,6 +8696,9 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           />
           {/* Drawer */}
           <div
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
             style={{
               position: 'absolute',
               bottom: 0,
@@ -8366,8 +8709,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
               borderRadius: '1.5rem 1.5rem 0 0',
               zIndex: 11,
               animation: 'slideUpScale 0.3s ease',
-              maxHeight: '70vh',
-              overflow: 'hidden',
+              maxHeight: '80vh',
+              display: 'flex',
+              flexDirection: 'column',
+              touchAction: 'auto',
             }}
           >
             {/* Header */}
@@ -8382,21 +8727,74 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
                 fontFamily: '"Jost", sans-serif',
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
-              }}>Scale Selection</span>
+              }}>Settings</span>
+            </div>
+
+            {/* Texture selection row */}
+            <div style={{
+              padding: '0.75rem 1rem',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              <div style={{
+                fontSize: '0.55rem',
+                color: 'rgba(255,255,255,0.4)',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                marginBottom: '0.5rem',
+              }}>Texture</div>
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
+              }}>
+                {textures.map((texture, index) => (
+                  <button
+                    key={texture.name}
+                    onClick={() => {
+                      updateTexture(index);
+                      displayLabel();
+                      haptic.tap();
+                    }}
+                    style={{
+                      background: currentTexture === index ? `hsla(${primaryHue}, 52%, 68%, 0.2)` : 'rgba(255,255,255,0.05)',
+                      border: currentTexture === index ? `1px solid hsla(${primaryHue}, 52%, 68%, 0.5)` : '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '4px',
+                      color: currentTexture === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      padding: '0.4rem 0.75rem',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      fontFamily: '"Jost", sans-serif',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {texture.name}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Two column layout */}
             <div style={{
               display: 'flex',
-              maxHeight: 'calc(70vh - 3rem)',
+              flex: 1,
+              minHeight: 0,
+              overflow: 'hidden',
             }}>
               {/* Keys column */}
-              <div style={{
-                flex: 1,
-                borderRight: '1px solid rgba(255,255,255,0.06)',
-                overflowY: 'auto',
-                WebkitOverflowScrolling: 'touch',
-              }}>
+              <div
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
+                style={{
+                  flex: 1,
+                  borderRight: '1px solid rgba(255,255,255,0.06)',
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  WebkitOverflowScrolling: 'touch',
+                  touchAction: 'pan-y',
+                  overscrollBehavior: 'contain',
+                }}>
                 <div style={{
                   padding: '0.5rem 0.75rem',
                   fontSize: '0.55rem',
@@ -8404,6 +8802,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
                   fontFamily: '"Jost", sans-serif',
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
+                  position: 'sticky',
+                  top: 0,
+                  background: 'rgba(0, 0, 0, 0.95)',
+                  zIndex: 1,
                 }}>Key</div>
                 {KEYS.map((key, index) => (
                   <button
@@ -8431,14 +8833,23 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
                     {key}
                   </button>
                 ))}
+                {/* Bottom spacer for scroll */}
+                <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom, 0px))', flexShrink: 0 }} />
               </div>
 
               {/* Scales column */}
-              <div style={{
-                flex: 2,
-                overflowY: 'auto',
-                WebkitOverflowScrolling: 'touch',
-              }}>
+              <div
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
+                style={{
+                  flex: 2,
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  WebkitOverflowScrolling: 'touch',
+                  touchAction: 'pan-y',
+                  overscrollBehavior: 'contain',
+                }}>
                 <div style={{
                   padding: '0.5rem 0.75rem',
                   fontSize: '0.55rem',
@@ -8446,6 +8857,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
                   fontFamily: '"Jost", sans-serif',
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
+                  position: 'sticky',
+                  top: 0,
+                  background: 'rgba(0, 0, 0, 0.95)',
+                  zIndex: 1,
                 }}>Scale</div>
                 {SCALE_TYPES.map((scaleType, index) => (
                   <button
@@ -8473,6 +8888,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
                     {scaleType.name}
                   </button>
                 ))}
+                {/* Bottom spacer for scroll */}
+                <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom, 0px))', flexShrink: 0 }} />
               </div>
             </div>
           </div>
@@ -8499,12 +8916,18 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           to { transform: translateY(0); }
         }
         @keyframes droneArrowPulse {
-          0%, 100% { opacity: 0.6; }
+          0%, 100% { opacity: 0.7; }
           50% { opacity: 1; }
         }
         @keyframes droneArrowBounce {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-4px); }
+        }
+        @keyframes settingsFadeOut {
+          0% { opacity: 0; }
+          15% { opacity: 0.85; }
+          50% { opacity: 0.85; }
+          100% { opacity: 0; }
         }
         @keyframes noteFade {
           0% { opacity: 0; }
@@ -8517,6 +8940,14 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           15% { opacity: 1; }
           70% { opacity: 1; }
           100% { opacity: 0; }
+        }
+        @keyframes gestureHintsFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes gestureHintsFadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
         }
       `}</style>
     </main>
@@ -9217,7 +9648,10 @@ function Still() {
         <header style={{
           position: 'fixed',
           top: 0, left: 0, right: 0,
-          padding: '1.25rem 1.5rem',
+          paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 0px))',
+          paddingBottom: '1.25rem',
+          paddingLeft: 'calc(1.5rem + env(safe-area-inset-left, 0px))',
+          paddingRight: 'calc(1.5rem + env(safe-area-inset-right, 0px))',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -9820,17 +10254,21 @@ function Still() {
             }}
           >
             {/* Technique selector - horizontal scroll */}
-            <div style={{
-              position: 'absolute',
-              top: '5rem',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              maxWidth: '85vw',
-              overflowX: 'auto',
-              overflowY: 'hidden',
-              padding: '0.5rem',
-              WebkitOverflowScrolling: 'touch',
-            }}>
+            <div
+              onTouchMove={(e) => e.stopPropagation()}
+              style={{
+                position: 'absolute',
+                top: '5rem',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                maxWidth: '85vw',
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                padding: '0.5rem',
+                WebkitOverflowScrolling: 'touch',
+                touchAction: 'pan-x',
+                overscrollBehavior: 'contain',
+              }}>
               <div style={{ display: 'flex', gap: '0.4rem', whiteSpace: 'nowrap' }}>
                 {Object.entries(breathTechniques).map(([key, tech]) => (
                   <button
