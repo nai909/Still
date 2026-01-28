@@ -1180,11 +1180,6 @@ const gazeModes = [
   { key: 'realm', name: 'Realm' },
 ];
 
-// Filtered visuals for breathwork mode (excludes busy visuals that interfere with text)
-const breathworkModes = gazeModes.filter(m =>
-  !['fern', 'succulent', 'ripples', 'jellyfish2d', 'mushrooms', 'koiPond', 'flowerOfLife', 'dandelion', 'bioluminescent', 'realm', 'tree', 'wax'].includes(m.key)
-);
-
 const gazeShapes = [
   { key: 'torus', name: 'Torus', create: () => new THREE.TorusGeometry(1, 0.4, 16, 100) },
   { key: 'torusKnot', name: 'Knot', create: () => new THREE.TorusKnotGeometry(0.7, 0.25, 100, 16) },
@@ -1200,7 +1195,7 @@ const MOBILE_SPEED = isMobile ? 0.6 : 1;  // Slower animations on mobile
 const MOBILE_PARTICLES = isMobile ? 0.4 : 1;  // Fewer particles on mobile
 const MOBILE_PIXEL_RATIO = isMobile ? Math.min(window.devicePixelRatio, 1.5) : Math.min(window.devicePixelRatio, 2);
 
-function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false, currentVisual, onVisualChange, breathSession = null, externalTouchRef = null, hintsShown = false, onHintsShown }) {
+function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false, currentVisual, onVisualChange, breathSession = null, externalTouchRef = null }) {
   // Use primaryHue throughout for consistent color scheme
   const hue = primaryHue;
   // Background mode: dimmer, slower, no interaction
@@ -1233,8 +1228,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   const [selectedTechnique, setSelectedTechnique] = React.useState('relaxation');
   const [showVisualToast, setShowVisualToast] = React.useState(false);
   const toastTimeoutRef = React.useRef(null);
-  const [showGestureHints, setShowGestureHints] = React.useState(!backgroundMode && !hintsShown);
-  const [gestureHintsFadingOut, setGestureHintsFadingOut] = React.useState(false);
 
   // Breath session state for technique-based breathing
   const breathSessionRef = React.useRef({
@@ -2022,7 +2015,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       });
       const ripple = new THREE.Mesh(rippleGeom, rippleMat);
       ripple.rotation.x = Math.PI / 2;
-      ripple.userData = { born: clockRef.current.getElapsedTime(), maxAge: 12 };
+      ripple.userData = { born: clockRef.current.getElapsedTime(), maxAge: 20 };
       rippleGroup.add(ripple);
       ripples.push(ripple);
 
@@ -2094,10 +2087,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         const progress = age / ripple.userData.maxAge;
 
         if (progress < 1) {
-          const radius = 0.3 + progress * 4;
+          const radius = 0.3 + progress * 3;
           ripple.scale.set(radius / 0.1, radius / 0.1, 1);
           ripple.material.opacity = (1 - progress) * 0.5;
-          ripple.position.y = Math.sin(progress * Math.PI) * 0.3;
+          ripple.position.y = Math.sin(progress * Math.PI) * 0.2;
         }
       });
 
@@ -6484,97 +6477,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         </>
       )} */}
 
-      {/* Gesture hints overlay */}
-      {!backgroundMode && showGestureHints && (
-        <div
-          onClick={() => {
-            if (!gestureHintsFadingOut) {
-              setGestureHintsFadingOut(true);
-              onHintsShown?.();
-              setTimeout(() => setShowGestureHints(false), 2500);
-            }
-          }}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
-            zIndex: 50,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            animation: gestureHintsFadingOut ? 'gestureHintsFadeOut 2.5s ease forwards' : 'gestureHintsFadeIn 3s ease',
-            cursor: 'pointer',
-          }}
-        >
-          <div style={{
-            color: `hsla(${hue}, 52%, 68%, 0.9)`,
-            fontSize: '0.7rem',
-            fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            marginBottom: '2rem',
-          }}>
-            gestures
-          </div>
-
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.25rem',
-            maxWidth: '280px',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{
-                width: '50px',
-                height: '50px',
-                border: `1px solid hsla(${hue}, 52%, 68%, 0.3)`,
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M4 12H20M4 12L8 8M4 12L8 16M20 12L16 8M20 12L16 16" stroke={`hsla(${hue}, 52%, 68%, 0.8)`} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.7)', fontFamily: '"Jost", sans-serif', fontSize: '0.85rem' }}>
-                swipe horizontal to change visual
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{
-                width: '50px',
-                height: '50px',
-                border: `1px solid hsla(${hue}, 52%, 68%, 0.3)`,
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="4" stroke={`hsla(${hue}, 52%, 68%, 0.8)`} strokeWidth="1.5"/>
-                </svg>
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.7)', fontFamily: '"Jost", sans-serif', fontSize: '0.85rem' }}>
-                touch and move to shift perspective
-              </div>
-            </div>
-          </div>
-
-          <div style={{
-            marginTop: '2.5rem',
-            color: 'rgba(255,255,255,0.4)',
-            fontSize: '0.7rem',
-            fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.1em',
-          }}>
-            tap to dismiss
-          </div>
-        </div>
-      )}
-
       <style>{`
         @keyframes slideUpDrawer {
           from { transform: translateY(100%); }
@@ -6589,12 +6491,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           20% { opacity: 1; }
           80% { opacity: 1; }
           100% { opacity: 0; }
-        }
-        @keyframes gestureHintsFadeIn {
-          from { opacity: 0; } to { opacity: 1; }
-        }
-        @keyframes gestureHintsFadeOut {
-          from { opacity: 1; } to { opacity: 0; }
         }
       `}</style>
     </div>
@@ -6684,16 +6580,12 @@ const toRoman = (num) => {
   return numerals[num] || num.toString();
 };
 
-function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', currentVisual = 'geometry', onVisualChange, hintsShown = false, onHintsShown }) {
+function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
   const [showUI, setShowUI] = useState(false);
-  const [showVisualToast, setShowVisualToast] = useState(false);
-  const [showGestureHints, setShowGestureHints] = useState(!hintsShown);
-  const [gestureHintsFadingOut, setGestureHintsFadingOut] = useState(false);
   const [showLabel, setShowLabel] = useState(true);
   const swipeStartRef = useRef(null);
   const wheelAccumRef = useRef(0);
   const wheelTimeoutRef = useRef(null);
-  const toastTimeoutRef = useRef(null);
   const labelTimeoutRef = useRef(null);
 
   // Reset breath session and show label when view opens
@@ -6706,23 +6598,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
     };
   }, []);
 
-  // Cycle through visuals (using filtered breathworkModes)
-  const cycleVisual = useCallback((direction) => {
-    const currentIndex = breathworkModes.findIndex(m => m.key === currentVisual);
-    let newIndex;
-    if (direction > 0) {
-      newIndex = (currentIndex + 1) % breathworkModes.length;
-    } else {
-      newIndex = (currentIndex - 1 + breathworkModes.length) % breathworkModes.length;
-    }
-    onVisualChange(breathworkModes[newIndex].key);
-    setShowVisualToast(true);
-    haptic.tap();
-    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-    toastTimeoutRef.current = setTimeout(() => setShowVisualToast(false), 1500);
-  }, [currentVisual, onVisualChange]);
-
-  // Handle swipe gestures
+  // Handle swipe gestures (vertical only - for technique selector)
   const handleTouchStart = useCallback((e) => {
     if (showUI) return;
     const touch = e.touches[0];
@@ -6752,18 +6628,12 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       setShowUI(false);
     }
 
-    // Horizontal swipe: cycle visuals (only when menu is closed)
-    if (!showUI && Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5 && deltaTime < maxSwipeTime) {
-      cycleVisual(deltaX < 0 ? 1 : -1); // Swipe left = next, swipe right = previous
-    }
-
     swipeStartRef.current = null;
-  }, [showUI, cycleVisual]);
+  }, [showUI]);
 
-  // Two-finger swipe (wheel event on trackpad) to cycle visuals or open menu
+  // Two-finger swipe (wheel event on trackpad) for menu only
   const showUIRef = useRef(showUI);
   showUIRef.current = showUI;
-  const wheelAccumXRef = useRef(0);
 
   useEffect(() => {
     const handleWheel = (e) => {
@@ -6771,25 +6641,16 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       if (showUIRef.current) return;
 
       wheelAccumRef.current += e.deltaY;
-      wheelAccumXRef.current += e.deltaX;
 
       clearTimeout(wheelTimeoutRef.current);
       wheelTimeoutRef.current = setTimeout(() => {
         wheelAccumRef.current = 0;
-        wheelAccumXRef.current = 0;
       }, 200);
 
       const threshold = 50;
 
-      // Horizontal swipe = change visual
-      if (Math.abs(wheelAccumXRef.current) > threshold) {
-        e.preventDefault();
-        cycleVisual(wheelAccumXRef.current > 0 ? 1 : -1);
-        wheelAccumXRef.current = 0;
-        wheelAccumRef.current = 0;
-      }
       // Swipe UP = open menu
-      else if (wheelAccumRef.current > threshold) {
+      if (wheelAccumRef.current > threshold) {
         e.preventDefault();
         setShowUI(true);
         wheelAccumRef.current = 0;
@@ -6798,7 +6659,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 
     window.addEventListener('wheel', handleWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleWheel);
-  }, [cycleVisual]);
+  }, []);
 
   return (
     <main
@@ -6820,40 +6681,13 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         cursor: 'pointer',
       }}
     >
-      {/* Visual background - uses GazeMode component */}
+      {/* Visual background - uses GazeMode component with fixed geometry visual */}
       <GazeMode
         primaryHue={primaryHue}
         backgroundMode={true}
-        currentVisual={currentVisual}
-        onVisualChange={onVisualChange}
+        currentVisual="geometry"
         breathSession={breathSession}
       />
-
-      {/* Visual name toast - appears briefly when switching visuals */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '6rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          pointerEvents: 'none',
-          opacity: showVisualToast ? 1 : 0,
-          transition: 'opacity 0.4s ease-in-out',
-          zIndex: 5,
-        }}
-      >
-        <span
-          style={{
-            color: 'rgba(255, 255, 255, 0.5)',
-            fontSize: '0.9rem',
-            fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.3em',
-            textTransform: 'lowercase',
-          }}
-        >
-          {breathworkModes.find(m => m.key === currentVisual)?.name || ''}
-        </span>
-      </div>
 
       {/* Phase text - centered */}
       {breathSession.isActive && (
@@ -6896,118 +6730,6 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         opacity: showLabel && !breathSession.isActive ? 1 : 0,
         transition: 'opacity 0.5s ease',
       }}>breathe</div>
-
-      {/* Gesture hints overlay */}
-      {!showUI && showGestureHints && (
-        <div
-          onClick={() => {
-            if (!gestureHintsFadingOut) {
-              setGestureHintsFadingOut(true);
-              onHintsShown?.();
-              setTimeout(() => setShowGestureHints(false), 2500);
-            }
-          }}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
-            zIndex: 50,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            animation: gestureHintsFadingOut ? 'gestureHintsFadeOut 2.5s ease forwards' : 'gestureHintsFadeIn 3s ease',
-            cursor: 'pointer',
-          }}
-        >
-          <div style={{
-            color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
-            fontSize: '0.7rem',
-            fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            marginBottom: '2rem',
-          }}>
-            gestures
-          </div>
-
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.25rem',
-            maxWidth: '280px',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{
-                width: '50px',
-                height: '50px',
-                border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 4V20M12 4L8 8M12 4L16 8M12 20L8 16M12 20L16 16" stroke={`hsla(${primaryHue}, 52%, 68%, 0.8)`} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.7)', fontFamily: '"Jost", sans-serif', fontSize: '0.85rem' }}>
-                swipe up to choose technique
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{
-                width: '50px',
-                height: '50px',
-                border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M4 12H20M4 12L8 8M4 12L8 16M20 12L16 8M20 12L16 16" stroke={`hsla(${primaryHue}, 52%, 68%, 0.8)`} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.7)', fontFamily: '"Jost", sans-serif', fontSize: '0.85rem' }}>
-                swipe horizontal to change visual
-              </div>
-            </div>
-          </div>
-
-          <div style={{
-            marginTop: '2rem',
-            color: 'rgba(255,255,255,0.5)',
-            fontSize: '0.75rem',
-            fontFamily: '"Jost", sans-serif',
-            textAlign: 'center',
-            maxWidth: '260px',
-            lineHeight: '1.5',
-          }}>
-            breathe through your nose unless technique specifies otherwise
-          </div>
-
-          <div style={{
-            marginTop: '1.5rem',
-            color: 'rgba(255,255,255,0.4)',
-            fontSize: '0.7rem',
-            fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.1em',
-          }}>
-            tap to dismiss
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes gestureHintsFadeIn {
-          from { opacity: 0; } to { opacity: 1; }
-        }
-        @keyframes gestureHintsFadeOut {
-          from { opacity: 1; } to { opacity: 0; }
-        }
-      `}</style>
 
       {/* Technique selector - bottom drawer */}
       {showUI && (
@@ -7518,7 +7240,7 @@ const generateScale = (keyName, scaleType, octaves = 3) => {
   return frequencies.sort((a, b) => a - b);
 };
 
-function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false, hintsShown = false, onHintsShown }) {
+function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [currentInstrument, setCurrentInstrument] = useState(2); // synth
   const [currentTexture, setCurrentTexture] = useState(3); // forest
@@ -7528,8 +7250,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathValue, setBreathValue] = useState(0);
-  const [showGestureHints, setShowGestureHints] = useState(!hintsShown);
-  const [gestureHintsFadingOut, setGestureHintsFadingOut] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
 
   // Generate current scale based on key and scale type (memoized to prevent stale closures)
@@ -8261,7 +7981,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     } else if (type === 'organicFlute') {
       // Flute synthesis - focus on the breathy "edge tone" character
 
-      const duration = 0.7;
+      const duration = 1.0;
 
       // === MAIN TONE (triangle for hollow quality) ===
       const osc = ctx.createOscillator();
@@ -8270,21 +7990,21 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
       // Pitch scoop - start slightly flat, rise to pitch
       osc.frequency.setValueAtTime(freq * 0.97, now);
-      osc.frequency.exponentialRampToValueAtTime(freq, now + 0.15);
+      osc.frequency.exponentialRampToValueAtTime(freq, now + 0.25);
 
       // Gentle vibrato (delayed onset)
       const vibrato = ctx.createOscillator();
       const vibGain = ctx.createGain();
       vibrato.frequency.value = 5;
       vibGain.gain.setValueAtTime(0, now);
-      vibGain.gain.setTargetAtTime(freq * 0.004, now + 0.2, 0.1);
+      vibGain.gain.setTargetAtTime(freq * 0.004, now + 0.3, 0.15);
       vibrato.connect(vibGain);
       vibGain.connect(osc.frequency);
 
-      // Tone envelope - soft attack, short decay
+      // Tone envelope - slow attack, gentle decay
       oscGain.gain.setValueAtTime(0, now);
-      oscGain.gain.linearRampToValueAtTime(0.05 * velocity, now + 0.18);
-      oscGain.gain.setTargetAtTime(0, now + 0.25, 0.12);
+      oscGain.gain.linearRampToValueAtTime(0.05 * velocity, now + 0.35);
+      oscGain.gain.setTargetAtTime(0, now + 0.5, 0.2);
 
       // === SECOND HARMONIC (octave) ===
       const osc2 = ctx.createOscillator();
@@ -8292,8 +8012,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       osc2.type = 'sine';
       osc2.frequency.value = freq * 2;
       osc2Gain.gain.setValueAtTime(0, now);
-      osc2Gain.gain.linearRampToValueAtTime(0.01 * velocity, now + 0.2);
-      osc2Gain.gain.setTargetAtTime(0, now + 0.3, 0.1);
+      osc2Gain.gain.linearRampToValueAtTime(0.01 * velocity, now + 0.35);
+      osc2Gain.gain.setTargetAtTime(0, now + 0.5, 0.15);
 
       // === BREATH/AIR NOISE ===
       const noiseLen = ctx.sampleRate * duration;
@@ -8317,11 +8037,11 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       airBand.frequency.value = 2000;
 
       const noiseGain = ctx.createGain();
-      // Soft breath attack, quick fade
+      // Soft breath attack, gradual fade
       noiseGain.gain.setValueAtTime(0, now);
-      noiseGain.gain.linearRampToValueAtTime(0.04 * velocity, now + 0.1);
-      noiseGain.gain.setTargetAtTime(0.02 * velocity, now + 0.15, 0.08);
-      noiseGain.gain.setTargetAtTime(0, now + 0.25, 0.1);
+      noiseGain.gain.linearRampToValueAtTime(0.04 * velocity, now + 0.2);
+      noiseGain.gain.setTargetAtTime(0.02 * velocity, now + 0.3, 0.12);
+      noiseGain.gain.setTargetAtTime(0, now + 0.5, 0.15);
 
       // === OUTPUT FILTER (warm, not shrill) ===
       const lpf = ctx.createBiquadFilter();
@@ -8674,117 +8394,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         </div>
       )}
 
-      {/* Gesture hints overlay */}
-      {isInitialized && showGestureHints && (
-        <div
-          onClick={() => {
-            if (!gestureHintsFadingOut) {
-              setGestureHintsFadingOut(true);
-              onHintsShown?.();
-              setTimeout(() => setShowGestureHints(false), 2500);
-            }
-          }}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
-            zIndex: 50,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            animation: gestureHintsFadingOut ? 'gestureHintsFadeOut 2.5s ease forwards' : 'gestureHintsFadeIn 3s ease',
-            cursor: 'pointer',
-          }}
-        >
-          <div style={{
-            color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
-            fontSize: '0.7rem',
-            fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            marginBottom: '2rem',
-            animation: gestureHintsFadingOut ? 'gestureHintsFadeOut 2.5s ease forwards' : 'gestureHintsFadeIn 3.5s ease',
-          }}>
-            gestures
-          </div>
-
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1.25rem',
-            maxWidth: '280px',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{
-                width: '50px',
-                height: '50px',
-                border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M4 12H20M4 12L8 8M4 12L8 16M20 12L16 8M20 12L16 16" stroke={`hsla(${primaryHue}, 52%, 68%, 0.8)`} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.7)', fontFamily: '"Jost", sans-serif', fontSize: '0.85rem' }}>
-                swipe horizontal to change instrument
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{
-                width: '50px',
-                height: '50px',
-                border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 4V20M12 4L8 8M12 4L16 8M12 20L8 16M12 20L16 16" stroke={`hsla(${primaryHue}, 52%, 68%, 0.8)`} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.7)', fontFamily: '"Jost", sans-serif', fontSize: '0.85rem' }}>
-                swipe vertical to open settings
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{
-                width: '50px',
-                height: '50px',
-                border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <circle cx="10" cy="10" r="4" stroke={`hsla(${primaryHue}, 52%, 68%, 0.8)`} strokeWidth="1.5"/>
-                </svg>
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.7)', fontFamily: '"Jost", sans-serif', fontSize: '0.85rem' }}>
-                tap to play - pitch follows position
-              </div>
-            </div>
-          </div>
-
-          <div style={{
-            marginTop: '2.5rem',
-            color: 'rgba(255,255,255,0.4)',
-            fontSize: '0.7rem',
-            fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.1em',
-          }}>
-            tap to dismiss
-          </div>
-        </div>
-      )}
-
       {/* Note display is handled via DOM manipulation in showPlayedNote */}
 
       {/* Center label */}
@@ -8937,8 +8546,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
               }}>Texture</div>
               <div style={{
                 display: 'flex',
-                flexWrap: 'wrap',
+                flexWrap: 'nowrap',
                 gap: '0.5rem',
+                overflowX: 'auto',
+                paddingBottom: '0.25rem',
               }}>
                 {textures.map((texture, index) => (
                   <button
@@ -9215,12 +8826,6 @@ function Still() {
   const [settings, setSettings] = useState(defaultSettings);
   const [showColorOverlay, setShowColorOverlay] = useState(false);
   const [gazeVisual, setGazeVisual] = useState('wax');
-  const [breathVisual, setBreathVisual] = useState('geometry');
-
-  // Track which modes have shown gesture hints this session
-  const [gazeHintsShown, setGazeHintsShown] = useState(false);
-  const [breathHintsShown, setBreathHintsShown] = useState(false);
-  const [droneHintsShown, setDroneHintsShown] = useState(false);
 
   // Music player state
   const [musicOpen, setMusicOpen] = useState(false);
@@ -10453,8 +10058,6 @@ function Still() {
             }}
             currentVisual={gazeVisual}
             onVisualChange={setGazeVisual}
-            hintsShown={gazeHintsShown}
-            onHintsShown={() => setGazeHintsShown(true)}
           />
         )}
 
@@ -10467,10 +10070,6 @@ function Still() {
             stopBreathSession={stopBreathSession}
             primaryHue={primaryHue}
             primaryColor={primaryColor}
-            currentVisual={breathVisual}
-            onVisualChange={setBreathVisual}
-            hintsShown={breathHintsShown}
-            onHintsShown={() => setBreathHintsShown(true)}
           />
         )}
 
@@ -10479,8 +10078,6 @@ function Still() {
           primaryHue={primaryHue}
           primaryColor={primaryColor}
           backgroundMode={view !== 'drone'}
-          hintsShown={droneHintsShown}
-          onHintsShown={() => setDroneHintsShown(true)}
         />
         {false && view === 'breathwork-old' && (
           <main
@@ -10777,6 +10374,43 @@ function Still() {
                 {preset.name}
               </button>
             ))}
+
+            {/* Gestures info section */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                marginTop: '1rem',
+                paddingTop: '2rem',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                opacity: 0,
+                animation: `colorWordIn 0.6s ease-out ${0.1 + COLOR_PRESETS.length * 0.08}s forwards`,
+              }}
+            >
+              <div style={{
+                color: 'rgba(255, 255, 255, 0.3)',
+                fontSize: '0.65rem',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                marginBottom: '1.25rem',
+                textAlign: 'center',
+              }}>
+                gestures
+              </div>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+                color: 'rgba(255, 255, 255, 0.5)',
+                fontSize: '0.8rem',
+                fontFamily: '"Jost", sans-serif',
+                textAlign: 'center',
+              }}>
+                <div>swipe horizontal — change sound or visual</div>
+                <div>swipe up — options</div>
+                <div>touch + drag — interact</div>
+              </div>
+            </div>
           </div>
         )}
 
