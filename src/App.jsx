@@ -969,16 +969,6 @@ const breathTechniques = {
     ],
     color: { inhale: '#1a3a4a', holdFull: '#2a4a3a', exhale: '#2a3a4a', holdEmpty: '#1a2a3a' },
   },
-  extended: {
-    name: 'Extended Exhale',
-    description: 'Long exhale activates rest',
-    recommendedCycles: 10, // ~2 min - parasympathetic activation
-    phases: [
-      { name: 'inhale', label: 'inhale', duration: 4 },
-      { name: 'exhale', label: 'exhale slowly', duration: 8 },
-    ],
-    color: { inhale: '#1a3a4a', exhale: '#2a2a4a' },
-  },
   ocean: {
     name: 'Ocean Breath',
     description: 'Slow, wave-like rhythm',
@@ -1080,37 +1070,16 @@ const breathTechniques = {
     description: 'Nadi Shodhana - balances',
     recommendedCycles: 5, // ~2 min - traditional practice
     phases: [
-      { name: 'inhale', label: 'Left nostril in', duration: 4 },
-      { name: 'holdFull', label: 'Hold', duration: 4 },
-      { name: 'exhale', label: 'Right nostril out', duration: 4 },
-      { name: 'inhale', label: 'Right nostril in', duration: 4 },
-      { name: 'holdFull', label: 'Hold', duration: 4 },
-      { name: 'exhale', label: 'Left nostril out', duration: 4 },
+      { name: 'inhale', label: 'Close right, inhale left', duration: 4 },
+      { name: 'holdFull', label: 'Close both, hold', duration: 4 },
+      { name: 'exhale', label: 'Close left, exhale right', duration: 4 },
+      { name: 'inhale', label: 'Close left, inhale right', duration: 4 },
+      { name: 'holdFull', label: 'Close both, hold', duration: 4 },
+      { name: 'exhale', label: 'Close right, exhale left', duration: 4 },
     ],
     color: { inhale: '#1a3a5a', holdFull: '#2a4a4a', exhale: '#1a2a4a' },
   },
 
-  threeSixFive: {
-    name: '365 Method',
-    description: '3x daily, 6 breaths/min, 5 min',
-    recommendedCycles: 30, // 5 min as prescribed by the method
-    phases: [
-      { name: 'inhale', label: 'Inhale', duration: 5 },
-      { name: 'exhale', label: 'Exhale', duration: 5 },
-    ],
-    color: { inhale: '#2a4a4a', exhale: '#1a3a4a' },
-  },
-
-  softBelly: {
-    name: 'Soft Belly',
-    description: 'Mindful belly softening',
-    recommendedCycles: 10, // ~1.6 min
-    phases: [
-      { name: 'inhale', label: 'Soft...', duration: 4 },
-      { name: 'exhale', label: 'Belly...', duration: 6 },
-    ],
-    color: { inhale: '#2a3a3a', exhale: '#1a2a3a' },
-  },
 
   cooling: {
     name: 'Sitali Cooling',
@@ -1129,9 +1098,9 @@ const breathTechniques = {
     description: 'Left nostril only - calming',
     recommendedCycles: 8, // ~1.6 min
     phases: [
-      { name: 'inhale', label: 'Left nostril in', duration: 4 },
-      { name: 'holdFull', label: 'Hold gently', duration: 2 },
-      { name: 'exhale', label: 'Right nostril out', duration: 6 },
+      { name: 'inhale', label: 'Close right, inhale left', duration: 4 },
+      { name: 'holdFull', label: 'Close both, hold', duration: 2 },
+      { name: 'exhale', label: 'Close left, exhale right', duration: 6 },
     ],
     color: { inhale: '#1a2a4a', holdFull: '#2a3a5a', exhale: '#1a2a3a' },
   },
