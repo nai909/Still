@@ -1,4 +1,5 @@
 import React from 'react';
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
@@ -1128,35 +1129,28 @@ const PALETTE = {
 };
 
 // ============================================================================
-// HAPTIC FEEDBACK - Subtle vibration patterns for key moments
+// HAPTIC FEEDBACK - Using Capacitor Haptics for native iOS feel
 // ============================================================================
 const haptic = {
-  // Check if vibration is supported
-  supported: typeof navigator !== 'undefined' && 'vibrate' in navigator,
+  // Gentle tap for UI interactions (buttons, selections)
+  tap: () => Haptics.impact({ style: ImpactStyle.Light }).catch(() => {}),
 
-  // Gentle tap for UI interactions
-  tap: () => haptic.supported && navigator.vibrate(10),
+  // Soft pulse for breath phase transitions
+  soft: () => Haptics.impact({ style: ImpactStyle.Light }).catch(() => {}),
 
-  // Soft pulse for breath phase start
-  soft: () => haptic.supported && navigator.vibrate(15),
+  // Medium pulse for mode changes
+  medium: () => Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {}),
 
-  // Medium pulse for transitions
-  medium: () => haptic.supported && navigator.vibrate(25),
+  // Selection feedback for scrolling/cycling through options
+  selection: () => Haptics.selectionChanged().catch(() => {}),
 
-  // Double tap for hold phases
-  double: () => haptic.supported && navigator.vibrate([12, 50, 12]),
+  // Success feedback for completed actions
+  success: () => Haptics.notification({ type: NotificationType.Success }).catch(() => {}),
 
-  // Success pattern for session complete
-  success: () => haptic.supported && navigator.vibrate([15, 80, 15, 80, 30]),
-
-  // Inhale pattern - gentle rising
-  inhale: () => haptic.supported && navigator.vibrate(20),
-
-  // Exhale pattern - soft release
-  exhale: () => haptic.supported && navigator.vibrate(15),
-
-  // Hold pattern - subtle reminder
-  hold: () => haptic.supported && navigator.vibrate([8, 60, 8]),
+  // Breath phase haptics
+  inhale: () => Haptics.impact({ style: ImpactStyle.Light }).catch(() => {}),
+  exhale: () => Haptics.impact({ style: ImpactStyle.Light }).catch(() => {}),
+  hold: () => Haptics.impact({ style: ImpactStyle.Light }).catch(() => {}),
 };
 
 const gazeModes = [
@@ -6663,7 +6657,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
 
   return (
     <main
-      onClick={() => !showUI && !breathSession.isActive && startBreathSession(breathSession.technique)}
+      onClick={() => { if (!showUI && !breathSession.isActive) { haptic.tap(); startBreathSession(breathSession.technique); } }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       style={{
@@ -6812,6 +6806,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
                   key={key}
                   onClick={(e) => {
                     e.stopPropagation();
+                    haptic.tap();
                     setTimeout(() => {
                       if (breathSession.isActive) stopBreathSession();
                       startBreathSession(key);
@@ -9507,6 +9502,7 @@ function Still() {
         }}>
           <h1
             onClick={() => {
+              haptic.tap();
               setHasOpenedSettings(true);
               setTimeout(() => setShowColorOverlay(true), 80);
             }}
@@ -9536,7 +9532,7 @@ function Still() {
               return (
                 <button
                   key={key}
-                  onClick={() => setTimeout(() => setView(key), 80)}
+                  onClick={() => { haptic.tap(); setTimeout(() => setView(key), 80); }}
                   style={{
                     background: isActive ? `hsla(${primaryHue}, 52%, 68%, 0.13)` : `${currentTheme.text}08`,
                     border: '1px solid',
@@ -10352,6 +10348,7 @@ function Still() {
                 key={preset.hue}
                 onClick={(e) => {
                   e.stopPropagation();
+                  haptic.tap();
                   const newSettings = { ...settings, primaryHue: preset.hue };
                   setSettings(newSettings);
                   saveSettings(newSettings);
