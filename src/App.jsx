@@ -8825,6 +8825,7 @@ function Still() {
   const [toast, setToast] = useState(null);
   const [settings, setSettings] = useState(defaultSettings);
   const [showColorOverlay, setShowColorOverlay] = useState(false);
+  const [hasOpenedSettings, setHasOpenedSettings] = useState(false);
   const [gazeVisual, setGazeVisual] = useState('wax');
 
   // Music player state
@@ -9505,7 +9506,11 @@ function Still() {
           zIndex: 100,
         }}>
           <h1
-            onClick={() => setTimeout(() => setShowColorOverlay(true), 80)}
+            onClick={() => {
+              setHasOpenedSettings(true);
+              setTimeout(() => setShowColorOverlay(true), 80);
+            }}
+            className={hasOpenedSettings ? '' : 'still-pulse'}
             style={{
               fontSize: 'clamp(1.2rem, 3vw, 1.5rem)',
               fontFamily: '"Jost", sans-serif',
@@ -9514,8 +9519,7 @@ function Still() {
               margin: 0,
               cursor: 'pointer',
               color: currentTheme.text,
-              opacity: 0.9,
-              transition: 'opacity 0.5s ease',
+              opacity: hasOpenedSettings ? 0.9 : undefined,
             }}
           >
             STILL
@@ -10410,6 +10414,17 @@ function Still() {
                 <div>swipe up — options</div>
                 <div>touch + drag — interact</div>
               </div>
+              <div style={{
+                marginTop: '1.5rem',
+                color: `hsla(${primaryHue}, 52%, 68%, 0.8)`,
+                fontSize: '1rem',
+                fontFamily: '"Jost", sans-serif',
+                fontWeight: 300,
+                letterSpacing: '0.15em',
+                textAlign: 'center',
+              }}>
+                feel and explore
+              </div>
             </div>
           </div>
         )}
@@ -10426,6 +10441,8 @@ function Still() {
           @keyframes colorOverlayIn { from { opacity: 0; } to { opacity: 1; } }
           @keyframes colorWordIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
           @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 0.8; } }
+          @keyframes stillPulse { 0%, 100% { text-shadow: 0 0 0 transparent; opacity: 0.7; transform: scale(1); } 50% { text-shadow: 0 0 15px rgba(127, 219, 202, 0.8), 0 0 30px rgba(127, 219, 202, 0.5); opacity: 1; transform: scale(1.04); } }
+          .still-pulse { animation: stillPulse 3s ease-in-out infinite; display: inline-block; }
           ::-webkit-scrollbar { width: 4px; }
           ::-webkit-scrollbar-track { background: transparent; }
           ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 2px; }
