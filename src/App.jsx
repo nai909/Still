@@ -1165,14 +1165,10 @@ const gazeModes = [
   { key: 'mushrooms', name: 'Mushrooms' },
   // Water/Ocean visuals
   { key: 'koiPond', name: 'Koi Pond' },
-  { key: 'bioluminescent', name: 'Bioluminescent' },
   // Mathematical/Topological visuals
   { key: 'flowerOfLife', name: 'Flower of Life' },
   // Organic/Abstract visuals
-  { key: 'wax', name: 'Lava Lamp' },
-  { key: 'lavaTouch', name: 'Lava Touch' },
-  // Interactive visuals
-  { key: 'bubbles', name: 'Bubbles' },
+  { key: 'lavaTouch', name: 'Lava Lamp' },
   // Hyperdimensional visuals
   { key: 'realm', name: 'Realm' },
 ];
@@ -1294,6 +1290,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   }, [currentMode, backgroundMode]);
 
   // Track touch/mouse positions with spring physics
+  // Ref to track pending haptic timeout
+  const pendingHapticRef = useRef(null);
+
   const handleInteractionStart = React.useCallback((e) => {
     if (backgroundMode || showUI) return; // No interaction in background mode
     e.preventDefault();
@@ -1307,6 +1306,18 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     touches.forEach(touch => {
       const existing = touchPointsRef.current.find(p => p.id === touch.identifier);
       if (!existing) {
+        // Delayed haptic feedback (except lavaTouch which has its own haptics)
+        // Wait briefly to see if this is a swipe before triggering haptic
+        if (currentMode !== 'lavaTouch') {
+          // Clear any existing pending haptic
+          if (pendingHapticRef.current) {
+            clearTimeout(pendingHapticRef.current);
+          }
+          pendingHapticRef.current = setTimeout(() => {
+            haptic.tap();
+            pendingHapticRef.current = null;
+          }, 60); // 60ms delay - imperceptible for taps, enough to detect swipes
+        }
         touchPointsRef.current.push({
           id: touch.identifier,
           x: touch.clientX,
@@ -1327,7 +1338,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         });
       }
     });
-  }, [backgroundMode, showUI]);
+  }, [backgroundMode, showUI, currentMode]);
 
   const handleInteractionMove = React.useCallback((e) => {
     if (backgroundMode || showUI) return;
@@ -1335,6 +1346,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     touches.forEach(touch => {
       const point = touchPointsRef.current.find(p => p.id === touch.identifier);
       if (point) {
+        // Cancel pending haptic if significant movement detected (it's a swipe, not a tap)
+        if (pendingHapticRef.current) {
+          const deltaX = Math.abs(touch.clientX - point.startX);
+          const deltaY = Math.abs(touch.clientY - point.startY);
+          if (deltaX > 15 || deltaY > 15) {
+            clearTimeout(pendingHapticRef.current);
+            pendingHapticRef.current = null;
+          }
+        }
         point.velocity.x = touch.clientX - point.x;
         point.velocity.y = touch.clientY - point.y;
         point.x = touch.clientX;
@@ -1360,6 +1380,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       // Detect horizontal swipe: change visual
       if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5 && deltaTime < maxSwipeTime) {
+        // Cancel any pending haptic since this was a swipe
+        if (pendingHapticRef.current) {
+          clearTimeout(pendingHapticRef.current);
+          pendingHapticRef.current = null;
+        }
         cycleVisual(deltaX > 0 ? -1 : 1); // Swipe left = next, swipe right = previous
         swipeStartRef.current = null;
         return; // Don't process further
@@ -4910,655 +4935,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
-  // ========== BIOLUMINESCENT OCEAN MODE (3D) ==========
-  React.useEffect(() => {
-    if (currentMode !== 'bioluminescent' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 8);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'none';
-    rendererRef.current = renderer;
-    clockRef.current = new THREE.Clock();
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    const oceanGroup = new THREE.Group();
-    scene.add(oceanGroup);
-
-    // Bioluminescent particles - primary color
-    const particleCount = 1500;
-    const particleGeom = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    const velocities = new Float32Array(particleCount * 3);
-    const baseBrightness = new Float32Array(particleCount);
-    const phases = new Float32Array(particleCount);
-
-    for (let i = 0; i < particleCount; i++) {
-      const i3 = i * 3;
-      positions[i3] = (Math.random() - 0.5) * 12;
-      positions[i3 + 1] = (Math.random() - 0.5) * 8;
-      positions[i3 + 2] = (Math.random() - 0.5) * 8;
-      velocities[i3] = (Math.random() - 0.5) * 0.01;
-      velocities[i3 + 1] = (Math.random() - 0.5) * 0.01;
-      velocities[i3 + 2] = (Math.random() - 0.5) * 0.01;
-      baseBrightness[i] = 0.3 + Math.random() * 0.4;
-      phases[i] = Math.random() * Math.PI * 2;
-    }
-
-    particleGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-
-    const particleMat = new THREE.PointsMaterial({
-      color: hslToHex(hue, 70, 55),
-      size: 0.06,
-      transparent: true,
-      opacity: 0.7,
-      blending: THREE.AdditiveBlending
-    });
-
-    const particles = new THREE.Points(particleGeom, particleMat);
-    oceanGroup.add(particles);
-
-    // Subtle accent particles
-    const whiteParticleCount = 300;
-    const whiteParticleGeom = new THREE.BufferGeometry();
-    const whitePositions = new Float32Array(whiteParticleCount * 3);
-    const whiteVelocities = new Float32Array(whiteParticleCount * 3);
-    const whitePhases = new Float32Array(whiteParticleCount);
-
-    for (let i = 0; i < whiteParticleCount; i++) {
-      const i3 = i * 3;
-      whitePositions[i3] = (Math.random() - 0.5) * 12;
-      whitePositions[i3 + 1] = (Math.random() - 0.5) * 8;
-      whitePositions[i3 + 2] = (Math.random() - 0.5) * 8;
-      whiteVelocities[i3] = (Math.random() - 0.5) * 0.008;
-      whiteVelocities[i3 + 1] = (Math.random() - 0.5) * 0.008;
-      whiteVelocities[i3 + 2] = (Math.random() - 0.5) * 0.008;
-      whitePhases[i] = Math.random() * Math.PI * 2;
-    }
-
-    whiteParticleGeom.setAttribute('position', new THREE.BufferAttribute(whitePositions, 3));
-
-    const whiteParticleMat = new THREE.PointsMaterial({
-      color: hslToHex(hue, 30, 75), // Subtle tint of primary hue
-      size: 0.03,
-      transparent: true,
-      opacity: 0.35,
-      blending: THREE.AdditiveBlending
-    });
-
-    const whiteParticles = new THREE.Points(whiteParticleGeom, whiteParticleMat);
-    oceanGroup.add(whiteParticles);
-
-    // Larger glowing orbs - jellyfish-like creatures
-    const orbs = [];
-    const numOrbs = 12;
-    for (let i = 0; i < numOrbs; i++) {
-      const orbGeom = new THREE.SphereGeometry(0.15 + Math.random() * 0.1, 16, 16);
-      // Just two variations of primary hue for cohesion
-      const orbColor = i % 2 === 0
-        ? hslToHex(hue, 65, 55)  // Primary
-        : hslToHex(hue, 50, 65); // Lighter variant
-      const orbMat = new THREE.MeshBasicMaterial({
-        color: orbColor,
-        transparent: true,
-        opacity: 0.5,
-        blending: THREE.AdditiveBlending
-      });
-      const orb = new THREE.Mesh(orbGeom, orbMat);
-
-      orb.position.set(
-        (Math.random() - 0.5) * 8,
-        (Math.random() - 0.5) * 6,
-        (Math.random() - 0.5) * 6
-      );
-
-      orb.userData = {
-        basePos: orb.position.clone(),
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.3 + Math.random() * 0.3,
-        brightness: 0.5,
-        targetBrightness: 0.5
-      };
-
-      oceanGroup.add(orb);
-      orbs.push(orb);
-    }
-
-    // Trailing light wisps
-    const wisps = [];
-    const numWisps = 8;
-    for (let i = 0; i < numWisps; i++) {
-      const wispGeom = new THREE.BufferGeometry();
-      const wispPositions = new Float32Array(30 * 3); // 30 points per wisp
-      for (let j = 0; j < 30; j++) {
-        const j3 = j * 3;
-        wispPositions[j3] = (Math.random() - 0.5) * 8;
-        wispPositions[j3 + 1] = (Math.random() - 0.5) * 6;
-        wispPositions[j3 + 2] = (Math.random() - 0.5) * 6;
-      }
-      wispGeom.setAttribute('position', new THREE.BufferAttribute(wispPositions, 3));
-
-      const wispMat = new THREE.LineBasicMaterial({
-        color: hslToHex(hue, 40, 50),
-        transparent: true,
-        opacity: 0.3,
-        blending: THREE.AdditiveBlending
-      });
-
-      const wisp = new THREE.Line(wispGeom, wispMat);
-      wisp.userData = {
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.1 + Math.random() * 0.1
-      };
-      oceanGroup.add(wisp);
-      wisps.push(wisp);
-    }
-
-    // Touch influence tracking
-    let touchInfluence = { x: 0, y: 0, strength: 0 };
-
-    // Spring physics state
-    let localScale = 1;
-    let localScaleVelocity = 0;
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clockRef.current.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
-
-      // Touch-responsive rotation and influence
-      if (touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          oceanGroup.rotation.y += normalizedX * 0.01;
-          oceanGroup.rotation.x += normalizedY * 0.005;
-
-          // Track touch for particle interaction
-          touchInfluence.x = normalizedX * 4;
-          touchInfluence.y = -normalizedY * 3;
-          touchInfluence.strength = Math.min(1, touchInfluence.strength + 0.05);
-        }
-      } else {
-        oceanGroup.rotation.y += 0.0003;
-        touchInfluence.strength *= 0.95;
-      }
-
-      // Spring-damper scale physics
-      const targetScale = 0.9 + breath * 0.2;
-      const springStiffness = 0.015;
-      const damping = 0.85;
-      const force = (targetScale - localScale) * springStiffness;
-      localScaleVelocity = localScaleVelocity * damping + force;
-      localScale += localScaleVelocity;
-      oceanGroup.scale.setScalar(localScale);
-
-      // Z-position breathing
-      const zOffset = (localScale - 0.9) * 2.0;
-      oceanGroup.position.z = zOffset;
-
-      // Animate particles with touch reactivity
-      const particlePositions = particleGeom.attributes.position.array;
-      for (let i = 0; i < particleCount; i++) {
-        const i3 = i * 3;
-
-        // Drift movement
-        particlePositions[i3] += velocities[i3] + Math.sin(elapsed * 0.5 + phases[i]) * 0.002;
-        particlePositions[i3 + 1] += velocities[i3 + 1] + Math.cos(elapsed * 0.3 + phases[i]) * 0.002;
-        particlePositions[i3 + 2] += velocities[i3 + 2];
-
-        // Touch attraction/reaction
-        if (touchInfluence.strength > 0.1) {
-          const dx = touchInfluence.x - particlePositions[i3];
-          const dy = touchInfluence.y - particlePositions[i3 + 1];
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 3) {
-            const attraction = touchInfluence.strength * 0.01 / (dist + 0.5);
-            particlePositions[i3] += dx * attraction;
-            particlePositions[i3 + 1] += dy * attraction;
-          }
-        }
-
-        // Wrap around boundaries
-        if (particlePositions[i3] > 6) particlePositions[i3] = -6;
-        if (particlePositions[i3] < -6) particlePositions[i3] = 6;
-        if (particlePositions[i3 + 1] > 4) particlePositions[i3 + 1] = -4;
-        if (particlePositions[i3 + 1] < -4) particlePositions[i3 + 1] = 4;
-        if (particlePositions[i3 + 2] > 4) particlePositions[i3 + 2] = -4;
-        if (particlePositions[i3 + 2] < -4) particlePositions[i3 + 2] = 4;
-      }
-      particleGeom.attributes.position.needsUpdate = true;
-
-      // Particle brightness pulses with breath
-      particleMat.opacity = 0.4 + breath * 0.4 + touchInfluence.strength * 0.2;
-      particleMat.size = 0.05 + breath * 0.03;
-
-      // Animate white particles
-      const whiteParticlePositions = whiteParticleGeom.attributes.position.array;
-      for (let i = 0; i < whiteParticleCount; i++) {
-        const i3 = i * 3;
-        whiteParticlePositions[i3] += whiteVelocities[i3] + Math.sin(elapsed * 0.4 + whitePhases[i]) * 0.001;
-        whiteParticlePositions[i3 + 1] += whiteVelocities[i3 + 1] + Math.cos(elapsed * 0.25 + whitePhases[i]) * 0.001;
-        whiteParticlePositions[i3 + 2] += whiteVelocities[i3 + 2];
-
-        // Wrap around boundaries
-        if (whiteParticlePositions[i3] > 6) whiteParticlePositions[i3] = -6;
-        if (whiteParticlePositions[i3] < -6) whiteParticlePositions[i3] = 6;
-        if (whiteParticlePositions[i3 + 1] > 4) whiteParticlePositions[i3 + 1] = -4;
-        if (whiteParticlePositions[i3 + 1] < -4) whiteParticlePositions[i3 + 1] = 4;
-        if (whiteParticlePositions[i3 + 2] > 4) whiteParticlePositions[i3 + 2] = -4;
-        if (whiteParticlePositions[i3 + 2] < -4) whiteParticlePositions[i3 + 2] = 4;
-      }
-      whiteParticleGeom.attributes.position.needsUpdate = true;
-      whiteParticleMat.opacity = 0.3 + breath * 0.3;
-
-      // Animate orbs
-      orbs.forEach((orb, i) => {
-        const data = orb.userData;
-
-        // Floating motion
-        orb.position.x = data.basePos.x + Math.sin(elapsed * data.speed + data.phase) * 0.8;
-        orb.position.y = data.basePos.y + Math.cos(elapsed * data.speed * 0.7 + data.phase) * 0.6;
-        orb.position.z = data.basePos.z + Math.sin(elapsed * data.speed * 0.5) * 0.4;
-
-        // Touch proximity glow
-        if (touchInfluence.strength > 0.1) {
-          const dx = touchInfluence.x - orb.position.x;
-          const dy = touchInfluence.y - orb.position.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 2) {
-            data.targetBrightness = 0.9;
-          } else {
-            data.targetBrightness = 0.5;
-          }
-        } else {
-          data.targetBrightness = 0.5;
-        }
-
-        // Smooth brightness transition
-        data.brightness += (data.targetBrightness - data.brightness) * 0.1;
-        orb.material.opacity = data.brightness * (0.5 + breath * 0.4);
-
-        // Pulse size with breath
-        const pulseScale = 1 + Math.sin(elapsed * 2 + data.phase) * 0.1 + breath * 0.15;
-        orb.scale.setScalar(pulseScale);
-      });
-
-      // Animate wisps
-      wisps.forEach(wisp => {
-        const wispPositions = wisp.geometry.attributes.position.array;
-        for (let j = 0; j < 30; j++) {
-          const j3 = j * 3;
-          wispPositions[j3] += Math.sin(elapsed * wisp.userData.speed + j * 0.2) * 0.005;
-          wispPositions[j3 + 1] += Math.cos(elapsed * wisp.userData.speed * 0.7 + j * 0.1) * 0.003;
-        }
-        wisp.geometry.attributes.position.needsUpdate = true;
-        wisp.material.opacity = 0.2 + breath * 0.2;
-      });
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
-      }
-      particleGeom.dispose();
-      particleMat.dispose();
-      whiteParticleGeom.dispose();
-      whiteParticleMat.dispose();
-      orbs.forEach(orb => {
-        orb.geometry.dispose();
-        orb.material.dispose();
-      });
-      wisps.forEach(wisp => {
-        wisp.geometry.dispose();
-        wisp.material.dispose();
-      });
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
-
-  // ========== WAX MODE (Hyperelastic lava lamp blobs) ==========
-  React.useEffect(() => {
-    if (currentMode !== 'wax' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 9);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'none';
-    rendererRef.current = renderer;
-    clockRef.current = new THREE.Clock();
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    // Simple 3D noise function (simplex-like)
-    const noise3D = (x, y, z) => {
-      const p = [151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,134,139,48,27,166,77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,102,143,54,65,25,63,161,1,216,80,73,209,76,132,187,208,89,18,169,200,196,135,130,116,188,159,86,164,100,109,198,173,186,3,64,52,217,226,250,124,123,5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,223,183,170,213,119,248,152,2,44,154,163,70,221,153,101,155,167,43,172,9,129,22,39,253,19,98,108,110,79,113,224,232,178,185,112,104,218,246,97,228,251,34,242,193,238,210,144,12,191,179,162,241,81,51,145,235,249,14,239,107,49,192,214,31,181,199,106,157,184,84,204,176,115,121,50,45,127,4,150,254,138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180];
-      const perm = [...p, ...p];
-      const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
-      const lerp = (t, a, b) => a + t * (b - a);
-      const grad = (hash, x, y, z) => {
-        const h = hash & 15;
-        const u = h < 8 ? x : y;
-        const v = h < 4 ? y : h === 12 || h === 14 ? x : z;
-        return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
-      };
-      const X = Math.floor(x) & 255, Y = Math.floor(y) & 255, Z = Math.floor(z) & 255;
-      x -= Math.floor(x); y -= Math.floor(y); z -= Math.floor(z);
-      const u = fade(x), v = fade(y), w = fade(z);
-      const A = perm[X] + Y, AA = perm[A] + Z, AB = perm[A + 1] + Z;
-      const B = perm[X + 1] + Y, BA = perm[B] + Z, BB = perm[B + 1] + Z;
-      return lerp(w, lerp(v, lerp(u, grad(perm[AA], x, y, z), grad(perm[BA], x-1, y, z)),
-        lerp(u, grad(perm[AB], x, y-1, z), grad(perm[BB], x-1, y-1, z))),
-        lerp(v, lerp(u, grad(perm[AA+1], x, y, z-1), grad(perm[BA+1], x-1, y, z-1)),
-          lerp(u, grad(perm[AB+1], x, y-1, z-1), grad(perm[BB+1], x-1, y-1, z-1))));
-    };
-
-    const waxGroup = new THREE.Group();
-    scene.add(waxGroup);
-
-    // Create organic blobs
-    const blobs = [];
-    const numBlobs = 6;
-
-    for (let i = 0; i < numBlobs; i++) {
-      // Create icosahedron for smooth organic shape
-      const baseRadius = 0.35 + Math.random() * 0.25;
-      const geometry = new THREE.IcosahedronGeometry(baseRadius, 4);
-
-      // Store original positions for displacement
-      const originalPositions = geometry.attributes.position.array.slice();
-      geometry.userData = { originalPositions };
-
-      // Wireframe material matching torus aesthetic
-      const material = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue, 52, 68),
-        wireframe: true,
-        transparent: true,
-        opacity: 0.75,
-      });
-
-      const mesh = new THREE.Mesh(geometry, material);
-
-      // Initial position - spread in void
-      mesh.position.set(
-        (Math.random() - 0.5) * 2.5,
-        (Math.random() - 0.5) * 3.5,
-        (Math.random() - 0.5) * 1.5
-      );
-
-      const blob = {
-        mesh,
-        baseRadius,
-        position: mesh.position.clone(),
-        velocity: new THREE.Vector3(0, 0, 0),
-        phase: Math.random() * Math.PI * 2,
-        floatSpeed: 0.15 + Math.random() * 0.15,
-        wobbleSpeed: 0.3 + Math.random() * 0.2,
-        wobbleIntensity: 0.12 + Math.random() * 0.08,
-      };
-
-      blobs.push(blob);
-      waxGroup.add(mesh);
-    }
-
-    // Add subtle ambient glow particles around blobs
-    const glowParticleCount = 200;
-    const glowGeom = new THREE.BufferGeometry();
-    const glowPositions = new Float32Array(glowParticleCount * 3);
-    const glowVelocities = [];
-
-    for (let i = 0; i < glowParticleCount; i++) {
-      const i3 = i * 3;
-      glowPositions[i3] = (Math.random() - 0.5) * 6;
-      glowPositions[i3 + 1] = (Math.random() - 0.5) * 6;
-      glowPositions[i3 + 2] = (Math.random() - 0.5) * 3;
-      glowVelocities.push({
-        x: (Math.random() - 0.5) * 0.005,
-        y: (Math.random() - 0.5) * 0.005,
-        z: (Math.random() - 0.5) * 0.003,
-        phase: Math.random() * Math.PI * 2
-      });
-    }
-
-    glowGeom.setAttribute('position', new THREE.BufferAttribute(glowPositions, 3));
-
-    const glowMat = new THREE.PointsMaterial({
-      color: hslToHex(hue, 45, 60),
-      size: 0.02,
-      transparent: true,
-      opacity: 0.4,
-      blending: THREE.AdditiveBlending
-    });
-
-    const glowParticles = new THREE.Points(glowGeom, glowMat);
-    waxGroup.add(glowParticles);
-
-    // Touch influence tracking
-    let touchInfluence = { x: 0, y: 0, z: 0, strength: 0 };
-
-    // Spring physics state
-    let localScale = 1;
-    let localScaleVelocity = 0;
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clockRef.current.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
-
-      // Touch-responsive rotation
-      if (touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          waxGroup.rotation.y += normalizedX * 0.02;
-          waxGroup.rotation.x += normalizedY * 0.01;
-
-          // Track touch for blob attraction
-          touchInfluence.x = normalizedX * 3;
-          touchInfluence.y = -normalizedY * 2.5;
-          touchInfluence.z = 0.5;
-          touchInfluence.strength = Math.min(1, touchInfluence.strength + 0.08);
-        }
-      } else {
-        // Gentle auto-rotation when not touching
-        waxGroup.rotation.y += 0.0003;
-        touchInfluence.strength *= 0.92;
-      }
-
-      // Spring-damper scale physics (smoother for breath transitions)
-      const targetScale = 0.85 + breath * 0.35;
-      const springStiffness = 0.008;
-      const damping = 0.92;
-      const force = (targetScale - localScale) * springStiffness;
-      localScaleVelocity = localScaleVelocity * damping + force;
-      localScale += localScaleVelocity;
-      waxGroup.scale.setScalar(localScale);
-
-      // Z-position breathing - move toward camera on inhale
-      waxGroup.position.z = (localScale - 0.85) * 2.3 - 0.3;
-
-      // Animate each blob
-      blobs.forEach((blob, index) => {
-        // Lava lamp physics - vertical oscillation
-        const verticalOsc = Math.sin(elapsed * blob.floatSpeed + blob.phase) * 0.4;
-        blob.position.y += (verticalOsc - (blob.position.y - blob.mesh.position.y)) * 0.02;
-
-        // Gentle horizontal drift
-        blob.position.x += Math.sin(elapsed * 0.08 + blob.phase * 1.5) * 0.001;
-        blob.position.z += Math.cos(elapsed * 0.06 + blob.phase * 0.7) * 0.0005;
-
-        // Apply velocity
-        blob.position.add(blob.velocity);
-        blob.velocity.multiplyScalar(0.98); // Damping
-
-        // Soft boundary limits
-        if (blob.position.y > 2.2) blob.velocity.y -= 0.0003;
-        if (blob.position.y < -2.2) blob.velocity.y += 0.0003;
-        if (blob.position.x > 1.8) blob.velocity.x -= 0.0002;
-        if (blob.position.x < -1.8) blob.velocity.x += 0.0002;
-        if (blob.position.z > 1) blob.velocity.z -= 0.0001;
-        if (blob.position.z < -1) blob.velocity.z += 0.0001;
-
-        // Touch attraction - blobs drawn to touch like heat source
-        if (touchInfluence.strength > 0.1) {
-          const touchVec = new THREE.Vector3(touchInfluence.x, touchInfluence.y, touchInfluence.z);
-          const dist = blob.position.distanceTo(touchVec);
-          if (dist < 3) {
-            const attractForce = touchVec.clone().sub(blob.position).normalize();
-            blob.velocity.add(attractForce.multiplyScalar(0.0008 * (3 - dist) * touchInfluence.strength));
-          }
-        }
-
-        // Breath sync - rise on inhale
-        const breathLift = breath * 0.25;
-        blob.mesh.position.x = blob.position.x;
-        blob.mesh.position.y = blob.position.y + breathLift;
-        blob.mesh.position.z = blob.position.z;
-
-        // Hyperelastic deformation - noise-based vertex displacement
-        const geometry = blob.mesh.geometry;
-        const positions = geometry.attributes.position.array;
-        const originalPositions = geometry.userData.originalPositions;
-        const normal = new THREE.Vector3();
-
-        for (let i = 0; i < positions.length; i += 3) {
-          // Get original vertex position
-          const ox = originalPositions[i];
-          const oy = originalPositions[i + 1];
-          const oz = originalPositions[i + 2];
-
-          // Calculate normal direction
-          normal.set(ox, oy, oz).normalize();
-
-          // 4D noise for smooth time-based displacement
-          const noiseVal = noise3D(
-            ox * 1.5 + blob.phase,
-            oy * 1.5 + elapsed * blob.wobbleSpeed,
-            oz * 1.5 + elapsed * 0.15
-          );
-
-          // Apply displacement along normal
-          const displacement = noiseVal * blob.wobbleIntensity * (0.8 + breath * 0.4);
-          positions[i] = ox + normal.x * displacement;
-          positions[i + 1] = oy + normal.y * displacement;
-          positions[i + 2] = oz + normal.z * displacement;
-        }
-
-        geometry.attributes.position.needsUpdate = true;
-        geometry.computeVertexNormals();
-
-        // Stretch in direction of movement (hyperelastic)
-        const speed = blob.velocity.length();
-        if (speed > 0.0001) {
-          const stretchFactor = 1 + speed * 15;
-          // Get velocity direction
-          const velDir = blob.velocity.clone().normalize();
-          // Create stretch matrix aligned to velocity
-          const baseScale = 0.9 + breath * 0.15;
-          blob.mesh.scale.set(
-            baseScale * (1 + Math.abs(velDir.x) * (stretchFactor - 1) * 0.3),
-            baseScale * (1 + Math.abs(velDir.y) * (stretchFactor - 1) * 0.5),
-            baseScale * (1 + Math.abs(velDir.z) * (stretchFactor - 1) * 0.3)
-          );
-        } else {
-          const baseScale = 0.9 + breath * 0.15;
-          blob.mesh.scale.setScalar(baseScale);
-        }
-
-        // Opacity with breath - light up on touch
-        blob.mesh.material.opacity = 0.5 + breath * 0.35 + touchInfluence.strength * 0.4;
-      });
-
-      // Glow particles light up on touch
-      glowMat.opacity = 0.4 + touchInfluence.strength * 0.5;
-
-      // Animate glow particles
-      const glowPositionsArr = glowGeom.attributes.position.array;
-      for (let i = 0; i < glowParticleCount; i++) {
-        const i3 = i * 3;
-        const vel = glowVelocities[i];
-
-        glowPositionsArr[i3] += vel.x + Math.sin(elapsed * 0.3 + vel.phase) * 0.002;
-        glowPositionsArr[i3 + 1] += vel.y + Math.cos(elapsed * 0.2 + vel.phase) * 0.002;
-        glowPositionsArr[i3 + 2] += vel.z;
-
-        // Wrap around
-        if (glowPositionsArr[i3] > 3) glowPositionsArr[i3] = -3;
-        if (glowPositionsArr[i3] < -3) glowPositionsArr[i3] = 3;
-        if (glowPositionsArr[i3 + 1] > 3) glowPositionsArr[i3 + 1] = -3;
-        if (glowPositionsArr[i3 + 1] < -3) glowPositionsArr[i3 + 1] = 3;
-        if (glowPositionsArr[i3 + 2] > 1.5) glowPositionsArr[i3 + 2] = -1.5;
-        if (glowPositionsArr[i3 + 2] < -1.5) glowPositionsArr[i3 + 2] = 1.5;
-      }
-      glowGeom.attributes.position.needsUpdate = true;
-      glowMat.opacity = 0.25 + breath * 0.25;
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
-      }
-      blobs.forEach(blob => {
-        blob.mesh.geometry.dispose();
-        blob.mesh.material.dispose();
-      });
-      glowGeom.dispose();
-      glowMat.dispose();
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
-
   // ========== LAVA TOUCH MODE (Interactive lava lamp with burst-on-touch) ==========
   React.useEffect(() => {
     if (currentMode !== 'lavaTouch' || !containerRef.current || typeof THREE === 'undefined') return;
@@ -5794,8 +5170,19 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       lavaGroup.scale.setScalar(localScale);
       lavaGroup.position.z = (localScale - 0.85) * 2.3 - 0.3;
 
-      // Gentle auto-rotation
-      lavaGroup.rotation.y += 0.0003;
+      // Touch-responsive rotation
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          lavaGroup.rotation.y += normalizedX * 0.02;
+          lavaGroup.rotation.x += normalizedY * 0.01;
+        }
+      } else {
+        // Gentle auto-rotation when not touching
+        lavaGroup.rotation.y += 0.0003;
+      }
 
       // Animate blobs
       blobs.forEach((blob) => {
@@ -6528,273 +5915,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
-  // ========== BUBBLES MODE (Interactive poppable bubbles) ==========
-  React.useEffect(() => {
-    if (currentMode !== 'bubbles' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 10);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'auto'; // Enable pointer events for raycasting
-    rendererRef.current = renderer;
-    clockRef.current = new THREE.Clock();
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    // Bubble data
-    const bubbles = [];
-    const bubbleGroup = new THREE.Group();
-    scene.add(bubbleGroup);
-
-    // Pop particles group
-    const popParticles = [];
-
-    // Create a bubble
-    const createBubble = (x, y, z) => {
-      const radius = 0.3 + Math.random() * 0.5;
-      const geometry = new THREE.SphereGeometry(radius, 32, 32);
-
-      // Iridescent bubble material
-      const bubbleHue = (hue + Math.random() * 40 - 20 + 360) % 360;
-      const material = new THREE.MeshPhysicalMaterial({
-        color: hslToHex(bubbleHue, 60, 70),
-        transparent: true,
-        opacity: 0.4,
-        roughness: 0,
-        metalness: 0.1,
-        clearcoat: 1,
-        clearcoatRoughness: 0,
-        transmission: 0.9,
-        thickness: 0.5,
-        envMapIntensity: 1,
-        side: THREE.DoubleSide,
-      });
-
-      const bubble = new THREE.Mesh(geometry, material);
-      bubble.position.set(x, y, z);
-      bubble.userData = {
-        velocity: new THREE.Vector3(
-          (Math.random() - 0.5) * 0.01,
-          0.008 + Math.random() * 0.012,
-          (Math.random() - 0.5) * 0.005
-        ),
-        wobble: Math.random() * Math.PI * 2,
-        wobbleSpeed: 0.5 + Math.random() * 0.5,
-        radius: radius,
-        hue: bubbleHue,
-      };
-
-      bubbleGroup.add(bubble);
-      bubbles.push(bubble);
-      return bubble;
-    };
-
-    // Create pop particles
-    const createPopParticles = (position, bubbleHue, radius) => {
-      const particleCount = 12;
-      for (let i = 0; i < particleCount; i++) {
-        const size = 0.05 + Math.random() * 0.08;
-        const geom = new THREE.SphereGeometry(size, 8, 8);
-        const mat = new THREE.MeshBasicMaterial({
-          color: hslToHex(bubbleHue, 70, 75),
-          transparent: true,
-          opacity: 0.8,
-        });
-        const particle = new THREE.Mesh(geom, mat);
-        particle.position.copy(position);
-
-        // Radial velocity outward
-        const angle = (i / particleCount) * Math.PI * 2;
-        const upAngle = Math.random() * Math.PI - Math.PI / 2;
-        particle.userData = {
-          velocity: new THREE.Vector3(
-            Math.cos(angle) * Math.cos(upAngle) * (0.08 + Math.random() * 0.05),
-            Math.sin(upAngle) * 0.1 + 0.05,
-            Math.sin(angle) * Math.cos(upAngle) * (0.08 + Math.random() * 0.05)
-          ),
-          life: 1,
-          decay: 0.02 + Math.random() * 0.01,
-        };
-        scene.add(particle);
-        popParticles.push(particle);
-      }
-    };
-
-    // Pop a bubble
-    const popBubble = (bubble) => {
-      const index = bubbles.indexOf(bubble);
-      if (index > -1) {
-        // Create pop particles
-        createPopParticles(bubble.position.clone(), bubble.userData.hue, bubble.userData.radius);
-
-        // Haptic feedback
-        haptic.medium();
-
-        // Remove bubble
-        bubbleGroup.remove(bubble);
-        bubble.geometry.dispose();
-        bubble.material.dispose();
-        bubbles.splice(index, 1);
-
-        // Spawn a new bubble at the bottom after a delay
-        setTimeout(() => {
-          if (currentMode === 'bubbles') {
-            createBubble(
-              (Math.random() - 0.5) * 8,
-              -6 - Math.random() * 2,
-              (Math.random() - 0.5) * 4
-            );
-          }
-        }, 500 + Math.random() * 1000);
-      }
-    };
-
-    // Initial bubbles
-    for (let i = 0; i < 15; i++) {
-      createBubble(
-        (Math.random() - 0.5) * 8,
-        (Math.random() - 0.5) * 10,
-        (Math.random() - 0.5) * 4
-      );
-    }
-
-    // Ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    // Point light for reflections
-    const pointLight = new THREE.PointLight(hslToHex(hue, 50, 70), 1, 20);
-    pointLight.position.set(5, 5, 5);
-    scene.add(pointLight);
-
-    const pointLight2 = new THREE.PointLight(hslToHex((hue + 180) % 360, 50, 70), 0.5, 20);
-    pointLight2.position.set(-5, -5, 3);
-    scene.add(pointLight2);
-
-    // Raycaster for bubble interaction
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-
-    const handlePointerDown = (event) => {
-      event.preventDefault();
-
-      // Get pointer position
-      const rect = renderer.domElement.getBoundingClientRect();
-      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
-      const clientY = event.touches ? event.touches[0].clientY : event.clientY;
-
-      mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(bubbles);
-
-      if (intersects.length > 0) {
-        popBubble(intersects[0].object);
-      }
-    };
-
-    renderer.domElement.addEventListener('pointerdown', handlePointerDown);
-    renderer.domElement.addEventListener('touchstart', handlePointerDown, { passive: false });
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clockRef.current.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
-
-      // Animate bubbles
-      bubbles.forEach(bubble => {
-        // Apply velocity
-        bubble.position.add(bubble.userData.velocity);
-
-        // Wobble effect
-        bubble.userData.wobble += bubble.userData.wobbleSpeed * 0.02;
-        bubble.position.x += Math.sin(bubble.userData.wobble) * 0.003;
-        bubble.position.z += Math.cos(bubble.userData.wobble * 0.7) * 0.002;
-
-        // Slight scale pulsing with breath
-        const scale = 1 + breath * 0.05 + Math.sin(elapsed * 2 + bubble.userData.wobble) * 0.02;
-        bubble.scale.set(scale, scale, scale);
-
-        // Reset bubble if it goes too high
-        if (bubble.position.y > 7) {
-          bubble.position.y = -6;
-          bubble.position.x = (Math.random() - 0.5) * 8;
-          bubble.position.z = (Math.random() - 0.5) * 4;
-        }
-
-        // Iridescent color shift
-        const shiftedHue = (bubble.userData.hue + elapsed * 5) % 360;
-        bubble.material.color.setHex(hslToHex(shiftedHue, 60, 70));
-      });
-
-      // Animate pop particles
-      for (let i = popParticles.length - 1; i >= 0; i--) {
-        const particle = popParticles[i];
-        particle.position.add(particle.userData.velocity);
-        particle.userData.velocity.y -= 0.003; // Gravity
-        particle.userData.life -= particle.userData.decay;
-        particle.material.opacity = particle.userData.life * 0.8;
-        particle.scale.setScalar(particle.userData.life);
-
-        if (particle.userData.life <= 0) {
-          scene.remove(particle);
-          particle.geometry.dispose();
-          particle.material.dispose();
-          popParticles.splice(i, 1);
-        }
-      }
-
-      // Gentle camera sway
-      camera.position.x = Math.sin(elapsed * 0.1) * 0.3;
-      camera.position.y = Math.cos(elapsed * 0.08) * 0.2;
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
-      renderer.domElement.removeEventListener('touchstart', handlePointerDown);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
-      }
-      bubbles.forEach(bubble => {
-        bubble.geometry.dispose();
-        bubble.material.dispose();
-      });
-      popParticles.forEach(particle => {
-        particle.geometry.dispose();
-        particle.material.dispose();
-      });
-      ambientLight.dispose();
-      pointLight.dispose();
-      pointLight2.dispose();
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
-
   // Floating particles animation (stars in space effect)
   React.useEffect(() => {
     const canvas = particleCanvasRef.current;
@@ -6895,7 +6015,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'bioluminescent' || currentMode === 'wax' || currentMode === 'lavaTouch' || currentMode === 'realm' || currentMode === 'bubbles') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'realm') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -6917,7 +6037,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'bioluminescent' && currentMode !== 'wax' && currentMode !== 'lavaTouch' && currentMode !== 'realm' && currentMode !== 'bubbles' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'realm' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
@@ -7854,7 +6974,7 @@ const generateScale = (keyName, scaleType, octaves = 3) => {
 
 function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }) {
   const [isInitialized, setIsInitialized] = useState(false);
-  const [currentInstrument, setCurrentInstrument] = useState(2); // synth
+  const [currentInstrument, setCurrentInstrument] = useState(3); // music box
   const [currentTexture, setCurrentTexture] = useState(3); // forest
   const [currentKey, setCurrentKey] = useState(9); // A
   const [currentScaleType, setCurrentScaleType] = useState(10); // pentatonic minor
@@ -9436,7 +8556,7 @@ function Still() {
   const [settings, setSettings] = useState(defaultSettings);
   const [showColorOverlay, setShowColorOverlay] = useState(false);
   const [hasOpenedSettings, setHasOpenedSettings] = useState(false);
-  const [gazeVisual, setGazeVisual] = useState('wax');
+  const [gazeVisual, setGazeVisual] = useState('lavaTouch');
 
   // Music player state
   const [musicOpen, setMusicOpen] = useState(false);
