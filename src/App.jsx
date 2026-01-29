@@ -7077,8 +7077,9 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const harpBufferRef = useRef(null);
   const celloBufferRef = useRef(null);
   const handpanBufferRef = useRef(null);
-  const dulcimerBufferRef = useRef(null);
   const voiceBufferRef = useRef(null);
+  const rainstickBufferRef = useRef(null);
+  const percBufferRef = useRef(null);
 
   // Breath pattern (4-7-8)
   const breathPattern = { inhale: 4, hold: 7, exhale: 8 };
@@ -7091,9 +7092,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     { name: 'harp', type: 'sampledHarp' },
     { name: 'cello', type: 'sampledCello' },
     { name: 'handpan', type: 'sampledHandpan' },
-    { name: 'dulcimer', type: 'sampledDulcimer' },
     { name: 'flute', type: 'organicFlute' },
-    { name: 'voice', type: 'sampledVoice' }
+    { name: 'voice', type: 'sampledVoice' },
+    { name: 'rainstick', type: 'sampledRainstick' },
+    { name: 'perc', type: 'sampledPerc' }
   ];
 
   const textures = [
@@ -7199,15 +7201,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       })
       .catch(err => console.log('Handpan sample not loaded:', err));
 
-    // Load dulcimer sample (C3 = 130.81Hz base note)
-    fetch('dulcimer.wav')
-      .then(response => response.arrayBuffer())
-      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
-      .then(audioBuffer => {
-        dulcimerBufferRef.current = audioBuffer;
-      })
-      .catch(err => console.log('Dulcimer sample not loaded:', err));
-
     fetch('samples/voice-c3.m4a')
       .then(response => response.arrayBuffer())
       .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
@@ -7215,6 +7208,22 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         voiceBufferRef.current = audioBuffer;
       })
       .catch(err => console.log('Voice sample not loaded:', err));
+
+    fetch('samples/rainstick-c3.m4a')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        rainstickBufferRef.current = audioBuffer;
+      })
+      .catch(err => console.log('Rainstick sample not loaded:', err));
+
+    fetch('samples/perc-c3.m4a')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        percBufferRef.current = audioBuffer;
+      })
+      .catch(err => console.log('Perc sample not loaded:', err));
 
     // Start drone
     startDrone(ctx, masterGain);
@@ -7311,29 +7320,44 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
   // Resume audio context when app returns from background (iOS)
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && ctxRef.current) {
-        // Resume suspended audio context
-        if (ctxRef.current.state === 'suspended') {
-          ctxRef.current.resume();
+    const resumeAudio = async () => {
+      if (!ctxRef.current) return;
+
+      // iOS can suspend/interrupt audio - try to resume regardless of state
+      if (ctxRef.current.state !== 'running') {
+        try {
+          await ctxRef.current.resume();
+        } catch (e) {
+          // Silently fail - will retry on next interaction
         }
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Delay slightly to let iOS settle
+        setTimeout(resumeAudio, 100);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Also handle iOS-specific resume on touch after returning
-    const handleTouchResume = () => {
-      if (ctxRef.current && ctxRef.current.state === 'suspended') {
-        ctxRef.current.resume();
-      }
-    };
+    // Resume on any touch/click after returning
+    document.addEventListener('touchstart', resumeAudio, { passive: true });
+    document.addEventListener('touchend', resumeAudio, { passive: true });
+    document.addEventListener('click', resumeAudio);
 
-    document.addEventListener('touchstart', handleTouchResume, { once: false });
+    // Also listen for page focus
+    window.addEventListener('focus', resumeAudio);
+    window.addEventListener('pageshow', resumeAudio);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('touchstart', handleTouchResume);
+      document.removeEventListener('touchstart', resumeAudio);
+      document.removeEventListener('touchend', resumeAudio);
+      document.removeEventListener('click', resumeAudio);
+      window.removeEventListener('focus', resumeAudio);
+      window.removeEventListener('pageshow', resumeAudio);
     };
   }, []);
 
@@ -7698,27 +7722,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       source.connect(gain);
       gain.connect(masterGain);
       source.start(now);
-    } else if (type === 'sampledDulcimer') {
-      // Sampled dulcimer - soft attack, long sustain
-      if (!dulcimerBufferRef.current) return;
-
-      const baseFreq = 130.81; // C3
-      // Allow full 3-octave range
-      const playbackRate = freq / baseFreq;
-
-      const source = ctx.createBufferSource();
-      source.buffer = dulcimerBufferRef.current;
-      source.playbackRate.value = playbackRate;
-
-      const gain = ctx.createGain();
-      gain.gain.value = 0;
-      gain.gain.setTargetAtTime(0.6 * velocity, now, 0.02);
-      gain.gain.setTargetAtTime(0.5 * velocity, now + 0.2, 0.6);
-      gain.gain.setTargetAtTime(0, now + 1.0, 3);
-
-      source.connect(gain);
-      gain.connect(masterGain);
-      source.start(now);
     } else if (type === 'sampledVoice') {
       // Sampled voice - ethereal choir-like pad
       if (!voiceBufferRef.current) return;
@@ -7735,6 +7738,46 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       gain.gain.setTargetAtTime(0.5 * velocity, now, 0.1);
       gain.gain.setTargetAtTime(0.4 * velocity, now + 0.3, 0.8);
       gain.gain.setTargetAtTime(0, now + 1.5, 3);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start(now);
+    } else if (type === 'sampledRainstick') {
+      // Sampled rainstick - gentle cascading texture
+      if (!rainstickBufferRef.current) return;
+
+      const baseFreq = 130.81; // C3
+      const playbackRate = freq / baseFreq;
+
+      const source = ctx.createBufferSource();
+      source.buffer = rainstickBufferRef.current;
+      source.playbackRate.value = playbackRate;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.6 * velocity, now, 0.05);
+      gain.gain.setTargetAtTime(0.4 * velocity, now + 0.5, 1.0);
+      gain.gain.setTargetAtTime(0, now + 2.0, 3);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start(now);
+    } else if (type === 'sampledPerc') {
+      // Sampled percussion - short punchy attack
+      if (!percBufferRef.current) return;
+
+      const baseFreq = 130.81; // C3
+      const playbackRate = freq / baseFreq;
+
+      const source = ctx.createBufferSource();
+      source.buffer = percBufferRef.current;
+      source.playbackRate.value = playbackRate;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.7 * velocity, now, 0.01);
+      gain.gain.setTargetAtTime(0.3 * velocity, now + 0.1, 0.3);
+      gain.gain.setTargetAtTime(0, now + 0.5, 1.5);
 
       source.connect(gain);
       gain.connect(masterGain);
