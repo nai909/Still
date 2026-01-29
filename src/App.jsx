@@ -6957,7 +6957,7 @@ const SCALE_TYPES = [
 ];
 
 // Generate scale frequencies from key and scale type
-const generateScale = (keyName, scaleType, octaves = 3) => {
+const generateScale = (keyName, scaleType, octaves = 2) => {
   const baseFreq = KEY_FREQUENCIES[keyName];
   const intervals = scaleType.intervals;
   const frequencies = [];
@@ -6965,7 +6965,7 @@ const generateScale = (keyName, scaleType, octaves = 3) => {
   for (let octave = 0; octave < octaves; octave++) {
     for (const interval of intervals) {
       const freq = baseFreq * Math.pow(2, octave + interval / 12);
-      if (freq < 1200) frequencies.push(freq); // Cap at reasonable frequency
+      if (freq < 520) frequencies.push(freq); // Cap to preserve sample quality
     }
   }
   // Sort ascending to ensure low notes at bottom, high notes at top
@@ -7078,6 +7078,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const celloBufferRef = useRef(null);
   const handpanBufferRef = useRef(null);
   const dulcimerBufferRef = useRef(null);
+  const voiceBufferRef = useRef(null);
 
   // Breath pattern (4-7-8)
   const breathPattern = { inhale: 4, hold: 7, exhale: 8 };
@@ -7091,7 +7092,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     { name: 'cello', type: 'sampledCello' },
     { name: 'handpan', type: 'sampledHandpan' },
     { name: 'dulcimer', type: 'sampledDulcimer' },
-    { name: 'flute', type: 'organicFlute' }
+    { name: 'flute', type: 'organicFlute' },
+    { name: 'voice', type: 'sampledVoice' }
   ];
 
   const textures = [
@@ -7205,6 +7207,14 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         dulcimerBufferRef.current = audioBuffer;
       })
       .catch(err => console.log('Dulcimer sample not loaded:', err));
+
+    fetch('samples/voice-c3.m4a')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        voiceBufferRef.current = audioBuffer;
+      })
+      .catch(err => console.log('Voice sample not loaded:', err));
 
     // Start drone
     startDrone(ctx, masterGain);
@@ -7705,6 +7715,26 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       gain.gain.setTargetAtTime(0.6 * velocity, now, 0.02);
       gain.gain.setTargetAtTime(0.5 * velocity, now + 0.2, 0.6);
       gain.gain.setTargetAtTime(0, now + 1.0, 3);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start(now);
+    } else if (type === 'sampledVoice') {
+      // Sampled voice - ethereal choir-like pad
+      if (!voiceBufferRef.current) return;
+
+      const baseFreq = 130.81; // C3
+      const playbackRate = freq / baseFreq;
+
+      const source = ctx.createBufferSource();
+      source.buffer = voiceBufferRef.current;
+      source.playbackRate.value = playbackRate;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.5 * velocity, now, 0.1);
+      gain.gain.setTargetAtTime(0.4 * velocity, now + 0.3, 0.8);
+      gain.gain.setTargetAtTime(0, now + 1.5, 3);
 
       source.connect(gain);
       gain.connect(masterGain);
