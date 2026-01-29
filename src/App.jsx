@@ -6957,20 +6957,357 @@ const SCALE_TYPES = [
 ];
 
 // Generate scale frequencies from key and scale type
-const generateScale = (keyName, scaleType, octaves = 2) => {
+const generateScale = (keyName, scaleType, targetNotes = 9) => {
   const baseFreq = KEY_FREQUENCIES[keyName];
   const intervals = scaleType.intervals;
   const frequencies = [];
 
-  for (let octave = 0; octave < octaves; octave++) {
+  // Generate enough octaves to fill the handpan (9 notes: 1 ding + 8 tone fields)
+  let octave = 0;
+  while (frequencies.length < targetNotes && octave < 4) {
     for (const interval of intervals) {
       const freq = baseFreq * Math.pow(2, octave + interval / 12);
-      if (freq < 520) frequencies.push(freq); // Cap to preserve sample quality
+      if (freq < 880) { // Extended cap to allow more notes
+        frequencies.push(freq);
+        if (frequencies.length >= targetNotes) break;
+      }
     }
+    octave++;
   }
   // Sort ascending to ensure low notes at bottom, high notes at top
-  return frequencies.sort((a, b) => a - b);
+  return frequencies.sort((a, b) => a - b).slice(0, targetNotes);
 };
+
+// ============================================================================
+// HANDPAN VIEW - 3D Interactive Handpan Visualization
+// ============================================================================
+
+const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, primaryHue, breathValue = 0.5 }, ref) {
+  const containerRef = useRef(null);
+  const sceneRef = useRef(null);
+  const cameraRef = useRef(null);
+  const rendererRef = useRef(null);
+  const composerRef = useRef(null);
+  const handpanRef = useRef(null);
+  const hitTargetsRef = useRef([]);
+  const toneFieldsRef = useRef([]);
+  const clockRef = useRef(null);
+  const activeNotesRef = useRef([]);
+  const particlesRef = useRef(null);
+  const ripplesRef = useRef([]);
+  const bloomRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const raycasterRef = useRef(null);
+  const mouseRef = useRef(null);
+  const primaryColorRef = useRef(new THREE.Color(`hsl(${primaryHue}, 52%, 68%)`));
+  const accentColorRef = useRef(new THREE.Color(`hsl(${primaryHue}, 52%, 82%)`));
+
+  useEffect(() => {
+    primaryColorRef.current = new THREE.Color(`hsl(${primaryHue}, 52%, 68%)`);
+    accentColorRef.current = new THREE.Color(`hsl(${primaryHue}, 52%, 82%)`);
+    if (handpanRef.current) {
+      handpanRef.current.traverse(obj => {
+        if (obj.material && obj.material.visible !== false) {
+          obj.material.color.copy(obj.material.opacity > 0.55 ? accentColorRef.current : primaryColorRef.current);
+        }
+      });
+    }
+  }, [primaryHue]);
+
+  const triggerGlowRef = useRef(null);
+
+  React.useImperativeHandle(ref, () => ({
+    handleTap: (clientX, clientY) => {
+      if (!rendererRef.current || !cameraRef.current || !raycasterRef.current || !mouseRef.current) return false;
+      const rect = rendererRef.current.domElement.getBoundingClientRect();
+      mouseRef.current.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      mouseRef.current.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
+      const hits = raycasterRef.current.intersectObjects(hitTargetsRef.current, false);
+      if (hits.length > 0) {
+        const { noteIndex, visualGroup } = hits[0].object.userData;
+        if (visualGroup && triggerGlowRef.current) triggerGlowRef.current(visualGroup);
+        if (onPlayNote && scale?.[noteIndex] !== undefined) onPlayNote(noteIndex);
+        return true;
+      }
+      return false;
+    }
+  }), [scale, onPlayNote]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x000000, 0.025);
+    sceneRef.current = scene;
+
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    camera.position.set(0, 5, 8);
+    camera.lookAt(0, 0, 0);
+    cameraRef.current = camera;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloom = new UnrealBloomPass(new THREE.Vector2(width, height), 0.5, 0.4, 0.25);
+    bloomRef.current = bloom;
+    composer.addPass(bloom);
+    composerRef.current = composer;
+
+    clockRef.current = new THREE.Clock();
+    raycasterRef.current = new THREE.Raycaster();
+    mouseRef.current = new THREE.Vector2();
+
+    const handpan = new THREE.Group();
+    scene.add(handpan);
+    handpanRef.current = handpan;
+    const pColor = primaryColorRef.current;
+    const aColor = accentColorRef.current;
+
+    // Shell
+    const shell = new THREE.Mesh(
+      new THREE.SphereGeometry(2.2, 72, 36, 0, Math.PI * 2, 0, Math.PI * 0.48),
+      new THREE.MeshBasicMaterial({ color: pColor, wireframe: true, transparent: true, opacity: 0.18 })
+    );
+    shell.rotation.x = Math.PI;
+    handpan.add(shell);
+
+    // Rim
+    const rim = new THREE.Mesh(
+      new THREE.TorusGeometry(2.2, 0.05, 16, 100),
+      new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.7 })
+    );
+    rim.rotation.x = Math.PI / 2;
+    handpan.add(rim);
+
+    // Ding (center note)
+    const dingGroup = new THREE.Group();
+    const dingHit = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.3, 32), new THREE.MeshBasicMaterial({ visible: false }));
+    dingHit.userData = { noteIndex: 0, visualGroup: dingGroup };
+    dingGroup.add(dingHit);
+    hitTargetsRef.current.push(dingHit);
+    const dingRing = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.028, 12, 48), new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.65 }));
+    dingRing.rotation.x = Math.PI / 2;
+    dingGroup.add(dingRing);
+    const dingCenter = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.015, 8, 24), new THREE.MeshBasicMaterial({ color: aColor, transparent: true, opacity: 0.6 }));
+    dingCenter.rotation.x = Math.PI / 2;
+    dingGroup.add(dingCenter);
+    dingGroup.position.y = 0.08;
+    handpan.add(dingGroup);
+
+    // Tone fields - always 8 surrounding the ding
+    // Size decreases with pitch (noteIndex) - lower notes are larger
+    const numFields = 8;
+    for (let i = 0; i < numFields; i++) {
+      const angle = -Math.PI / 2 + (i / numFields) * Math.PI * 2;
+      const g = new THREE.Group();
+      // Scale factor: 1.0 for lowest note (i=0), down to 0.65 for highest (i=7)
+      const ns = 1.0 - (i / (numFields - 1)) * 0.35;
+      // Hit target sized to match visual
+      const hit = new THREE.Mesh(new THREE.CylinderGeometry(0.52 * ns, 0.52 * ns, 0.15, 32), new THREE.MeshBasicMaterial({ visible: false }));
+      hit.userData = { noteIndex: i + 1, visualGroup: g };
+      g.add(hit);
+      hitTargetsRef.current.push(hit);
+      // Outer oval - scales with pitch
+      const oval = new THREE.Mesh(new THREE.TorusGeometry(0.45 * ns, 0.025, 12, 40), new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.6 }));
+      oval.rotation.x = Math.PI / 2;
+      oval.scale.set(1, 1.25, 1);
+      g.add(oval);
+      // Inner oval - scales proportionally
+      const innerOval = new THREE.Mesh(new THREE.TorusGeometry(0.14 * ns, 0.012, 8, 24), new THREE.MeshBasicMaterial({ color: aColor, transparent: true, opacity: 0.5 }));
+      innerOval.rotation.x = Math.PI / 2;
+      innerOval.scale.set(1, 1.25, 1);
+      g.add(innerOval);
+      g.position.set(Math.cos(angle) * 1.4, 0, Math.sin(angle) * 1.4);
+      g.rotation.y = -angle - Math.PI / 2;
+      handpan.add(g);
+      toneFieldsRef.current.push(g);
+    }
+
+    // Stars - dense starfield for space effect
+    const starCount = 300;
+    const pGeom = new THREE.BufferGeometry();
+    const pPos = new Float32Array(starCount * 3);
+    const pSizes = new Float32Array(starCount);
+    const pVel = [];
+    for (let i = 0; i < starCount; i++) {
+      pPos[i * 3] = (Math.random() - 0.5) * 40;
+      pPos[i * 3 + 1] = (Math.random() - 0.5) * 25;
+      pPos[i * 3 + 2] = (Math.random() - 0.5) * 40;
+      pSizes[i] = Math.random() * 0.03 + 0.01; // Varying star sizes
+      pVel.push({
+        x: (Math.random() - 0.5) * 0.001,
+        y: (Math.random() - 0.5) * 0.001,
+        z: (Math.random() - 0.5) * 0.001,
+        twinkle: Math.random() * Math.PI * 2, // Random twinkle phase
+        twinkleSpeed: Math.random() * 0.02 + 0.01
+      });
+    }
+    pGeom.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    const particles = new THREE.Points(pGeom, new THREE.PointsMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending,
+      size: 0.05
+    }));
+    particles.userData.vel = pVel;
+    scene.add(particles);
+    particlesRef.current = particles;
+
+    // Shooting stars array
+    const shootingStars = [];
+    scene.userData.shootingStars = shootingStars;
+    scene.userData.lastShootingStar = 0;
+
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const animate = () => {
+      animationFrameRef.current = requestAnimationFrame(animate);
+      if (handpanRef.current) {
+        handpanRef.current.scale.setScalar(0.96 + breathValue * 0.08);
+        handpanRef.current.rotation.y += 0.001;
+      }
+      if (bloomRef.current) bloomRef.current.strength = 0.35 + breathValue * 0.4;
+      if (particlesRef.current) {
+        const pos = particlesRef.current.geometry.attributes.position.array;
+        const vel = particlesRef.current.userData.vel;
+        for (let i = 0; i < vel.length; i++) {
+          pos[i * 3] += vel[i].x; pos[i * 3 + 1] += vel[i].y; pos[i * 3 + 2] += vel[i].z;
+          vel[i].twinkle += vel[i].twinkleSpeed;
+          if (Math.abs(pos[i * 3]) > 20) pos[i * 3] *= -0.95;
+          if (Math.abs(pos[i * 3 + 1]) > 12) pos[i * 3 + 1] *= -0.95;
+          if (Math.abs(pos[i * 3 + 2]) > 20) pos[i * 3 + 2] *= -0.95;
+        }
+        particlesRef.current.geometry.attributes.position.needsUpdate = true;
+        // Subtle twinkling effect
+        particlesRef.current.material.opacity = 0.7 + Math.sin(Date.now() * 0.001) * 0.15;
+      }
+      // Shooting stars
+      if (scene.userData.shootingStars) {
+        const now = clockRef.current?.getElapsedTime() || 0;
+        // Spawn a new shooting star occasionally (every 4-8 seconds)
+        if (now - scene.userData.lastShootingStar > 4 + Math.random() * 4) {
+          scene.userData.lastShootingStar = now;
+          const starGeom = new THREE.BufferGeometry();
+          const trailLength = 8;
+          const trailPos = new Float32Array(trailLength * 3);
+          const startX = (Math.random() - 0.5) * 30;
+          const startY = 8 + Math.random() * 5;
+          const startZ = -15 + Math.random() * 10;
+          for (let i = 0; i < trailLength; i++) {
+            trailPos[i * 3] = startX;
+            trailPos[i * 3 + 1] = startY;
+            trailPos[i * 3 + 2] = startZ;
+          }
+          starGeom.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+          const starMat = new THREE.PointsMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending,
+            size: 0.06
+          });
+          const shootingStar = new THREE.Points(starGeom, starMat);
+          shootingStar.userData = {
+            born: now,
+            maxAge: 2 + Math.random(),
+            velocity: { x: (Math.random() - 0.5) * 0.15, y: -0.12 - Math.random() * 0.08, z: 0.05 }
+          };
+          scene.add(shootingStar);
+          scene.userData.shootingStars.push(shootingStar);
+        }
+        // Update shooting stars
+        for (let i = scene.userData.shootingStars.length - 1; i >= 0; i--) {
+          const star = scene.userData.shootingStars[i];
+          const age = now - star.userData.born;
+          const progress = age / star.userData.maxAge;
+          if (progress >= 1) {
+            scene.remove(star);
+            star.geometry.dispose();
+            star.material.dispose();
+            scene.userData.shootingStars.splice(i, 1);
+          } else {
+            const pos = star.geometry.attributes.position.array;
+            const vel = star.userData.velocity;
+            // Move the head of the trail
+            const headX = pos[0] + vel.x;
+            const headY = pos[0 + 1] + vel.y;
+            const headZ = pos[0 + 2] + vel.z;
+            // Shift trail positions back
+            for (let j = pos.length / 3 - 1; j > 0; j--) {
+              pos[j * 3] = pos[(j - 1) * 3];
+              pos[j * 3 + 1] = pos[(j - 1) * 3 + 1];
+              pos[j * 3 + 2] = pos[(j - 1) * 3 + 2];
+            }
+            pos[0] = headX;
+            pos[1] = headY;
+            pos[2] = headZ;
+            star.geometry.attributes.position.needsUpdate = true;
+            // Fade out
+            star.material.opacity = 0.8 * (1 - progress * 0.7);
+          }
+        }
+      }
+      if (clockRef.current) {
+        const now = clockRef.current.getElapsedTime();
+        for (let i = activeNotesRef.current.length - 1; i >= 0; i--) {
+          const n = activeNotesRef.current[i];
+          const p = (now - n.birth) / n.duration;
+          if (p >= 1) { n.states.forEach(s => { s.obj.material.opacity = s.op; s.obj.material.color.copy(s.col); }); activeNotesRef.current.splice(i, 1); }
+          else { const g = p < 0.15 ? p / 0.15 : 1 - (p - 0.15) / 0.85; n.states.forEach(s => { s.obj.material.opacity = s.op + (1 - s.op) * g * 0.7; s.obj.material.color.copy(s.col).lerp(accentColorRef.current, g * 0.8); }); }
+        }
+        for (let i = ripplesRef.current.length - 1; i >= 0; i--) {
+          const r = ripplesRef.current[i];
+          const p = (now - r.userData.born) / r.userData.maxAge;
+          if (p >= 1) { scene.remove(r); r.geometry.dispose(); r.material.dispose(); ripplesRef.current.splice(i, 1); }
+          else { const s = 1 + p * 8; r.scale.set(s, s, 1); r.position.y = -1.8 - p * 5; r.material.opacity = 0.5 * (1 - p * 0.8); }
+        }
+      }
+      composer.render();
+    };
+    animate();
+
+    const onResize = () => { camera.aspect = container.clientWidth / container.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth, container.clientHeight); composer.setSize(container.clientWidth, container.clientHeight); };
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      ripplesRef.current.forEach(r => { r.geometry.dispose(); r.material.dispose(); });
+      if (scene.userData.shootingStars) {
+        scene.userData.shootingStars.forEach(s => { s.geometry.dispose(); s.material.dispose(); });
+      }
+      if (renderer) { renderer.dispose(); if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement); }
+    };
+  }, []);
+
+  const triggerNoteGlow = useCallback((mesh) => {
+    if (!mesh || !clockRef.current || !sceneRef.current) return;
+    const states = [];
+    mesh.traverse(o => { if (o.material && o.material.visible !== false) states.push({ obj: o, op: o.material.opacity, col: o.material.color.clone() }); });
+    activeNotesRef.current.push({ mesh, states, birth: clockRef.current.getElapsedTime(), duration: 0.8 });
+    const ripple = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.04, 12, 48), new THREE.MeshBasicMaterial({ color: primaryColorRef.current, transparent: true, opacity: 0.5, wireframe: true }));
+    ripple.rotation.x = Math.PI / 2;
+    ripple.position.y = -1.8;
+    ripple.userData = { born: clockRef.current.getElapsedTime(), maxAge: 12 };
+    sceneRef.current.add(ripple);
+    ripplesRef.current.push(ripple);
+  }, []);
+
+  triggerGlowRef.current = triggerNoteGlow;
+
+  return <div ref={containerRef} style={{ position: 'absolute', inset: 0, touchAction: 'none' }} />;
+});
 
 function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }) {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -7049,6 +7386,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
   // Touch ref for forwarding to GazeMode ripples
   const externalTouchRef = useRef([]);
+  const handpanViewRef = useRef(null);
 
   const ctxRef = useRef(null);
   const masterGainRef = useRef(null);
@@ -7989,50 +8327,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         setShowScaleSelector(true);
       }
     } else {
-      // It's a tap - play instrument
-      const clientY = touchStartRef.current.y;
+      // Delegate to the handpan 3D view
       const clientX = touchStartRef.current.x;
-      // Use actual container bounds for reliable mapping on iOS
-      const rect = e.currentTarget.getBoundingClientRect();
-      const relativeY = clientY - rect.top;
-      const normalizedY = 1 - (relativeY / rect.height);
-      const clampedNormalizedY = Math.max(0, Math.min(1, normalizedY));
-      const noteIndex = Math.floor(clampedNormalizedY * scale.length);
-      const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
-
-      playInstrument(freq, 0.6 + breathValue * 0.4);
-      if (showNotes) showPlayedNote(freq, primaryHue);
-
-      // Forward touch to GazeMode for ripples
-      externalTouchRef.current.push({
-        id: `drone-${Date.now()}`,
-        x: clientX,
-        y: clientY,
-        time: Date.now(),
-      });
-
-      // Create ripple
-      const container = e.target.closest('main');
-      if (container) {
-        const containerRect = container.getBoundingClientRect();
-        const rippleX = clientX - containerRect.left;
-        const rippleY = clientY - containerRect.top;
-        const ripple = document.createElement('div');
-        ripple.style.cssText = `
-          position: absolute;
-          left: ${rippleX}px;
-          top: ${rippleY}px;
-          width: 100px;
-          height: 100px;
-          border: 2px solid hsla(${primaryHue}, 52%, 68%, 0.8);
-          border-radius: 50%;
-          pointer-events: none;
-          animation: droneRipple 1.5s ease-out forwards;
-          transform: translate(-50%, -50%) scale(0);
-        `;
-        container.appendChild(ripple);
-        setTimeout(() => ripple.remove(), 1500);
-      }
+      const clientY = touchStartRef.current.y;
+      handpanViewRef.current?.handleTap(clientX, clientY);
     }
   }, [backgroundMode, showScaleSelector, playInstrument, breathValue, primaryHue, currentTexture, updateTexture, displayLabel, showPlayedNote, scale]);
 
@@ -8044,38 +8342,9 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     }
     if (!ctxRef.current) return;
 
-    const clientY = e.clientY;
-    const clientX = e.clientX;
-    // Use actual container bounds for reliable mapping
-    const rect = e.currentTarget.getBoundingClientRect();
-    const relativeY = clientY - rect.top;
-    const normalizedY = 1 - (relativeY / rect.height);
-    const clampedNormalizedY = Math.max(0, Math.min(1, normalizedY));
-    const noteIndex = Math.floor(clampedNormalizedY * scale.length);
-    const freq = scale[Math.max(0, Math.min(scale.length - 1, noteIndex))];
-
-    playInstrument(freq, 0.6 + breathValue * 0.4);
-    if (showNotes) showPlayedNote(freq, primaryHue);
-
-    // Create ripple - use relative coordinates
-    const rippleX = clientX - rect.left;
-    const rippleY = clientY - rect.top;
-    const ripple = document.createElement('div');
-    ripple.style.cssText = `
-      position: absolute;
-      left: ${rippleX}px;
-      top: ${rippleY}px;
-      width: 100px;
-      height: 100px;
-      border: 2px solid hsla(${primaryHue}, 52%, 68%, 0.8);
-      border-radius: 50%;
-      pointer-events: none;
-      animation: droneRipple 1.5s ease-out forwards;
-      transform: translate(-50%, -50%) scale(0);
-    `;
-    e.currentTarget.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 1500);
-  }, [backgroundMode, showScaleSelector, isInitialized, initAudio, playInstrument, breathValue, primaryHue, showPlayedNote, scale]);
+    // Delegate to the handpan 3D view
+    handpanViewRef.current?.handleTap(e.clientX, e.clientY);
+  }, [backgroundMode, showScaleSelector, isInitialized, initAudio]);
 
   // Handle scroll for instrument/texture/key/scale change
   useEffect(() => {
@@ -8182,39 +8451,22 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         overflow: 'hidden',
       }}
     >
-      {/* Ripples visual background */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        opacity: isInitialized ? 1 : 0.3,
-        transition: 'opacity 1s ease',
-      }}>
-        <GazeMode
-          primaryHue={primaryHue}
-          backgroundMode={true}
-          currentVisual="ripples"
-          breathSession={{
-            isActive: isInitialized,
-            phase: breathPhase,
-            phaseProgress: breathValue,
+      {/* 3D handpan visualization */}
+      <HandpanView
+          ref={handpanViewRef}
+          scale={scale}
+          onPlayNote={(noteIndex) => {
+            if (!isInitialized) initAudio();
+            const freq = scale?.[noteIndex];
+            if (freq) {
+              playInstrument(freq, 0.6 + breathValue * 0.4);
+              if (showNotes) showPlayedNote(freq, primaryHue);
+              haptic.tap();
+            }
           }}
-          externalTouchRef={externalTouchRef}
+          primaryHue={primaryHue}
+          breathValue={breathValue}
         />
-      </div>
-
-      {/* Floating particles overlay */}
-      <canvas
-        ref={particleCanvasRef}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          opacity: isInitialized ? 0.6 : 0.3,
-          transition: 'opacity 2s ease',
-        }}
-      />
 
       {/* Begin prompt */}
       {!isInitialized && (
@@ -8244,11 +8496,11 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
       {/* Note display is handled via DOM manipulation in showPlayedNote */}
 
-      {/* Center label */}
+      {/* Center label - positioned above the handpan */}
       <div
         style={{
           position: 'absolute',
-          top: '50%',
+          top: '22%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
           textAlign: 'center',
