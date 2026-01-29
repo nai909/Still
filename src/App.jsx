@@ -7169,6 +7169,10 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
     scene.userData.shootingStars = shootingStars;
     scene.userData.lastShootingStar = 0;
 
+    // Flying saucer
+    scene.userData.flyingSaucer = null;
+    scene.userData.lastSaucer = 0;
+
     renderer.domElement.style.pointerEvents = 'none';
 
     const animate = () => {
@@ -7256,6 +7260,78 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
             // Fade out
             star.material.opacity = 0.8 * (1 - progress * 0.7);
           }
+        }
+      }
+      // Flying saucer
+      if (scene.userData.flyingSaucer === null || scene.userData.flyingSaucer === undefined) {
+        const now = clockRef.current?.getElapsedTime() || 0;
+        // Spawn a flying saucer every 30-45 seconds
+        if (now - scene.userData.lastSaucer > 30 + Math.random() * 15) {
+          scene.userData.lastSaucer = now;
+          const saucerGroup = new THREE.Group();
+          // Saucer body (flattened ellipsoid)
+          const bodyGeom = new THREE.SphereGeometry(0.3, 16, 8);
+          bodyGeom.scale(1, 0.3, 1);
+          const bodyMat = new THREE.MeshBasicMaterial({
+            color: 0x888899,
+            transparent: true,
+            opacity: 0.7,
+            wireframe: true
+          });
+          const body = new THREE.Mesh(bodyGeom, bodyMat);
+          saucerGroup.add(body);
+          // Dome on top
+          const domeGeom = new THREE.SphereGeometry(0.12, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2);
+          const domeMat = new THREE.MeshBasicMaterial({
+            color: 0xaaddff,
+            transparent: true,
+            opacity: 0.6
+          });
+          const dome = new THREE.Mesh(domeGeom, domeMat);
+          dome.position.y = 0.06;
+          saucerGroup.add(dome);
+          // Lights around rim
+          for (let li = 0; li < 6; li++) {
+            const lightAngle = (li / 6) * Math.PI * 2;
+            const light = new THREE.Mesh(
+              new THREE.SphereGeometry(0.03, 6, 6),
+              new THREE.MeshBasicMaterial({ color: 0x00ffaa, transparent: true, opacity: 0.8 })
+            );
+            light.position.set(Math.cos(lightAngle) * 0.25, 0, Math.sin(lightAngle) * 0.25);
+            saucerGroup.add(light);
+          }
+          // Random start position (far left or right)
+          const fromLeft = Math.random() > 0.5;
+          saucerGroup.position.set(
+            fromLeft ? -20 : 20,
+            5 + Math.random() * 4,
+            -8 + Math.random() * 4
+          );
+          saucerGroup.userData = {
+            born: now,
+            maxAge: 8,
+            velocity: { x: fromLeft ? 0.06 : -0.06, y: (Math.random() - 0.5) * 0.01 },
+            wobble: Math.random() * Math.PI * 2
+          };
+          scene.add(saucerGroup);
+          scene.userData.flyingSaucer = saucerGroup;
+        }
+      } else {
+        // Update flying saucer
+        const saucer = scene.userData.flyingSaucer;
+        const now = clockRef.current?.getElapsedTime() || 0;
+        const age = now - saucer.userData.born;
+        const progress = age / saucer.userData.maxAge;
+        if (progress >= 1) {
+          scene.remove(saucer);
+          saucer.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) obj.material.dispose(); });
+          scene.userData.flyingSaucer = null;
+        } else {
+          saucer.position.x += saucer.userData.velocity.x;
+          saucer.position.y += saucer.userData.velocity.y + Math.sin(now * 2) * 0.003;
+          saucer.rotation.y += 0.03; // Spinning
+          saucer.userData.wobble += 0.05;
+          saucer.rotation.z = Math.sin(saucer.userData.wobble) * 0.1; // Gentle wobble
         }
       }
       if (clockRef.current) {
