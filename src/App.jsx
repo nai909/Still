@@ -7108,7 +7108,22 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
 
   // Initialize audio context
-  const initAudio = useCallback(() => {
+  const initAudio = useCallback((forceReinit = false) => {
+    // If forcing reinit, clean up old context
+    if (forceReinit && ctxRef.current) {
+      try {
+        // Stop all drone oscillators
+        droneOscillatorsRef.current.forEach(node => {
+          if (node.osc) {
+            try { node.osc.stop(); } catch (e) {}
+          }
+        });
+        droneOscillatorsRef.current = [];
+        ctxRef.current.close();
+      } catch (e) {}
+      ctxRef.current = null;
+    }
+
     if (ctxRef.current) return;
 
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -7320,32 +7335,58 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
   // Resume audio context when app returns from background (iOS)
   useEffect(() => {
+    let needsReinit = false;
+
     const resumeAudio = async () => {
+      // If context is closed or doesn't exist but we were initialized, we need full reinit
+      if (ctxRef.current && ctxRef.current.state === 'closed') {
+        needsReinit = true;
+      }
+
       if (!ctxRef.current) return;
 
-      // iOS can suspend/interrupt audio - try to resume regardless of state
-      if (ctxRef.current.state !== 'running') {
+      const ctx = ctxRef.current;
+
+      // iOS can suspend/interrupt audio - try to resume
+      if (ctx.state !== 'running') {
         try {
-          await ctxRef.current.resume();
+          await ctx.resume();
         } catch (e) {
-          // Silently fail - will retry on next interaction
+          // Resume failed - might need reinit on next touch
+          needsReinit = true;
         }
+      }
+    };
+
+    // On touch, check if we need to reinitialize audio completely
+    const handleTouchReinit = () => {
+      if (needsReinit || (ctxRef.current && ctxRef.current.state === 'closed')) {
+        needsReinit = false;
+        initAudio(true); // Force reinit
+      } else {
+        resumeAudio();
       }
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        // Delay slightly to let iOS settle
+        // Check if context is dead
+        if (ctxRef.current && ctxRef.current.state === 'closed') {
+          needsReinit = true;
+        }
+        // Multiple attempts with delays for iOS
+        resumeAudio();
         setTimeout(resumeAudio, 100);
+        setTimeout(resumeAudio, 300);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Resume on any touch/click after returning
-    document.addEventListener('touchstart', resumeAudio, { passive: true });
-    document.addEventListener('touchend', resumeAudio, { passive: true });
-    document.addEventListener('click', resumeAudio);
+    // Resume/reinit on any touch after returning
+    document.addEventListener('touchstart', handleTouchReinit, { passive: true });
+    document.addEventListener('touchend', handleTouchReinit, { passive: true });
+    document.addEventListener('click', handleTouchReinit);
 
     // Also listen for page focus
     window.addEventListener('focus', resumeAudio);
@@ -7353,13 +7394,13 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('touchstart', resumeAudio);
-      document.removeEventListener('touchend', resumeAudio);
-      document.removeEventListener('click', resumeAudio);
+      document.removeEventListener('touchstart', handleTouchReinit);
+      document.removeEventListener('touchend', handleTouchReinit);
+      document.removeEventListener('click', handleTouchReinit);
       window.removeEventListener('focus', resumeAudio);
       window.removeEventListener('pageshow', resumeAudio);
     };
-  }, []);
+  }, [initAudio]);
 
   // Floating particles animation (like stars in space)
   useEffect(() => {
@@ -8183,17 +8224,21 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
+            textAlign: 'center',
+            pointerEvents: 'none',
+            animation: 'droneTextPulse 4s ease-in-out forwards',
+          }}
+        >
+          <div style={{
             fontSize: '2rem',
             fontFamily: '"Jost", sans-serif',
             letterSpacing: '0.3em',
             textTransform: 'lowercase',
             fontWeight: 300,
             color: '#fff',
-            pointerEvents: 'none',
-            animation: 'droneTextPulse 4s ease-in-out forwards',
-          }}
-        >
-          begin
+          }}>
+            begin
+          </div>
         </div>
       )}
 
@@ -8629,6 +8674,7 @@ function Still() {
   const [settings, setSettings] = useState(defaultSettings);
   const [showColorOverlay, setShowColorOverlay] = useState(false);
   const [hasOpenedSettings, setHasOpenedSettings] = useState(false);
+  const [showSettingsHint, setShowSettingsHint] = useState(false);
   const [gazeVisual, setGazeVisual] = useState('lavaTouch');
 
   // Music player state
@@ -8764,6 +8810,34 @@ function Still() {
       };
     }
   }, []);
+
+  // Settings hint timer - shows hint every 20 seconds until settings opened
+  useEffect(() => {
+    if (hasOpenedSettings) {
+      setShowSettingsHint(false);
+      return;
+    }
+
+    // Show hint initially after 5 seconds
+    const initialTimeout = setTimeout(() => {
+      setShowSettingsHint(true);
+      // Hide after 4 seconds (animation duration)
+      setTimeout(() => setShowSettingsHint(false), 4000);
+    }, 5000);
+
+    // Then show every 20 seconds
+    const intervalId = setInterval(() => {
+      if (!hasOpenedSettings) {
+        setShowSettingsHint(true);
+        setTimeout(() => setShowSettingsHint(false), 4000);
+      }
+    }, 20000);
+
+    return () => {
+      clearTimeout(initialTimeout);
+      clearInterval(intervalId);
+    };
+  }, [hasOpenedSettings]);
 
   // ============================================================================
   // SCROLL STATE
@@ -9297,26 +9371,51 @@ function Still() {
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)',
           zIndex: 100,
         }}>
-          <h1
-            onClick={() => {
-              haptic.tap();
-              setHasOpenedSettings(true);
-              setTimeout(() => setShowColorOverlay(true), 80);
-            }}
-            className={hasOpenedSettings ? '' : 'still-pulse'}
-            style={{
-              fontSize: 'clamp(1.2rem, 3vw, 1.5rem)',
-              fontFamily: '"Jost", sans-serif',
-              fontWeight: 400,
-              letterSpacing: '0.2em',
-              margin: 0,
-              cursor: 'pointer',
-              color: currentTheme.text,
-              opacity: hasOpenedSettings ? 0.9 : undefined,
-            }}
-          >
-            STILL
-          </h1>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <h1
+              onClick={() => {
+                haptic.tap();
+                setHasOpenedSettings(true);
+                setTimeout(() => setShowColorOverlay(true), 80);
+              }}
+              className={hasOpenedSettings ? '' : 'still-pulse'}
+              style={{
+                fontSize: 'clamp(1.2rem, 3vw, 1.5rem)',
+                fontFamily: '"Jost", sans-serif',
+                fontWeight: 400,
+                letterSpacing: '0.2em',
+                margin: 0,
+                cursor: 'pointer',
+                color: currentTheme.text,
+                opacity: hasOpenedSettings ? 0.9 : undefined,
+              }}
+            >
+              STILL
+            </h1>
+            {/* Settings hint that appears periodically */}
+            {!hasOpenedSettings && (
+              <div
+                className={showSettingsHint ? 'settings-hint-show' : 'settings-hint-hide'}
+                style={{
+                  fontSize: '0.55rem',
+                  fontFamily: '"Jost", sans-serif',
+                  letterSpacing: '0.1em',
+                  textTransform: 'lowercase',
+                  fontWeight: 300,
+                  color: `hsla(${primaryHue}, 52%, 68%, 0.7)`,
+                  marginTop: '0.3rem',
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  haptic.tap();
+                  setHasOpenedSettings(true);
+                  setTimeout(() => setShowColorOverlay(true), 80);
+                }}
+              >
+                tap for settings
+              </div>
+            )}
+          </div>
           <nav style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             {/* Main mode buttons - always visible */}
             {[
@@ -10237,6 +10336,9 @@ function Still() {
           @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 0.8; } }
           @keyframes stillPulse { 0%, 100% { text-shadow: 0 0 0 transparent; opacity: 0.7; transform: scale(1); } 50% { text-shadow: 0 0 15px rgba(127, 219, 202, 0.8), 0 0 30px rgba(127, 219, 202, 0.5); opacity: 1; transform: scale(1.04); } }
           .still-pulse { animation: stillPulse 3s ease-in-out infinite; display: inline-block; }
+          @keyframes settingsHintPulse { 0% { opacity: 0; transform: translateY(-5px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-5px); } }
+          .settings-hint-show { animation: settingsHintPulse 4s ease-in-out forwards; }
+          .settings-hint-hide { opacity: 0; }
           ::-webkit-scrollbar { width: 4px; }
           ::-webkit-scrollbar-track { background: transparent; }
           ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 2px; }
