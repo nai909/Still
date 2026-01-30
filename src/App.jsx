@@ -7045,7 +7045,7 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 5, 8);
+    camera.position.set(0, 8, 6);
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
@@ -7346,7 +7346,7 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
           const r = ripplesRef.current[i];
           const p = (now - r.userData.born) / r.userData.maxAge;
           if (p >= 1) { scene.remove(r); r.geometry.dispose(); r.material.dispose(); ripplesRef.current.splice(i, 1); }
-          else { const s = 1 + p * 8; r.scale.set(s, s, 1); r.position.y = -1.8 - p * 5; r.material.opacity = 0.5 * (1 - p * 0.8); }
+          else { const s = 1 + p * 8; r.scale.set(s, s, 1); r.position.y = -1.8 - p * 5; r.material.opacity = 0.3 * (1 - p * 0.8); }
         }
       }
       composer.render();
@@ -7372,7 +7372,10 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
     const states = [];
     mesh.traverse(o => { if (o.material && o.material.visible !== false) states.push({ obj: o, op: o.material.opacity, col: o.material.color.clone() }); });
     activeNotesRef.current.push({ mesh, states, birth: clockRef.current.getElapsedTime(), duration: 0.8 });
-    const ripple = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.04, 12, 48), new THREE.MeshBasicMaterial({ color: primaryColorRef.current, transparent: true, opacity: 0.5, wireframe: true }));
+    // Only one ripple at a time - remove existing before adding new
+    ripplesRef.current.forEach(r => { sceneRef.current.remove(r); r.geometry.dispose(); r.material.dispose(); });
+    ripplesRef.current = [];
+    const ripple = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.04, 12, 48), new THREE.MeshBasicMaterial({ color: primaryColorRef.current, transparent: true, opacity: 0.3, wireframe: true }));
     ripple.rotation.x = Math.PI / 2;
     ripple.position.y = -1.8;
     ripple.userData = { born: clockRef.current.getElapsedTime(), maxAge: 12 };
@@ -7491,6 +7494,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const harpBufferRef = useRef(null);
   const celloBufferRef = useRef(null);
   const handpanBufferRef = useRef(null);
+  const handpanSamplesRef = useRef({}); // Multi-sample handpan: { freq: buffer }
+  const malletSamplesRef = useRef({}); // Multi-sample mallet: { freq: buffer }
   const voiceBufferRef = useRef(null);
   const rainstickBufferRef = useRef(null);
   const percBufferRef = useRef(null);
@@ -7506,6 +7511,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     { name: 'harp', type: 'sampledHarp' },
     { name: 'cello', type: 'sampledCello' },
     { name: 'handpan', type: 'sampledHandpan' },
+    { name: 'mallet', type: 'sampledMallet' },
     { name: 'flute', type: 'organicFlute' },
     { name: 'voice', type: 'sampledVoice' },
     { name: 'rainstick', type: 'sampledRainstick' },
@@ -7621,14 +7627,38 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       })
       .catch(err => console.log('Cello sample not loaded:', err));
 
-    // Load handpan sample (C3 = 130.81Hz base note)
-    fetch('handpan.wav')
+    // Load multi-sample handpan - C2 to C6 chromatic from real recordings
+    const handpanSampleMap = [
+      // Octave 2 (from C2 ding recording)
+      ['C2', 65.41], ['Cs2', 69.30], ['D2', 73.42], ['Ds2', 77.78],
+      ['E2', 82.41], ['F2', 87.31], ['Fs2', 92.50], ['G2', 98.00],
+      ['Gs2', 103.83], ['A2', 110.00], ['As2', 116.54], ['B2', 123.47],
+      // Octave 3 (from C3 recording)
+      ['C3', 130.81], ['Cs3', 138.59], ['D3', 146.83], ['Ds3', 155.56],
+      ['E3', 164.81], ['F3', 174.61], ['Fs3', 185.00], ['G3', 196.00],
+      ['Gs3', 207.65], ['A3', 220.00], ['As3', 233.08], ['B3', 246.94],
+      // Octave 4
+      ['C4', 261.63], ['Cs4', 277.18], ['D4', 293.66], ['Ds4', 311.13],
+      ['E4', 329.63], ['F4', 349.23], ['Fs4', 369.99], ['G4', 392.00],
+      ['Gs4', 415.30], ['A4', 440.00], ['As4', 466.16], ['B4', 493.88],
+      // Octave 5
+      ['C5', 523.25], ['Cs5', 554.37], ['D5', 587.33], ['Ds5', 622.25],
+      ['E5', 659.26], ['F5', 698.46], ['Fs5', 739.99], ['G5', 783.99],
+      ['Gs5', 830.61], ['A5', 880.00], ['As5', 932.33], ['B5', 987.77],
+      // Octave 6
+      ['C6', 1046.50],
+    ];
+
+    // Load handpan sample - EXACT same pattern as guitar
+    fetch('handpan-C3.wav')
       .then(response => response.arrayBuffer())
       .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
       .then(audioBuffer => {
         handpanBufferRef.current = audioBuffer;
       })
       .catch(err => console.log('Handpan sample not loaded:', err));
+
+    // No fallback - only use multi-sampled handpan
 
     fetch('samples/voice-c3.m4a')
       .then(response => response.arrayBuffer())
@@ -7653,6 +7683,32 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         percBufferRef.current = audioBuffer;
       })
       .catch(err => console.log('Perc sample not loaded:', err));
+
+    // Load mallet samples (ATYYA sound pack)
+    const malletSampleMap = [
+      ['ATYYA_Mallet_A_1', 55.00],
+      ['ATYYA_Mallet_C_1', 32.70],
+      ['ATYYA_Mallet_C_2', 65.41],
+      ['ATYYA_Mallet_C_3', 130.81],
+      ['ATYYA_Mallet_D_1', 36.71],
+      ['ATYYA_Mallet_D_2', 73.42],
+      ['ATYYA_Mallet_E_1', 41.20],
+      ['ATYYA_Mallet_E_2', 82.41],
+      ['ATYYA_Mallet_E_3', 164.81],
+      ['ATYYA_Mallet_F_1aif', 43.65],
+      ['ATYYA_Mallet_F_2', 87.31],
+      ['ATYYA_Mallet_G_1', 49.00],
+      ['ATYYA_Mallet_G_2', 98.00],
+      ['ATYYA_Mallet_Gm_1', 51.91],
+    ];
+    // Load mallet sample - same pattern as guitar/handpan (using C2 = 65.41Hz)
+    fetch('mallet-ATYYA_Mallet_C_2.wav')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        malletSamplesRef.current = audioBuffer;
+      })
+      .catch(err => console.log('Mallet sample not loaded:', err));
 
     // Start drone
     startDrone(ctx, masterGain);
@@ -8022,6 +8078,18 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     const masterGain = masterGainRef.current;
     if (!ctx || !masterGain) return;
 
+    // Haptic feedback - stronger for low notes (dings)
+    if (freq < 150) {
+      // Low ding notes get heavy haptic
+      Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => {});
+    } else if (freq < 300) {
+      // Mid notes get medium haptic
+      Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
+    } else {
+      // High notes get light haptic
+      Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+    }
+
     const type = instruments[currentInstrument].type;
     const now = ctx.currentTime;
 
@@ -8157,11 +8225,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       gain.connect(masterGain);
       source.start(now);
     } else if (type === 'sampledHandpan') {
-      // Sampled handpan - resonant, long decay
+      // Sampled handpan - EXACT same pattern as guitar
       if (!handpanBufferRef.current) return;
 
       const baseFreq = 130.81; // C3
-      // Allow full 3-octave range
       const playbackRate = freq / baseFreq;
 
       const source = ctx.createBufferSource();
@@ -8170,9 +8237,29 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
       const gain = ctx.createGain();
       gain.gain.value = 0;
-      gain.gain.setTargetAtTime(0.6 * velocity, now, 0.01);
-      gain.gain.setTargetAtTime(0.4 * velocity, now + 0.3, 0.8);
-      gain.gain.setTargetAtTime(0, now + 1.5, 4);
+      gain.gain.setTargetAtTime(0.7 * velocity, now, 0.003);
+      gain.gain.setTargetAtTime(0.5 * velocity, now + 0.15, 0.4);
+      gain.gain.setTargetAtTime(0, now + 1.0, 4.0);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start(now);
+    } else if (type === 'sampledMallet') {
+      // Sampled mallet - same pattern as guitar/handpan
+      if (!malletSamplesRef.current) return;
+
+      const baseFreq = 65.41; // C2
+      const playbackRate = freq / baseFreq;
+
+      const source = ctx.createBufferSource();
+      source.buffer = malletSamplesRef.current;
+      source.playbackRate.value = playbackRate;
+
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.6 * velocity, now, 0.003);
+      gain.gain.setTargetAtTime(0.4 * velocity, now + 0.2, 0.5);
+      gain.gain.setTargetAtTime(0, now + 1.2, 3.5);
 
       source.connect(gain);
       gain.connect(masterGain);
@@ -8544,12 +8631,12 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           breathValue={breathValue}
         />
 
-      {/* Begin prompt */}
+      {/* Begin prompt - positioned above handpan */}
       {!isInitialized && (
         <div
           style={{
             position: 'absolute',
-            top: '50%',
+            top: '22%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center',
