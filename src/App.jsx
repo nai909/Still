@@ -9863,7 +9863,7 @@ function Still() {
                 opacity: hasOpenedSettings ? 0.9 : undefined,
               }}
             >
-              STILL
+              PĀṆA
             </h1>
             {/* Settings hint that appears periodically */}
             {!hasOpenedSettings && (
