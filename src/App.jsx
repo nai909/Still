@@ -7463,6 +7463,46 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     setTimeout(() => noteEl.remove(), 2000);
   }, [freqToNoteName]);
 
+  // Visual pulse effect when notes are played (works on all devices)
+  const triggerNotePulse = useCallback((freq, primaryHueVal) => {
+    // Inject keyframes if not already present
+    if (!document.getElementById('note-pulse-style')) {
+      const style = document.createElement('style');
+      style.id = 'note-pulse-style';
+      style.textContent = `
+        @keyframes notePulse {
+          0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+          20% { opacity: 1; }
+          100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Create pulse element - intensity based on frequency
+    const pulseEl = document.createElement('div');
+    const intensity = freq < 150 ? 0.25 : freq < 300 ? 0.15 : 0.1;
+    const size = freq < 150 ? 300 : freq < 300 ? 200 : 150;
+
+    pulseEl.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: ${size}px;
+      height: ${size}px;
+      border-radius: 50%;
+      background: radial-gradient(circle, hsla(${primaryHueVal}, 52%, 68%, ${intensity}) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 9998;
+      opacity: 0;
+      animation: notePulse 0.6s ease-out forwards;
+    `;
+    document.body.appendChild(pulseEl);
+
+    // Remove after animation completes
+    setTimeout(() => pulseEl.remove(), 600);
+  }, []);
+
   // Touch ref for forwarding to GazeMode ripples
   const externalTouchRef = useRef([]);
   const handpanViewRef = useRef(null);
@@ -8113,6 +8153,9 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
     }
 
+    // Visual pulse feedback (works on all devices)
+    triggerNotePulse(freq, primaryHue);
+
     const type = instruments[currentInstrument].type;
     const now = ctx.currentTime;
 
@@ -8461,7 +8504,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     }
 
     haptic.tap();
-  }, [currentInstrument]);
+  }, [currentInstrument, triggerNotePulse, primaryHue]);
 
   // Update texture
   const updateTexture = useCallback((newTexture) => {
