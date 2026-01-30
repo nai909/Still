@@ -1208,6 +1208,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   const scaleRef = React.useRef(1);
   const scaleVelocityRef = React.useRef(0);
 
+  // Reset scale refs when visual mode changes to prevent fast zoom animation
+  React.useEffect(() => {
+    // Initialize to a neutral scale that matches typical breath midpoint
+    // This prevents the jarring fast zoom when switching visuals
+    scaleRef.current = 1.0;
+    scaleVelocityRef.current = 0;
+  }, [currentMode]);
+
   // Keep external breathSession prop in a ref for access in animation loops
   const externalBreathSessionRef = React.useRef(breathSession);
   externalBreathSessionRef.current = breathSession;
@@ -7589,47 +7597,53 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     ctxRef.current = ctx;
 
-    // Resume context (required for mobile browsers)
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-    }
+    // Resume context immediately (required for mobile browsers)
+    // This is critical for iOS - must happen in user gesture handler
+    ctx.resume().catch(() => {});
 
     const masterGain = ctx.createGain();
     masterGain.gain.value = 0.7;
     masterGainRef.current = masterGain;
 
-    // Create reverb
-    const reverbNode = ctx.createConvolver();
-    const reverbLength = 6;
-    const sampleRate = ctx.sampleRate;
-    const length = sampleRate * reverbLength;
-    const impulse = ctx.createBuffer(2, length, sampleRate);
-
-    for (let ch = 0; ch < 2; ch++) {
-      const data = impulse.getChannelData(ch);
-      for (let i = 0; i < length; i++) {
-        const t = i / sampleRate;
-        const earlyDecay = Math.exp(-t * 3) * 0.3;
-        const lateDecay = Math.exp(-t * 0.8) * 0.7;
-        data[i] = (Math.random() * 2 - 1) * (earlyDecay + lateDecay);
-      }
-    }
-    reverbNode.buffer = impulse;
-    reverbNodeRef.current = reverbNode;
-
-    const reverbGain = ctx.createGain();
-    reverbGain.gain.value = 0.5;
-    reverbGainRef.current = reverbGain;
-
+    // Set up dry output immediately (no reverb delay on first tap)
     const dryGain = ctx.createGain();
-    dryGain.gain.value = 0.6;
+    dryGain.gain.value = 0.8; // Slightly louder dry signal initially
     dryGainRef.current = dryGain;
 
     masterGain.connect(dryGain);
     dryGain.connect(ctx.destination);
-    masterGain.connect(reverbNode);
-    reverbNode.connect(reverbGain);
-    reverbGain.connect(ctx.destination);
+
+    // Create reverb asynchronously to avoid blocking first tap
+    // This defers the heavy impulse buffer creation
+    setTimeout(() => {
+      const reverbNode = ctx.createConvolver();
+      const reverbLength = 6;
+      const sampleRate = ctx.sampleRate;
+      const length = sampleRate * reverbLength;
+      const impulse = ctx.createBuffer(2, length, sampleRate);
+
+      for (let ch = 0; ch < 2; ch++) {
+        const data = impulse.getChannelData(ch);
+        for (let i = 0; i < length; i++) {
+          const t = i / sampleRate;
+          const earlyDecay = Math.exp(-t * 3) * 0.3;
+          const lateDecay = Math.exp(-t * 0.8) * 0.7;
+          data[i] = (Math.random() * 2 - 1) * (earlyDecay + lateDecay);
+        }
+      }
+      reverbNode.buffer = impulse;
+      reverbNodeRef.current = reverbNode;
+
+      const reverbGain = ctx.createGain();
+      reverbGain.gain.value = 0.5;
+      reverbGainRef.current = reverbGain;
+
+      // Connect reverb chain and reduce dry signal
+      masterGain.connect(reverbNode);
+      reverbNode.connect(reverbGain);
+      reverbGain.connect(ctx.destination);
+      dryGain.gain.setTargetAtTime(0.6, ctx.currentTime, 0.5); // Fade dry down
+    }, 50); // Small delay to let first tap through
 
     // Load piano sample (C3 = 130.81Hz base note)
     fetch('piano.mp3')
