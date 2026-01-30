@@ -7140,9 +7140,51 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
       toneFieldsRef.current.push(g);
     }
 
+    // Twinkling stars background - kept far from camera to avoid square artifacts
+    const starCount = 400;
+    const starGeom = new THREE.BufferGeometry();
+    const starPos = new Float32Array(starCount * 3);
+    const starData = [];
+    for (let i = 0; i < starCount; i++) {
+      // Spread stars in a sphere around the scene, but keep them far back
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = 25 + Math.random() * 35; // Distance 25-60 from center
+      starPos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      starPos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.6 - 5; // Flatten vertically, shift down
+      starPos[i * 3 + 2] = r * Math.cos(phi);
+      starData.push({
+        baseOpacity: 0.3 + Math.random() * 0.5,
+        twinkleSpeed: 0.5 + Math.random() * 2,
+        twinklePhase: Math.random() * Math.PI * 2
+      });
+    }
+    starGeom.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starMaterial = new THREE.PointsMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.6,
+      size: 0.08,
+      sizeAttenuation: true,
+      blending: THREE.AdditiveBlending
+    });
+    const stars = new THREE.Points(starGeom, starMaterial);
+    stars.userData.starData = starData;
+    scene.add(stars);
+
     renderer.domElement.style.pointerEvents = 'none';
 
     const animate = () => {
+      // Twinkle stars
+      if (stars.userData.starData) {
+        const time = Date.now() * 0.001;
+        let avgOpacity = 0;
+        stars.userData.starData.forEach((s, i) => {
+          const twinkle = 0.5 + 0.5 * Math.sin(time * s.twinkleSpeed + s.twinklePhase);
+          avgOpacity += s.baseOpacity * twinkle;
+        });
+        stars.material.opacity = 0.4 + 0.3 * Math.sin(time * 0.5);
+      }
       animationFrameRef.current = requestAnimationFrame(animate);
       if (handpanRef.current) {
         handpanRef.current.scale.setScalar(0.96 + breathValue * 0.08);
