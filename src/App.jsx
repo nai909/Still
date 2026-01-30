@@ -7171,11 +7171,6 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
     scene.add(particles);
     particlesRef.current = particles;
 
-    // Shooting stars array
-    const shootingStars = [];
-    scene.userData.shootingStars = shootingStars;
-    scene.userData.lastShootingStar = 0;
-
     renderer.domElement.style.pointerEvents = 'none';
 
     const animate = () => {
@@ -7198,72 +7193,6 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
         particlesRef.current.geometry.attributes.position.needsUpdate = true;
         // Subtle twinkling effect
         particlesRef.current.material.opacity = 0.7 + Math.sin(Date.now() * 0.001) * 0.15;
-      }
-      // Shooting stars
-      if (scene.userData.shootingStars) {
-        const now = clockRef.current?.getElapsedTime() || 0;
-        // Spawn a new shooting star occasionally (every 4-8 seconds)
-        if (now - scene.userData.lastShootingStar > 4 + Math.random() * 4) {
-          scene.userData.lastShootingStar = now;
-          const starGeom = new THREE.BufferGeometry();
-          const trailLength = 8;
-          const trailPos = new Float32Array(trailLength * 3);
-          const startX = (Math.random() - 0.5) * 30;
-          const startY = 8 + Math.random() * 5;
-          const startZ = -15 + Math.random() * 10;
-          for (let i = 0; i < trailLength; i++) {
-            trailPos[i * 3] = startX;
-            trailPos[i * 3 + 1] = startY;
-            trailPos[i * 3 + 2] = startZ;
-          }
-          starGeom.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
-          const starMat = new THREE.PointsMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending,
-            size: 0.06
-          });
-          const shootingStar = new THREE.Points(starGeom, starMat);
-          shootingStar.userData = {
-            born: now,
-            maxAge: 2 + Math.random(),
-            velocity: { x: (Math.random() - 0.5) * 0.15, y: -0.12 - Math.random() * 0.08, z: 0.05 }
-          };
-          scene.add(shootingStar);
-          scene.userData.shootingStars.push(shootingStar);
-        }
-        // Update shooting stars
-        for (let i = scene.userData.shootingStars.length - 1; i >= 0; i--) {
-          const star = scene.userData.shootingStars[i];
-          const age = now - star.userData.born;
-          const progress = age / star.userData.maxAge;
-          if (progress >= 1) {
-            scene.remove(star);
-            star.geometry.dispose();
-            star.material.dispose();
-            scene.userData.shootingStars.splice(i, 1);
-          } else {
-            const pos = star.geometry.attributes.position.array;
-            const vel = star.userData.velocity;
-            // Move the head of the trail
-            const headX = pos[0] + vel.x;
-            const headY = pos[0 + 1] + vel.y;
-            const headZ = pos[0 + 2] + vel.z;
-            // Shift trail positions back
-            for (let j = pos.length / 3 - 1; j > 0; j--) {
-              pos[j * 3] = pos[(j - 1) * 3];
-              pos[j * 3 + 1] = pos[(j - 1) * 3 + 1];
-              pos[j * 3 + 2] = pos[(j - 1) * 3 + 2];
-            }
-            pos[0] = headX;
-            pos[1] = headY;
-            pos[2] = headZ;
-            star.geometry.attributes.position.needsUpdate = true;
-            // Fade out
-            star.material.opacity = 0.8 * (1 - progress * 0.7);
-          }
-        }
       }
       if (clockRef.current) {
         const now = clockRef.current.getElapsedTime();
@@ -7291,9 +7220,6 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
       window.removeEventListener('resize', onResize);
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       ripplesRef.current.forEach(r => { r.geometry.dispose(); r.material.dispose(); });
-      if (scene.userData.shootingStars) {
-        scene.userData.shootingStars.forEach(s => { s.geometry.dispose(); s.material.dispose(); });
-      }
       if (renderer) { renderer.dispose(); if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement); }
     };
   }, []);
