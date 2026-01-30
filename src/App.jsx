@@ -6957,8 +6957,8 @@ const SCALE_TYPES = [
   { name: 'pentatonic minor', intervals: [0, 3, 5, 7, 10] },
   { name: 'blues', intervals: [0, 3, 5, 6, 7, 10] },
   { name: 'whole tone', intervals: [0, 2, 4, 6, 8, 10] },
-  { name: 'japanese', intervals: [0, 1, 5, 7, 8] },
-  { name: 'arabic', intervals: [0, 1, 4, 5, 7, 8, 11] },
+  { name: 'insen', intervals: [0, 1, 5, 7, 8] },
+  { name: 'hijaz', intervals: [0, 1, 4, 5, 7, 8, 11] },
   { name: 'hungarian minor', intervals: [0, 2, 3, 6, 7, 8, 11] },
 ];
 
@@ -7323,7 +7323,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const [currentInstrument, setCurrentInstrument] = useState(0); // handpan
   const [currentTexture, setCurrentTexture] = useState(2); // forest
   const [currentKey, setCurrentKey] = useState(5); // F
-  const [currentScaleType, setCurrentScaleType] = useState(13); // japanese
+  const [currentScaleType, setCurrentScaleType] = useState(13); // insen
   const [showLabel, setShowLabel] = useState(false);
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
