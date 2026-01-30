@@ -7396,8 +7396,8 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
 
 function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }) {
   const [isInitialized, setIsInitialized] = useState(false);
-  const [currentInstrument, setCurrentInstrument] = useState(6); // handpan
-  const [currentTexture, setCurrentTexture] = useState(3); // forest
+  const [currentInstrument, setCurrentInstrument] = useState(0); // handpan
+  const [currentTexture, setCurrentTexture] = useState(2); // forest
   const [currentKey, setCurrentKey] = useState(2); // D
   const [currentScaleType, setCurrentScaleType] = useState(0); // major
   const [showLabel, setShowLabel] = useState(false);
@@ -7510,16 +7510,16 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const breathPattern = { inhale: 4, hold: 7, exhale: 8 };
 
   const instruments = [
+    { name: 'handpan', type: 'sampledHandpan' },
     { name: 'piano', type: 'sampledPiano' },
     { name: 'guitar', type: 'sampledGuitar' },
     { name: 'synth', type: 'feltPiano' },
     { name: 'music box', type: 'musicBox' },
     { name: 'harp', type: 'sampledHarp' },
     { name: 'cello', type: 'sampledCello' },
-    { name: 'handpan', type: 'sampledHandpan' },
-    { name: 'mallet', type: 'sampledMallet' },
     { name: 'flute', type: 'organicFlute' },
     { name: 'voice', type: 'sampledVoice' },
+    { name: 'mallet', type: 'sampledMallet' },
     { name: 'rainstick', type: 'sampledRainstick' },
     { name: 'perc', type: 'sampledPerc' }
   ];
