@@ -7381,7 +7381,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     noteEl.textContent = noteName;
     noteEl.style.cssText = `
       position: fixed;
-      top: 35%;
+      top: 75%;
       left: 50%;
       transform: translate(-50%, -50%);
       font-size: 1.5rem;
