@@ -8219,8 +8219,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
       const gain = ctx.createGain();
       gain.gain.value = 0;
-      gain.gain.setTargetAtTime(0.5 * velocity, now, 0.01);
-      gain.gain.setTargetAtTime(0.35 * velocity, now + 0.1, 0.3);
+      gain.gain.setTargetAtTime(1.0 * velocity, now, 0.01);
+      gain.gain.setTargetAtTime(0.7 * velocity, now + 0.1, 0.3);
       gain.gain.setTargetAtTime(0, now + 0.5, 3.0);
 
       source.connect(gain);
