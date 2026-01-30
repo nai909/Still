@@ -7140,37 +7140,6 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
       toneFieldsRef.current.push(g);
     }
 
-    // Stars - dense starfield for space effect
-    const starCount = 300;
-    const pGeom = new THREE.BufferGeometry();
-    const pPos = new Float32Array(starCount * 3);
-    const pSizes = new Float32Array(starCount);
-    const pVel = [];
-    for (let i = 0; i < starCount; i++) {
-      pPos[i * 3] = (Math.random() - 0.5) * 40;
-      pPos[i * 3 + 1] = (Math.random() - 0.5) * 25;
-      pPos[i * 3 + 2] = (Math.random() - 0.5) * 40;
-      pSizes[i] = Math.random() * 0.03 + 0.01; // Varying star sizes
-      pVel.push({
-        x: (Math.random() - 0.5) * 0.001,
-        y: (Math.random() - 0.5) * 0.001,
-        z: (Math.random() - 0.5) * 0.001,
-        twinkle: Math.random() * Math.PI * 2, // Random twinkle phase
-        twinkleSpeed: Math.random() * 0.02 + 0.01
-      });
-    }
-    pGeom.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-    const particles = new THREE.Points(pGeom, new THREE.PointsMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.8,
-      blending: THREE.AdditiveBlending,
-      size: 0.05
-    }));
-    particles.userData.vel = pVel;
-    scene.add(particles);
-    particlesRef.current = particles;
-
     renderer.domElement.style.pointerEvents = 'none';
 
     const animate = () => {
@@ -7180,20 +7149,6 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
         handpanRef.current.rotation.y += 0.001;
       }
       if (bloomRef.current) bloomRef.current.strength = 0.35 + breathValue * 0.4;
-      if (particlesRef.current) {
-        const pos = particlesRef.current.geometry.attributes.position.array;
-        const vel = particlesRef.current.userData.vel;
-        for (let i = 0; i < vel.length; i++) {
-          pos[i * 3] += vel[i].x; pos[i * 3 + 1] += vel[i].y; pos[i * 3 + 2] += vel[i].z;
-          vel[i].twinkle += vel[i].twinkleSpeed;
-          if (Math.abs(pos[i * 3]) > 20) pos[i * 3] *= -0.95;
-          if (Math.abs(pos[i * 3 + 1]) > 12) pos[i * 3 + 1] *= -0.95;
-          if (Math.abs(pos[i * 3 + 2]) > 20) pos[i * 3 + 2] *= -0.95;
-        }
-        particlesRef.current.geometry.attributes.position.needsUpdate = true;
-        // Subtle twinkling effect
-        particlesRef.current.material.opacity = 0.7 + Math.sin(Date.now() * 0.001) * 0.15;
-      }
       if (clockRef.current) {
         const now = clockRef.current.getElapsedTime();
         for (let i = activeNotesRef.current.length - 1; i >= 0; i--) {
