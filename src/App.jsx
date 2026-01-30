@@ -7405,6 +7405,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathValue, setBreathValue] = useState(0);
   const [showNotes, setShowNotes] = useState(false);
+  const [droneEnabled, setDroneEnabled] = useState(true);
 
   // Generate current scale based on key and scale type (memoized to prevent stale closures)
   const scale = React.useMemo(() =>
@@ -7809,6 +7810,16 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       node.osc.frequency.setTargetAtTime(newFreq, ctxRef.current.currentTime, 0.5);
     });
   }, [currentKey, isInitialized]);
+
+  // Fade drone in/out when toggle changes
+  useEffect(() => {
+    if (!isInitialized || !ctxRef.current || droneOscillatorsRef.current.length === 0) return;
+
+    const targetGain = droneEnabled ? 1 : 0;
+    droneOscillatorsRef.current.forEach(node => {
+      node.gain.gain.setTargetAtTime(node.baseGain * targetGain, ctxRef.current.currentTime, 0.5);
+    });
+  }, [droneEnabled, isInitialized]);
 
   // Resume audio context when app returns from background (iOS)
   useEffect(() => {
@@ -8882,6 +8893,50 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
                   position: 'absolute',
                   top: '3px',
                   left: showNotes ? '23px' : '3px',
+                  transition: 'all 0.2s ease',
+                }} />
+              </button>
+            </div>
+
+            {/* Drone toggle */}
+            <div style={{
+              padding: '0.75rem 1rem',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <div style={{
+                fontSize: '0.55rem',
+                color: 'rgba(255,255,255,0.4)',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}>Ambient Drone</div>
+              <button
+                onClick={() => {
+                  setDroneEnabled(prev => !prev);
+                  haptic.tap();
+                }}
+                style={{
+                  width: '44px',
+                  height: '24px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: droneEnabled ? `hsla(${primaryHue}, 52%, 68%, 0.4)` : 'rgba(255,255,255,0.1)',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  transition: 'background 0.2s ease',
+                }}
+              >
+                <div style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  background: droneEnabled ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.5)',
+                  position: 'absolute',
+                  top: '3px',
+                  left: droneEnabled ? '23px' : '3px',
                   transition: 'all 0.2s ease',
                 }} />
               </button>
