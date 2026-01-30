@@ -7406,6 +7406,12 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const [breathValue, setBreathValue] = useState(0);
   const [showNotes, setShowNotes] = useState(false);
   const [droneEnabled, setDroneEnabled] = useState(true);
+  const droneEnabledRef = useRef(true);
+
+  // Keep ref in sync with state for animation loop access
+  useEffect(() => {
+    droneEnabledRef.current = droneEnabled;
+  }, [droneEnabled]);
 
   // Generate current scale based on key and scale type (memoized to prevent stale closures)
   const scale = React.useMemo(() =>
@@ -7747,9 +7753,10 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       setBreathPhase(phase);
       setBreathValue(value);
 
-      // Modulate drone
+      // Modulate drone (respects drone toggle)
       droneOscillatorsRef.current.forEach(node => {
-        const target = node.baseGain * (0.4 + value * 0.6);
+        const droneMultiplier = droneEnabledRef.current ? 1 : 0;
+        const target = node.baseGain * (0.4 + value * 0.6) * droneMultiplier;
         node.gain.gain.setTargetAtTime(target, ctx.currentTime, 0.5);
       });
 
