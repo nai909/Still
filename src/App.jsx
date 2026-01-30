@@ -6846,7 +6846,6 @@ function ZenWaterBoard({ primaryHue = 162 }) {
     const pos = getPosition(e), pressure = getPressure(e);
     currentStrokeRef.current = {
       points: [{ ...pos, pressure, width: (4 + pressure * 28) * 0.4, timestamp: Date.now(), velocity: 0 }],
-      createdAt: Date.now(),
       wetness: 0.7 + Math.random() * 0.5
     };
     lastPointRef.current = { ...pos, timestamp: Date.now() };
@@ -6875,6 +6874,8 @@ function ZenWaterBoard({ primaryHue = 162 }) {
       const dx = last.x - prev.x, dy = last.y - prev.y;
       currentStrokeRef.current.points.push({ x: last.x + dx * 0.3, y: last.y + dy * 0.3, width: last.width * 0.4, pressure: last.pressure * 0.5, timestamp: Date.now() });
       currentStrokeRef.current.points.push({ x: last.x + dx * 0.5, y: last.y + dy * 0.5, width: last.width * 0.1, pressure: last.pressure * 0.2, timestamp: Date.now() });
+      // Set createdAt when touch is released so fade starts only after drawing ends
+      currentStrokeRef.current.createdAt = Date.now();
       strokesRef.current.push(currentStrokeRef.current);
     }
     isDrawingRef.current = false;
