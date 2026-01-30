@@ -7390,10 +7390,10 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
 
 function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }) {
   const [isInitialized, setIsInitialized] = useState(false);
-  const [currentInstrument, setCurrentInstrument] = useState(3); // music box
+  const [currentInstrument, setCurrentInstrument] = useState(6); // handpan
   const [currentTexture, setCurrentTexture] = useState(3); // forest
-  const [currentKey, setCurrentKey] = useState(9); // A
-  const [currentScaleType, setCurrentScaleType] = useState(10); // pentatonic minor
+  const [currentKey, setCurrentKey] = useState(2); // D
+  const [currentScaleType, setCurrentScaleType] = useState(0); // major
   const [showLabel, setShowLabel] = useState(false);
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
@@ -7649,16 +7649,39 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       ['C6', 1046.50],
     ];
 
-    // Load handpan sample - EXACT same pattern as guitar
-    fetch('handpan-C3.wav')
-      .then(response => response.arrayBuffer())
-      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
-      .then(audioBuffer => {
-        handpanBufferRef.current = audioBuffer;
-      })
-      .catch(err => console.log('Handpan sample not loaded:', err));
-
-    // No fallback - only use multi-sampled handpan
+    // Load handpan samples - using original recorded samples for best quality
+    // Original samples: As2, B2, C3, C4, C5, Cs2, Cs3, Cs5, Ds2, Ds3, Ds4, Ds5, F2, F3, F4, F5, G3, G4, Gs3, Gs4
+    const handpanKeySamples = [
+      ['handpan-Cs2.wav', 69.30],   // C#2 - original
+      ['handpan-Ds2.wav', 77.78],   // D#2 - original
+      ['handpan-F2.wav', 87.31],    // F2 - original
+      ['handpan-As2.wav', 116.54],  // A#2 - original
+      ['handpan-B2.wav', 123.47],   // B2 - original
+      ['handpan-C3.wav', 130.81],   // C3 - original
+      ['handpan-Cs3.wav', 138.59],  // C#3 - original
+      ['handpan-Ds3.wav', 155.56],  // D#3 - original
+      ['handpan-F3.wav', 174.61],   // F3 - original
+      ['handpan-G3.wav', 196.00],   // G3 - original
+      ['handpan-Gs3.wav', 207.65],  // G#3 - original
+      ['handpan-C4.wav', 261.63],   // C4 - original
+      ['handpan-Ds4.wav', 311.13],  // D#4 - original
+      ['handpan-F4.wav', 349.23],   // F4 - original
+      ['handpan-G4.wav', 392.00],   // G4 - original
+      ['handpan-Gs4.wav', 415.30],  // G#4 - original
+      ['handpan-C5.wav', 523.25],   // C5 - original
+      ['handpan-Cs5.wav', 554.37],  // C#5 - original
+      ['handpan-Ds5.wav', 622.25],  // D#5 - original
+      ['handpan-F5.wav', 698.46],   // F5 - original
+    ];
+    handpanKeySamples.forEach(([file, freq]) => {
+      fetch(file)
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+        .then(audioBuffer => {
+          handpanSamplesRef.current[freq] = audioBuffer;
+        })
+        .catch(err => console.log(`Handpan ${file} not loaded:`, err));
+    });
 
     fetch('samples/voice-c3.m4a')
       .then(response => response.arrayBuffer())
@@ -8225,14 +8248,30 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       gain.connect(masterGain);
       source.start(now);
     } else if (type === 'sampledHandpan') {
-      // Sampled handpan - EXACT same pattern as guitar
-      if (!handpanBufferRef.current) return;
+      // Multi-sampled handpan - find closest sample to minimize pitch shifting
+      const samples = handpanSamplesRef.current;
+      const sampleFreqs = Object.keys(samples).map(Number).filter(f => samples[f]);
 
-      const baseFreq = 130.81; // C3
-      const playbackRate = freq / baseFreq;
+      if (sampleFreqs.length === 0) return;
+
+      // Find closest sample frequency
+      let closestFreq = sampleFreqs[0];
+      let minDiff = Math.abs(Math.log2(freq / closestFreq));
+      for (const sampleFreq of sampleFreqs) {
+        const diff = Math.abs(Math.log2(freq / sampleFreq));
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestFreq = sampleFreq;
+        }
+      }
+
+      const buffer = samples[closestFreq];
+      if (!buffer) return;
+
+      const playbackRate = freq / closestFreq;
 
       const source = ctx.createBufferSource();
-      source.buffer = handpanBufferRef.current;
+      source.buffer = buffer;
       source.playbackRate.value = playbackRate;
 
       const gain = ctx.createGain();
