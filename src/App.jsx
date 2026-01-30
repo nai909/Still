@@ -7501,7 +7501,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const celloBufferRef = useRef(null);
   const handpanBufferRef = useRef(null);
   const handpanSamplesRef = useRef({}); // Multi-sample handpan: { freq: buffer }
-  const malletSamplesRef = useRef({}); // Multi-sample mallet: { freq: buffer }
   const voiceBufferRef = useRef(null);
   const rainstickBufferRef = useRef(null);
   const percBufferRef = useRef(null);
@@ -7519,7 +7518,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
     { name: 'cello', type: 'sampledCello' },
     { name: 'flute', type: 'organicFlute' },
     { name: 'voice', type: 'sampledVoice' },
-    { name: 'mallet', type: 'sampledMallet' },
     { name: 'rainstick', type: 'sampledRainstick' },
     { name: 'perc', type: 'sampledPerc' }
   ];
@@ -7718,32 +7716,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
         percBufferRef.current = audioBuffer;
       })
       .catch(err => console.log('Perc sample not loaded:', err));
-
-    // Load mallet samples (ATYYA sound pack)
-    const malletSampleMap = [
-      ['ATYYA_Mallet_A_1', 55.00],
-      ['ATYYA_Mallet_C_1', 32.70],
-      ['ATYYA_Mallet_C_2', 65.41],
-      ['ATYYA_Mallet_C_3', 130.81],
-      ['ATYYA_Mallet_D_1', 36.71],
-      ['ATYYA_Mallet_D_2', 73.42],
-      ['ATYYA_Mallet_E_1', 41.20],
-      ['ATYYA_Mallet_E_2', 82.41],
-      ['ATYYA_Mallet_E_3', 164.81],
-      ['ATYYA_Mallet_F_1aif', 43.65],
-      ['ATYYA_Mallet_F_2', 87.31],
-      ['ATYYA_Mallet_G_1', 49.00],
-      ['ATYYA_Mallet_G_2', 98.00],
-      ['ATYYA_Mallet_Gm_1', 51.91],
-    ];
-    // Load mallet sample - same pattern as guitar/handpan (using C2 = 65.41Hz)
-    fetch('mallet-ATYYA_Mallet_C_2.wav')
-      .then(response => response.arrayBuffer())
-      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
-      .then(audioBuffer => {
-        malletSamplesRef.current = audioBuffer;
-      })
-      .catch(err => console.log('Mallet sample not loaded:', err));
 
     // Start drone
     startDrone(ctx, masterGain);
@@ -8291,26 +8263,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       gain.gain.setTargetAtTime(0.7 * velocity, now, 0.003);
       gain.gain.setTargetAtTime(0.5 * velocity, now + 0.15, 0.4);
       gain.gain.setTargetAtTime(0, now + 1.0, 4.0);
-
-      source.connect(gain);
-      gain.connect(masterGain);
-      source.start(now);
-    } else if (type === 'sampledMallet') {
-      // Sampled mallet - same pattern as guitar/handpan
-      if (!malletSamplesRef.current) return;
-
-      const baseFreq = 65.41; // C2
-      const playbackRate = freq / baseFreq;
-
-      const source = ctx.createBufferSource();
-      source.buffer = malletSamplesRef.current;
-      source.playbackRate.value = playbackRate;
-
-      const gain = ctx.createGain();
-      gain.gain.value = 0;
-      gain.gain.setTargetAtTime(0.6 * velocity, now, 0.003);
-      gain.gain.setTargetAtTime(0.4 * velocity, now + 0.2, 0.5);
-      gain.gain.setTargetAtTime(0, now + 1.2, 3.5);
 
       source.connect(gain);
       gain.connect(masterGain);
