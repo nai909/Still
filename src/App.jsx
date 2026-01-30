@@ -1169,6 +1169,23 @@ const gazeModes = [
   { key: 'flowerOfLife', name: 'Flower of Life' },
   // Organic/Abstract visuals
   { key: 'lavaTouch', name: 'Lava Lamp' },
+  // Crystalline/Geometric visuals
+  { key: 'crystalCave', name: 'Crystal Cave' },
+  // Cosmic visuals
+  { key: 'nebula', name: 'Nebula' },
+  { key: 'aurora', name: 'Aurora' },
+  { key: 'constellation', name: 'Constellations' },
+  // Network/Connected visuals
+  { key: 'mycelium', name: 'Mycelium' },
+  { key: 'neural', name: 'Neural' },
+  // Fluid/Particle visuals
+  { key: 'smokeWisps', name: 'Smoke' },
+  { key: 'quantumFoam', name: 'Quantum' },
+  { key: 'liquidMetal', name: 'Mercury' },
+  // Ethereal visuals
+  { key: 'wovenLight', name: 'Woven Light' },
+  { key: 'orbitalRings', name: 'Orbital' },
+  { key: 'floatingIslands', name: 'Islands' },
 ];
 
 const gazeShapes = [
@@ -5298,6 +5315,1495 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
+  // ========== CRYSTAL CAVE MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'crystalCave' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const crystalGroup = new THREE.Group();
+    scene.add(crystalGroup);
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Create crystals
+    const crystals = [];
+    const createCrystal = (pos, size, rotation) => {
+      const geometry = new THREE.ConeGeometry(size * 0.3, size, 6);
+      const material = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 50, 60),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.6
+      });
+      const crystal = new THREE.Mesh(geometry, material);
+      crystal.position.copy(pos);
+      crystal.rotation.set(rotation.x, rotation.y, rotation.z);
+      crystal.userData = { baseOpacity: 0.6, pulsePhase: Math.random() * Math.PI * 2, size };
+      crystalGroup.add(crystal);
+      crystals.push({ mesh: crystal, geometry, material });
+
+      // Inner glow
+      const innerGeom = new THREE.ConeGeometry(size * 0.15, size * 0.8, 6);
+      const innerMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 60, 75),
+        transparent: true,
+        opacity: 0.3
+      });
+      const inner = new THREE.Mesh(innerGeom, innerMat);
+      crystal.add(inner);
+      crystals.push({ mesh: inner, geometry: innerGeom, material: innerMat });
+    };
+
+    // Generate crystal formations
+    for (let i = 0; i < 25; i++) {
+      const angle = (i / 25) * Math.PI * 2;
+      const radius = 2 + Math.random() * 2;
+      const height = (Math.random() - 0.5) * 3;
+      const size = 0.8 + Math.random() * 1.2;
+      createCrystal(
+        new THREE.Vector3(Math.cos(angle) * radius, height, Math.sin(angle) * radius),
+        size,
+        new THREE.Vector3(Math.random() - 0.5, 0, Math.random() - 0.5)
+      );
+    }
+
+    // Central cluster
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      createCrystal(
+        new THREE.Vector3(Math.cos(angle) * 0.5, -0.5 + Math.random(), Math.sin(angle) * 0.5),
+        1.5 + Math.random() * 0.5,
+        new THREE.Vector3((Math.random() - 0.5) * 0.3, 0, (Math.random() - 0.5) * 0.3)
+      );
+    }
+
+    let localScale = 1, localScaleVelocity = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Spring physics
+      const targetScale = 0.95 + breath * 0.1;
+      localScaleVelocity = localScaleVelocity * 0.9 + (targetScale - localScale) * 0.02;
+      localScale += localScaleVelocity;
+      crystalGroup.scale.setScalar(localScale);
+
+      // Rotate slowly
+      crystalGroup.rotation.y += 0.0008;
+
+      // Pulse crystals
+      crystals.forEach((c, i) => {
+        if (c.mesh.userData.pulsePhase !== undefined) {
+          const pulse = Math.sin(elapsed * 0.5 + c.mesh.userData.pulsePhase) * 0.5 + 0.5;
+          c.material.opacity = (0.4 + breath * 0.3) * (0.7 + pulse * 0.3);
+        }
+      });
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      crystals.forEach(c => { c.geometry.dispose(); c.material.dispose(); });
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== NEBULA MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'nebula' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Particle cloud
+    const particleCount = 2000;
+    const positions = new Float32Array(particleCount * 3);
+    const velocities = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = 1 + Math.random() * 3;
+      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      positions[i * 3 + 2] = r * Math.cos(phi);
+      velocities.push({
+        x: (Math.random() - 0.5) * 0.002,
+        y: (Math.random() - 0.5) * 0.002,
+        z: (Math.random() - 0.5) * 0.002,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const material = new THREE.PointsMaterial({
+      color: hslToHex(hue, 50, 65),
+      size: 0.03,
+      transparent: true,
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending
+    });
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+
+    // Core glow
+    const coreGeom = new THREE.SphereGeometry(0.3, 16, 16);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 60, 70),
+      transparent: true,
+      opacity: 0.4
+    });
+    const core = new THREE.Mesh(coreGeom, coreMat);
+    scene.add(core);
+
+    let localScale = 1, localScaleVelocity = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Spring physics
+      const targetScale = 0.9 + breath * 0.2;
+      localScaleVelocity = localScaleVelocity * 0.9 + (targetScale - localScale) * 0.015;
+      localScale += localScaleVelocity;
+      particles.scale.setScalar(localScale);
+
+      // Rotate
+      particles.rotation.y += 0.0005;
+      particles.rotation.x += 0.0002;
+
+      // Animate particles
+      const pos = geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        const v = velocities[i];
+        pos[i * 3] += v.x + Math.sin(elapsed * 0.2 + v.phase) * 0.001;
+        pos[i * 3 + 1] += v.y + Math.cos(elapsed * 0.15 + v.phase) * 0.001;
+        pos[i * 3 + 2] += v.z;
+
+        // Keep in bounds
+        const dist = Math.sqrt(pos[i * 3] ** 2 + pos[i * 3 + 1] ** 2 + pos[i * 3 + 2] ** 2);
+        if (dist > 4) {
+          pos[i * 3] *= 0.98;
+          pos[i * 3 + 1] *= 0.98;
+          pos[i * 3 + 2] *= 0.98;
+        }
+      }
+      geometry.attributes.position.needsUpdate = true;
+
+      // Pulse core
+      core.scale.setScalar(0.8 + breath * 0.4 + Math.sin(elapsed) * 0.1);
+      coreMat.opacity = 0.3 + breath * 0.3;
+      material.opacity = 0.4 + breath * 0.3;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      geometry.dispose(); material.dispose(); coreGeom.dispose(); coreMat.dispose();
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== AURORA MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'aurora' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Create aurora ribbons
+    const ribbons = [];
+    const createRibbon = (yOffset, phase) => {
+      const points = [];
+      const segments = 50;
+      for (let i = 0; i <= segments; i++) {
+        points.push(new THREE.Vector3((i / segments - 0.5) * 8, yOffset, 0));
+      }
+      const curve = new THREE.CatmullRomCurve3(points);
+      const geometry = new THREE.TubeGeometry(curve, segments, 0.1, 8, false);
+      const material = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 55, 60),
+        transparent: true,
+        opacity: 0.4,
+        side: THREE.DoubleSide,
+        wireframe: true
+      });
+      const ribbon = new THREE.Mesh(geometry, material);
+      ribbon.userData = { phase, yOffset, points };
+      scene.add(ribbon);
+      ribbons.push({ mesh: ribbon, geometry, material, curve, segments });
+    };
+
+    for (let i = 0; i < 5; i++) {
+      createRibbon(-1 + i * 0.5, i * 0.7);
+    }
+
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      ribbons.forEach((r, ri) => {
+        const positions = r.geometry.attributes.position.array;
+        for (let i = 0; i < positions.length; i += 3) {
+          const x = positions[i];
+          const wave = Math.sin(elapsed * 0.5 + x * 0.5 + r.mesh.userData.phase) * 0.3;
+          const wave2 = Math.sin(elapsed * 0.3 + x * 0.8 + r.mesh.userData.phase * 1.5) * 0.2;
+          positions[i + 1] = r.mesh.userData.yOffset + wave + wave2;
+          positions[i + 2] = Math.sin(elapsed * 0.4 + x * 0.3) * 0.5 * breath;
+        }
+        r.geometry.attributes.position.needsUpdate = true;
+        r.material.opacity = 0.25 + breath * 0.25 + Math.sin(elapsed + ri) * 0.1;
+      });
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      ribbons.forEach(r => { r.geometry.dispose(); r.material.dispose(); });
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== MYCELIUM NETWORK MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'mycelium' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const networkGroup = new THREE.Group();
+    scene.add(networkGroup);
+
+    // Create nodes
+    const nodes = [];
+    const nodeCount = 30;
+    for (let i = 0; i < nodeCount; i++) {
+      const nodeGeom = new THREE.SphereGeometry(0.08 + Math.random() * 0.08, 8, 8);
+      const nodeMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 55, 65),
+        transparent: true,
+        opacity: 0.7
+      });
+      const node = new THREE.Mesh(nodeGeom, nodeMat);
+      node.position.set(
+        (Math.random() - 0.5) * 6,
+        (Math.random() - 0.5) * 4,
+        (Math.random() - 0.5) * 3
+      );
+      node.userData = { pulsePhase: Math.random() * Math.PI * 2, baseOpacity: 0.7 };
+      networkGroup.add(node);
+      nodes.push({ mesh: node, geometry: nodeGeom, material: nodeMat });
+    }
+
+    // Create connections
+    const connections = [];
+    const lineMat = new THREE.LineBasicMaterial({
+      color: hslToHex(hue, 45, 55),
+      transparent: true,
+      opacity: 0.3
+    });
+
+    nodes.forEach((node, i) => {
+      const closest = nodes
+        .filter((_, j) => j !== i)
+        .sort((a, b) => node.mesh.position.distanceTo(a.mesh.position) - node.mesh.position.distanceTo(b.mesh.position))
+        .slice(0, 3);
+
+      closest.forEach(target => {
+        const points = [node.mesh.position.clone(), target.mesh.position.clone()];
+        const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
+        const line = new THREE.Line(lineGeom, lineMat);
+        line.userData = { from: node, to: target, pulseProgress: Math.random() };
+        networkGroup.add(line);
+        connections.push({ line, geometry: lineGeom });
+      });
+    });
+
+    // Pulse particles traveling along connections
+    const pulses = [];
+    const pulseGeom = new THREE.SphereGeometry(0.03, 6, 6);
+    const pulseMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 60, 75),
+      transparent: true,
+      opacity: 0.8
+    });
+
+    connections.slice(0, 15).forEach(conn => {
+      const pulse = new THREE.Mesh(pulseGeom, pulseMat.clone());
+      pulse.userData = { connection: conn, progress: Math.random(), speed: 0.005 + Math.random() * 0.01 };
+      networkGroup.add(pulse);
+      pulses.push(pulse);
+    });
+
+    let localScale = 1, localScaleVelocity = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Spring physics
+      const targetScale = 0.95 + breath * 0.1;
+      localScaleVelocity = localScaleVelocity * 0.9 + (targetScale - localScale) * 0.02;
+      localScale += localScaleVelocity;
+      networkGroup.scale.setScalar(localScale);
+      networkGroup.rotation.y += 0.0005;
+
+      // Pulse nodes
+      nodes.forEach(n => {
+        const pulse = Math.sin(elapsed * 0.8 + n.mesh.userData.pulsePhase) * 0.5 + 0.5;
+        n.material.opacity = (0.5 + breath * 0.3) * (0.6 + pulse * 0.4);
+      });
+
+      // Animate pulses along connections
+      pulses.forEach(pulse => {
+        pulse.userData.progress += pulse.userData.speed;
+        if (pulse.userData.progress > 1) pulse.userData.progress = 0;
+
+        const conn = pulse.userData.connection;
+        const from = conn.line.userData.from.mesh.position;
+        const to = conn.line.userData.to.mesh.position;
+        pulse.position.lerpVectors(from, to, pulse.userData.progress);
+      });
+
+      lineMat.opacity = 0.2 + breath * 0.2;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      nodes.forEach(n => { n.geometry.dispose(); n.material.dispose(); });
+      connections.forEach(c => c.geometry.dispose());
+      lineMat.dispose();
+      pulseGeom.dispose(); pulseMat.dispose();
+      pulses.forEach(p => p.material.dispose());
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== SMOKE WISPS MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'smokeWisps' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Create smoke wisps using particle trails
+    const wisps = [];
+    const wispCount = 8;
+
+    for (let w = 0; w < wispCount; w++) {
+      const particleCount = 100;
+      const positions = new Float32Array(particleCount * 3);
+      const baseX = (Math.random() - 0.5) * 3;
+      const baseZ = (Math.random() - 0.5) * 2;
+
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] = baseX;
+        positions[i * 3 + 1] = -2 + (i / particleCount) * 4;
+        positions[i * 3 + 2] = baseZ;
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const material = new THREE.PointsMaterial({
+        color: hslToHex(hue, 40, 60),
+        size: 0.08,
+        transparent: true,
+        opacity: 0.4,
+        blending: THREE.AdditiveBlending
+      });
+      const particles = new THREE.Points(geometry, material);
+      scene.add(particles);
+
+      wisps.push({
+        particles,
+        geometry,
+        material,
+        baseX,
+        baseZ,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.3 + Math.random() * 0.3
+      });
+    }
+
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      wisps.forEach(wisp => {
+        const pos = wisp.geometry.attributes.position.array;
+        for (let i = 0; i < pos.length / 3; i++) {
+          const y = pos[i * 3 + 1];
+          const t = (y + 2) / 4; // 0-1 based on height
+
+          // Turbulent motion
+          pos[i * 3] = wisp.baseX +
+            Math.sin(elapsed * wisp.speed + y * 0.5 + wisp.phase) * (0.3 + t * 0.5) +
+            Math.sin(elapsed * 0.7 + y * 0.3) * 0.2;
+          pos[i * 3 + 2] = wisp.baseZ +
+            Math.cos(elapsed * wisp.speed * 0.8 + y * 0.4 + wisp.phase) * (0.2 + t * 0.4);
+
+          // Rise slowly
+          pos[i * 3 + 1] += 0.005 * breath;
+          if (pos[i * 3 + 1] > 2.5) pos[i * 3 + 1] = -2;
+        }
+        wisp.geometry.attributes.position.needsUpdate = true;
+        wisp.material.opacity = 0.25 + breath * 0.25;
+      });
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      wisps.forEach(w => { w.geometry.dispose(); w.material.dispose(); });
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== CONSTELLATION MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'constellation' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const constellationGroup = new THREE.Group();
+    scene.add(constellationGroup);
+
+    // Background stars
+    const starCount = 300;
+    const starPositions = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+      starPositions[i * 3] = (Math.random() - 0.5) * 15;
+      starPositions[i * 3 + 1] = (Math.random() - 0.5) * 10;
+      starPositions[i * 3 + 2] = -5 - Math.random() * 5;
+    }
+    const starGeom = new THREE.BufferGeometry();
+    starGeom.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starMat = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.02,
+      transparent: true,
+      opacity: 0.5
+    });
+    const stars = new THREE.Points(starGeom, starMat);
+    constellationGroup.add(stars);
+
+    // Constellation stars (brighter)
+    const constStars = [];
+    const constCount = 15;
+    for (let i = 0; i < constCount; i++) {
+      const starGeo = new THREE.SphereGeometry(0.04 + Math.random() * 0.03, 8, 8);
+      const starMaterial = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 50, 70),
+        transparent: true,
+        opacity: 0.8
+      });
+      const star = new THREE.Mesh(starGeo, starMaterial);
+      star.position.set(
+        (Math.random() - 0.5) * 5,
+        (Math.random() - 0.5) * 4,
+        (Math.random() - 0.5) * 2
+      );
+      star.userData = { twinklePhase: Math.random() * Math.PI * 2 };
+      constellationGroup.add(star);
+      constStars.push({ mesh: star, geometry: starGeo, material: starMaterial });
+    }
+
+    // Constellation lines
+    const lineMat = new THREE.LineBasicMaterial({
+      color: hslToHex(hue, 40, 55),
+      transparent: true,
+      opacity: 0.3
+    });
+    const lines = [];
+
+    // Connect nearby stars
+    constStars.forEach((star, i) => {
+      const nearby = constStars
+        .filter((_, j) => j !== i)
+        .sort((a, b) => star.mesh.position.distanceTo(a.mesh.position) - star.mesh.position.distanceTo(b.mesh.position))
+        .slice(0, 2);
+
+      nearby.forEach(target => {
+        const lineGeom = new THREE.BufferGeometry().setFromPoints([
+          star.mesh.position, target.mesh.position
+        ]);
+        const line = new THREE.Line(lineGeom, lineMat);
+        constellationGroup.add(line);
+        lines.push({ line, geometry: lineGeom });
+      });
+    });
+
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      constellationGroup.rotation.y += 0.0003;
+      constellationGroup.rotation.x = Math.sin(elapsed * 0.1) * 0.05;
+
+      // Twinkle stars
+      constStars.forEach(s => {
+        const twinkle = Math.sin(elapsed * 2 + s.mesh.userData.twinklePhase) * 0.5 + 0.5;
+        s.material.opacity = (0.5 + breath * 0.3) * (0.6 + twinkle * 0.4);
+        s.mesh.scale.setScalar(0.8 + twinkle * 0.4);
+      });
+
+      lineMat.opacity = 0.15 + breath * 0.2;
+      starMat.opacity = 0.3 + breath * 0.3;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      starGeom.dispose(); starMat.dispose();
+      constStars.forEach(s => { s.geometry.dispose(); s.material.dispose(); });
+      lines.forEach(l => l.geometry.dispose());
+      lineMat.dispose();
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== QUANTUM FOAM MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'quantumFoam' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Particles that phase in and out
+    const particleCount = 500;
+    const positions = new Float32Array(particleCount * 3);
+    const phases = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 6;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 6;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 6;
+      phases.push({
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.5 + Math.random() * 2,
+        lifetime: Math.random()
+      });
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const material = new THREE.PointsMaterial({
+      color: hslToHex(hue, 50, 65),
+      size: 0.05,
+      transparent: true,
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending
+    });
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      particles.rotation.y += 0.0005;
+      particles.rotation.x += 0.0003;
+
+      const pos = geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        const p = phases[i];
+        p.lifetime += 0.01;
+
+        // Phase in and out
+        const visible = Math.sin(elapsed * p.speed + p.phase) > -0.3;
+        if (!visible && p.lifetime > 1) {
+          // Respawn
+          pos[i * 3] = (Math.random() - 0.5) * 6;
+          pos[i * 3 + 1] = (Math.random() - 0.5) * 6;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * 6;
+          p.lifetime = 0;
+        }
+
+        // Drift
+        pos[i * 3] += Math.sin(elapsed + p.phase) * 0.002;
+        pos[i * 3 + 1] += Math.cos(elapsed * 0.7 + p.phase) * 0.002;
+      }
+      geometry.attributes.position.needsUpdate = true;
+
+      material.opacity = 0.3 + breath * 0.4;
+      particles.scale.setScalar(0.9 + breath * 0.2);
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      geometry.dispose(); material.dispose();
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== NEURAL PATHWAYS MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'neural' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const neuralGroup = new THREE.Group();
+    scene.add(neuralGroup);
+
+    // Neurons
+    const neurons = [];
+    const neuronCount = 25;
+    for (let i = 0; i < neuronCount; i++) {
+      const geom = new THREE.SphereGeometry(0.1 + Math.random() * 0.1, 12, 12);
+      const mat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 55, 60),
+        transparent: true,
+        opacity: 0.6
+      });
+      const neuron = new THREE.Mesh(geom, mat);
+      neuron.position.set(
+        (Math.random() - 0.5) * 5,
+        (Math.random() - 0.5) * 4,
+        (Math.random() - 0.5) * 3
+      );
+      neuron.userData = {
+        firing: false,
+        fireTime: 0,
+        connections: [],
+        pulsePhase: Math.random() * Math.PI * 2
+      };
+      neuralGroup.add(neuron);
+      neurons.push({ mesh: neuron, geometry: geom, material: mat });
+    }
+
+    // Axons (connections)
+    const axonMat = new THREE.LineBasicMaterial({
+      color: hslToHex(hue, 40, 50),
+      transparent: true,
+      opacity: 0.25
+    });
+    const axons = [];
+
+    neurons.forEach((neuron, i) => {
+      const nearby = neurons
+        .filter((_, j) => j !== i)
+        .sort((a, b) =>
+          neuron.mesh.position.distanceTo(a.mesh.position) -
+          neuron.mesh.position.distanceTo(b.mesh.position)
+        )
+        .slice(0, 3);
+
+      nearby.forEach(target => {
+        const mid = neuron.mesh.position.clone().add(target.mesh.position).multiplyScalar(0.5);
+        mid.y += (Math.random() - 0.5) * 0.5;
+
+        const curve = new THREE.QuadraticBezierCurve3(
+          neuron.mesh.position,
+          mid,
+          target.mesh.position
+        );
+        const points = curve.getPoints(20);
+        const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
+        const line = new THREE.Line(lineGeom, axonMat);
+        neuralGroup.add(line);
+        axons.push({ line, geometry: lineGeom, from: neuron, to: target });
+        neuron.mesh.userData.connections.push({ target, axon: line });
+      });
+    });
+
+    // Signals traveling along axons
+    const signals = [];
+    const signalGeom = new THREE.SphereGeometry(0.04, 6, 6);
+    const signalMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 60, 75),
+      transparent: true,
+      opacity: 0.9
+    });
+
+    const clock = new THREE.Clock();
+    let lastFire = 0;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      neuralGroup.rotation.y += 0.0004;
+
+      // Random firing
+      if (elapsed - lastFire > 0.3 + Math.random() * 0.5) {
+        lastFire = elapsed;
+        const randomNeuron = neurons[Math.floor(Math.random() * neurons.length)];
+        randomNeuron.mesh.userData.firing = true;
+        randomNeuron.mesh.userData.fireTime = elapsed;
+
+        // Create signal
+        randomNeuron.mesh.userData.connections.forEach(conn => {
+          const signal = new THREE.Mesh(signalGeom, signalMat.clone());
+          signal.position.copy(randomNeuron.mesh.position);
+          signal.userData = {
+            from: randomNeuron.mesh.position.clone(),
+            to: conn.target.mesh.position.clone(),
+            progress: 0,
+            speed: 0.02 + Math.random() * 0.02
+          };
+          neuralGroup.add(signal);
+          signals.push(signal);
+        });
+      }
+
+      // Animate signals
+      for (let i = signals.length - 1; i >= 0; i--) {
+        const signal = signals[i];
+        signal.userData.progress += signal.userData.speed;
+        signal.position.lerpVectors(signal.userData.from, signal.userData.to, signal.userData.progress);
+
+        if (signal.userData.progress >= 1) {
+          neuralGroup.remove(signal);
+          signal.geometry.dispose();
+          signal.material.dispose();
+          signals.splice(i, 1);
+        }
+      }
+
+      // Pulse neurons
+      neurons.forEach(n => {
+        const timeSinceFire = elapsed - n.mesh.userData.fireTime;
+        const fireBrightness = n.mesh.userData.firing && timeSinceFire < 0.3
+          ? 1 - (timeSinceFire / 0.3)
+          : 0;
+        const pulse = Math.sin(elapsed * 0.5 + n.mesh.userData.pulsePhase) * 0.2 + 0.8;
+        n.material.opacity = (0.4 + breath * 0.2) * pulse + fireBrightness * 0.5;
+        n.mesh.scale.setScalar(1 + fireBrightness * 0.3);
+
+        if (timeSinceFire > 0.5) n.mesh.userData.firing = false;
+      });
+
+      axonMat.opacity = 0.15 + breath * 0.15;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      neurons.forEach(n => { n.geometry.dispose(); n.material.dispose(); });
+      axons.forEach(a => a.geometry.dispose());
+      axonMat.dispose();
+      signalGeom.dispose(); signalMat.dispose();
+      signals.forEach(s => { s.geometry.dispose(); s.material.dispose(); });
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== LIQUID METAL MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'liquidMetal' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 4);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Morphing sphere
+    const geometry = new THREE.IcosahedronGeometry(1.2, 4);
+    const material = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 45, 60),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.7
+    });
+    const blob = new THREE.Mesh(geometry, material);
+    scene.add(blob);
+
+    // Store original positions
+    const originalPositions = geometry.attributes.position.array.slice();
+    const vertexPhases = [];
+    for (let i = 0; i < originalPositions.length / 3; i++) {
+      vertexPhases.push({
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.3 + Math.random() * 0.5,
+        amplitude: 0.1 + Math.random() * 0.15
+      });
+    }
+
+    // Inner glow
+    const innerGeom = new THREE.IcosahedronGeometry(0.6, 3);
+    const innerMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 55, 70),
+      transparent: true,
+      opacity: 0.4
+    });
+    const inner = new THREE.Mesh(innerGeom, innerMat);
+    scene.add(inner);
+
+    let localScale = 1, localScaleVelocity = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Spring physics for scale
+      const targetScale = 0.9 + breath * 0.25;
+      localScaleVelocity = localScaleVelocity * 0.9 + (targetScale - localScale) * 0.02;
+      localScale += localScaleVelocity;
+
+      // Morph vertices
+      const positions = geometry.attributes.position.array;
+      for (let i = 0; i < positions.length / 3; i++) {
+        const i3 = i * 3;
+        const v = vertexPhases[i];
+        const ox = originalPositions[i3];
+        const oy = originalPositions[i3 + 1];
+        const oz = originalPositions[i3 + 2];
+
+        const dist = Math.sqrt(ox * ox + oy * oy + oz * oz);
+        const morphAmount = Math.sin(elapsed * v.speed + v.phase) * v.amplitude;
+        const scale = localScale * (1 + morphAmount);
+
+        positions[i3] = (ox / dist) * dist * scale;
+        positions[i3 + 1] = (oy / dist) * dist * scale;
+        positions[i3 + 2] = (oz / dist) * dist * scale;
+      }
+      geometry.attributes.position.needsUpdate = true;
+
+      blob.rotation.y += 0.003;
+      blob.rotation.x += 0.001;
+      inner.rotation.y -= 0.002;
+      inner.scale.setScalar(0.5 + breath * 0.3);
+
+      material.opacity = 0.5 + breath * 0.3;
+      innerMat.opacity = 0.3 + breath * 0.3;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      geometry.dispose(); material.dispose();
+      innerGeom.dispose(); innerMat.dispose();
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== WOVEN LIGHT MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'wovenLight' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const weaveGroup = new THREE.Group();
+    scene.add(weaveGroup);
+
+    // Create woven threads
+    const threads = [];
+    const threadCount = 20;
+
+    for (let i = 0; i < threadCount; i++) {
+      const isHorizontal = i < threadCount / 2;
+      const points = [];
+      const segments = 30;
+
+      for (let j = 0; j <= segments; j++) {
+        const t = j / segments;
+        if (isHorizontal) {
+          points.push(new THREE.Vector3(
+            (t - 0.5) * 5,
+            ((i % (threadCount / 2)) / (threadCount / 2) - 0.5) * 4,
+            0
+          ));
+        } else {
+          points.push(new THREE.Vector3(
+            ((i - threadCount / 2) / (threadCount / 2) - 0.5) * 5,
+            (t - 0.5) * 4,
+            0
+          ));
+        }
+      }
+
+      const curve = new THREE.CatmullRomCurve3(points);
+      const geometry = new THREE.TubeGeometry(curve, segments, 0.02, 8, false);
+      const material = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 50, 60),
+        transparent: true,
+        opacity: 0.5
+      });
+      const thread = new THREE.Mesh(geometry, material);
+      thread.userData = {
+        isHorizontal,
+        index: i,
+        phase: Math.random() * Math.PI * 2,
+        originalPoints: points.map(p => p.clone())
+      };
+      weaveGroup.add(thread);
+      threads.push({ mesh: thread, geometry, material, curve });
+    }
+
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      weaveGroup.rotation.y = Math.sin(elapsed * 0.2) * 0.1;
+
+      threads.forEach((t, ti) => {
+        const positions = t.geometry.attributes.position.array;
+        const ud = t.mesh.userData;
+
+        for (let i = 0; i < positions.length; i += 3) {
+          const wave = Math.sin(elapsed * 0.5 + i * 0.1 + ud.phase) * 0.15 * breath;
+          positions[i + 2] = wave * (ud.isHorizontal ? 1 : -1);
+        }
+        t.geometry.attributes.position.needsUpdate = true;
+        t.material.opacity = 0.3 + breath * 0.3;
+      });
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      threads.forEach(t => { t.geometry.dispose(); t.material.dispose(); });
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== ORBITAL RINGS MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'orbitalRings' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 5);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const orbitalGroup = new THREE.Group();
+    scene.add(orbitalGroup);
+
+    // Central sphere
+    const coreGeom = new THREE.SphereGeometry(0.3, 16, 16);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 55, 65),
+      transparent: true,
+      opacity: 0.7
+    });
+    const core = new THREE.Mesh(coreGeom, coreMat);
+    orbitalGroup.add(core);
+
+    // Orbital rings
+    const rings = [];
+    const ringCount = 5;
+
+    for (let i = 0; i < ringCount; i++) {
+      const radius = 0.8 + i * 0.4;
+      const geometry = new THREE.TorusGeometry(radius, 0.015, 8, 64);
+      const material = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 50, 60),
+        transparent: true,
+        opacity: 0.5
+      });
+      const ring = new THREE.Mesh(geometry, material);
+      ring.rotation.x = Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+      ring.rotation.y = (Math.random() - 0.5) * 0.5;
+      ring.userData = {
+        speed: 0.3 + i * 0.15,
+        tilt: ring.rotation.x,
+        phase: Math.random() * Math.PI * 2
+      };
+      orbitalGroup.add(ring);
+      rings.push({ mesh: ring, geometry, material });
+
+      // Particles on ring
+      const particleCount = 20 + i * 10;
+      const particleGeom = new THREE.BufferGeometry();
+      const particlePositions = new Float32Array(particleCount * 3);
+      for (let j = 0; j < particleCount; j++) {
+        const angle = (j / particleCount) * Math.PI * 2;
+        particlePositions[j * 3] = Math.cos(angle) * radius;
+        particlePositions[j * 3 + 1] = 0;
+        particlePositions[j * 3 + 2] = Math.sin(angle) * radius;
+      }
+      particleGeom.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+      const particleMat = new THREE.PointsMaterial({
+        color: hslToHex(hue, 60, 70),
+        size: 0.04,
+        transparent: true,
+        opacity: 0.6
+      });
+      const particles = new THREE.Points(particleGeom, particleMat);
+      particles.rotation.copy(ring.rotation);
+      particles.userData = { ...ring.userData };
+      orbitalGroup.add(particles);
+      rings.push({ mesh: particles, geometry: particleGeom, material: particleMat, isParticles: true });
+    }
+
+    let localScale = 1, localScaleVelocity = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Spring physics
+      const targetScale = 0.9 + breath * 0.15;
+      localScaleVelocity = localScaleVelocity * 0.9 + (targetScale - localScale) * 0.02;
+      localScale += localScaleVelocity;
+      orbitalGroup.scale.setScalar(localScale);
+
+      orbitalGroup.rotation.y += 0.002;
+
+      rings.forEach(r => {
+        r.mesh.rotation.z += r.mesh.userData.speed * 0.01;
+        r.material.opacity = 0.3 + breath * 0.3;
+      });
+
+      core.scale.setScalar(0.8 + breath * 0.4);
+      coreMat.opacity = 0.5 + breath * 0.3;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      coreGeom.dispose(); coreMat.dispose();
+      rings.forEach(r => { r.geometry.dispose(); r.material.dispose(); });
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== FLOATING ISLANDS MODE ==========
+  React.useEffect(() => {
+    if (currentMode !== 'floatingIslands' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1, 6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const islandGroup = new THREE.Group();
+    scene.add(islandGroup);
+
+    // Create floating islands
+    const islands = [];
+
+    const createIsland = (pos, size) => {
+      const group = new THREE.Group();
+      group.position.copy(pos);
+
+      // Island base (inverted cone)
+      const baseGeom = new THREE.ConeGeometry(size * 0.8, size * 1.2, 6);
+      const baseMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 40, 45),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.5
+      });
+      const base = new THREE.Mesh(baseGeom, baseMat);
+      base.rotation.x = Math.PI;
+      base.position.y = -size * 0.4;
+      group.add(base);
+
+      // Top surface
+      const topGeom = new THREE.CylinderGeometry(size * 0.8, size * 0.8, size * 0.2, 6);
+      const topMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 50, 55),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.6
+      });
+      const top = new THREE.Mesh(topGeom, topMat);
+      top.position.y = size * 0.1;
+      group.add(top);
+
+      // Simple tree
+      const trunkGeom = new THREE.CylinderGeometry(0.03, 0.05, size * 0.4, 4);
+      const trunkMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 35, 40),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.5
+      });
+      const trunk = new THREE.Mesh(trunkGeom, trunkMat);
+      trunk.position.y = size * 0.4;
+      group.add(trunk);
+
+      const foliageGeom = new THREE.ConeGeometry(size * 0.3, size * 0.5, 5);
+      const foliageMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 55, 60),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.6
+      });
+      const foliage = new THREE.Mesh(foliageGeom, foliageMat);
+      foliage.position.y = size * 0.7;
+      group.add(foliage);
+
+      islandGroup.add(group);
+
+      return {
+        group,
+        geometries: [baseGeom, topGeom, trunkGeom, foliageGeom],
+        materials: [baseMat, topMat, trunkMat, foliageMat],
+        baseY: pos.y,
+        phase: Math.random() * Math.PI * 2,
+        floatSpeed: 0.3 + Math.random() * 0.3
+      };
+    };
+
+    // Create several islands
+    islands.push(createIsland(new THREE.Vector3(0, 0, 0), 1));
+    islands.push(createIsland(new THREE.Vector3(-2, -0.5, -1), 0.7));
+    islands.push(createIsland(new THREE.Vector3(2.5, 0.3, -0.5), 0.6));
+    islands.push(createIsland(new THREE.Vector3(-1.5, 0.8, 0.5), 0.5));
+    islands.push(createIsland(new THREE.Vector3(1.5, -0.3, 1), 0.55));
+
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      islandGroup.rotation.y += 0.0008;
+
+      islands.forEach(island => {
+        // Floating motion
+        island.group.position.y = island.baseY + Math.sin(elapsed * island.floatSpeed + island.phase) * 0.15;
+        island.group.rotation.y = Math.sin(elapsed * 0.2 + island.phase) * 0.05;
+
+        // Breath-responsive opacity
+        island.materials.forEach(mat => {
+          mat.opacity = 0.35 + breath * 0.3;
+        });
+      });
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      islands.forEach(island => {
+        island.geometries.forEach(g => g.dispose());
+        island.materials.forEach(m => m.dispose());
+      });
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
   // Floating particles animation (stars in space effect)
   React.useEffect(() => {
     const canvas = particleCanvasRef.current;
@@ -5398,7 +6904,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'crystalCave' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'mycelium' || currentMode === 'smokeWisps' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'wovenLight' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -5420,7 +6926,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'crystalCave' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'mycelium' && currentMode !== 'smokeWisps' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'wovenLight' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
