@@ -7398,8 +7398,8 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
   const [isInitialized, setIsInitialized] = useState(false);
   const [currentInstrument, setCurrentInstrument] = useState(0); // handpan
   const [currentTexture, setCurrentTexture] = useState(2); // forest
-  const [currentKey, setCurrentKey] = useState(2); // D
-  const [currentScaleType, setCurrentScaleType] = useState(0); // major
+  const [currentKey, setCurrentKey] = useState(5); // F
+  const [currentScaleType, setCurrentScaleType] = useState(13); // japanese
   const [showLabel, setShowLabel] = useState(false);
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
