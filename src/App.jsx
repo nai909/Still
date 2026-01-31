@@ -5432,30 +5432,27 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clock.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Touch controls direction and movement
+      // Touch controls direction and movement - very slow and gentle
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          // Horizontal touch position controls turning
-          targetLookAngle = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.8;
-          // Vertical touch position controls pitch and forward speed
+          targetLookAngle = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.3;
           const verticalPos = activeTouch.y / window.innerHeight;
-          targetLookPitch = (verticalPos - 0.5) * 0.3;
-          // Move forward faster when touching upper part of screen
-          const forwardSpeed = 0.03 + (1 - verticalPos) * 0.04;
+          targetLookPitch = (verticalPos - 0.5) * 0.1;
+          const forwardSpeed = 0.005 + (1 - verticalPos) * 0.01;
           targetMoveZ = -forwardSpeed;
         }
       } else {
-        // Gentle autonomous movement - slow drift forward
-        targetLookAngle = Math.sin(elapsed * 0.02) * 0.3;
-        targetLookPitch = Math.sin(elapsed * 0.015) * 0.05;
-        targetMoveZ = -0.015 - breath * 0.01;
+        // Very gentle autonomous movement
+        targetLookAngle = Math.sin(elapsed * 0.01) * 0.15;
+        targetLookPitch = Math.sin(elapsed * 0.008) * 0.02;
+        targetMoveZ = -0.003 - breath * 0.002;
       }
 
-      // Smooth movement interpolation
-      lookAngle += (targetLookAngle - lookAngle) * 0.015;
-      lookPitch += (targetLookPitch - lookPitch) * 0.015;
-      moveZ += (targetMoveZ - moveZ) * 0.02;
+      // Very slow interpolation for smooth, meditative movement
+      lookAngle += (targetLookAngle - lookAngle) * 0.005;
+      lookPitch += (targetLookPitch - lookPitch) * 0.005;
+      moveZ += (targetMoveZ - moveZ) * 0.008;
 
       // Move in the direction we're facing
       camera.position.x += Math.sin(lookAngle) * moveZ;
@@ -5630,24 +5627,27 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clock.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
+      // Very slow and gentle touch controls
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetLookAngle = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.6;
+          targetLookAngle = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.25;
           const verticalPos = activeTouch.y / window.innerHeight;
-          targetLookPitch = (verticalPos - 0.5) * 0.4;
-          const forwardSpeed = 0.02 + (1 - verticalPos) * 0.05;
+          targetLookPitch = (verticalPos - 0.5) * 0.1;
+          const forwardSpeed = 0.004 + (1 - verticalPos) * 0.008;
           targetMoveZ = -forwardSpeed;
         }
       } else {
-        targetLookAngle = Math.sin(elapsed * 0.015) * 0.2;
-        targetLookPitch = Math.sin(elapsed * 0.01) * 0.05;
-        targetMoveZ = -0.012 - breath * 0.008;
+        // Very gentle autonomous drift
+        targetLookAngle = Math.sin(elapsed * 0.008) * 0.1;
+        targetLookPitch = Math.sin(elapsed * 0.006) * 0.02;
+        targetMoveZ = -0.003 - breath * 0.002;
       }
 
-      lookAngle += (targetLookAngle - lookAngle) * 0.012;
-      lookPitch += (targetLookPitch - lookPitch) * 0.012;
-      moveZ += (targetMoveZ - moveZ) * 0.02;
+      // Very slow interpolation
+      lookAngle += (targetLookAngle - lookAngle) * 0.005;
+      lookPitch += (targetLookPitch - lookPitch) * 0.005;
+      moveZ += (targetMoveZ - moveZ) * 0.008;
 
       // Follow the winding path
       const currentZ = camera.position.z;
@@ -5840,20 +5840,22 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clock.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Touch to look around underwater
+      // Very slow touch look - gentle underwater exploration
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetLookX = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.5;
-          targetLookY = (activeTouch.y / window.innerHeight - 0.5) * Math.PI * 0.3;
+          targetLookX = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.2;
+          targetLookY = (activeTouch.y / window.innerHeight - 0.5) * Math.PI * 0.1;
         }
       } else {
-        targetLookX = Math.sin(elapsed * 0.05) * 0.2;
-        targetLookY = Math.sin(elapsed * 0.03) * 0.1;
+        // Very gentle autonomous drift
+        targetLookX = Math.sin(elapsed * 0.015) * 0.1;
+        targetLookY = Math.sin(elapsed * 0.01) * 0.05;
       }
 
-      lookX += (targetLookX - lookX) * 0.015;
-      lookY += (targetLookY - lookY) * 0.015;
+      // Very slow interpolation
+      lookX += (targetLookX - lookX) * 0.005;
+      lookY += (targetLookY - lookY) * 0.005;
       camera.rotation.y = lookX;
       camera.rotation.x = lookY;
 
