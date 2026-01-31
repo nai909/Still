@@ -1177,6 +1177,15 @@ const gazeModes = [
   { key: 'smokeWisps', name: 'Smoke' },
   // Ethereal visuals
   { key: 'wovenLight', name: 'Woven Light' },
+  // Deep experiential visuals
+  { key: 'infiniteDescent', name: 'Descent' },
+  { key: 'theWomb', name: 'Sanctuary' },
+  { key: 'dissolution', name: 'Dissolution' },
+  { key: 'eventHorizon', name: 'Horizon' },
+  // Landscape visuals
+  { key: 'mountains', name: 'Mountains' },
+  { key: 'underwater', name: 'Abyss' },
+  { key: 'cavern', name: 'Cavern' },
 ];
 
 const gazeShapes = [
@@ -5836,6 +5845,1539 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
       threads.forEach(t => { t.geometry.dispose(); t.material.dispose(); });
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== INFINITE DESCENT MODE ==========
+  // Falling forever through luminous geometric layers - the feeling of letting go
+  React.useEffect(() => {
+    if (currentMode !== 'infiniteDescent' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'auto';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Create layers of geometric rings that we fall through
+    const layers = [];
+    const layerCount = 40;
+    const layerSpacing = 8;
+
+    for (let i = 0; i < layerCount; i++) {
+      const layerGroup = new THREE.Group();
+      layerGroup.position.z = -i * layerSpacing;
+
+      // Each layer is a ring of geometric shapes
+      const ringRadius = 4 + Math.sin(i * 0.3) * 2;
+      const shapeCount = 6 + Math.floor(i % 4);
+      const hueShift = (i * 15) % 60 - 30;
+
+      for (let j = 0; j < shapeCount; j++) {
+        const angle = (j / shapeCount) * Math.PI * 2;
+
+        // Vary the geometry type for each layer
+        let geometry;
+        const shapeType = i % 5;
+        if (shapeType === 0) {
+          geometry = new THREE.IcosahedronGeometry(0.5 + Math.random() * 0.3, 1);
+        } else if (shapeType === 1) {
+          geometry = new THREE.OctahedronGeometry(0.6 + Math.random() * 0.3, 0);
+        } else if (shapeType === 2) {
+          geometry = new THREE.TorusGeometry(0.4, 0.15, 8, 16);
+        } else if (shapeType === 3) {
+          geometry = new THREE.TetrahedronGeometry(0.6 + Math.random() * 0.2, 0);
+        } else {
+          geometry = new THREE.DodecahedronGeometry(0.4 + Math.random() * 0.2, 0);
+        }
+
+        const material = new THREE.MeshBasicMaterial({
+          color: hslToHex(hue + hueShift, 45, 55 + (i % 3) * 10),
+          wireframe: true,
+          transparent: true,
+          opacity: 0.6
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(
+          Math.cos(angle) * ringRadius,
+          Math.sin(angle) * ringRadius,
+          0
+        );
+        mesh.rotation.set(
+          Math.random() * Math.PI,
+          Math.random() * Math.PI,
+          Math.random() * Math.PI
+        );
+        mesh.userData = {
+          rotationSpeed: {
+            x: (Math.random() - 0.5) * 0.01,
+            y: (Math.random() - 0.5) * 0.01,
+            z: (Math.random() - 0.5) * 0.01
+          },
+          orbitPhase: angle,
+          orbitSpeed: 0.1 + Math.random() * 0.1
+        };
+
+        layerGroup.add(mesh);
+        layers.push({ mesh, geometry, material, layer: layerGroup, layerIndex: i });
+      }
+
+      scene.add(layerGroup);
+    }
+
+    // Gentle ambient particles floating upward as we descend
+    const particleCount = 200;
+    const particlePositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+      particlePositions[i * 3] = (Math.random() - 0.5) * 20;
+      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 20;
+      particlePositions[i * 3 + 2] = -Math.random() * layerCount * layerSpacing;
+    }
+    const particleGeom = new THREE.BufferGeometry();
+    particleGeom.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 30, 70),
+      size: 0.08,
+      transparent: true,
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending
+    });
+    const particles = new THREE.Points(particleGeom, particleMat);
+    scene.add(particles);
+
+    let fallSpeed = 0;
+    let fallPosition = 0;
+    let tiltX = 0, tiltY = 0;
+    let targetTiltX = 0, targetTiltY = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Breathing affects fall speed - exhale accelerates, inhale slows
+      const targetSpeed = 0.15 + breath * 0.1;
+      fallSpeed = fallSpeed * 0.98 + targetSpeed * 0.02;
+      fallPosition += fallSpeed;
+
+      // Touch to steer through the descent
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetTiltX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          targetTiltY = (activeTouch.y / window.innerHeight - 0.5) * 1;
+        }
+      } else {
+        // Gentle autonomous drift
+        targetTiltX = Math.sin(elapsed * 0.1) * 0.3;
+        targetTiltY = Math.cos(elapsed * 0.08) * 0.2;
+      }
+
+      tiltX += (targetTiltX - tiltX) * 0.02;
+      tiltY += (targetTiltY - tiltY) * 0.02;
+
+      // Move camera forward (falling sensation)
+      camera.position.z = -fallPosition;
+      camera.position.x = tiltX * 3;
+      camera.position.y = tiltY * 2;
+      camera.rotation.z = -tiltX * 0.1;
+
+      // Animate each layer
+      layers.forEach(item => {
+        const { mesh, layerIndex } = item;
+
+        // Rotate individual shapes
+        mesh.rotation.x += mesh.userData.rotationSpeed.x;
+        mesh.rotation.y += mesh.userData.rotationSpeed.y;
+        mesh.rotation.z += mesh.userData.rotationSpeed.z;
+
+        // Calculate distance from camera
+        const layerZ = item.layer.position.z;
+        const distFromCamera = Math.abs(camera.position.z - layerZ);
+
+        // Fade based on distance
+        if (distFromCamera < 2) {
+          item.material.opacity = distFromCamera / 2 * 0.6;
+        } else if (distFromCamera > layerSpacing * (layerCount - 5)) {
+          item.material.opacity = 0.1;
+        } else {
+          item.material.opacity = 0.4 + breath * 0.2;
+        }
+
+        // Recycle layers that pass behind camera
+        if (layerZ > camera.position.z + layerSpacing) {
+          item.layer.position.z -= layerCount * layerSpacing;
+        }
+      });
+
+      // Particles drift upward relative to our fall
+      const pPos = particleGeom.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        pPos[i * 3 + 2] += fallSpeed * 0.3;
+        if (pPos[i * 3 + 2] > camera.position.z + 10) {
+          pPos[i * 3 + 2] = camera.position.z - layerCount * layerSpacing + Math.random() * 20;
+          pPos[i * 3] = (Math.random() - 0.5) * 20;
+          pPos[i * 3 + 1] = (Math.random() - 0.5) * 20;
+        }
+      }
+      particleGeom.attributes.position.needsUpdate = true;
+      particleMat.opacity = 0.2 + breath * 0.2;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      layers.forEach(l => { l.geometry.dispose(); l.material.dispose(); });
+      particleGeom.dispose();
+      particleMat.dispose();
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== THE WOMB / SANCTUARY MODE ==========
+  // Being held inside something warm and alive - safety, return to origin
+  React.useEffect(() => {
+    if (currentMode !== 'theWomb' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'auto';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Create the inner membrane - a sphere we're inside of
+    const membraneGeom = new THREE.IcosahedronGeometry(8, 4);
+    const membraneMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 40, 25),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.15,
+      side: THREE.BackSide
+    });
+    const membrane = new THREE.Mesh(membraneGeom, membraneMat);
+    scene.add(membrane);
+
+    // Second layer - softer, more organic
+    const innerGeom = new THREE.IcosahedronGeometry(6, 3);
+    const innerMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 50, 35),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.2,
+      side: THREE.BackSide
+    });
+    const innerMembrane = new THREE.Mesh(innerGeom, innerMat);
+    scene.add(innerMembrane);
+
+    // Floating veins of light - like blood vessels or neural pathways
+    const veins = [];
+    const veinCount = 12;
+    for (let i = 0; i < veinCount; i++) {
+      const points = [];
+      const startTheta = Math.random() * Math.PI * 2;
+      const startPhi = Math.random() * Math.PI;
+      const segments = 40;
+
+      let theta = startTheta;
+      let phi = startPhi;
+
+      for (let j = 0; j <= segments; j++) {
+        const r = 5 + Math.sin(j * 0.3) * 1.5;
+        theta += (Math.random() - 0.5) * 0.2;
+        phi += (Math.random() - 0.5) * 0.15;
+
+        points.push(new THREE.Vector3(
+          r * Math.sin(phi) * Math.cos(theta),
+          r * Math.sin(phi) * Math.sin(theta),
+          r * Math.cos(phi)
+        ));
+      }
+
+      const curve = new THREE.CatmullRomCurve3(points);
+      const geometry = new THREE.TubeGeometry(curve, segments, 0.03 + Math.random() * 0.02, 6, false);
+      const material = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 55, 50),
+        transparent: true,
+        opacity: 0.3
+      });
+      const vein = new THREE.Mesh(geometry, material);
+      vein.userData = { phase: Math.random() * Math.PI * 2, pulseSpeed: 0.5 + Math.random() * 0.5 };
+      scene.add(vein);
+      veins.push({ mesh: vein, geometry, material });
+    }
+
+    // Soft floating orbs - like cells or memories
+    const orbs = [];
+    const orbCount = 20;
+    for (let i = 0; i < orbCount; i++) {
+      const radius = 0.1 + Math.random() * 0.2;
+      const orbGeom = new THREE.SphereGeometry(radius, 16, 16);
+      const orbMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue + (Math.random() - 0.5) * 30, 50, 55),
+        transparent: true,
+        opacity: 0.25
+      });
+      const orb = new THREE.Mesh(orbGeom, orbMat);
+
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.random() * Math.PI;
+      const r = 2 + Math.random() * 3;
+      orb.position.set(
+        r * Math.sin(phi) * Math.cos(theta),
+        r * Math.sin(phi) * Math.sin(theta),
+        r * Math.cos(phi)
+      );
+      orb.userData = {
+        basePosition: orb.position.clone(),
+        driftPhase: Math.random() * Math.PI * 2,
+        driftSpeed: 0.2 + Math.random() * 0.3,
+        radius: r
+      };
+
+      scene.add(orb);
+      orbs.push({ mesh: orb, geometry: orbGeom, material: orbMat });
+    }
+
+    // Central warm glow - the heart
+    const heartGeom = new THREE.SphereGeometry(0.5, 32, 32);
+    const heartMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 60, 55),
+      transparent: true,
+      opacity: 0.4
+    });
+    const heart = new THREE.Mesh(heartGeom, heartMat);
+    scene.add(heart);
+
+    let lookX = 0, lookY = 0;
+    let targetLookX = 0, targetLookY = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // The whole space breathes
+      const breathScale = 1 + breath * 0.15;
+      membrane.scale.setScalar(breathScale);
+      innerMembrane.scale.setScalar(breathScale * 0.95);
+
+      // Gentle rotation of the membrane
+      membrane.rotation.y += 0.0003;
+      membrane.rotation.x += 0.0001;
+      innerMembrane.rotation.y -= 0.0002;
+      innerMembrane.rotation.z += 0.00015;
+
+      // Touch to look around inside the space
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetLookX = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.5;
+          targetLookY = (activeTouch.y / window.innerHeight - 0.5) * Math.PI * 0.3;
+        }
+      } else {
+        // Gentle autonomous looking
+        targetLookX = Math.sin(elapsed * 0.05) * 0.3;
+        targetLookY = Math.cos(elapsed * 0.03) * 0.2;
+      }
+
+      lookX += (targetLookX - lookX) * 0.015;
+      lookY += (targetLookY - lookY) * 0.015;
+      camera.rotation.y = lookX;
+      camera.rotation.x = lookY;
+
+      // Pulse the veins with the breath
+      veins.forEach((vein, i) => {
+        const pulse = Math.sin(elapsed * vein.mesh.userData.pulseSpeed + vein.mesh.userData.phase);
+        vein.material.opacity = 0.15 + breath * 0.2 + pulse * 0.1;
+      });
+
+      // Floating orbs drift gently
+      orbs.forEach(orb => {
+        const ud = orb.mesh.userData;
+        const drift = elapsed * ud.driftSpeed;
+        orb.mesh.position.x = ud.basePosition.x + Math.sin(drift + ud.driftPhase) * 0.5;
+        orb.mesh.position.y = ud.basePosition.y + Math.cos(drift * 0.7 + ud.driftPhase) * 0.4;
+        orb.mesh.position.z = ud.basePosition.z + Math.sin(drift * 0.5 + ud.driftPhase * 2) * 0.3;
+        orb.material.opacity = 0.15 + breath * 0.15;
+      });
+
+      // Heart pulses with breath
+      const heartPulse = 1 + breath * 0.3 + Math.sin(elapsed * 1.2) * 0.1;
+      heart.scale.setScalar(heartPulse);
+      heartMat.opacity = 0.25 + breath * 0.25;
+
+      // Membrane opacity responds to breath
+      membraneMat.opacity = 0.1 + breath * 0.1;
+      innerMat.opacity = 0.15 + breath * 0.1;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      membraneGeom.dispose(); membraneMat.dispose();
+      innerGeom.dispose(); innerMat.dispose();
+      heartGeom.dispose(); heartMat.dispose();
+      veins.forEach(v => { v.geometry.dispose(); v.material.dispose(); });
+      orbs.forEach(o => { o.geometry.dispose(); o.material.dispose(); });
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== DISSOLUTION MODE ==========
+  // The self dispersing into cosmos and reforming - impermanence and continuity
+  React.useEffect(() => {
+    if (currentMode !== 'dissolution' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 8);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'auto';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Create a form from particles - abstract but suggestive of presence
+    const particleCount = 3000;
+    const positions = new Float32Array(particleCount * 3);
+    const originalPositions = new Float32Array(particleCount * 3);
+    const velocities = [];
+
+    // Create a form that suggests humanness - a vertical gathering
+    for (let i = 0; i < particleCount; i++) {
+      // Create a soft vertical ellipsoid shape
+      const y = (Math.random() - 0.3) * 4; // Slightly higher center
+      const radiusAtY = Math.sqrt(Math.max(0, 1 - (y * y) / 8)) * 1.5;
+      const theta = Math.random() * Math.PI * 2;
+      const r = radiusAtY * Math.pow(Math.random(), 0.5);
+
+      const x = Math.cos(theta) * r + (Math.random() - 0.5) * 0.2;
+      const z = Math.sin(theta) * r * 0.7 + (Math.random() - 0.5) * 0.2;
+
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
+
+      originalPositions[i * 3] = x;
+      originalPositions[i * 3 + 1] = y;
+      originalPositions[i * 3 + 2] = z;
+
+      velocities.push({
+        x: (Math.random() - 0.5) * 0.02,
+        y: (Math.random() - 0.5) * 0.02,
+        z: (Math.random() - 0.5) * 0.02,
+        disperseAngle: Math.random() * Math.PI * 2,
+        disperseSpeed: 0.02 + Math.random() * 0.03,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const material = new THREE.PointsMaterial({
+      color: hslToHex(hue, 50, 65),
+      size: 0.04,
+      transparent: true,
+      opacity: 0.7,
+      blending: THREE.AdditiveBlending
+    });
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+
+    // Background cosmic dust
+    const dustCount = 500;
+    const dustPositions = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++) {
+      dustPositions[i * 3] = (Math.random() - 0.5) * 30;
+      dustPositions[i * 3 + 1] = (Math.random() - 0.5) * 20;
+      dustPositions[i * 3 + 2] = (Math.random() - 0.5) * 20 - 5;
+    }
+    const dustGeom = new THREE.BufferGeometry();
+    dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+    const dustMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 30, 50),
+      size: 0.02,
+      transparent: true,
+      opacity: 0.3
+    });
+    const dust = new THREE.Points(dustGeom, dustMat);
+    scene.add(dust);
+
+    // Dissolution cycle state
+    let dissolveProgress = 0; // 0 = formed, 1 = fully dispersed
+    let isDissolving = true;
+    let cycleTime = 0;
+    const dissolveDuration = 15; // seconds to fully dissolve
+    const reformDuration = 20; // seconds to reform (slower, more gentle)
+    const holdDuration = 5; // seconds to hold at each extreme
+
+    let rotationY = 0;
+    let targetRotationY = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+      const delta = clock.getDelta();
+
+      // Manage dissolution cycle
+      cycleTime += delta;
+      if (isDissolving) {
+        if (dissolveProgress < 1) {
+          dissolveProgress += delta / dissolveDuration;
+        } else if (cycleTime > dissolveDuration + holdDuration) {
+          isDissolving = false;
+          cycleTime = 0;
+        }
+      } else {
+        if (dissolveProgress > 0) {
+          dissolveProgress -= delta / reformDuration;
+        } else if (cycleTime > reformDuration + holdDuration) {
+          isDissolving = true;
+          cycleTime = 0;
+        }
+      }
+      dissolveProgress = Math.max(0, Math.min(1, dissolveProgress));
+
+      // Touch influences rotation and can slow/reverse dissolution
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetRotationY = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 2;
+          // Touch pulls particles back together
+          dissolveProgress = Math.max(0, dissolveProgress - delta * 0.1);
+        }
+      }
+
+      rotationY += (targetRotationY - rotationY) * 0.02;
+      particles.rotation.y = rotationY;
+
+      // Update particle positions
+      const pos = geometry.attributes.position.array;
+      const easeDissolve = dissolveProgress * dissolveProgress; // Ease in
+      const easeReform = 1 - Math.pow(1 - (1 - dissolveProgress), 2); // Ease out
+      const ease = isDissolving ? easeDissolve : (1 - easeReform);
+
+      for (let i = 0; i < particleCount; i++) {
+        const v = velocities[i];
+        const ox = originalPositions[i * 3];
+        const oy = originalPositions[i * 3 + 1];
+        const oz = originalPositions[i * 3 + 2];
+
+        // Calculate dispersed position - particles drift outward and upward
+        const disperseX = ox + Math.cos(v.disperseAngle) * ease * 8;
+        const disperseY = oy + ease * 3 + Math.sin(elapsed * 0.5 + v.phase) * ease * 2;
+        const disperseZ = oz + Math.sin(v.disperseAngle) * ease * 6;
+
+        // Lerp between original and dispersed
+        pos[i * 3] = ox + (disperseX - ox) * ease + Math.sin(elapsed + v.phase) * 0.05 * (1 - ease);
+        pos[i * 3 + 1] = oy + (disperseY - oy) * ease + Math.cos(elapsed * 0.8 + v.phase) * 0.05 * (1 - ease);
+        pos[i * 3 + 2] = oz + (disperseZ - oz) * ease + Math.sin(elapsed * 0.6 + v.phase) * 0.05 * (1 - ease);
+      }
+      geometry.attributes.position.needsUpdate = true;
+
+      // Opacity based on dissolution state
+      material.opacity = 0.3 + (1 - ease) * 0.4 + breath * 0.1;
+      material.size = 0.03 + ease * 0.02;
+
+      // Background dust drifts
+      const dPos = dustGeom.attributes.position.array;
+      for (let i = 0; i < dustCount; i++) {
+        dPos[i * 3 + 1] += 0.002;
+        if (dPos[i * 3 + 1] > 10) dPos[i * 3 + 1] = -10;
+      }
+      dustGeom.attributes.position.needsUpdate = true;
+      dustMat.opacity = 0.15 + breath * 0.1;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      geometry.dispose(); material.dispose();
+      dustGeom.dispose(); dustMat.dispose();
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== EVENT HORIZON MODE ==========
+  // The edge of something vast and unknowable - sublime terror and beauty
+  React.useEffect(() => {
+    if (currentMode !== 'eventHorizon' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'auto';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // The void at the center - pure darkness
+    const voidGeom = new THREE.SphereGeometry(1.5, 64, 64);
+    const voidMat = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.95
+    });
+    const voidSphere = new THREE.Mesh(voidGeom, voidMat);
+    voidSphere.position.z = -3;
+    scene.add(voidSphere);
+
+    // Accretion disk - rings of light being pulled in
+    const rings = [];
+    const ringCount = 8;
+    for (let i = 0; i < ringCount; i++) {
+      const innerR = 2 + i * 0.4;
+      const outerR = innerR + 0.3;
+      const ringGeom = new THREE.RingGeometry(innerR, outerR, 64);
+      const hueShift = i * 10;
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue + hueShift, 60, 50 + i * 3),
+        transparent: true,
+        opacity: 0.3 - i * 0.02,
+        side: THREE.DoubleSide
+      });
+      const ring = new THREE.Mesh(ringGeom, ringMat);
+      ring.position.z = -3;
+      ring.rotation.x = Math.PI / 2 + (Math.random() - 0.5) * 0.2;
+      ring.userData = {
+        rotationSpeed: 0.002 + (ringCount - i) * 0.001,
+        wobblePhase: Math.random() * Math.PI * 2,
+        baseOpacity: 0.3 - i * 0.02
+      };
+      scene.add(ring);
+      rings.push({ mesh: ring, geometry: ringGeom, material: ringMat });
+    }
+
+    // Particles being drawn toward the center
+    const particleCount = 1500;
+    const positions = new Float32Array(particleCount * 3);
+    const particleData = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const r = 3 + Math.random() * 7;
+      const y = (Math.random() - 0.5) * 2;
+
+      positions[i * 3] = Math.cos(theta) * r;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = Math.sin(theta) * r - 3;
+
+      particleData.push({
+        angle: theta,
+        radius: r,
+        y: y,
+        speed: 0.001 + Math.random() * 0.002,
+        spiralSpeed: 0.01 + Math.random() * 0.02,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    const particleGeom = new THREE.BufferGeometry();
+    particleGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 50, 70),
+      size: 0.04,
+      transparent: true,
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending
+    });
+    const particles = new THREE.Points(particleGeom, particleMat);
+    scene.add(particles);
+
+    // Light tendrils reaching out from the edge
+    const tendrils = [];
+    const tendrilCount = 6;
+    for (let i = 0; i < tendrilCount; i++) {
+      const points = [];
+      const baseAngle = (i / tendrilCount) * Math.PI * 2;
+      const segments = 30;
+
+      for (let j = 0; j <= segments; j++) {
+        const t = j / segments;
+        const r = 1.8 + t * 4;
+        const angle = baseAngle + t * 0.5;
+        const wobble = Math.sin(t * Math.PI * 2) * 0.3;
+
+        points.push(new THREE.Vector3(
+          Math.cos(angle) * r + wobble,
+          (Math.random() - 0.5) * 0.5 * t,
+          Math.sin(angle) * r - 3 + wobble
+        ));
+      }
+
+      const curve = new THREE.CatmullRomCurve3(points);
+      const geometry = new THREE.TubeGeometry(curve, segments, 0.02, 6, false);
+      const material = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 55, 60),
+        transparent: true,
+        opacity: 0.2
+      });
+      const tendril = new THREE.Mesh(geometry, material);
+      tendril.userData = { phase: i * (Math.PI * 2 / tendrilCount), baseAngle };
+      scene.add(tendril);
+      tendrils.push({ mesh: tendril, geometry, material, points, curve });
+    }
+
+    // Outer glow ring
+    const glowGeom = new THREE.TorusGeometry(2, 0.1, 16, 64);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 60, 60),
+      transparent: true,
+      opacity: 0.3
+    });
+    const glow = new THREE.Mesh(glowGeom, glowMat);
+    glow.position.z = -3;
+    glow.rotation.x = Math.PI / 2;
+    scene.add(glow);
+
+    let cameraAngle = 0;
+    let targetCameraAngle = 0;
+    let cameraDistance = 5;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Touch to orbit around the event horizon
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetCameraAngle = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 2;
+          cameraDistance = 5 - (activeTouch.y / window.innerHeight - 0.5) * 2;
+        }
+      } else {
+        targetCameraAngle += 0.002;
+      }
+
+      cameraAngle += (targetCameraAngle - cameraAngle) * 0.02;
+      camera.position.x = Math.sin(cameraAngle) * cameraDistance;
+      camera.position.z = Math.cos(cameraAngle) * cameraDistance;
+      camera.position.y = Math.sin(elapsed * 0.1) * 0.5;
+      camera.lookAt(0, 0, -3);
+
+      // Rotate rings at different speeds (closer = faster)
+      rings.forEach((ring, i) => {
+        ring.mesh.rotation.z += ring.mesh.userData.rotationSpeed;
+        ring.mesh.rotation.x = Math.PI / 2 + Math.sin(elapsed * 0.2 + ring.mesh.userData.wobblePhase) * 0.1;
+        ring.material.opacity = ring.mesh.userData.baseOpacity + breath * 0.15;
+      });
+
+      // Particles spiral inward
+      const pos = particleGeom.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        const p = particleData[i];
+
+        // Spiral inward
+        p.angle += p.spiralSpeed;
+        p.radius -= p.speed;
+
+        // Reset if too close to center
+        if (p.radius < 1.8) {
+          p.radius = 3 + Math.random() * 7;
+          p.angle = Math.random() * Math.PI * 2;
+        }
+
+        pos[i * 3] = Math.cos(p.angle) * p.radius;
+        pos[i * 3 + 1] = p.y + Math.sin(elapsed + p.phase) * 0.1;
+        pos[i * 3 + 2] = Math.sin(p.angle) * p.radius - 3;
+      }
+      particleGeom.attributes.position.needsUpdate = true;
+      particleMat.opacity = 0.3 + breath * 0.2;
+
+      // Pulsing glow
+      glow.scale.setScalar(1 + Math.sin(elapsed * 0.5) * 0.1 + breath * 0.1);
+      glowMat.opacity = 0.2 + breath * 0.15;
+
+      // Void pulses subtly with breath
+      voidSphere.scale.setScalar(1 + breath * 0.05);
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      voidGeom.dispose(); voidMat.dispose();
+      glowGeom.dispose(); glowMat.dispose();
+      particleGeom.dispose(); particleMat.dispose();
+      rings.forEach(r => { r.geometry.dispose(); r.material.dispose(); });
+      tendrils.forEach(t => { t.geometry.dispose(); t.material.dispose(); });
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== MOUNTAINS LANDSCAPE MODE ==========
+  // Vast peaks in eternal stillness - the sublime scale of nature
+  React.useEffect(() => {
+    if (currentMode !== 'mountains' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 8);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'auto';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Simple noise function for terrain
+    const noise = (x, z) => {
+      const n1 = Math.sin(x * 0.5) * Math.cos(z * 0.5) * 2;
+      const n2 = Math.sin(x * 0.2 + 1) * Math.cos(z * 0.3 + 2) * 4;
+      const n3 = Math.sin(x * 0.1) * Math.cos(z * 0.1) * 6;
+      return n1 + n2 + n3;
+    };
+
+    // Create mountain range - multiple layers for depth
+    const mountainLayers = [];
+
+    for (let layer = 0; layer < 4; layer++) {
+      const zOffset = -layer * 15;
+      const width = 40;
+      const depth = 20;
+      const segmentsW = 60;
+      const segmentsD = 30;
+
+      const geometry = new THREE.PlaneGeometry(width, depth, segmentsW, segmentsD);
+      geometry.rotateX(-Math.PI / 2);
+
+      const positions = geometry.attributes.position.array;
+      for (let i = 0; i < positions.length; i += 3) {
+        const x = positions[i];
+        const z = positions[i + 2];
+        // Height based on noise, scaled by layer (further = taller)
+        const height = noise(x * 0.3 + layer * 5, z * 0.3) * (1 + layer * 0.5);
+        positions[i + 1] = Math.max(0, height);
+      }
+      geometry.computeVertexNormals();
+
+      const lightness = 30 - layer * 5;
+      const saturation = 30 - layer * 5;
+      const material = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, saturation, lightness),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.4 - layer * 0.08
+      });
+
+      const mountain = new THREE.Mesh(geometry, material);
+      mountain.position.z = zOffset - 15;
+      mountain.position.y = -3;
+      scene.add(mountain);
+      mountainLayers.push({ mesh: mountain, geometry, material, layer });
+    }
+
+    // Floating mist particles
+    const mistCount = 300;
+    const mistPositions = new Float32Array(mistCount * 3);
+    const mistData = [];
+
+    for (let i = 0; i < mistCount; i++) {
+      mistPositions[i * 3] = (Math.random() - 0.5) * 40;
+      mistPositions[i * 3 + 1] = Math.random() * 4;
+      mistPositions[i * 3 + 2] = (Math.random() - 0.5) * 60 - 20;
+
+      mistData.push({
+        speed: 0.005 + Math.random() * 0.01,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    const mistGeom = new THREE.BufferGeometry();
+    mistGeom.setAttribute('position', new THREE.BufferAttribute(mistPositions, 3));
+    const mistMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 20, 60),
+      size: 0.15,
+      transparent: true,
+      opacity: 0.2,
+      blending: THREE.AdditiveBlending
+    });
+    const mist = new THREE.Points(mistGeom, mistMat);
+    scene.add(mist);
+
+    // Distant stars
+    const starCount = 200;
+    const starPositions = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+      starPositions[i * 3] = (Math.random() - 0.5) * 100;
+      starPositions[i * 3 + 1] = 10 + Math.random() * 30;
+      starPositions[i * 3 + 2] = -50 - Math.random() * 50;
+    }
+    const starGeom = new THREE.BufferGeometry();
+    starGeom.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starMat = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.05,
+      transparent: true,
+      opacity: 0.4
+    });
+    const stars = new THREE.Points(starGeom, starMat);
+    scene.add(stars);
+
+    let lookX = 0, lookY = 0;
+    let targetLookX = 0, targetLookY = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Touch to look around the landscape
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetLookX = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.4;
+          targetLookY = (activeTouch.y / window.innerHeight - 0.5) * Math.PI * 0.15;
+        }
+      } else {
+        // Gentle drift
+        targetLookX = Math.sin(elapsed * 0.03) * 0.2;
+        targetLookY = Math.sin(elapsed * 0.02) * 0.05;
+      }
+
+      lookX += (targetLookX - lookX) * 0.02;
+      lookY += (targetLookY - lookY) * 0.02;
+      camera.rotation.y = lookX;
+      camera.rotation.x = lookY;
+
+      // Mountains breathe subtly
+      mountainLayers.forEach((m, i) => {
+        m.mesh.position.y = -3 + breath * 0.1 * (1 - i * 0.2);
+        m.material.opacity = (0.3 - i * 0.06) + breath * 0.1;
+      });
+
+      // Mist drifts slowly
+      const mPos = mistGeom.attributes.position.array;
+      for (let i = 0; i < mistCount; i++) {
+        const d = mistData[i];
+        mPos[i * 3] += d.speed;
+        mPos[i * 3 + 1] += Math.sin(elapsed + d.phase) * 0.003;
+        if (mPos[i * 3] > 20) mPos[i * 3] = -20;
+      }
+      mistGeom.attributes.position.needsUpdate = true;
+      mistMat.opacity = 0.1 + breath * 0.15;
+
+      // Stars twinkle
+      starMat.opacity = 0.2 + breath * 0.2 + Math.sin(elapsed * 0.5) * 0.1;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      mountainLayers.forEach(m => { m.geometry.dispose(); m.material.dispose(); });
+      mistGeom.dispose(); mistMat.dispose();
+      starGeom.dispose(); starMat.dispose();
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== UNDERWATER / ABYSS MODE ==========
+  // Deep ocean depths - pressure, silence, bioluminescence
+  React.useEffect(() => {
+    if (currentMode !== 'underwater' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'auto';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Caustic light rays from above
+    const rays = [];
+    const rayCount = 8;
+    for (let i = 0; i < rayCount; i++) {
+      const geometry = new THREE.CylinderGeometry(0.1, 2, 30, 8, 1, true);
+      const material = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 40, 50),
+        transparent: true,
+        opacity: 0.05,
+        side: THREE.DoubleSide
+      });
+      const ray = new THREE.Mesh(geometry, material);
+      ray.position.set(
+        (Math.random() - 0.5) * 15,
+        15,
+        (Math.random() - 0.5) * 15 - 5
+      );
+      ray.rotation.x = Math.PI;
+      ray.rotation.z = (Math.random() - 0.5) * 0.3;
+      ray.userData = { phase: Math.random() * Math.PI * 2, baseX: ray.position.x };
+      scene.add(ray);
+      rays.push({ mesh: ray, geometry, material });
+    }
+
+    // Bioluminescent particles floating
+    const particleCount = 400;
+    const positions = new Float32Array(particleCount * 3);
+    const particleData = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 20;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 15;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 20 - 5;
+
+      particleData.push({
+        velocity: {
+          x: (Math.random() - 0.5) * 0.005,
+          y: 0.002 + Math.random() * 0.005,
+          z: (Math.random() - 0.5) * 0.005
+        },
+        phase: Math.random() * Math.PI * 2,
+        pulseSpeed: 0.5 + Math.random() * 1
+      });
+    }
+
+    const particleGeom = new THREE.BufferGeometry();
+    particleGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 60, 65),
+      size: 0.06,
+      transparent: true,
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending
+    });
+    const particles = new THREE.Points(particleGeom, particleMat);
+    scene.add(particles);
+
+    // Jellyfish-like creatures
+    const jellyfish = [];
+    const jellyCount = 5;
+    for (let i = 0; i < jellyCount; i++) {
+      const group = new THREE.Group();
+
+      // Bell
+      const bellGeom = new THREE.SphereGeometry(0.4, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+      const bellMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue + Math.random() * 40, 50, 55),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.4
+      });
+      const bell = new THREE.Mesh(bellGeom, bellMat);
+      group.add(bell);
+
+      // Tendrils
+      const tendrilCount = 8;
+      const tendrils = [];
+      for (let j = 0; j < tendrilCount; j++) {
+        const points = [];
+        const angle = (j / tendrilCount) * Math.PI * 2;
+        const tendrilLength = 1 + Math.random() * 0.5;
+        for (let k = 0; k <= 15; k++) {
+          const t = k / 15;
+          points.push(new THREE.Vector3(
+            Math.cos(angle) * 0.2 * (1 - t * 0.5),
+            -t * tendrilLength,
+            Math.sin(angle) * 0.2 * (1 - t * 0.5)
+          ));
+        }
+        const curve = new THREE.CatmullRomCurve3(points);
+        const tendrilGeom = new THREE.TubeGeometry(curve, 15, 0.02, 4, false);
+        const tendrilMat = new THREE.MeshBasicMaterial({
+          color: hslToHex(hue, 45, 50),
+          transparent: true,
+          opacity: 0.3
+        });
+        const tendril = new THREE.Mesh(tendrilGeom, tendrilMat);
+        group.add(tendril);
+        tendrils.push({ mesh: tendril, geometry: tendrilGeom, material: tendrilMat, points });
+      }
+
+      group.position.set(
+        (Math.random() - 0.5) * 12,
+        (Math.random() - 0.5) * 8,
+        -5 - Math.random() * 10
+      );
+      group.userData = {
+        velocity: { x: (Math.random() - 0.5) * 0.01, y: 0.005 + Math.random() * 0.01, z: (Math.random() - 0.5) * 0.01 },
+        pulsePhase: Math.random() * Math.PI * 2,
+        tendrils
+      };
+
+      scene.add(group);
+      jellyfish.push({ group, bell, bellGeom, bellMat, tendrils });
+    }
+
+    // Distant seafloor hints
+    const floorGeom = new THREE.PlaneGeometry(50, 50, 20, 20);
+    floorGeom.rotateX(-Math.PI / 2);
+    const floorPositions = floorGeom.attributes.position.array;
+    for (let i = 0; i < floorPositions.length; i += 3) {
+      floorPositions[i + 1] = Math.random() * 0.5;
+    }
+    const floorMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 30, 20),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.15
+    });
+    const floor = new THREE.Mesh(floorGeom, floorMat);
+    floor.position.y = -10;
+    floor.position.z = -10;
+    scene.add(floor);
+
+    let lookX = 0, lookY = 0;
+    let targetLookX = 0, targetLookY = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Touch to look around underwater
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetLookX = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.5;
+          targetLookY = (activeTouch.y / window.innerHeight - 0.5) * Math.PI * 0.3;
+        }
+      } else {
+        targetLookX = Math.sin(elapsed * 0.05) * 0.2;
+        targetLookY = Math.sin(elapsed * 0.03) * 0.1;
+      }
+
+      lookX += (targetLookX - lookX) * 0.015;
+      lookY += (targetLookY - lookY) * 0.015;
+      camera.rotation.y = lookX;
+      camera.rotation.x = lookY;
+
+      // Caustic rays shimmer
+      rays.forEach(ray => {
+        ray.material.opacity = 0.03 + Math.sin(elapsed * 0.5 + ray.mesh.userData.phase) * 0.02 + breath * 0.02;
+        ray.mesh.position.x = ray.mesh.userData.baseX + Math.sin(elapsed * 0.2 + ray.mesh.userData.phase) * 0.5;
+      });
+
+      // Particles drift upward
+      const pos = particleGeom.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        const p = particleData[i];
+        pos[i * 3] += p.velocity.x + Math.sin(elapsed + p.phase) * 0.002;
+        pos[i * 3 + 1] += p.velocity.y;
+        pos[i * 3 + 2] += p.velocity.z;
+
+        // Reset if out of bounds
+        if (pos[i * 3 + 1] > 8) {
+          pos[i * 3 + 1] = -8;
+          pos[i * 3] = (Math.random() - 0.5) * 20;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * 20 - 5;
+        }
+      }
+      particleGeom.attributes.position.needsUpdate = true;
+      particleMat.opacity = 0.3 + breath * 0.3;
+
+      // Jellyfish swim and pulse
+      jellyfish.forEach(jf => {
+        const ud = jf.group.userData;
+
+        // Movement
+        jf.group.position.x += ud.velocity.x;
+        jf.group.position.y += ud.velocity.y * (0.5 + breath * 0.5);
+        jf.group.position.z += ud.velocity.z;
+
+        // Wrap around
+        if (jf.group.position.y > 6) {
+          jf.group.position.y = -6;
+          jf.group.position.x = (Math.random() - 0.5) * 12;
+        }
+
+        // Pulsing
+        const pulse = Math.sin(elapsed * 2 + ud.pulsePhase) * 0.5 + 0.5;
+        jf.bell.scale.set(1 + pulse * 0.2, 1 - pulse * 0.15, 1 + pulse * 0.2);
+        jf.bellMat.opacity = 0.3 + breath * 0.2 + pulse * 0.1;
+      });
+
+      // Floor visibility with breath
+      floorMat.opacity = 0.08 + breath * 0.08;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      rays.forEach(r => { r.geometry.dispose(); r.material.dispose(); });
+      particleGeom.dispose(); particleMat.dispose();
+      jellyfish.forEach(jf => {
+        jf.bellGeom.dispose(); jf.bellMat.dispose();
+        jf.tendrils.forEach(t => { t.geometry.dispose(); t.material.dispose(); });
+      });
+      floorGeom.dispose(); floorMat.dispose();
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== CAVERN MODE ==========
+  // Ancient depths - stone, dripping water, hidden light
+  React.useEffect(() => {
+    if (currentMode !== 'cavern' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'auto';
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Cave walls - cylinder we're inside
+    const caveGeom = new THREE.CylinderGeometry(8, 10, 30, 32, 20, true);
+    const cavePositions = caveGeom.attributes.position.array;
+    // Add organic irregularity to the walls
+    for (let i = 0; i < cavePositions.length; i += 3) {
+      const y = cavePositions[i + 1];
+      const angle = Math.atan2(cavePositions[i + 2], cavePositions[i]);
+      const noise = Math.sin(y * 0.5 + angle * 3) * 0.8 + Math.sin(y * 0.2 + angle * 7) * 0.4;
+      const dist = Math.sqrt(cavePositions[i] ** 2 + cavePositions[i + 2] ** 2);
+      const newDist = dist + noise;
+      cavePositions[i] = (cavePositions[i] / dist) * newDist;
+      cavePositions[i + 2] = (cavePositions[i + 2] / dist) * newDist;
+    }
+    caveGeom.computeVertexNormals();
+
+    const caveMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 20, 25),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.2,
+      side: THREE.BackSide
+    });
+    const cave = new THREE.Mesh(caveGeom, caveMat);
+    scene.add(cave);
+
+    // Stalactites hanging from ceiling
+    const stalactites = [];
+    const stalCount = 30;
+    for (let i = 0; i < stalCount; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 3 + Math.random() * 4;
+      const length = 1 + Math.random() * 3;
+
+      const geom = new THREE.ConeGeometry(0.15 + Math.random() * 0.1, length, 6);
+      const mat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 25, 35),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.3
+      });
+      const stal = new THREE.Mesh(geom, mat);
+      stal.position.set(
+        Math.cos(angle) * radius,
+        10 - length / 2,
+        Math.sin(angle) * radius
+      );
+      stal.rotation.x = Math.PI;
+      stal.userData = { dripPhase: Math.random() * Math.PI * 2, dripSpeed: 0.5 + Math.random() };
+      scene.add(stal);
+      stalactites.push({ mesh: stal, geometry: geom, material: mat });
+    }
+
+    // Stalagmites rising from floor
+    const stalagmites = [];
+    const stagCount = 25;
+    for (let i = 0; i < stagCount; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 2 + Math.random() * 5;
+      const length = 0.5 + Math.random() * 2;
+
+      const geom = new THREE.ConeGeometry(0.2 + Math.random() * 0.15, length, 6);
+      const mat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 25, 30),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.25
+      });
+      const stag = new THREE.Mesh(geom, mat);
+      stag.position.set(
+        Math.cos(angle) * radius,
+        -10 + length / 2,
+        Math.sin(angle) * radius
+      );
+      scene.add(stag);
+      stalagmites.push({ mesh: stag, geometry: geom, material: mat });
+    }
+
+    // Glowing crystals embedded in walls
+    const crystals = [];
+    const crystalCount = 15;
+    for (let i = 0; i < crystalCount; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const y = (Math.random() - 0.5) * 15;
+      const radius = 7 + Math.random() * 2;
+
+      const geom = new THREE.OctahedronGeometry(0.2 + Math.random() * 0.2, 0);
+      const mat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 60, 55),
+        transparent: true,
+        opacity: 0.5
+      });
+      const crystal = new THREE.Mesh(geom, mat);
+      crystal.position.set(
+        Math.cos(angle) * radius,
+        y,
+        Math.sin(angle) * radius
+      );
+      crystal.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+      crystal.userData = { pulsePhase: Math.random() * Math.PI * 2 };
+      scene.add(crystal);
+      crystals.push({ mesh: crystal, geometry: geom, material: mat });
+    }
+
+    // Water drops falling
+    const drops = [];
+    const dropCount = 20;
+    for (let i = 0; i < dropCount; i++) {
+      const geom = new THREE.SphereGeometry(0.03, 6, 6);
+      const mat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 50, 65),
+        transparent: true,
+        opacity: 0.6
+      });
+      const drop = new THREE.Mesh(geom, mat);
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 3 + Math.random() * 4;
+      drop.position.set(
+        Math.cos(angle) * radius,
+        10 + Math.random() * 5,
+        Math.sin(angle) * radius
+      );
+      drop.userData = {
+        startY: drop.position.y,
+        fallSpeed: 0.05 + Math.random() * 0.05,
+        resetY: 10 + Math.random() * 5
+      };
+      scene.add(drop);
+      drops.push({ mesh: drop, geometry: geom, material: mat });
+    }
+
+    // Distant light source - suggesting an exit
+    const lightGeom = new THREE.CircleGeometry(2, 32);
+    const lightMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 40, 60),
+      transparent: true,
+      opacity: 0.15
+    });
+    const light = new THREE.Mesh(lightGeom, lightMat);
+    light.position.set(0, 5, -12);
+    scene.add(light);
+
+    let lookX = 0, lookY = 0;
+    let targetLookX = 0, targetLookY = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Touch to look around the cavern
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetLookX = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.6;
+          targetLookY = (activeTouch.y / window.innerHeight - 0.5) * Math.PI * 0.4;
+        }
+      } else {
+        targetLookX = Math.sin(elapsed * 0.04) * 0.3;
+        targetLookY = Math.sin(elapsed * 0.025) * 0.15;
+      }
+
+      lookX += (targetLookX - lookX) * 0.015;
+      lookY += (targetLookY - lookY) * 0.015;
+      camera.rotation.y = lookX;
+      camera.rotation.x = lookY;
+
+      // Cave breathes very subtly
+      cave.scale.setScalar(1 + breath * 0.02);
+      caveMat.opacity = 0.15 + breath * 0.08;
+
+      // Crystals pulse with inner light
+      crystals.forEach(c => {
+        const pulse = Math.sin(elapsed * 0.8 + c.mesh.userData.pulsePhase) * 0.5 + 0.5;
+        c.material.opacity = 0.3 + breath * 0.2 + pulse * 0.2;
+        c.mesh.scale.setScalar(1 + pulse * 0.1);
+      });
+
+      // Water drops fall
+      drops.forEach(d => {
+        d.mesh.position.y -= d.mesh.userData.fallSpeed;
+        if (d.mesh.position.y < -10) {
+          d.mesh.position.y = d.mesh.userData.resetY;
+        }
+        d.material.opacity = 0.4 + breath * 0.3;
+      });
+
+      // Stalactites and stalagmites opacity with breath
+      stalactites.forEach(s => {
+        s.material.opacity = 0.2 + breath * 0.15;
+      });
+      stalagmites.forEach(s => {
+        s.material.opacity = 0.15 + breath * 0.12;
+      });
+
+      // Distant light pulses
+      lightMat.opacity = 0.1 + breath * 0.1 + Math.sin(elapsed * 0.3) * 0.05;
+      light.scale.setScalar(1 + Math.sin(elapsed * 0.2) * 0.1);
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      caveGeom.dispose(); caveMat.dispose();
+      stalactites.forEach(s => { s.geometry.dispose(); s.material.dispose(); });
+      stalagmites.forEach(s => { s.geometry.dispose(); s.material.dispose(); });
+      crystals.forEach(c => { c.geometry.dispose(); c.material.dispose(); });
+      drops.forEach(d => { d.geometry.dispose(); d.material.dispose(); });
+      lightGeom.dispose(); lightMat.dispose();
       if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
       renderer.dispose();
     };
