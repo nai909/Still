@@ -5864,6 +5864,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     containerRef.current.appendChild(renderer.domElement);
     renderer.domElement.style.pointerEvents = 'auto';
+    rendererRef.current = renderer;
 
     const hslToHex = (h, s, l) => {
       s /= 100; l /= 100;
@@ -6074,6 +6075,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     containerRef.current.appendChild(renderer.domElement);
     renderer.domElement.style.pointerEvents = 'auto';
+    rendererRef.current = renderer;
 
     const hslToHex = (h, s, l) => {
       s /= 100; l /= 100;
@@ -6286,6 +6288,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     containerRef.current.appendChild(renderer.domElement);
     renderer.domElement.style.pointerEvents = 'auto';
+    rendererRef.current = renderer;
 
     const hslToHex = (h, s, l) => {
       s /= 100; l /= 100;
@@ -6482,6 +6485,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     containerRef.current.appendChild(renderer.domElement);
     renderer.domElement.style.pointerEvents = 'auto';
+    rendererRef.current = renderer;
 
     const hslToHex = (h, s, l) => {
       s /= 100; l /= 100;
@@ -6710,6 +6714,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     containerRef.current.appendChild(renderer.domElement);
     renderer.domElement.style.pointerEvents = 'auto';
+    rendererRef.current = renderer;
 
     const hslToHex = (h, s, l) => {
       s /= 100; l /= 100;
@@ -6895,6 +6900,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     containerRef.current.appendChild(renderer.domElement);
     renderer.domElement.style.pointerEvents = 'auto';
+    rendererRef.current = renderer;
 
     const hslToHex = (h, s, l) => {
       s /= 100; l /= 100;
@@ -7151,6 +7157,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     containerRef.current.appendChild(renderer.domElement);
     renderer.domElement.style.pointerEvents = 'auto';
+    rendererRef.current = renderer;
 
     const hslToHex = (h, s, l) => {
       s /= 100; l /= 100;
