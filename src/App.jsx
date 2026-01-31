@@ -1169,10 +1169,10 @@ const gazeModes = [
   { key: 'flowerOfLife', name: 'Flower of Life' },
   // Organic/Abstract visuals
   { key: 'lavaTouch', name: 'Lava Lamp' },
-  // Deep experiential visuals
-  { key: 'infiniteDescent', name: 'Descent' },
   // Landscape visuals
   { key: 'mountains', name: 'Mountains' },
+  { key: 'canyon', name: 'Canyon' },
+  { key: 'dunes', name: 'Dunes' },
   { key: 'underwater', name: 'Abyss' },
 ];
 
@@ -5303,216 +5303,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
-  // ========== INFINITE DESCENT MODE ==========
-  // Falling forever through luminous geometric layers - the feeling of letting go
-  React.useEffect(() => {
-    if (currentMode !== 'infiniteDescent' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 0);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'auto';
-    rendererRef.current = renderer;
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    // Create layers of geometric rings that we fall through
-    const layers = [];
-    const layerCount = 40;
-    const layerSpacing = 8;
-
-    for (let i = 0; i < layerCount; i++) {
-      const layerGroup = new THREE.Group();
-      layerGroup.position.z = -i * layerSpacing;
-
-      // Each layer is a ring of geometric shapes
-      const ringRadius = 4 + Math.sin(i * 0.3) * 2;
-      const shapeCount = 6 + Math.floor(i % 4);
-      const hueShift = (i * 15) % 60 - 30;
-
-      for (let j = 0; j < shapeCount; j++) {
-        const angle = (j / shapeCount) * Math.PI * 2;
-
-        // Vary the geometry type for each layer
-        let geometry;
-        const shapeType = i % 5;
-        if (shapeType === 0) {
-          geometry = new THREE.IcosahedronGeometry(0.5 + Math.random() * 0.3, 1);
-        } else if (shapeType === 1) {
-          geometry = new THREE.OctahedronGeometry(0.6 + Math.random() * 0.3, 0);
-        } else if (shapeType === 2) {
-          geometry = new THREE.TorusGeometry(0.4, 0.15, 8, 16);
-        } else if (shapeType === 3) {
-          geometry = new THREE.TetrahedronGeometry(0.6 + Math.random() * 0.2, 0);
-        } else {
-          geometry = new THREE.DodecahedronGeometry(0.4 + Math.random() * 0.2, 0);
-        }
-
-        const material = new THREE.MeshBasicMaterial({
-          color: hslToHex(hue, 50, 60),
-          wireframe: true,
-          transparent: true,
-          opacity: 0.6
-        });
-
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(
-          Math.cos(angle) * ringRadius,
-          Math.sin(angle) * ringRadius,
-          0
-        );
-        mesh.rotation.set(
-          Math.random() * Math.PI,
-          Math.random() * Math.PI,
-          Math.random() * Math.PI
-        );
-        mesh.userData = {
-          rotationSpeed: {
-            x: (Math.random() - 0.5) * 0.002,
-            y: (Math.random() - 0.5) * 0.002,
-            z: (Math.random() - 0.5) * 0.002
-          },
-          orbitPhase: angle,
-          orbitSpeed: 0.02 + Math.random() * 0.02
-        };
-
-        layerGroup.add(mesh);
-        layers.push({ mesh, geometry, material, layer: layerGroup, layerIndex: i });
-      }
-
-      scene.add(layerGroup);
-    }
-
-    // Gentle ambient particles floating upward as we descend
-    const particleCount = 200;
-    const particlePositions = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i++) {
-      particlePositions[i * 3] = (Math.random() - 0.5) * 20;
-      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 20;
-      particlePositions[i * 3 + 2] = -Math.random() * layerCount * layerSpacing;
-    }
-    const particleGeom = new THREE.BufferGeometry();
-    particleGeom.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-    const particleMat = new THREE.PointsMaterial({
-      color: hslToHex(hue, 30, 70),
-      size: 0.08,
-      transparent: true,
-      opacity: 0.4,
-      blending: THREE.AdditiveBlending
-    });
-    const particles = new THREE.Points(particleGeom, particleMat);
-    scene.add(particles);
-
-    let fallSpeed = 0;
-    let fallPosition = 0;
-    let tiltX = 0, tiltY = 0;
-    let targetTiltX = 0, targetTiltY = 0;
-    const clock = new THREE.Clock();
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
-
-      // Breathing affects fall speed - very slow, meditative descent
-      const targetSpeed = 0.03 + breath * 0.02;
-      fallSpeed = fallSpeed * 0.95 + targetSpeed * 0.05;
-      fallPosition += fallSpeed;
-
-      // Touch to steer through the descent
-      if (touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          targetTiltX = (activeTouch.x / window.innerWidth - 0.5) * 0.8;
-          targetTiltY = (activeTouch.y / window.innerHeight - 0.5) * 0.4;
-        }
-      } else {
-        // Gentle autonomous drift
-        targetTiltX = Math.sin(elapsed * 0.03) * 0.15;
-        targetTiltY = Math.cos(elapsed * 0.02) * 0.1;
-      }
-
-      tiltX += (targetTiltX - tiltX) * 0.01;
-      tiltY += (targetTiltY - tiltY) * 0.01;
-
-      // Move camera forward (falling sensation)
-      camera.position.z = -fallPosition;
-      camera.position.x = tiltX * 1.5;
-      camera.position.y = tiltY * 1;
-      camera.rotation.z = -tiltX * 0.05;
-
-      // Animate each layer
-      layers.forEach(item => {
-        const { mesh, layerIndex } = item;
-
-        // Rotate individual shapes
-        mesh.rotation.x += mesh.userData.rotationSpeed.x;
-        mesh.rotation.y += mesh.userData.rotationSpeed.y;
-        mesh.rotation.z += mesh.userData.rotationSpeed.z;
-
-        // Calculate distance from camera
-        const layerZ = item.layer.position.z;
-        const distFromCamera = Math.abs(camera.position.z - layerZ);
-
-        // Fade based on distance
-        if (distFromCamera < 2) {
-          item.material.opacity = distFromCamera / 2 * 0.6;
-        } else if (distFromCamera > layerSpacing * (layerCount - 5)) {
-          item.material.opacity = 0.1;
-        } else {
-          item.material.opacity = 0.4 + breath * 0.2;
-        }
-
-        // Recycle layers that pass behind camera
-        if (layerZ > camera.position.z + layerSpacing) {
-          item.layer.position.z -= layerCount * layerSpacing;
-        }
-      });
-
-      // Particles drift upward relative to our fall
-      const pPos = particleGeom.attributes.position.array;
-      for (let i = 0; i < particleCount; i++) {
-        pPos[i * 3 + 2] += fallSpeed * 0.3;
-        if (pPos[i * 3 + 2] > camera.position.z + 10) {
-          pPos[i * 3 + 2] = camera.position.z - layerCount * layerSpacing + Math.random() * 20;
-          pPos[i * 3] = (Math.random() - 0.5) * 20;
-          pPos[i * 3 + 1] = (Math.random() - 0.5) * 20;
-        }
-      }
-      particleGeom.attributes.position.needsUpdate = true;
-      particleMat.opacity = 0.2 + breath * 0.2;
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      layers.forEach(l => { l.geometry.dispose(); l.material.dispose(); });
-      particleGeom.dispose();
-      particleMat.dispose();
-      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
 
   // ========== MOUNTAINS LANDSCAPE MODE ==========
   // Vast peaks in eternal stillness - the sublime scale of nature
@@ -5721,6 +5511,356 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
+  // ========== CANYON MODE ==========
+  // Winding through ancient desert gorges - deep time, erosion, stillness
+  React.useEffect(() => {
+    if (currentMode !== 'canyon' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1.5, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'auto';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Canyon walls - two sides creating a winding path
+    const wallSegments = 30;
+    const walls = [];
+    const pathPoints = [];
+
+    // Generate winding path
+    for (let i = 0; i < wallSegments; i++) {
+      const z = -i * 8;
+      const curve = Math.sin(i * 0.3) * 6;
+      pathPoints.push({ x: curve, z });
+    }
+
+    // Create canyon walls on both sides
+    [-1, 1].forEach(side => {
+      const geometry = new THREE.PlaneGeometry(15, 25, 20, 30);
+      const positions = geometry.attributes.position.array;
+
+      for (let i = 0; i < positions.length; i += 3) {
+        const localX = positions[i];
+        const localY = positions[i + 1];
+        // Add rocky variation
+        const rockNoise = Math.sin(localY * 0.5) * Math.cos(localX * 0.3) * 1.5;
+        const erosion = Math.sin(localY * 0.2 + localX * 0.1) * 0.8;
+        positions[i] += rockNoise + erosion;
+      }
+      geometry.computeVertexNormals();
+
+      for (let seg = 0; seg < wallSegments - 1; seg++) {
+        const material = new THREE.MeshBasicMaterial({
+          color: hslToHex(hue, 25, 28 + Math.random() * 10),
+          wireframe: true,
+          transparent: true,
+          opacity: 0.35
+        });
+
+        const wall = new THREE.Mesh(geometry.clone(), material);
+        wall.rotation.y = side * Math.PI / 2;
+        wall.position.x = pathPoints[seg].x + side * 4;
+        wall.position.z = pathPoints[seg].z - 4;
+        wall.position.y = 8;
+        scene.add(wall);
+        walls.push({ mesh: wall, geometry: wall.geometry, material, seg });
+      }
+    });
+
+    // Canyon floor
+    const floorGeometry = new THREE.PlaneGeometry(10, wallSegments * 8, 15, 60);
+    floorGeometry.rotateX(-Math.PI / 2);
+    const floorPositions = floorGeometry.attributes.position.array;
+    for (let i = 0; i < floorPositions.length; i += 3) {
+      const z = floorPositions[i + 2];
+      const segIndex = Math.floor(-z / 8);
+      if (segIndex >= 0 && segIndex < pathPoints.length) {
+        floorPositions[i] += pathPoints[segIndex].x;
+      }
+      floorPositions[i + 1] = Math.random() * 0.2;
+    }
+    const floorMaterial = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 20, 22),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.25
+    });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.position.z = -wallSegments * 4;
+    scene.add(floor);
+
+    // Dust particles floating in sunbeams
+    const dustCount = 200;
+    const dustPositions = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++) {
+      dustPositions[i * 3] = (Math.random() - 0.5) * 8;
+      dustPositions[i * 3 + 1] = Math.random() * 15;
+      dustPositions[i * 3 + 2] = (Math.random() - 0.5) * wallSegments * 8;
+    }
+    const dustGeom = new THREE.BufferGeometry();
+    dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+    const dustMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 30, 55),
+      size: 0.08,
+      transparent: true,
+      opacity: 0.3,
+      blending: THREE.AdditiveBlending
+    });
+    const dust = new THREE.Points(dustGeom, dustMat);
+    scene.add(dust);
+
+    // Roaming state
+    let moveZ = 0, targetMoveZ = 0;
+    let lookAngle = 0, targetLookAngle = 0;
+    let lookPitch = 0, targetLookPitch = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetLookAngle = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.6;
+          const verticalPos = activeTouch.y / window.innerHeight;
+          targetLookPitch = (verticalPos - 0.5) * 0.4;
+          const forwardSpeed = 0.02 + (1 - verticalPos) * 0.05;
+          targetMoveZ = -forwardSpeed;
+        }
+      } else {
+        targetLookAngle = Math.sin(elapsed * 0.015) * 0.2;
+        targetLookPitch = Math.sin(elapsed * 0.01) * 0.05;
+        targetMoveZ = -0.012 - breath * 0.008;
+      }
+
+      lookAngle += (targetLookAngle - lookAngle) * 0.012;
+      lookPitch += (targetLookPitch - lookPitch) * 0.012;
+      moveZ += (targetMoveZ - moveZ) * 0.02;
+
+      // Follow the winding path
+      const currentZ = camera.position.z;
+      const segIndex = Math.floor(-currentZ / 8);
+      if (segIndex >= 0 && segIndex < pathPoints.length - 1) {
+        const t = (-currentZ / 8) - segIndex;
+        const currentX = pathPoints[segIndex].x * (1 - t) + pathPoints[Math.min(segIndex + 1, pathPoints.length - 1)].x * t;
+        camera.position.x += (currentX - camera.position.x) * 0.05;
+      }
+
+      camera.position.z += moveZ;
+      camera.position.y = 1.5 + Math.sin(elapsed * 0.08) * 0.15;
+      camera.rotation.y = lookAngle;
+      camera.rotation.x = lookPitch;
+
+      // Dust drifts slowly
+      const dPos = dustGeom.attributes.position.array;
+      for (let i = 0; i < dustCount; i++) {
+        dPos[i * 3 + 1] += 0.003;
+        dPos[i * 3] += Math.sin(elapsed + i) * 0.001;
+        if (dPos[i * 3 + 1] > 15) {
+          dPos[i * 3 + 1] = 0;
+          dPos[i * 3 + 2] = camera.position.z - Math.random() * 30;
+        }
+      }
+      dustGeom.attributes.position.needsUpdate = true;
+      dustMat.opacity = 0.2 + breath * 0.15;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      walls.forEach(w => { w.geometry.dispose(); w.material.dispose(); });
+      floorGeometry.dispose(); floorMaterial.dispose();
+      dustGeom.dispose(); dustMat.dispose();
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== DUNES MODE ==========
+  // Rolling sand hills - warmth, wind, endless horizon
+  React.useEffect(() => {
+    if (currentMode !== 'dunes' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'auto';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Dune terrain - smooth rolling waves
+    const duneNoise = (x, z, time) => {
+      const n1 = Math.sin(x * 0.15 + time * 0.02) * Math.cos(z * 0.1) * 2;
+      const n2 = Math.sin(x * 0.08 + z * 0.05) * 3;
+      const n3 = Math.cos(x * 0.04 - z * 0.06) * 4;
+      const ripple = Math.sin(x * 0.8) * 0.15;
+      return n1 + n2 + n3 + ripple;
+    };
+
+    const duneLayers = [];
+    for (let layer = 0; layer < 4; layer++) {
+      const zOffset = -layer * 20;
+      const geometry = new THREE.PlaneGeometry(70, 35, 60, 30);
+      geometry.rotateX(-Math.PI / 2);
+
+      const material = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 35 - layer * 5, 35 - layer * 5),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.35 - layer * 0.07
+      });
+
+      const dune = new THREE.Mesh(geometry, material);
+      dune.position.z = zOffset - 15;
+      dune.position.y = -1;
+      scene.add(dune);
+      duneLayers.push({ mesh: dune, geometry, material, layer });
+    }
+
+    // Sand particles blowing in wind
+    const sandCount = 250;
+    const sandPositions = new Float32Array(sandCount * 3);
+    const sandData = [];
+    for (let i = 0; i < sandCount; i++) {
+      sandPositions[i * 3] = (Math.random() - 0.5) * 50;
+      sandPositions[i * 3 + 1] = Math.random() * 3;
+      sandPositions[i * 3 + 2] = (Math.random() - 0.5) * 70;
+      sandData.push({
+        speed: 0.03 + Math.random() * 0.05,
+        height: Math.random() * 2,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+    const sandGeom = new THREE.BufferGeometry();
+    sandGeom.setAttribute('position', new THREE.BufferAttribute(sandPositions, 3));
+    const sandMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 40, 50),
+      size: 0.05,
+      transparent: true,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending
+    });
+    const sand = new THREE.Points(sandGeom, sandMat);
+    scene.add(sand);
+
+    // Roaming state
+    let moveZ = 0, targetMoveZ = 0;
+    let lookAngle = 0, targetLookAngle = 0;
+    let lookPitch = 0, targetLookPitch = 0;
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          targetLookAngle = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.8;
+          const verticalPos = activeTouch.y / window.innerHeight;
+          targetLookPitch = (verticalPos - 0.5) * 0.3;
+          const forwardSpeed = 0.02 + (1 - verticalPos) * 0.04;
+          targetMoveZ = -forwardSpeed;
+        }
+      } else {
+        targetLookAngle = Math.sin(elapsed * 0.015) * 0.3;
+        targetLookPitch = Math.sin(elapsed * 0.01) * 0.04;
+        targetMoveZ = -0.012 - breath * 0.008;
+      }
+
+      lookAngle += (targetLookAngle - lookAngle) * 0.01;
+      lookPitch += (targetLookPitch - lookPitch) * 0.01;
+      moveZ += (targetMoveZ - moveZ) * 0.02;
+
+      camera.position.x += Math.sin(lookAngle) * moveZ;
+      camera.position.z += Math.cos(lookAngle) * moveZ;
+      camera.position.y = 2 + Math.sin(elapsed * 0.08) * 0.2;
+      camera.rotation.y = lookAngle;
+      camera.rotation.x = lookPitch;
+
+      // Animate dunes - subtle wind ripples
+      duneLayers.forEach((d, layerIndex) => {
+        const positions = d.geometry.attributes.position.array;
+        for (let i = 0; i < positions.length; i += 3) {
+          const x = positions[i];
+          const z = positions[i + 2] + d.mesh.position.z;
+          positions[i + 1] = duneNoise(x, z, elapsed) * (1 + layerIndex * 0.3);
+        }
+        d.geometry.attributes.position.needsUpdate = true;
+        d.material.opacity = (0.3 - layerIndex * 0.06) + breath * 0.08;
+      });
+
+      // Sand blows with wind
+      const sPos = sandGeom.attributes.position.array;
+      for (let i = 0; i < sandCount; i++) {
+        const s = sandData[i];
+        sPos[i * 3] += s.speed;
+        sPos[i * 3 + 1] = s.height + Math.sin(elapsed * 3 + s.phase) * 0.3;
+        if (sPos[i * 3] > 25) {
+          sPos[i * 3] = -25;
+          sPos[i * 3 + 2] = camera.position.z + (Math.random() - 0.5) * 40;
+        }
+      }
+      sandGeom.attributes.position.needsUpdate = true;
+      sandMat.opacity = 0.2 + breath * 0.2;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      duneLayers.forEach(d => { d.geometry.dispose(); d.material.dispose(); });
+      sandGeom.dispose(); sandMat.dispose();
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
   // ========== UNDERWATER / ABYSS MODE ==========
   // Deep ocean depths - pressure, silence, bioluminescence
   React.useEffect(() => {
@@ -5743,30 +5883,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
       return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
     };
-
-    // Caustic light rays from above
-    const rays = [];
-    const rayCount = 8;
-    for (let i = 0; i < rayCount; i++) {
-      const geometry = new THREE.CylinderGeometry(0.1, 2, 30, 8, 1, true);
-      const material = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue, 40, 50),
-        transparent: true,
-        opacity: 0.05,
-        side: THREE.DoubleSide
-      });
-      const ray = new THREE.Mesh(geometry, material);
-      ray.position.set(
-        (Math.random() - 0.5) * 15,
-        15,
-        (Math.random() - 0.5) * 15 - 5
-      );
-      ray.rotation.x = Math.PI;
-      ray.rotation.z = (Math.random() - 0.5) * 0.3;
-      ray.userData = { phase: Math.random() * Math.PI * 2, baseX: ray.position.x };
-      scene.add(ray);
-      rays.push({ mesh: ray, geometry, material });
-    }
 
     // Bioluminescent particles floating
     const particleCount = 400;
@@ -5904,12 +6020,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       camera.rotation.y = lookX;
       camera.rotation.x = lookY;
 
-      // Caustic rays shimmer
-      rays.forEach(ray => {
-        ray.material.opacity = 0.03 + Math.sin(elapsed * 0.5 + ray.mesh.userData.phase) * 0.02 + breath * 0.02;
-        ray.mesh.position.x = ray.mesh.userData.baseX + Math.sin(elapsed * 0.2 + ray.mesh.userData.phase) * 0.5;
-      });
-
       // Particles drift upward
       const pos = particleGeom.attributes.position.array;
       for (let i = 0; i < particleCount; i++) {
@@ -5966,7 +6076,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     return () => {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      rays.forEach(r => { r.geometry.dispose(); r.material.dispose(); });
       particleGeom.dispose(); particleMat.dispose();
       jellyfish.forEach(jf => {
         jf.bellGeom.dispose(); jf.bellMat.dispose();
@@ -6078,7 +6187,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'infiniteDescent' || currentMode === 'mountains' || currentMode === 'underwater') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'mountains' || currentMode === 'canyon' || currentMode === 'dunes' || currentMode === 'underwater') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -6100,7 +6209,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'infiniteDescent' && currentMode !== 'mountains' && currentMode !== 'underwater' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'mountains' && currentMode !== 'canyon' && currentMode !== 'dunes' && currentMode !== 'underwater' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
