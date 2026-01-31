@@ -1171,10 +1171,6 @@ const gazeModes = [
   { key: 'lavaTouch', name: 'Lava Lamp' },
   // Crystalline/Geometric visuals
   { key: 'crystalCave', name: 'Crystal Cave' },
-  // Network/Connected visuals
-  { key: 'mycelium', name: 'Mycelium' },
-  // Fluid/Particle visuals
-  { key: 'smokeWisps', name: 'Smoke' },
   // Ethereal visuals
   { key: 'wovenLight', name: 'Woven Light' },
   // Deep experiential visuals
@@ -5447,285 +5443,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
-  // ========== MYCELIUM NETWORK MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'mycelium' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 6);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'auto';
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    const networkGroup = new THREE.Group();
-    scene.add(networkGroup);
-
-    // Create nodes
-    const nodes = [];
-    const nodeCount = 30;
-    for (let i = 0; i < nodeCount; i++) {
-      const nodeGeom = new THREE.SphereGeometry(0.08 + Math.random() * 0.08, 8, 8);
-      const nodeMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue, 55, 65),
-        transparent: true,
-        opacity: 0.7
-      });
-      const node = new THREE.Mesh(nodeGeom, nodeMat);
-      node.position.set(
-        (Math.random() - 0.5) * 6,
-        (Math.random() - 0.5) * 4,
-        (Math.random() - 0.5) * 3
-      );
-      node.userData = { pulsePhase: Math.random() * Math.PI * 2, baseOpacity: 0.7 };
-      networkGroup.add(node);
-      nodes.push({ mesh: node, geometry: nodeGeom, material: nodeMat });
-    }
-
-    // Create connections
-    const connections = [];
-    const lineMat = new THREE.LineBasicMaterial({
-      color: hslToHex(hue, 45, 55),
-      transparent: true,
-      opacity: 0.3
-    });
-
-    nodes.forEach((node, i) => {
-      const closest = nodes
-        .filter((_, j) => j !== i)
-        .sort((a, b) => node.mesh.position.distanceTo(a.mesh.position) - node.mesh.position.distanceTo(b.mesh.position))
-        .slice(0, 3);
-
-      closest.forEach(target => {
-        const points = [node.mesh.position.clone(), target.mesh.position.clone()];
-        const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(lineGeom, lineMat);
-        line.userData = { from: node, to: target, pulseProgress: Math.random() };
-        networkGroup.add(line);
-        connections.push({ line, geometry: lineGeom });
-      });
-    });
-
-    // Pulse particles traveling along connections
-    const pulses = [];
-    const pulseGeom = new THREE.SphereGeometry(0.03, 6, 6);
-    const pulseMat = new THREE.MeshBasicMaterial({
-      color: hslToHex(hue, 60, 75),
-      transparent: true,
-      opacity: 0.8
-    });
-
-    connections.slice(0, 15).forEach(conn => {
-      const pulse = new THREE.Mesh(pulseGeom, pulseMat.clone());
-      pulse.userData = { connection: conn, progress: Math.random(), speed: 0.005 + Math.random() * 0.01 };
-      networkGroup.add(pulse);
-      pulses.push(pulse);
-    });
-
-    let localScale = 1, localScaleVelocity = 0;
-    const clock = new THREE.Clock();
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
-
-      // Spring physics
-      const targetScale = 0.95 + breath * 0.1;
-      localScaleVelocity = localScaleVelocity * 0.9 + (targetScale - localScale) * 0.02;
-      localScale += localScaleVelocity;
-      networkGroup.scale.setScalar(localScale);
-
-      // Touch-responsive rotation
-      if (touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          networkGroup.rotation.y += normalizedX * 0.015;
-          networkGroup.rotation.x += normalizedY * 0.008;
-        }
-      } else {
-        networkGroup.rotation.y += 0.0004;
-      }
-
-      // Pulse nodes
-      nodes.forEach(n => {
-        const pulse = Math.sin(elapsed * 0.8 + n.mesh.userData.pulsePhase) * 0.5 + 0.5;
-        n.material.opacity = (0.5 + breath * 0.3) * (0.6 + pulse * 0.4);
-      });
-
-      // Animate pulses along connections
-      pulses.forEach(pulse => {
-        pulse.userData.progress += pulse.userData.speed;
-        if (pulse.userData.progress > 1) pulse.userData.progress = 0;
-
-        const conn = pulse.userData.connection;
-        const from = conn.line.userData.from.mesh.position;
-        const to = conn.line.userData.to.mesh.position;
-        pulse.position.lerpVectors(from, to, pulse.userData.progress);
-      });
-
-      lineMat.opacity = 0.2 + breath * 0.2;
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      nodes.forEach(n => { n.geometry.dispose(); n.material.dispose(); });
-      connections.forEach(c => c.geometry.dispose());
-      lineMat.dispose();
-      pulseGeom.dispose(); pulseMat.dispose();
-      pulses.forEach(p => p.material.dispose());
-      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
-
-  // ========== SMOKE WISPS MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'smokeWisps' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 5);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'auto';
-
-    const smokeGroup = new THREE.Group();
-    scene.add(smokeGroup);
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    // Create smoke wisps using particle trails
-    const wisps = [];
-    const wispCount = 8;
-
-    for (let w = 0; w < wispCount; w++) {
-      const particleCount = 100;
-      const positions = new Float32Array(particleCount * 3);
-      const baseX = (Math.random() - 0.5) * 3;
-      const baseZ = (Math.random() - 0.5) * 2;
-
-      for (let i = 0; i < particleCount; i++) {
-        positions[i * 3] = baseX;
-        positions[i * 3 + 1] = -2 + (i / particleCount) * 4;
-        positions[i * 3 + 2] = baseZ;
-      }
-
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      const material = new THREE.PointsMaterial({
-        color: hslToHex(hue, 40, 60),
-        size: 0.08,
-        transparent: true,
-        opacity: 0.4,
-        blending: THREE.AdditiveBlending
-      });
-      const particles = new THREE.Points(geometry, material);
-      smokeGroup.add(particles);
-
-      wisps.push({
-        particles,
-        geometry,
-        material,
-        baseX,
-        baseZ,
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.3 + Math.random() * 0.3
-      });
-    }
-
-    const clock = new THREE.Clock();
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
-
-      // Touch-responsive rotation
-      if (touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          smokeGroup.rotation.y += normalizedX * 0.012;
-          smokeGroup.rotation.x += normalizedY * 0.006;
-        }
-      } else {
-        smokeGroup.rotation.y += 0.0003;
-      }
-
-      wisps.forEach(wisp => {
-        const pos = wisp.geometry.attributes.position.array;
-        for (let i = 0; i < pos.length / 3; i++) {
-          const y = pos[i * 3 + 1];
-          const t = (y + 2) / 4; // 0-1 based on height
-
-          // Turbulent motion
-          pos[i * 3] = wisp.baseX +
-            Math.sin(elapsed * wisp.speed + y * 0.5 + wisp.phase) * (0.3 + t * 0.5) +
-            Math.sin(elapsed * 0.7 + y * 0.3) * 0.2;
-          pos[i * 3 + 2] = wisp.baseZ +
-            Math.cos(elapsed * wisp.speed * 0.8 + y * 0.4 + wisp.phase) * (0.2 + t * 0.4);
-
-          // Rise slowly
-          pos[i * 3 + 1] += 0.005 * breath;
-          if (pos[i * 3 + 1] > 2.5) pos[i * 3 + 1] = -2;
-        }
-        wisp.geometry.attributes.position.needsUpdate = true;
-        wisp.material.opacity = 0.25 + breath * 0.25;
-      });
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      wisps.forEach(w => { w.geometry.dispose(); w.material.dispose(); });
-      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
-
   // ========== WOVEN LIGHT MODE ==========
   React.useEffect(() => {
     if (currentMode !== 'wovenLight' || !containerRef.current || typeof THREE === 'undefined') return;
@@ -5902,7 +5619,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
 
         const material = new THREE.MeshBasicMaterial({
-          color: hslToHex(hue + hueShift, 45, 55 + (i % 3) * 10),
+          color: hslToHex(hue, 50, 60),
           wireframe: true,
           transparent: true,
           opacity: 0.6
@@ -5921,12 +5638,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         );
         mesh.userData = {
           rotationSpeed: {
-            x: (Math.random() - 0.5) * 0.01,
-            y: (Math.random() - 0.5) * 0.01,
-            z: (Math.random() - 0.5) * 0.01
+            x: (Math.random() - 0.5) * 0.002,
+            y: (Math.random() - 0.5) * 0.002,
+            z: (Math.random() - 0.5) * 0.002
           },
           orbitPhase: angle,
-          orbitSpeed: 0.1 + Math.random() * 0.1
+          orbitSpeed: 0.02 + Math.random() * 0.02
         };
 
         layerGroup.add(mesh);
@@ -5967,32 +5684,32 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clock.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Breathing affects fall speed - exhale accelerates, inhale slows
-      const targetSpeed = 0.15 + breath * 0.1;
-      fallSpeed = fallSpeed * 0.98 + targetSpeed * 0.02;
+      // Breathing affects fall speed - very slow, meditative descent
+      const targetSpeed = 0.03 + breath * 0.02;
+      fallSpeed = fallSpeed * 0.95 + targetSpeed * 0.05;
       fallPosition += fallSpeed;
 
       // Touch to steer through the descent
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetTiltX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-          targetTiltY = (activeTouch.y / window.innerHeight - 0.5) * 1;
+          targetTiltX = (activeTouch.x / window.innerWidth - 0.5) * 0.8;
+          targetTiltY = (activeTouch.y / window.innerHeight - 0.5) * 0.4;
         }
       } else {
         // Gentle autonomous drift
-        targetTiltX = Math.sin(elapsed * 0.1) * 0.3;
-        targetTiltY = Math.cos(elapsed * 0.08) * 0.2;
+        targetTiltX = Math.sin(elapsed * 0.03) * 0.15;
+        targetTiltY = Math.cos(elapsed * 0.02) * 0.1;
       }
 
-      tiltX += (targetTiltX - tiltX) * 0.02;
-      tiltY += (targetTiltY - tiltY) * 0.02;
+      tiltX += (targetTiltX - tiltX) * 0.01;
+      tiltY += (targetTiltY - tiltY) * 0.01;
 
       // Move camera forward (falling sensation)
       camera.position.z = -fallPosition;
-      camera.position.x = tiltX * 3;
-      camera.position.y = tiltY * 2;
-      camera.rotation.z = -tiltX * 0.1;
+      camera.position.x = tiltX * 1.5;
+      camera.position.y = tiltY * 1;
+      camera.rotation.z = -tiltX * 0.05;
 
       // Animate each layer
       layers.forEach(item => {
@@ -6174,8 +5891,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const stars = new THREE.Points(starGeom, starMat);
     scene.add(stars);
 
-    let lookX = 0, lookY = 0;
-    let targetLookX = 0, targetLookY = 0;
+    // Roaming state
+    let moveX = 0, moveZ = 0;
+    let targetMoveX = 0, targetMoveZ = 0;
+    let lookAngle = 0, targetLookAngle = 0;
+    let lookPitch = 0, targetLookPitch = 0;
     const clock = new THREE.Clock();
 
     const animate = () => {
@@ -6183,23 +5903,41 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clock.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Touch to look around the landscape
+      // Touch controls direction and movement
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetLookX = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.4;
-          targetLookY = (activeTouch.y / window.innerHeight - 0.5) * Math.PI * 0.15;
+          // Horizontal touch position controls turning
+          targetLookAngle = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.8;
+          // Vertical touch position controls pitch and forward speed
+          const verticalPos = activeTouch.y / window.innerHeight;
+          targetLookPitch = (verticalPos - 0.5) * 0.3;
+          // Move forward faster when touching upper part of screen
+          const forwardSpeed = 0.03 + (1 - verticalPos) * 0.04;
+          targetMoveZ = -forwardSpeed;
         }
       } else {
-        // Gentle drift
-        targetLookX = Math.sin(elapsed * 0.03) * 0.2;
-        targetLookY = Math.sin(elapsed * 0.02) * 0.05;
+        // Gentle autonomous movement - slow drift forward
+        targetLookAngle = Math.sin(elapsed * 0.02) * 0.3;
+        targetLookPitch = Math.sin(elapsed * 0.015) * 0.05;
+        targetMoveZ = -0.015 - breath * 0.01;
       }
 
-      lookX += (targetLookX - lookX) * 0.02;
-      lookY += (targetLookY - lookY) * 0.02;
-      camera.rotation.y = lookX;
-      camera.rotation.x = lookY;
+      // Smooth movement interpolation
+      lookAngle += (targetLookAngle - lookAngle) * 0.015;
+      lookPitch += (targetLookPitch - lookPitch) * 0.015;
+      moveZ += (targetMoveZ - moveZ) * 0.02;
+
+      // Move in the direction we're facing
+      camera.position.x += Math.sin(lookAngle) * moveZ;
+      camera.position.z += Math.cos(lookAngle) * moveZ;
+
+      // Keep camera at consistent height
+      camera.position.y = 2 + Math.sin(elapsed * 0.1) * 0.2;
+
+      // Apply look direction
+      camera.rotation.y = lookAngle;
+      camera.rotation.x = lookPitch;
 
       // Mountains breathe subtly
       mountainLayers.forEach((m, i) => {
@@ -6600,7 +6338,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'crystalCave' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'mycelium' || currentMode === 'smokeWisps' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'wovenLight' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'infiniteDescent' || currentMode === 'mountains' || currentMode === 'underwater') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'crystalCave' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'wovenLight' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'infiniteDescent' || currentMode === 'mountains' || currentMode === 'underwater') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -6622,7 +6360,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'crystalCave' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'mycelium' && currentMode !== 'smokeWisps' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'wovenLight' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'infiniteDescent' && currentMode !== 'mountains' && currentMode !== 'underwater' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'crystalCave' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'wovenLight' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'infiniteDescent' && currentMode !== 'mountains' && currentMode !== 'underwater' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
