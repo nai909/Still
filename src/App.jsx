@@ -1169,10 +1169,6 @@ const gazeModes = [
   { key: 'flowerOfLife', name: 'Flower of Life' },
   // Organic/Abstract visuals
   { key: 'lavaTouch', name: 'Lava Lamp' },
-  // Crystalline/Geometric visuals
-  { key: 'crystalCave', name: 'Crystal Cave' },
-  // Ethereal visuals
-  { key: 'wovenLight', name: 'Woven Light' },
   // Deep experiential visuals
   { key: 'infiniteDescent', name: 'Descent' },
   // Landscape visuals
@@ -5307,262 +5303,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
-  // ========== CRYSTAL CAVE MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'crystalCave' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 6);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'auto';
-
-    const crystalGroup = new THREE.Group();
-    scene.add(crystalGroup);
-
-    // Raycaster for touch interaction
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    // Create crystals
-    const crystals = [];
-    const createCrystal = (pos, size, rotation) => {
-      const geometry = new THREE.ConeGeometry(size * 0.3, size, 6);
-      const material = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue, 50, 60),
-        wireframe: true,
-        transparent: true,
-        opacity: 0.6
-      });
-      const crystal = new THREE.Mesh(geometry, material);
-      crystal.position.copy(pos);
-      crystal.rotation.set(rotation.x, rotation.y, rotation.z);
-      crystal.userData = { baseOpacity: 0.6, pulsePhase: Math.random() * Math.PI * 2, size };
-      crystalGroup.add(crystal);
-      crystals.push({ mesh: crystal, geometry, material });
-
-      // Inner glow
-      const innerGeom = new THREE.ConeGeometry(size * 0.15, size * 0.8, 6);
-      const innerMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue, 60, 75),
-        transparent: true,
-        opacity: 0.3
-      });
-      const inner = new THREE.Mesh(innerGeom, innerMat);
-      crystal.add(inner);
-      crystals.push({ mesh: inner, geometry: innerGeom, material: innerMat });
-    };
-
-    // Generate crystal formations
-    for (let i = 0; i < 25; i++) {
-      const angle = (i / 25) * Math.PI * 2;
-      const radius = 2 + Math.random() * 2;
-      const height = (Math.random() - 0.5) * 3;
-      const size = 0.8 + Math.random() * 1.2;
-      createCrystal(
-        new THREE.Vector3(Math.cos(angle) * radius, height, Math.sin(angle) * radius),
-        size,
-        new THREE.Vector3(Math.random() - 0.5, 0, Math.random() - 0.5)
-      );
-    }
-
-    // Central cluster
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      createCrystal(
-        new THREE.Vector3(Math.cos(angle) * 0.5, -0.5 + Math.random(), Math.sin(angle) * 0.5),
-        1.5 + Math.random() * 0.5,
-        new THREE.Vector3((Math.random() - 0.5) * 0.3, 0, (Math.random() - 0.5) * 0.3)
-      );
-    }
-
-    let localScale = 1, localScaleVelocity = 0;
-    const clock = new THREE.Clock();
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
-
-      // Spring physics
-      const targetScale = 0.95 + breath * 0.1;
-      localScaleVelocity = localScaleVelocity * 0.9 + (targetScale - localScale) * 0.02;
-      localScale += localScaleVelocity;
-      crystalGroup.scale.setScalar(localScale);
-
-      // Touch-responsive rotation
-      if (touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          crystalGroup.rotation.y += normalizedX * 0.015;
-          crystalGroup.rotation.x += normalizedY * 0.008;
-        }
-      } else {
-        // Gentle auto-rotation when not touching
-        crystalGroup.rotation.y += 0.0005;
-      }
-
-      // Pulse crystals
-      crystals.forEach((c, i) => {
-        if (c.mesh.userData.pulsePhase !== undefined) {
-          const pulse = Math.sin(elapsed * 0.5 + c.mesh.userData.pulsePhase) * 0.5 + 0.5;
-          c.material.opacity = (0.4 + breath * 0.3) * (0.7 + pulse * 0.3);
-        }
-      });
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      crystals.forEach(c => { c.geometry.dispose(); c.material.dispose(); });
-      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
-
-  // ========== WOVEN LIGHT MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'wovenLight' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 5);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'auto';
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    const weaveGroup = new THREE.Group();
-    scene.add(weaveGroup);
-
-    // Create woven threads
-    const threads = [];
-    const threadCount = 20;
-
-    for (let i = 0; i < threadCount; i++) {
-      const isHorizontal = i < threadCount / 2;
-      const points = [];
-      const segments = 30;
-
-      for (let j = 0; j <= segments; j++) {
-        const t = j / segments;
-        if (isHorizontal) {
-          points.push(new THREE.Vector3(
-            (t - 0.5) * 5,
-            ((i % (threadCount / 2)) / (threadCount / 2) - 0.5) * 4,
-            0
-          ));
-        } else {
-          points.push(new THREE.Vector3(
-            ((i - threadCount / 2) / (threadCount / 2) - 0.5) * 5,
-            (t - 0.5) * 4,
-            0
-          ));
-        }
-      }
-
-      const curve = new THREE.CatmullRomCurve3(points);
-      const geometry = new THREE.TubeGeometry(curve, segments, 0.02, 8, false);
-      const material = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue, 50, 60),
-        transparent: true,
-        opacity: 0.5
-      });
-      const thread = new THREE.Mesh(geometry, material);
-      thread.userData = {
-        isHorizontal,
-        index: i,
-        phase: Math.random() * Math.PI * 2,
-        originalPoints: points.map(p => p.clone())
-      };
-      weaveGroup.add(thread);
-      threads.push({ mesh: thread, geometry, material, curve });
-    }
-
-    const clock = new THREE.Clock();
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
-
-      // Touch-responsive rotation
-      if (touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          weaveGroup.rotation.y += normalizedX * 0.015;
-          weaveGroup.rotation.x += normalizedY * 0.008;
-        }
-      } else {
-        weaveGroup.rotation.y = Math.sin(elapsed * 0.2) * 0.1;
-      }
-
-      threads.forEach((t, ti) => {
-        const positions = t.geometry.attributes.position.array;
-        const ud = t.mesh.userData;
-
-        for (let i = 0; i < positions.length; i += 3) {
-          const wave = Math.sin(elapsed * 0.5 + i * 0.1 + ud.phase) * 0.15 * breath;
-          positions[i + 2] = wave * (ud.isHorizontal ? 1 : -1);
-        }
-        t.geometry.attributes.position.needsUpdate = true;
-        t.material.opacity = 0.3 + breath * 0.3;
-      });
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      threads.forEach(t => { t.geometry.dispose(); t.material.dispose(); });
-      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
-
   // ========== INFINITE DESCENT MODE ==========
   // Falling forever through luminous geometric layers - the feeling of letting go
   React.useEffect(() => {
@@ -6338,7 +6078,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'crystalCave' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'wovenLight' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'infiniteDescent' || currentMode === 'mountains' || currentMode === 'underwater') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'infiniteDescent' || currentMode === 'mountains' || currentMode === 'underwater') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -6360,7 +6100,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'crystalCave' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'wovenLight' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'infiniteDescent' && currentMode !== 'mountains' && currentMode !== 'underwater' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'infiniteDescent' && currentMode !== 'mountains' && currentMode !== 'underwater' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
