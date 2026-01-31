@@ -1791,7 +1791,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         meshRef.current.scale.setScalar(scaleRef.current);
 
         // Z-position breathing (moves toward viewer on inhale)
-        const zOffset = (scaleRef.current - 0.85) * 2.3 - 0.3;
+        const zOffset = (scaleRef.current - 1.0) * 0.3;
         meshRef.current.position.z = zOffset;
 
         // Opacity synced to scale
@@ -1916,7 +1916,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     createBranch(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0), 1.4, 0, 6);
 
     // Spring physics state for this visualization
-    let localScale = 1;
+    let localScale = 1.0; // Match target scale at breath=0.5 (elapsed=0)
     let localScaleVelocity = 0;
 
     const animate = () => {
@@ -1924,18 +1924,18 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Touch-responsive rotation
+      // Touch-responsive rotation - slow and meditative
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
           const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          treeGroup.rotation.y += normalizedX * 0.02;
-          treeGroup.rotation.x += normalizedY * 0.01;
+          treeGroup.rotation.y += normalizedX * 0.015;
+          treeGroup.rotation.x += normalizedY * 0.008;
         }
       } else {
-        // Gentle auto-rotation when not touching
-        treeGroup.rotation.y += 0.0004;
+        // Very gentle auto-rotation when not touching
+        treeGroup.rotation.y += 0.0002;
       }
 
       // Spring-damper scale physics
@@ -1947,21 +1947,21 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       localScale += localScaleVelocity;
       treeGroup.scale.setScalar(localScale);
 
-      // Z-position breathing
-      const zOffset = (localScale - 0.9) * 2.0;
+      // Very subtle Z-position breathing
+      const zOffset = (localScale - 1.0) * 0.3;
       treeGroup.position.z = zOffset;
 
-      // Branches sway like they're underwater
+      // Branches sway very slowly like they're underwater
       branches.forEach(branch => {
-        const sway = Math.sin(elapsed * 0.3 + branch.userData.depth * 0.2 + branch.userData.phase) * 0.008 * branch.userData.depth;
-        branch.rotation.z += sway * 0.1;
+        const sway = Math.sin(elapsed * 0.1 + branch.userData.depth * 0.2 + branch.userData.phase) * 0.004 * branch.userData.depth;
+        branch.rotation.z += sway * 0.05;
         // Opacity synced to breath
         branch.material.opacity = 0.5 + localScale * 0.4;
       });
 
-      // Leaves pulse with breath
+      // Leaves pulse slowly with breath
       leaves.forEach(leaf => {
-        const pulse = 0.9 + Math.sin(elapsed * 0.8 + leaf.userData.phase) * 0.1;
+        const pulse = 0.9 + Math.sin(elapsed * 0.25 + leaf.userData.phase) * 0.1;
         leaf.scale.setScalar(pulse + breath * 0.15);
         leaf.material.opacity = 0.3 + localScale * 0.4;
       });
@@ -2059,7 +2059,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     createRipple();
 
     // Spring physics state
-    let localScale = 1;
+    let localScale = 1.0; // Match target scale at breath=0.5 (elapsed=0)
     let localScaleVelocity = 0;
 
     const animate = () => {
@@ -2105,8 +2105,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       core.scale.setScalar(localScale);
       coreMat.opacity = 0.4 + localScale * 0.4;
 
-      // Z-position breathing
-      const zOffset = (localScale - 0.85) * 2.0;
+      // Very subtle Z-position breathing
+      const zOffset = (localScale - 1.0) * 0.3;
       rippleGroup.position.z = zOffset;
 
       // Animate ripples expanding outward (slower in background mode)
@@ -2242,7 +2242,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     fernGroup.add(fern);
 
     // Spring physics state
-    let localScale = 1;
+    let localScale = 1.0; // Match target scale at breath=0.5 (elapsed=0)
     let localScaleVelocity = 0;
 
     const animate = () => {
@@ -2277,8 +2277,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       localScale += localScaleVelocity;
       fernGroup.scale.setScalar(localScale);
 
-      // Z-position breathing
-      const zOffset = (localScale - 0.9) * 2.0;
+      // Very subtle Z-position breathing
+      const zOffset = (localScale - 1.0) * 0.3;
       fernGroup.position.z = zOffset;
 
       // Opacity synced to scale
@@ -2410,7 +2410,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     let lastExhale = 0;
 
     // Spring physics state
-    let localScale = 1;
+    let localScale = 1.0; // Match target scale at breath=0.5 (elapsed=0)
     let localScaleVelocity = 0;
 
     const animate = () => {
@@ -2419,14 +2419,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const breath = getBreathPhase(elapsed);
       const isExhaling = breath < 0.4 && elapsed > 2;
 
-      // Touch-responsive rotation
+      // Touch-responsive rotation - slow and meditative
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
           const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          dandelionGroup.rotation.y += normalizedX * 0.02;
-          dandelionGroup.rotation.x += normalizedY * 0.01;
+          dandelionGroup.rotation.y += normalizedX * 0.015;
+          dandelionGroup.rotation.x += normalizedY * 0.008;
 
           // Release seeds when touched
           seeds.forEach(seed => {
@@ -2443,9 +2443,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
               if (dist < 100) { // Larger touch radius
                 seed.userData.attached = false;
                 seed.userData.velocity.set(
-                  (Math.random() - 0.5) * 0.03,
-                  0.015 + Math.random() * 0.015,
-                  (Math.random() - 0.5) * 0.03
+                  (Math.random() - 0.5) * 0.012,
+                  0.006 + Math.random() * 0.006,
+                  (Math.random() - 0.5) * 0.012
                 );
                 floatingSeeds.push(seed);
               }
@@ -2453,20 +2453,20 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           });
         }
       } else {
-        // Gentle auto-rotation when not touching
-        dandelionGroup.rotation.y += 0.0004;
+        // Very gentle auto-rotation when not touching
+        dandelionGroup.rotation.y += 0.0002;
       }
 
-      // Release seeds on exhale
-      if (isExhaling && elapsed - lastExhale > 3) {
+      // Release seeds on exhale - slow drift
+      if (isExhaling && elapsed - lastExhale > 4) {
         const attached = seeds.filter(s => s.userData.attached);
         const toRelease = attached.slice(0, 2);
         toRelease.forEach(seed => {
           seed.userData.attached = false;
           seed.userData.velocity.set(
-            (Math.random() - 0.5) * 0.015,
-            0.008 + Math.random() * 0.008,
-            (Math.random() - 0.5) * 0.015
+            (Math.random() - 0.5) * 0.006,
+            0.003 + Math.random() * 0.003,
+            (Math.random() - 0.5) * 0.006
           );
           floatingSeeds.push(seed);
         });
@@ -2482,14 +2482,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       localScale += localScaleVelocity;
       dandelionGroup.scale.setScalar(localScale);
 
-      // Z-position breathing
-      const zOffset = (localScale - 0.9) * 2.0;
+      // Very subtle Z-position breathing
+      const zOffset = (localScale - 1.0) * 0.3;
       dandelionGroup.position.z = zOffset;
 
-      // Animate attached seeds - gentle sway
+      // Animate attached seeds - very gentle sway
       seeds.forEach(seed => {
         if (seed.userData.attached) {
-          const sway = Math.sin(elapsed * 0.3 + seed.userData.phase) * 0.02;
+          const sway = Math.sin(elapsed * 0.1 + seed.userData.phase) * 0.01;
           seed.rotation.z = sway;
           seed.children.forEach(child => {
             if (child.material) {
@@ -2499,12 +2499,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
       });
 
-      // Animate floating seeds - drift upward slowly
+      // Animate floating seeds - drift upward very slowly
       floatingSeeds.forEach(seed => {
         seed.position.add(seed.userData.velocity);
-        seed.userData.velocity.y += 0.0001; // Gentle lift
-        seed.userData.velocity.x += Math.sin(elapsed + seed.userData.phase) * 0.0002;
-        seed.rotation.y += 0.004;
+        seed.userData.velocity.y += 0.00004; // Very gentle lift
+        seed.userData.velocity.x += Math.sin(elapsed + seed.userData.phase) * 0.00008;
+        seed.rotation.y += 0.0015;
 
         // Fade out as they rise
         const fadeStart = 2;
@@ -2632,7 +2632,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     succulentGroup.add(core);
 
     // Spring physics state
-    let localScale = 1;
+    let localScale = 1.0; // Match target scale at breath=0.5 (elapsed=0)
     let localScaleVelocity = 0;
 
     const animate = () => {
@@ -2640,18 +2640,18 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Touch-responsive rotation
+      // Touch-responsive rotation - slow and meditative
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
           const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          succulentGroup.rotation.y += normalizedX * 0.02;
-          succulentGroup.rotation.x += normalizedY * 0.01;
+          succulentGroup.rotation.y += normalizedX * 0.015;
+          succulentGroup.rotation.x += normalizedY * 0.008;
         }
       } else {
-        // Gentle auto-rotation when not touching
-        succulentGroup.rotation.y += 0.0008;
+        // Very gentle auto-rotation when not touching
+        succulentGroup.rotation.y += 0.0003;
       }
 
       // Spring-damper scale physics
@@ -2662,8 +2662,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       localScaleVelocity = localScaleVelocity * damping + force;
       localScale += localScaleVelocity;
 
-      // Z-position breathing
-      const zOffset = (localScale - 0.9) * 2.0;
+      // Very subtle Z-position breathing
+      const zOffset = (localScale - 1.0) * 0.3;
       succulentGroup.position.z = zOffset;
 
       // Breathing - leaves expand outward
@@ -2674,8 +2674,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         leaf.position.x = Math.cos(angle) * expandedRadius;
         leaf.position.z = Math.sin(angle) * expandedRadius;
 
-        // Gentle pulse
-        const pulse = 1 + Math.sin(elapsed * 0.5 + leaf.userData.phase) * 0.03;
+        // Very gentle pulse
+        const pulse = 1 + Math.sin(elapsed * 0.15 + leaf.userData.phase) * 0.03;
         leaf.scale.setScalar(pulse * localScale);
 
         leaf.material.opacity = 0.3 + localScale * 0.5;
@@ -2818,7 +2818,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     createBranch(new THREE.Vector3(0.3, startY, 0), new THREE.Vector3(0.3, -1, 0).normalize(), 0.5, 0, 5, 'right');
 
     // Spring physics state
-    let localScale = 1;
+    let localScale = 1.0; // Match target scale at breath=0.5 (elapsed=0)
     let localScaleVelocity = 0;
 
     const animate = () => {
@@ -2826,17 +2826,17 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Touch-responsive rotation
+      // Touch-responsive rotation - slow and meditative
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
           const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          lungsGroup.rotation.y += normalizedX * 0.02;
-          lungsGroup.rotation.x += normalizedY * 0.01;
+          lungsGroup.rotation.y += normalizedX * 0.015;
+          lungsGroup.rotation.x += normalizedY * 0.008;
         }
       } else {
-        lungsGroup.rotation.y += 0.0004;
+        lungsGroup.rotation.y += 0.0002;
       }
 
       // Spring-damper scale physics
@@ -2851,8 +2851,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       lungsGroup.scale.x = localScale;
       lungsGroup.scale.z = localScale * 0.8;
 
-      // Z-position breathing
-      const zOffset = (localScale - 0.9) * 2.0;
+      // Very subtle Z-position breathing
+      const zOffset = (localScale - 1.0) * 0.3;
       lungsGroup.position.z = zOffset;
 
       // Branches pulse with breath
@@ -2860,9 +2860,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         branch.material.opacity = 0.3 + localScale * 0.5;
       });
 
-      // Alveoli glow brighter during inhale
+      // Alveoli glow brighter during inhale - slow pulse
       alveoli.forEach(alveolus => {
-        const pulse = 0.8 + Math.sin(elapsed * 0.8 + alveolus.userData.phase) * 0.2;
+        const pulse = 0.8 + Math.sin(elapsed * 0.25 + alveolus.userData.phase) * 0.2;
         alveolus.scale.setScalar(pulse + (localScale - 0.9) * 1.5);
         alveolus.material.opacity = 0.3 + localScale * 0.5;
       });
@@ -2925,8 +2925,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     let bellFlashIntensity = 0;
 
     // Spring physics for fluid breathing
-    let springScaleY = 1;
-    let springScaleXZ = 1;
+    let springScaleY = 1.075; // Match target at breath=0.5
+    let springScaleXZ = 0.96; // Match target at breath=0.5
     let springVelocityY = 0;
     let springVelocityXZ = 0;
     let springZ = 0;
@@ -3203,9 +3203,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       jellyfishGroup.position.y = (springScaleY - 1.0) * 0.7;
       jellyfishGroup.position.z = springZ;
 
-      // Constant gentle rotation for ambient life
-      jellyfishGroup.rotation.y = Math.sin(elapsed * 0.2) * 0.1;
-      jellyfishGroup.rotation.x = Math.sin(elapsed * 0.15) * 0.05;
+      // Constant very gentle rotation for ambient life
+      jellyfishGroup.rotation.y = Math.sin(elapsed * 0.08) * 0.1;
+      jellyfishGroup.rotation.x = Math.sin(elapsed * 0.06) * 0.05;
 
       // Color transition
       const currentColor = new THREE.Color().lerpColors(COLORS.dim, COLORS.bell, colorLerp);
@@ -3223,16 +3223,16 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const delayedProgress = Math.max(0, breathProgress - tentacleDelay);
 
       tentacles.forEach((tentacle, i) => {
-        const noiseVal = noise(elapsed * 0.3 + tentacle.noiseOffset, i * 0.5, 0);
+        const noiseVal = noise(elapsed * 0.12 + tentacle.noiseOffset, i * 0.5, 0);
         const swayAmp = isReducedMotion ? 0.05 : (0.1 + noiseVal * 0.1);
 
         for (let j = 0; j < tentacle.points.length; j++) {
           const t = j / tentacle.points.length;
           const base = tentacle.basePoints[j];
 
-          // Sway based on noise
-          const swayX = Math.sin(elapsed * 0.5 + j * 0.2 + tentacle.angle) * swayAmp * t;
-          const swayZ = Math.cos(elapsed * 0.4 + j * 0.3 + tentacle.noiseOffset) * swayAmp * t;
+          // Sway based on noise - slow and meditative
+          const swayX = Math.sin(elapsed * 0.2 + j * 0.2 + tentacle.angle) * swayAmp * t;
+          const swayZ = Math.cos(elapsed * 0.15 + j * 0.3 + tentacle.noiseOffset) * swayAmp * t;
 
           // Breath response - flare on exhale, stream on inhale
           let breathOffset = 0;
@@ -3260,8 +3260,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
             base.z + swayZ + avoidZ + breathOffset * Math.sin(tentacle.angle)
           );
 
-          // Smooth lerp
-          tentacle.points[j].lerp(tentacle.targetPoints[j], 0.04);
+          // Very slow smooth lerp
+          tentacle.points[j].lerp(tentacle.targetPoints[j], 0.015);
         }
 
         // Rebuild tentacle geometry
@@ -3275,13 +3275,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         tentacle.mesh.material.color.copy(tentacleColor);
       });
 
-      // Oral arms animation
+      // Oral arms animation - slow and flowing
       oralArms.forEach((arm, i) => {
         for (let j = 1; j < arm.points.length; j++) {
           const t = j / arm.points.length;
-          const sway = Math.sin(elapsed * 0.3 + j * 0.4 + arm.noiseOffset) * 0.08 * t;
-          arm.points[j].x += sway * 0.01;
-          arm.points[j].z += Math.cos(elapsed * 0.25 + j * 0.3) * 0.08 * t * 0.01;
+          const sway = Math.sin(elapsed * 0.12 + j * 0.4 + arm.noiseOffset) * 0.08 * t;
+          arm.points[j].x += sway * 0.005;
+          arm.points[j].z += Math.cos(elapsed * 0.1 + j * 0.3) * 0.08 * t * 0.005;
         }
         const curve = new THREE.CatmullRomCurve3(arm.points);
         const newGeometry = new THREE.TubeGeometry(curve, 20, 0.04, 8, false);
@@ -3290,19 +3290,19 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         arm.mesh.material.color.copy(new THREE.Color().lerpColors(COLORS.dim, COLORS.tentacle, colorLerp));
       });
 
-      // Particle shimmer
+      // Particle shimmer - slow
       const positions = particles.geometry.attributes.position.array;
       for (let i = 0; i < particleCount; i++) {
-        const shimmer = Math.sin(elapsed * 2 + particlePhases[i]) * 0.5 + 0.5;
+        const shimmer = Math.sin(elapsed * 0.6 + particlePhases[i]) * 0.5 + 0.5;
         particleSizes[i] = (0.02 + shimmer * 0.03) * (0.5 + colorLerp * 0.5);
       }
       particles.material.opacity = 0.3 + colorLerp * 0.5;
       particles.geometry.attributes.position.needsUpdate = true;
 
-      // Ambient drift
+      // Ambient drift - very slow
       if (!isReducedMotion) {
-        jellyfishGroup.position.x += Math.sin(elapsed * 0.1) * 0.0002;
-        jellyfishGroup.position.z += Math.cos(elapsed * 0.08) * 0.0002;
+        jellyfishGroup.position.x += Math.sin(elapsed * 0.04) * 0.0001;
+        jellyfishGroup.position.z += Math.cos(elapsed * 0.03) * 0.0001;
       }
 
       // Auto-rotate after idle
@@ -3432,19 +3432,19 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         setBreathePhase('exhale', (breathCycle - 0.55) / 0.45);
       }
 
-      // Touch-responsive rotation (using parent's touchPointsRef)
+      // Touch-responsive rotation - slow and meditative
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
           const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          jellyfishGroup.rotation.y += normalizedX * 0.03;
-          jellyfishGroup.rotation.x += normalizedY * 0.02;
+          jellyfishGroup.rotation.y += normalizedX * 0.015;
+          jellyfishGroup.rotation.x += normalizedY * 0.008;
         }
         lastInteractionTime = Date.now();
       } else {
-        // Gentle auto-rotation when not touching
-        jellyfishGroup.rotation.y += 0.001;
+        // Very gentle auto-rotation when not touching
+        jellyfishGroup.rotation.y += 0.0004;
       }
 
       updateJellyfish(deltaTime, elapsed);
@@ -4362,7 +4362,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     scene.add(spores);
 
     // Spring physics state
-    let localScale = 1;
+    let localScale = 1.0; // Match target scale at breath=0.5 (elapsed=0)
     let localScaleVelocity = 0;
 
     const animate = () => {
@@ -4370,18 +4370,18 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Touch-responsive rotation
+      // Touch-responsive rotation - slow and meditative
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
           const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          mushroomGroup.rotation.y += normalizedX * 0.02;
-          mushroomGroup.rotation.x += normalizedY * 0.01;
+          mushroomGroup.rotation.y += normalizedX * 0.015;
+          mushroomGroup.rotation.x += normalizedY * 0.008;
         }
       } else {
-        // Gentle auto-rotation when not touching
-        mushroomGroup.rotation.y += 0.0004;
+        // Very gentle auto-rotation when not touching
+        mushroomGroup.rotation.y += 0.0002;
       }
 
       // Spring-damper scale physics
@@ -4392,40 +4392,40 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       localScaleVelocity = localScaleVelocity * damping + force;
       localScale += localScaleVelocity;
 
-      // Z-position breathing
-      const zOffset = (localScale - 0.9) * 2.0;
+      // Very subtle Z-position breathing
+      const zOffset = (localScale - 1.0) * 0.3;
       mushroomGroup.position.z = zOffset;
 
-      // Animate individual mushrooms
+      // Animate individual mushrooms - slow and meditative
       mushrooms.forEach((mushroom) => {
         // Scale synced to spring physics
         mushroom.scale.setScalar(localScale);
 
-        // Gentle bob
-        mushroom.position.y = mushroom.userData.baseY + Math.sin(elapsed * 0.5 + mushroom.userData.phase) * 0.05;
+        // Very gentle bob
+        mushroom.position.y = mushroom.userData.baseY + Math.sin(elapsed * 0.15 + mushroom.userData.phase) * 0.03;
 
-        // Rotate cap slightly
+        // Rotate cap very slowly
         const cap = mushroom.children[1];
         if (cap) {
-          cap.rotation.y = elapsed * mushroom.userData.rotationSpeed * 10;
+          cap.rotation.y = elapsed * mushroom.userData.rotationSpeed * 3;
         }
 
-        // Pulse spots
+        // Pulse spots slowly
         mushroom.children.forEach(child => {
           if (child.userData && child.userData.phase !== undefined) {
-            const pulse = 0.5 + Math.sin(elapsed * 2 + child.userData.phase) * 0.5;
+            const pulse = 0.5 + Math.sin(elapsed * 0.6 + child.userData.phase) * 0.5;
             child.material.opacity = 0.4 + pulse * 0.6 + breath * 0.2;
           }
         });
       });
 
-      // Animate spores floating upward
+      // Animate spores floating upward very slowly
       const positions = sporeGeom.attributes.position.array;
       for (let i = 0; i < sporeCount; i++) {
         const idx = i * 3;
-        positions[idx + 1] += 0.005 + Math.sin(elapsed + sporePhases[i]) * 0.002;
-        positions[idx] += Math.sin(elapsed * 0.5 + sporePhases[i]) * 0.002;
-        positions[idx + 2] += Math.cos(elapsed * 0.5 + sporePhases[i]) * 0.002;
+        positions[idx + 1] += 0.0015 + Math.sin(elapsed * 0.3 + sporePhases[i]) * 0.0006;
+        positions[idx] += Math.sin(elapsed * 0.15 + sporePhases[i]) * 0.0006;
+        positions[idx + 2] += Math.cos(elapsed * 0.15 + sporePhases[i]) * 0.0006;
 
         // Touch influence on spores
         touchPointsRef.current.forEach(point => {
@@ -4560,7 +4560,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     meshRef.current = group;
 
     // Spring physics state
-    let localScale = 1;
+    let localScale = 1.0; // Match target scale at breath=0.5 (elapsed=0)
     let localScaleVelocity = 0;
 
     const animate = () => {
@@ -4595,7 +4595,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         meshRef.current.scale.setScalar(localScale);
 
         // Z-position breathing
-        const zOffset = (localScale - 0.85) * 2.3 - 0.3;
+        const zOffset = (localScale - 1.0) * 0.3;
         meshRef.current.position.z = zOffset;
 
         // Opacity synced to scale
@@ -4720,7 +4720,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       fishGroup.userData = {
         baseAngle: angle,
         orbitRadius: radius,
-        speed: 0.15 + Math.random() * 0.1,
+        speed: 0.05 + Math.random() * 0.03, // Much slower swimming
         wobblePhase: Math.random() * Math.PI * 2,
         depthPhase: Math.random() * Math.PI * 2,
         tail: tail
@@ -4792,7 +4792,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
 
     // Spring physics state
-    let localScale = 1;
+    let localScale = 1.0; // Match target scale at breath=0.5 (elapsed=0)
     let localScaleVelocity = 0;
     let lastTouchTime = 0;
 
@@ -4801,7 +4801,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clockRef.current.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Touch-responsive camera rotation
+      // Touch-responsive camera rotation - slow and meditative
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
@@ -4812,7 +4812,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           camera.lookAt(0, 0, 0);
 
           // Create ripples on touch
-          if (elapsed - lastTouchTime > 0.3) {
+          if (elapsed - lastTouchTime > 0.5) {
             const touchX = normalizedX * 3;
             const touchZ = normalizedY * 3;
             createRipple(touchX, touchZ);
@@ -4820,7 +4820,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           }
         }
       } else {
-        pondGroup.rotation.y += 0.0002;
+        pondGroup.rotation.y += 0.0001;
       }
 
       // Spring-damper scale physics
@@ -4832,26 +4832,26 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       localScale += localScaleVelocity;
       pondGroup.scale.setScalar(localScale);
 
-      // Z-position breathing
-      const zOffset = (localScale - 0.95) * 1.5;
+      // Very subtle Z-position breathing
+      const zOffset = (localScale - 1.0) * 0.3;
       pondGroup.position.z = zOffset;
 
-      // Animate fish
+      // Animate fish - slow and meditative
       fishArray.forEach((fish, i) => {
         const data = fish.userData;
-        const speedMod = 0.7 + breath * 0.6; // Faster on inhale
+        const speedMod = 0.3 + breath * 0.2; // Much slower swimming
 
-        // Figure-8 swimming pattern
+        // Figure-8 swimming pattern - slow and graceful
         const t = elapsed * data.speed * speedMod + data.baseAngle;
         const x = Math.sin(t) * data.orbitRadius;
         const z = Math.sin(t * 2) * data.orbitRadius * 0.5;
 
-        // Smooth position update
-        fish.position.x += (x - fish.position.x) * 0.02;
-        fish.position.z += (z - fish.position.z) * 0.02;
+        // Very smooth position update
+        fish.position.x += (x - fish.position.x) * 0.008;
+        fish.position.z += (z - fish.position.z) * 0.008;
 
-        // Depth variation with breath
-        const depthWave = Math.sin(elapsed * 0.5 + data.depthPhase) * 0.1;
+        // Depth variation with breath - slow
+        const depthWave = Math.sin(elapsed * 0.15 + data.depthPhase) * 0.1;
         fish.position.y = -0.2 + depthWave + breath * 0.05;
 
         // Face direction of movement
@@ -4862,30 +4862,30 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           fish.rotation.y = targetAngle;
         }
 
-        // Tail waggle
-        data.tail.rotation.y = Math.sin(elapsed * 8 * speedMod + data.wobblePhase) * 0.3;
+        // Tail waggle - slow and flowing
+        data.tail.rotation.y = Math.sin(elapsed * 2.5 * speedMod + data.wobblePhase) * 0.2;
 
-        // Body undulation
-        fish.rotation.z = Math.sin(elapsed * 4 * speedMod + data.wobblePhase) * 0.05;
+        // Body undulation - gentle
+        fish.rotation.z = Math.sin(elapsed * 1.2 * speedMod + data.wobblePhase) * 0.03;
       });
 
-      // Animate water surface
+      // Animate water surface - very slow ripples
       const positions = waterGeom.attributes.position.array;
       for (let i = 0; i < positions.length; i += 3) {
         const x = positions[i];
         const z = positions[i + 1];
-        positions[i + 2] = Math.sin(x * 2 + elapsed) * 0.02 +
-                          Math.cos(z * 2 + elapsed * 0.7) * 0.02 +
-                          breath * 0.03;
+        positions[i + 2] = Math.sin(x * 2 + elapsed * 0.3) * 0.015 +
+                          Math.cos(z * 2 + elapsed * 0.2) * 0.015 +
+                          breath * 0.02;
       }
       waterGeom.attributes.position.needsUpdate = true;
       waterMat.opacity = 0.2 + breath * 0.15;
 
-      // Animate lily pads
+      // Animate lily pads - very slow bobbing
       lilyPads.forEach(lily => {
-        const bob = Math.sin(elapsed * 0.8 + lily.userData.phase) * 0.02;
-        lily.position.y = 0.12 + bob + breath * 0.02;
-        lily.rotation.z = Math.sin(elapsed * 0.3 + lily.userData.phase) * 0.05;
+        const bob = Math.sin(elapsed * 0.25 + lily.userData.phase) * 0.015;
+        lily.position.y = 0.12 + bob + breath * 0.015;
+        lily.rotation.z = Math.sin(elapsed * 0.1 + lily.userData.phase) * 0.03;
       });
 
       // Animate and cleanup ripples
@@ -5021,13 +5021,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         radius,
         position: new THREE.Vector3(x, y, z),
         velocity: new THREE.Vector3(
-          (Math.random() - 0.5) * 0.01,
-          (Math.random() - 0.5) * 0.01,
-          (Math.random() - 0.5) * 0.005
+          (Math.random() - 0.5) * 0.004,
+          (Math.random() - 0.5) * 0.004,
+          (Math.random() - 0.5) * 0.002
         ),
         phase: Math.random() * Math.PI * 2,
-        floatSpeed: 0.15 + Math.random() * 0.15,
-        wobbleSpeed: 0.3 + Math.random() * 0.2,
+        floatSpeed: 0.05 + Math.random() * 0.04, // Much slower floating
+        wobbleSpeed: 0.1 + Math.random() * 0.06, // Much slower wobble
         wobbleIntensity: 0.12 + Math.random() * 0.08,
         hue: blobHue,
       };
@@ -5160,7 +5160,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     renderer.domElement.addEventListener('touchstart', handlePointerDown, { passive: false });
 
     // Spring physics for group
-    let localScale = 1;
+    let localScale = 1.0; // Match target scale at breath=0.5 (elapsed=0)
     let localScaleVelocity = 0;
 
     const animate = () => {
@@ -5176,31 +5176,31 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       localScaleVelocity = localScaleVelocity * damping + force;
       localScale += localScaleVelocity;
       lavaGroup.scale.setScalar(localScale);
-      lavaGroup.position.z = (localScale - 0.85) * 2.3 - 0.3;
+      lavaGroup.position.z = (localScale - 1.0) * 0.3;
 
-      // Touch-responsive rotation
+      // Touch-responsive rotation - slow and meditative
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
           const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          lavaGroup.rotation.y += normalizedX * 0.02;
-          lavaGroup.rotation.x += normalizedY * 0.01;
+          lavaGroup.rotation.y += normalizedX * 0.015;
+          lavaGroup.rotation.x += normalizedY * 0.008;
         }
       } else {
-        // Gentle auto-rotation when not touching
-        lavaGroup.rotation.y += 0.0003;
+        // Very gentle auto-rotation when not touching
+        lavaGroup.rotation.y += 0.00015;
       }
 
-      // Animate blobs
+      // Animate blobs - slow and meditative
       blobs.forEach((blob) => {
-        // Lava lamp physics - vertical oscillation
-        const verticalOsc = Math.sin(elapsed * blob.floatSpeed + blob.phase) * 0.4;
-        blob.position.y += (verticalOsc - (blob.position.y - blob.mesh.position.y)) * 0.02;
+        // Lava lamp physics - very slow vertical oscillation
+        const verticalOsc = Math.sin(elapsed * blob.floatSpeed + blob.phase) * 0.3;
+        blob.position.y += (verticalOsc - (blob.position.y - blob.mesh.position.y)) * 0.008;
 
-        // Gentle drift
-        blob.position.x += Math.sin(elapsed * 0.08 + blob.phase * 1.5) * 0.001;
-        blob.position.z += Math.cos(elapsed * 0.06 + blob.phase * 0.7) * 0.0005;
+        // Very gentle drift
+        blob.position.x += Math.sin(elapsed * 0.03 + blob.phase * 1.5) * 0.0004;
+        blob.position.z += Math.cos(elapsed * 0.02 + blob.phase * 0.7) * 0.0002;
 
         // Apply velocity
         blob.position.add(blob.velocity);
@@ -5235,7 +5235,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           const noiseVal = noise3D(
             ox * 1.5 + blob.phase,
             oy * 1.5 + elapsed * blob.wobbleSpeed,
-            oz * 1.5 + elapsed * 0.15
+            oz * 1.5 + elapsed * 0.05
           );
 
           const displacement = noiseVal * blob.wobbleIntensity * (0.8 + breath * 0.4);
@@ -5254,14 +5254,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         blob.mesh.material.opacity = 0.5 + breath * 0.35;
       });
 
-      // Animate glow particles
+      // Animate glow particles - slow drift
       const glowPositionsArr = glowGeom.attributes.position.array;
       for (let i = 0; i < glowParticleCount; i++) {
         const i3 = i * 3;
         const vel = glowVelocities[i];
-        glowPositionsArr[i3] += vel.x + Math.sin(elapsed * 0.3 + vel.phase) * 0.002;
-        glowPositionsArr[i3 + 1] += vel.y + Math.cos(elapsed * 0.2 + vel.phase) * 0.002;
-        glowPositionsArr[i3 + 2] += vel.z;
+        glowPositionsArr[i3] += vel.x * 0.4 + Math.sin(elapsed * 0.1 + vel.phase) * 0.0008;
+        glowPositionsArr[i3 + 1] += vel.y * 0.4 + Math.cos(elapsed * 0.07 + vel.phase) * 0.0008;
+        glowPositionsArr[i3 + 2] += vel.z * 0.4;
 
         if (glowPositionsArr[i3] > 3) glowPositionsArr[i3] = -3;
         if (glowPositionsArr[i3] < -3) glowPositionsArr[i3] = 3;
