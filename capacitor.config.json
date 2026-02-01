@@ -1,6 +1,6 @@
 {
-  "appId": "com.still.meditation",
-  "appName": "Still",
+  "appId": "com.psyense.app",
+  "appName": "Psyense",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

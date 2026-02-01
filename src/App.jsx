@@ -1171,7 +1171,8 @@ const gazeModes = [
   { key: 'lavaTouch', name: 'Lava Lamp' },
   // Landscape visuals
   { key: 'mountains', name: 'Mountains' },
-  { key: 'canyon', name: 'Canyon' },
+  { key: 'cave', name: 'Cave' },
+  { key: 'maloka', name: 'Maloka' },
   { key: 'underwater', name: 'Abyss' },
 ];
 
@@ -1838,8 +1839,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 3, 10);
-    camera.lookAt(0, 2, 0);
+    camera.position.set(0, 4, 16);
+    camera.lookAt(0, 3, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -5426,17 +5427,19 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
-  // ========== CANYON MODE ==========
-  // Winding through ancient desert gorges - deep time, erosion, stillness
+  // ========== CAVE MODE ==========
+  // First-person journey through endless crystalline cave tunnel
   React.useEffect(() => {
-    if (currentMode !== 'canyon' || !containerRef.current || typeof THREE === 'undefined') return;
+    if (currentMode !== 'cave' || !containerRef.current || typeof THREE === 'undefined') return;
 
     // Clear any residual touch data from navigation
     touchPointsRef.current = [];
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 1.5, 0);
+    scene.fog = new THREE.FogExp2(0x000000, 0.04);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -5452,151 +5455,205 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
     };
 
-    // Canyon walls - two sides creating a winding path
-    const wallSegments = 30;
-    const walls = [];
-    const pathPoints = [];
+    // Tunnel segments - rings of stalactites/stalagmites
+    const tunnelSegments = [];
+    const segmentCount = 40;
+    const segmentSpacing = 3;
+    const tunnelRadius = 4;
 
-    // Generate winding path
-    for (let i = 0; i < wallSegments; i++) {
-      const z = -i * 8;
-      const curve = Math.sin(i * 0.3) * 6;
-      pathPoints.push({ x: curve, z });
-    }
+    // Create a single stalactite geometry to reuse
+    const createStalactite = (length, baseWidth) => {
+      const geometry = new THREE.ConeGeometry(baseWidth, length, 4, 1);
+      return geometry;
+    };
 
-    // Create canyon walls on both sides
-    [-1, 1].forEach(side => {
-      const geometry = new THREE.PlaneGeometry(15, 25, 20, 30);
-      const positions = geometry.attributes.position.array;
+    // Create tunnel segments
+    for (let seg = 0; seg < segmentCount; seg++) {
+      const segmentGroup = new THREE.Group();
+      const z = -seg * segmentSpacing;
 
-      for (let i = 0; i < positions.length; i += 3) {
-        const localX = positions[i];
-        const localY = positions[i + 1];
-        const rockNoise = Math.sin(localY * 0.5) * Math.cos(localX * 0.3) * 1.5;
-        const erosion = Math.sin(localY * 0.2 + localX * 0.1) * 0.8;
-        positions[i] += rockNoise + erosion;
-      }
-      geometry.computeVertexNormals();
+      // Random stalactites around the ceiling
+      const stalactiteCount = 8 + Math.floor(Math.random() * 6);
+      const stalactites = [];
 
-      for (let seg = 0; seg < wallSegments - 1; seg++) {
+      for (let i = 0; i < stalactiteCount; i++) {
+        const angle = (i / stalactiteCount) * Math.PI * 2 + Math.random() * 0.3;
+        const length = 0.5 + Math.random() * 1.5;
+        const baseWidth = 0.08 + Math.random() * 0.12;
+
+        const geometry = createStalactite(length, baseWidth);
         const material = new THREE.MeshBasicMaterial({
-          color: hslToHex(hue, 25, 28 + Math.random() * 10),
+          color: hslToHex(hue, 45, 35 + Math.random() * 20),
           wireframe: true,
           transparent: true,
-          opacity: 0.35
+          opacity: 0.5 + Math.random() * 0.3
         });
 
-        const wall = new THREE.Mesh(geometry.clone(), material);
-        wall.rotation.y = side * Math.PI / 2;
-        wall.position.x = pathPoints[seg].x + side * 4;
-        wall.position.z = pathPoints[seg].z - 4;
-        wall.position.y = 8;
-        scene.add(wall);
-        walls.push({ mesh: wall, geometry: wall.geometry, material, seg });
-      }
-    });
+        const stalactite = new THREE.Mesh(geometry, material);
 
-    // Canyon floor
-    const floorGeometry = new THREE.PlaneGeometry(10, wallSegments * 8, 15, 60);
-    floorGeometry.rotateX(-Math.PI / 2);
-    const floorPositions = floorGeometry.attributes.position.array;
-    for (let i = 0; i < floorPositions.length; i += 3) {
-      const z = floorPositions[i + 2];
-      const segIndex = Math.floor(-z / 8);
-      if (segIndex >= 0 && segIndex < pathPoints.length) {
-        floorPositions[i] += pathPoints[segIndex].x;
-      }
-      floorPositions[i + 1] = Math.random() * 0.2;
-    }
-    const floorMaterial = new THREE.MeshBasicMaterial({
-      color: hslToHex(hue, 20, 22),
-      wireframe: true,
-      transparent: true,
-      opacity: 0.25
-    });
-    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.position.z = -wallSegments * 4;
-    scene.add(floor);
+        // Position on ceiling (top half of tunnel)
+        const heightVariation = 0.7 + Math.random() * 0.3;
+        stalactite.position.x = Math.cos(angle) * tunnelRadius * heightVariation;
+        stalactite.position.y = Math.abs(Math.sin(angle)) * tunnelRadius * heightVariation + 1;
+        stalactite.position.z = z + (Math.random() - 0.5) * segmentSpacing * 0.5;
 
-    // Dust particles floating in sunbeams
-    const dustCount = 200;
-    const dustPositions = new Float32Array(dustCount * 3);
-    for (let i = 0; i < dustCount; i++) {
-      dustPositions[i * 3] = (Math.random() - 0.5) * 8;
-      dustPositions[i * 3 + 1] = Math.random() * 15;
-      dustPositions[i * 3 + 2] = (Math.random() - 0.5) * wallSegments * 8;
+        // Point downward with slight random tilt
+        stalactite.rotation.x = Math.PI + (Math.random() - 0.5) * 0.3;
+        stalactite.rotation.z = (Math.random() - 0.5) * 0.2;
+
+        // Store phase for animation
+        stalactite.userData.phase = Math.random() * Math.PI * 2;
+        stalactite.userData.pulseSpeed = 0.5 + Math.random() * 0.5;
+        stalactite.userData.baseOpacity = material.opacity;
+
+        scene.add(stalactite);
+        stalactites.push({ mesh: stalactite, material, geometry });
+      }
+
+      // Some stalagmites on the floor (fewer)
+      const stalagmiteCount = 3 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < stalagmiteCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const length = 0.3 + Math.random() * 0.8;
+        const baseWidth = 0.06 + Math.random() * 0.08;
+
+        const geometry = createStalactite(length, baseWidth);
+        const material = new THREE.MeshBasicMaterial({
+          color: hslToHex(hue, 40, 25 + Math.random() * 15),
+          wireframe: true,
+          transparent: true,
+          opacity: 0.35 + Math.random() * 0.2
+        });
+
+        const stalagmite = new THREE.Mesh(geometry, material);
+
+        // Position on floor
+        const dist = 1 + Math.random() * (tunnelRadius - 1.5);
+        stalagmite.position.x = Math.cos(angle) * dist;
+        stalagmite.position.y = -2 + length / 2;
+        stalagmite.position.z = z + (Math.random() - 0.5) * segmentSpacing;
+
+        // Point upward
+        stalagmite.rotation.x = (Math.random() - 0.5) * 0.15;
+        stalagmite.rotation.z = (Math.random() - 0.5) * 0.15;
+
+        stalagmite.userData.phase = Math.random() * Math.PI * 2;
+        stalagmite.userData.pulseSpeed = 0.3 + Math.random() * 0.3;
+        stalagmite.userData.baseOpacity = material.opacity;
+
+        scene.add(stalagmite);
+        stalactites.push({ mesh: stalagmite, material, geometry });
+      }
+
+      tunnelSegments.push({ group: segmentGroup, stalactites, z: seg });
     }
-    const dustGeom = new THREE.BufferGeometry();
-    dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
-    const dustMat = new THREE.PointsMaterial({
-      color: hslToHex(hue, 30, 55),
-      size: 0.08,
+
+    // Ambient particles (dust/sparkles in the air)
+    const particleCount = 150;
+    const particlePositions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+      particlePositions[i * 3] = (Math.random() - 0.5) * tunnelRadius * 2;
+      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 4;
+      particlePositions[i * 3 + 2] = -Math.random() * segmentCount * segmentSpacing;
+    }
+    const particleGeom = new THREE.BufferGeometry();
+    particleGeom.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particleMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 50, 60),
+      size: 0.03,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.4,
       blending: THREE.AdditiveBlending
     });
-    const dust = new THREE.Points(dustGeom, dustMat);
-    scene.add(dust);
+    const particles = new THREE.Points(particleGeom, particleMat);
+    scene.add(particles);
 
-    // Roaming state
-    let moveZ = 0, targetMoveZ = 0;
+    const clock = new THREE.Clock();
+    let cameraZ = 0;
+
+    // Roaming state for touch controls
     let lookAngle = 0, targetLookAngle = 0;
     let lookPitch = 0, targetLookPitch = 0;
-    const clock = new THREE.Clock();
+    let moveSpeed = 0.015, targetMoveSpeed = 0.015;
+    let cameraX = 0, targetCameraX = 0;
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clock.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Very slow and gentle touch controls
+      // Touch controls for perspective
       if (touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
-          targetLookAngle = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.25;
+          // Horizontal: look left/right
+          targetLookAngle = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.4;
+          // Vertical: look up/down
           const verticalPos = activeTouch.y / window.innerHeight;
-          targetLookPitch = (verticalPos - 0.5) * 0.1;
-          const forwardSpeed = 0.004 + (1 - verticalPos) * 0.008;
-          targetMoveZ = -forwardSpeed;
+          targetLookPitch = (verticalPos - 0.5) * 0.4;
+          // Vertical also controls speed - touch higher to go faster
+          targetMoveSpeed = 0.008 + (1 - verticalPos) * 0.025;
+          // Slight lateral movement based on look direction
+          targetCameraX = -targetLookAngle * 0.5;
         }
       } else {
-        // Very gentle autonomous drift - floating in space
-        targetLookAngle = Math.sin(elapsed * 0.008) * 0.1;
-        targetLookPitch = Math.sin(elapsed * 0.006) * 0.02;
-        targetMoveZ = -0.004;
+        // Gentle autonomous drift when not touching
+        targetLookAngle = Math.sin(elapsed * 0.05) * 0.15;
+        targetLookPitch = Math.sin(elapsed * 0.04) * 0.08;
+        targetMoveSpeed = 0.012 + breath * 0.004;
+        targetCameraX = Math.sin(elapsed * 0.03) * 0.3;
       }
 
-      // Very slow interpolation
-      lookAngle += (targetLookAngle - lookAngle) * 0.005;
-      lookPitch += (targetLookPitch - lookPitch) * 0.005;
-      moveZ += (targetMoveZ - moveZ) * 0.008;
+      // Smooth interpolation
+      lookAngle += (targetLookAngle - lookAngle) * 0.03;
+      lookPitch += (targetLookPitch - lookPitch) * 0.03;
+      moveSpeed += (targetMoveSpeed - moveSpeed) * 0.02;
+      cameraX += (targetCameraX - cameraX) * 0.02;
 
-      // Follow the winding path
-      const currentZ = camera.position.z;
-      const segIndex = Math.floor(-currentZ / 8);
-      if (segIndex >= 0 && segIndex < pathPoints.length - 1) {
-        const t = (-currentZ / 8) - segIndex;
-        const currentX = pathPoints[segIndex].x * (1 - t) + pathPoints[Math.min(segIndex + 1, pathPoints.length - 1)].x * t;
-        camera.position.x += (currentX - camera.position.x) * 0.05;
-      }
-
-      camera.position.z += moveZ;
-      camera.position.y = 1.5 + Math.sin(elapsed * 0.08) * 0.15;
+      // Apply camera movement
+      cameraZ -= moveSpeed;
+      camera.position.z = cameraZ;
+      camera.position.x = cameraX;
+      camera.position.y = Math.sin(elapsed * 0.08) * 0.1;
       camera.rotation.y = lookAngle;
       camera.rotation.x = lookPitch;
+      camera.rotation.z = Math.sin(elapsed * 0.05) * 0.015;
 
-      // Dust drifts slowly
-      const dPos = dustGeom.attributes.position.array;
-      for (let i = 0; i < dustCount; i++) {
-        dPos[i * 3 + 1] += 0.003 + breath * 0.001;
-        dPos[i * 3] += Math.sin(elapsed + i) * 0.001;
-        if (dPos[i * 3 + 1] > 15) {
-          dPos[i * 3 + 1] = 0;
-          dPos[i * 3 + 2] = camera.position.z - Math.random() * 30;
+      // Animate stalactites - subtle pulse/glow
+      tunnelSegments.forEach(segment => {
+        segment.stalactites.forEach(({ mesh, material }) => {
+          const phase = mesh.userData.phase;
+          const speed = mesh.userData.pulseSpeed;
+          const pulse = 0.7 + Math.sin(elapsed * speed + phase) * 0.3;
+          material.opacity = mesh.userData.baseOpacity * pulse * (0.8 + breath * 0.2);
+
+          // Subtle sway
+          mesh.rotation.x += Math.sin(elapsed * 0.2 + phase) * 0.0003;
+        });
+      });
+
+      // Recycle segments that go behind camera
+      tunnelSegments.forEach(segment => {
+        segment.stalactites.forEach(({ mesh }) => {
+          if (mesh.position.z > cameraZ + 5) {
+            mesh.position.z -= segmentCount * segmentSpacing;
+          }
+        });
+      });
+
+      // Recycle particles
+      const pPos = particleGeom.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        if (pPos[i * 3 + 2] > cameraZ + 3) {
+          pPos[i * 3 + 2] -= segmentCount * segmentSpacing;
+          pPos[i * 3] = (Math.random() - 0.5) * tunnelRadius * 2;
+          pPos[i * 3 + 1] = (Math.random() - 0.5) * 4;
         }
+        // Gentle float
+        pPos[i * 3 + 1] += Math.sin(elapsed + i) * 0.001;
       }
-      dustGeom.attributes.position.needsUpdate = true;
-      dustMat.opacity = 0.2 + breath * 0.2;
+      particleGeom.attributes.position.needsUpdate = true;
+      particleMat.opacity = 0.3 + breath * 0.2;
 
       renderer.render(scene, camera);
     };
@@ -5612,9 +5669,445 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     return () => {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      walls.forEach(w => { w.geometry.dispose(); w.material.dispose(); });
-      floorGeometry.dispose(); floorMaterial.dispose();
-      dustGeom.dispose(); dustMat.dispose();
+      tunnelSegments.forEach(segment => {
+        segment.stalactites.forEach(({ geometry, material }) => {
+          geometry.dispose();
+          material.dispose();
+        });
+      });
+      particleGeom.dispose();
+      particleMat.dispose();
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
+  // ========== MALOKA MODE ==========
+  // Ayahuasca ceremony space with Shipibo kené patterns
+  React.useEffect(() => {
+    if (currentMode !== 'maloka' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    // Clear any residual touch data from navigation
+    touchPointsRef.current = [];
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x000000, 0.012);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1.2, 4);
+    camera.lookAt(0, 1, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'auto';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const allGeometries = [];
+    const allMaterials = [];
+    const animatedElements = [];
+
+    // Materials using user's hue
+    const wireframeMaterial = new THREE.LineBasicMaterial({
+      color: hslToHex(hue, 90, 70),
+      transparent: true,
+      opacity: 0.9
+    });
+    allMaterials.push(wireframeMaterial);
+
+    const dimWireframeMaterial = new THREE.LineBasicMaterial({
+      color: hslToHex(hue, 80, 60),
+      transparent: true,
+      opacity: 0.6
+    });
+    allMaterials.push(dimWireframeMaterial);
+
+    // Create maloca structure
+    const postCount = 8;
+    const radius = 8;
+    const postHeight = 4;
+
+    for (let i = 0; i < postCount; i++) {
+      const angle = (i / postCount) * Math.PI * 2;
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+
+      // Vertical posts
+      const postGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x, 0, z),
+        new THREE.Vector3(x, postHeight, z)
+      ]);
+      allGeometries.push(postGeometry);
+      const post = new THREE.Line(postGeometry, wireframeMaterial);
+      scene.add(post);
+
+      // Horizontal beams
+      const nextAngle = ((i + 1) / postCount) * Math.PI * 2;
+      const nextX = Math.cos(nextAngle) * radius;
+      const nextZ = Math.sin(nextAngle) * radius;
+
+      const beamGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x, postHeight, z),
+        new THREE.Vector3(nextX, postHeight, nextZ)
+      ]);
+      allGeometries.push(beamGeometry);
+      const beam = new THREE.Line(beamGeometry, wireframeMaterial);
+      scene.add(beam);
+
+      // Roof beams to center
+      const roofGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x, postHeight, z),
+        new THREE.Vector3(0, postHeight + 3, 0)
+      ]);
+      allGeometries.push(roofGeometry);
+      const roofBeam = new THREE.Line(roofGeometry, dimWireframeMaterial);
+      scene.add(roofBeam);
+    }
+
+    // Roof rings
+    for (let ring = 1; ring <= 5; ring++) {
+      const ringRadius = radius * (1 - ring * 0.18);
+      const ringHeight = postHeight + ring * 0.55;
+      const points = [];
+
+      for (let i = 0; i <= 32; i++) {
+        const angle = (i / 32) * Math.PI * 2;
+        points.push(new THREE.Vector3(
+          Math.cos(angle) * ringRadius,
+          ringHeight,
+          Math.sin(angle) * ringRadius
+        ));
+      }
+
+      const ringGeometry = new THREE.BufferGeometry().setFromPoints(points);
+      allGeometries.push(ringGeometry);
+      const ringLine = new THREE.Line(ringGeometry, dimWireframeMaterial);
+      scene.add(ringLine);
+    }
+
+    // Shipibo kené floor patterns
+    const patternMaterial = new THREE.LineBasicMaterial({
+      color: hslToHex(hue, 90, 70),
+      transparent: true,
+      opacity: 0.7
+    });
+    allMaterials.push(patternMaterial);
+
+    const accentMaterial = new THREE.LineBasicMaterial({
+      color: hslToHex(hue + 180, 85, 65), // Complementary color
+      transparent: true,
+      opacity: 0.6
+    });
+    allMaterials.push(accentMaterial);
+
+    const dimMaterial = new THREE.LineBasicMaterial({
+      color: hslToHex(hue, 80, 60),
+      transparent: true,
+      opacity: 0.45
+    });
+    allMaterials.push(dimMaterial);
+
+    // Concentric zigzag circles
+    const patternGroup = new THREE.Group();
+    for (let ring = 1; ring <= 15; ring++) {
+      const ringRadius = ring * 0.45;
+      const points = [];
+      const zigzagAmp = 0.04 + (ring % 3) * 0.02;
+      const segments = 60 + ring * 3;
+
+      for (let i = 0; i <= segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const zigzag = (i % 2 === 0) ? zigzagAmp : -zigzagAmp;
+        const r = ringRadius + zigzag;
+        points.push(new THREE.Vector3(
+          Math.cos(angle) * r,
+          0.01,
+          Math.sin(angle) * r
+        ));
+      }
+
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      allGeometries.push(geometry);
+      let mat;
+      if (ring % 3 === 0) mat = accentMaterial;
+      else if (ring % 3 === 1) mat = patternMaterial;
+      else mat = dimMaterial;
+
+      const line = new THREE.Line(geometry, mat.clone());
+      allMaterials.push(line.material);
+      line.userData.ring = ring;
+      animatedElements.push(line);
+      patternGroup.add(line);
+    }
+
+    // Radiating stepped lines
+    for (let i = 0; i < 24; i++) {
+      const angle = (i / 24) * Math.PI * 2;
+      const points = [];
+
+      for (let j = 0; j < 30; j++) {
+        const dist = 0.5 + j * 0.22;
+        const stepOffset = (j % 2 === 0) ? 0.03 : -0.03;
+        const a = angle + stepOffset;
+        points.push(new THREE.Vector3(
+          Math.cos(a) * dist,
+          0.01,
+          Math.sin(a) * dist
+        ));
+      }
+
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      allGeometries.push(geo);
+      const mat = i % 4 === 0 ? patternMaterial.clone() : dimMaterial.clone();
+      allMaterials.push(mat);
+      const line = new THREE.Line(geo, mat);
+      animatedElements.push(line);
+      patternGroup.add(line);
+    }
+
+    scene.add(patternGroup);
+
+    // Central fire
+    const pitPoints = [];
+    const pitRadius = 0.3;
+    for (let i = 0; i <= 16; i++) {
+      const angle = (i / 16) * Math.PI * 2;
+      pitPoints.push(new THREE.Vector3(
+        Math.cos(angle) * pitRadius,
+        0.02,
+        Math.sin(angle) * pitRadius
+      ));
+    }
+    const pitGeo = new THREE.BufferGeometry().setFromPoints(pitPoints);
+    allGeometries.push(pitGeo);
+    const pitMat = new THREE.LineBasicMaterial({ color: hslToHex(hue, 80, 60), transparent: true, opacity: 0.5 });
+    allMaterials.push(pitMat);
+    const pit = new THREE.Line(pitGeo, pitMat);
+    scene.add(pit);
+
+    // Rising embers
+    const emberCount = 15;
+    const emberGeometry = new THREE.BufferGeometry();
+    const emberPositions = new Float32Array(emberCount * 3);
+    for (let i = 0; i < emberCount; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = Math.random() * 0.15;
+      emberPositions[i * 3] = Math.cos(angle) * r;
+      emberPositions[i * 3 + 1] = Math.random() * 1.5;
+      emberPositions[i * 3 + 2] = Math.sin(angle) * r;
+    }
+    emberGeometry.setAttribute('position', new THREE.BufferAttribute(emberPositions, 3));
+    allGeometries.push(emberGeometry);
+
+    const emberMaterial = new THREE.PointsMaterial({
+      color: hslToHex(30, 100, 65), // Warm amber
+      size: 0.04,
+      transparent: true,
+      opacity: 0.8
+    });
+    allMaterials.push(emberMaterial);
+    const embers = new THREE.Points(emberGeometry, emberMaterial);
+    scene.add(embers);
+
+    // Core glow
+    const glowGeo = new THREE.SphereGeometry(0.12, 8, 8);
+    allGeometries.push(glowGeo);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(30, 100, 60),
+      transparent: true,
+      opacity: 0.6
+    });
+    allMaterials.push(glowMat);
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.position.y = 0.1;
+    scene.add(glow);
+
+    // Seated figures
+    const figureMaterial = new THREE.LineBasicMaterial({
+      color: hslToHex(hue, 85, 65),
+      transparent: true,
+      opacity: 0.7
+    });
+    allMaterials.push(figureMaterial);
+
+    const figureCount = 6;
+    for (let i = 0; i < figureCount; i++) {
+      const angle = (i / figureCount) * Math.PI * 2 + Math.PI / 6;
+      if (i !== 3) { // Leave gap for viewer
+        const figureGroup = new THREE.Group();
+        const x = Math.cos(angle) * 5;
+        const z = Math.sin(angle) * 5;
+
+        // Torso
+        const torsoGeometry = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0.3, 0),
+          new THREE.Vector3(0, 0.8, 0)
+        ]);
+        allGeometries.push(torsoGeometry);
+        const torso = new THREE.Line(torsoGeometry, figureMaterial);
+        figureGroup.add(torso);
+
+        // Head
+        const headGeometry = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0.8, 0),
+          new THREE.Vector3(0, 1.0, 0)
+        ]);
+        allGeometries.push(headGeometry);
+        const head = new THREE.Line(headGeometry, figureMaterial);
+        figureGroup.add(head);
+
+        // Arms
+        const armsGeometry = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-0.2, 0.4, 0.1),
+          new THREE.Vector3(0, 0.6, 0),
+          new THREE.Vector3(0.2, 0.4, 0.1)
+        ]);
+        allGeometries.push(armsGeometry);
+        const arms = new THREE.Line(armsGeometry, figureMaterial);
+        figureGroup.add(arms);
+
+        // Legs
+        const legsGeometry = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-0.25, 0.1, 0.2),
+          new THREE.Vector3(0, 0.3, 0),
+          new THREE.Vector3(0.25, 0.1, 0.2)
+        ]);
+        allGeometries.push(legsGeometry);
+        const legs = new THREE.Line(legsGeometry, figureMaterial);
+        figureGroup.add(legs);
+
+        figureGroup.position.set(x, 0, z);
+        figureGroup.lookAt(0, 0.5, 0);
+        scene.add(figureGroup);
+      }
+    }
+
+    // Serpent spiral
+    const serpentPoints = [];
+    const serpentSegments = 100;
+    for (let i = 0; i <= serpentSegments; i++) {
+      const t = i / serpentSegments;
+      const angle = t * Math.PI * 4;
+      const serpentRadius = 2 + t * 3;
+      const y = 0.5 + Math.sin(t * Math.PI * 2) * 1.5 + t * 2;
+      serpentPoints.push(new THREE.Vector3(
+        Math.cos(angle) * serpentRadius,
+        y,
+        Math.sin(angle) * serpentRadius
+      ));
+    }
+    const serpentGeometry = new THREE.BufferGeometry().setFromPoints(serpentPoints);
+    allGeometries.push(serpentGeometry);
+    const serpentMaterial = new THREE.LineBasicMaterial({
+      color: hslToHex(hue, 90, 70),
+      transparent: true,
+      opacity: 0.6
+    });
+    allMaterials.push(serpentMaterial);
+    const serpent = new THREE.Line(serpentGeometry, serpentMaterial);
+    scene.add(serpent);
+
+    const clock = new THREE.Clock();
+
+    // Camera look controls
+    let targetRotationX = 0;
+    let targetRotationY = 0;
+    let currentRotationX = 0;
+    let currentRotationY = 0;
+    const baseCameraY = 1.2;
+    const baseCameraZ = 4;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Touch-based look controls
+      const touchPoints = touchPointsRef.current;
+      if (touchPoints.length > 0) {
+        const touch = touchPoints[0];
+        const deltaX = (touch.x - 0.5) * 2;
+        const deltaY = (touch.y - 0.5) * 2;
+        targetRotationY = deltaX * Math.PI * 0.5;
+        targetRotationX = deltaY * Math.PI * 0.25;
+      } else {
+        targetRotationY *= 0.95;
+        targetRotationX *= 0.95;
+      }
+
+      // Smooth interpolation
+      currentRotationX += (targetRotationX - currentRotationX) * 0.08;
+      currentRotationY += (targetRotationY - currentRotationY) * 0.08;
+
+      // Apply camera rotation
+      const breathY = Math.sin(elapsed * 0.3) * 0.05;
+      const breathZ = Math.sin(elapsed * 0.25) * 0.1;
+      camera.position.y = baseCameraY + breathY;
+      camera.position.z = baseCameraZ + breathZ;
+
+      const lookX = Math.sin(currentRotationY) * 5;
+      const lookY = 1 - currentRotationX * 2;
+      const lookZ = -Math.cos(currentRotationY) * 5;
+      camera.lookAt(lookX, lookY, lookZ);
+
+      // Animate embers rising
+      const positions = emberGeometry.attributes.position.array;
+      for (let i = 0; i < emberCount; i++) {
+        positions[i * 3 + 1] += 0.003;
+        positions[i * 3] += (Math.random() - 0.5) * 0.001;
+        positions[i * 3 + 2] += (Math.random() - 0.5) * 0.001;
+
+        if (positions[i * 3 + 1] > 1.8) {
+          const angle = Math.random() * Math.PI * 2;
+          const r = Math.random() * 0.1;
+          positions[i * 3] = Math.cos(angle) * r;
+          positions[i * 3 + 1] = 0;
+          positions[i * 3 + 2] = Math.sin(angle) * r;
+        }
+      }
+      emberGeometry.attributes.position.needsUpdate = true;
+      emberMaterial.opacity = 0.6 + breath * 0.25;
+      glowMat.opacity = 0.45 + breath * 0.2;
+
+      // Pulse patterns with breath
+      animatedElements.forEach((child, i) => {
+        if (child.material && child.material.opacity !== undefined) {
+          const baseOpacity = 0.5;
+          child.material.opacity = baseOpacity + breath * 0.2 + Math.sin(elapsed * 0.8 + i * 0.2) * 0.08;
+        }
+      });
+
+      // Rotate serpent
+      serpent.rotation.y += 0.001;
+      serpentMaterial.opacity = 0.5 + breath * 0.15;
+
+      // Subtle pattern rotation
+      patternGroup.rotation.y += 0.0002;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      allGeometries.forEach(g => g.dispose());
+      allMaterials.forEach(m => m.dispose());
       if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
       renderer.dispose();
     };
@@ -5952,7 +6445,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'mountains' || currentMode === 'canyon' || currentMode === 'underwater') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'mountains' || currentMode === 'cave' || currentMode === 'maloka' || currentMode === 'underwater') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -5974,7 +6467,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'mountains' && currentMode !== 'canyon' && currentMode !== 'underwater' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'mountains' && currentMode !== 'cave' && currentMode !== 'maloka' && currentMode !== 'underwater' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
@@ -7173,7 +7666,7 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
   return <div ref={containerRef} style={{ position: 'absolute', inset: 0, touchAction: 'none' }} />;
 });
 
-function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }) {
+const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }, ref) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [samplesLoading, setSamplesLoading] = useState(false);
   const [samplesReady, setSamplesReady] = useState(false);
@@ -7562,6 +8055,11 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
 
     setIsInitialized(true);
   }, []);
+
+  // Expose initAudio to parent component via ref
+  React.useImperativeHandle(ref, () => ({
+    init: initAudio
+  }), [initAudio]);
 
   // Start drone oscillators
   const startDrone = (ctx, masterGain) => {
@@ -8448,31 +8946,6 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
           breathValue={breathValue}
         />
 
-      {/* Begin prompt - positioned above handpan */}
-      {!isInitialized && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '22%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            pointerEvents: 'none',
-            animation: 'droneTextPulse 4s ease-in-out forwards',
-          }}
-        >
-          <div style={{
-            fontSize: '2rem',
-            fontFamily: '"Jost", sans-serif',
-            letterSpacing: '0.3em',
-            textTransform: 'lowercase',
-            fontWeight: 300,
-            color: '#fff',
-          }}>
-            begin
-          </div>
-        </div>
-      )}
 
 
       {/* Note display is handled via DOM manipulation in showPlayedNote */}
@@ -8924,7 +9397,7 @@ function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', back
       `}</style>
     </main>
   );
-}
+});
 
 // ============================================================================
 // MAIN COMPONENT
@@ -8939,6 +9412,44 @@ const musicTracks = [
 ];
 
 function Still() {
+  // Intro screen state
+  const [showIntro, setShowIntro] = useState(true);
+  const [introFading, setIntroFading] = useState(false);
+  const [audioInitialized, setAudioInitialized] = useState(false);
+
+  // Ref for DroneMode to trigger audio initialization
+  const droneModeRef = useRef(null);
+
+  // Handler for dismissing intro screen and initializing audio
+  const handleIntroTouch = useCallback(() => {
+    if (introFading) return; // Prevent double-tap
+
+    // Initialize DroneMode audio (samples, AudioContext, etc.)
+    // This must happen in a user gesture handler for iOS
+    if (droneModeRef.current) {
+      droneModeRef.current.init();
+    }
+
+    // Initialize background music
+    if (!audioInitialized && audioRef.current) {
+      audioRef.current.play()
+        .then(() => {
+          setAudioInitialized(true);
+        })
+        .catch(() => {
+          // Autoplay blocked, will try again on next interaction
+        });
+    }
+
+    // Start fade out animation
+    setIntroFading(true);
+
+    // Remove intro screen after animation
+    setTimeout(() => {
+      setShowIntro(false);
+    }, 800);
+  }, [introFading, audioInitialized]);
+
   // Core state
   const [currentIndex, setCurrentIndex] = useState(0);
   const [savedQuotes, setSavedQuotes] = useState([]);
@@ -9595,6 +10106,101 @@ function Still() {
 
   return (
     <ThemeContext.Provider value={currentTheme}>
+      {/* Intro Screen - Touch to Begin */}
+      {showIntro && (
+        <div
+          onClick={handleIntroTouch}
+          onTouchStart={handleIntroTouch}
+          className={introFading ? 'intro-fade-out' : ''}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 10000,
+            background: '#000',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'opacity 0.8s ease-out',
+            opacity: introFading ? 0 : 1,
+          }}
+        >
+          {/* Background visual - dimmed */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: 0.4,
+          }}>
+            <GazeMode
+              theme={currentTheme}
+              primaryHue={settings.primaryHue}
+              backgroundMode={true}
+              currentVisual="ripples"
+            />
+          </div>
+
+          {/* Vignette overlay */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.7) 80%)',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Title - positioned above visual */}
+          <h1
+            className="intro-title-glow"
+            style={{
+              position: 'absolute',
+              top: '22%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 1,
+              fontSize: 'clamp(2.5rem, 10vw, 5rem)',
+              fontFamily: '"Jost", sans-serif',
+              fontWeight: 300,
+              letterSpacing: '0.5em',
+              margin: 0,
+              color: 'rgba(255,255,255,0.95)',
+              textShadow: `0 0 40px hsla(${settings.primaryHue}, 60%, 60%, 0.5), 0 0 80px hsla(${settings.primaryHue}, 60%, 60%, 0.3)`,
+            }}
+          >
+            PSYENSE
+          </h1>
+
+          {/* Touch to begin - positioned below visual */}
+          <p
+            className="intro-touch-pulse"
+            style={{
+              position: 'absolute',
+              bottom: '18%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 1,
+              fontSize: 'clamp(0.85rem, 3vw, 1.1rem)',
+              fontFamily: '"Jost", sans-serif',
+              fontWeight: 300,
+              letterSpacing: '0.3em',
+              textTransform: 'lowercase',
+              margin: 0,
+              color: 'rgba(255,255,255,0.5)',
+            }}
+          >
+            touch to begin
+          </p>
+        </div>
+      )}
+
       <div
         ref={containerRef}
         onWheel={handleWheel}
@@ -9667,7 +10273,7 @@ function Still() {
                 opacity: hasOpenedSettings ? 0.9 : undefined,
               }}
             >
-              PĀṆA
+              PSYENSE
             </h1>
             {/* Settings hint that appears periodically */}
             {!hasOpenedSettings && (
@@ -10248,6 +10854,7 @@ function Still() {
 
         {/* Drone Mode - Generative ambient soundscape (always mounted to keep audio playing) */}
         <DroneMode
+          ref={droneModeRef}
           primaryHue={primaryHue}
           primaryColor={primaryColor}
           backgroundMode={view !== 'drone'}
@@ -10616,6 +11223,10 @@ function Still() {
           @keyframes settingsHintPulse { 0% { opacity: 0; transform: translateY(-5px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-5px); } }
           .settings-hint-show { animation: settingsHintPulse 4s ease-in-out forwards; }
           .settings-hint-hide { opacity: 0; }
+          @keyframes introTitleGlow { 0%, 100% { text-shadow: 0 0 40px rgba(127, 200, 180, 0.4), 0 0 80px rgba(127, 200, 180, 0.2); } 50% { text-shadow: 0 0 60px rgba(127, 200, 180, 0.7), 0 0 120px rgba(127, 200, 180, 0.4); } }
+          .intro-title-glow { animation: introTitleGlow 4s ease-in-out infinite; }
+          @keyframes introTouchPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+          .intro-touch-pulse { animation: introTouchPulse 2.5s ease-in-out infinite; }
           ::-webkit-scrollbar { width: 4px; }
           ::-webkit-scrollbar-track { background: transparent; }
           ::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 2px; }
