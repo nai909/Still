@@ -9065,6 +9065,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
           />
           {/* Drawer */}
           <div
+            onClick={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
@@ -10189,7 +10190,7 @@ function Still() {
               textShadow: `0 0 40px hsla(${settings.primaryHue}, 60%, 60%, 0.5), 0 0 80px hsla(${settings.primaryHue}, 60%, 60%, 0.3)`,
             }}
           >
-            Psyense
+            omhum
           </h1>
 
           {/* Touch to begin - positioned below visual */}
@@ -10287,7 +10288,7 @@ function Still() {
                 opacity: hasOpenedSettings ? 0.9 : undefined,
               }}
             >
-              Psyense
+              omhum
             </h1>
             {/* Settings hint that appears periodically */}
             {!hasOpenedSettings && (

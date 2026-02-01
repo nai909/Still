@@ -1,6 +1,6 @@
 {
-  "appId": "com.psyense.app",
-  "appName": "Psyense",
+  "appId": "com.omhum.app",
+  "appName": "omhum",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"
