@@ -8826,6 +8826,8 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
 
   // Handle scroll for instrument/texture/key/scale change
   useEffect(() => {
+    if (backgroundMode) return;
+
     const handleWheel = (e) => {
       if (!isInitialized) return;
 
@@ -8839,6 +8841,18 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
       }, 200);
 
       const threshold = 30;
+
+      // Vertical swipe up when menu is closed = open settings menu
+      if (!showScaleSelector && wheelAccumYRef.current > threshold && Math.abs(wheelAccumYRef.current) > Math.abs(wheelAccumXRef.current)) {
+        e.preventDefault();
+        setShowScaleSelector(true);
+        wheelAccumXRef.current = 0;
+        wheelAccumYRef.current = 0;
+        return;
+      }
+
+      // Only allow instrument/texture/key/scale changes when menu is open
+      if (!showScaleSelector) return;
 
       if (e.shiftKey) {
         // Shift held: change key (horizontal) or scale type (vertical)
@@ -8888,7 +8902,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
 
     window.addEventListener('wheel', handleWheel, { passive: false });
     return () => window.removeEventListener('wheel', handleWheel);
-  }, [isInitialized, currentTexture, updateTexture, displayLabel]);
+  }, [backgroundMode, isInitialized, showScaleSelector, currentTexture, updateTexture, displayLabel]);
 
   // Cleanup
   useEffect(() => {
@@ -10175,7 +10189,7 @@ function Still() {
               textShadow: `0 0 40px hsla(${settings.primaryHue}, 60%, 60%, 0.5), 0 0 80px hsla(${settings.primaryHue}, 60%, 60%, 0.3)`,
             }}
           >
-            PSYENSE
+            Psyense
           </h1>
 
           {/* Touch to begin - positioned below visual */}
@@ -10273,7 +10287,7 @@ function Still() {
                 opacity: hasOpenedSettings ? 0.9 : undefined,
               }}
             >
-              PSYENSE
+              Psyense
             </h1>
             {/* Settings hint that appears periodically */}
             {!hasOpenedSettings && (
