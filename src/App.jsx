@@ -5725,7 +5725,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   }, [currentMode, hue, getBreathPhase]);
 
   // ========== MALOKA MODE ==========
-  // Ayahuasca ceremony space with Shipibo kené patterns
+  // Full ceremonial ayahuasca space - visionary and immersive
   React.useEffect(() => {
     if (currentMode !== 'maloka' || !containerRef.current || typeof THREE === 'undefined') return;
 
@@ -5733,7 +5733,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     touchPointsRef.current = [];
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x000000, 0.012);
+    scene.fog = new THREE.FogExp2(0x000000, 0.015);
 
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 1.2, 4);
@@ -5753,121 +5753,144 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
     };
 
+    // Reusable color object to avoid allocations
+    const tempColor = new THREE.Color();
+
     const allGeometries = [];
     const allMaterials = [];
     const animatedElements = [];
+    const breathingElements = []; // Elements that scale with breath
+    const colorShiftElements = []; // Elements that shift hue over time
 
-    // Materials using user's hue
-    const wireframeMaterial = new THREE.LineBasicMaterial({
-      color: hslToHex(hue, 90, 70),
-      transparent: true,
-      opacity: 0.9
-    });
-    allMaterials.push(wireframeMaterial);
+    // Base hue for color shifting
+    let currentHue = hue;
 
-    const dimWireframeMaterial = new THREE.LineBasicMaterial({
-      color: hslToHex(hue, 80, 60),
-      transparent: true,
-      opacity: 0.6
-    });
-    allMaterials.push(dimWireframeMaterial);
-
-    // Create maloca structure
-    const postCount = 8;
+    // Create maloca structure (breathing)
+    const structureGroup = new THREE.Group();
+    const postCount = 12; // More posts for denser structure
     const radius = 8;
-    const postHeight = 4;
+    const postHeight = 5;
 
     for (let i = 0; i < postCount; i++) {
       const angle = (i / postCount) * Math.PI * 2;
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
 
-      // Vertical posts
+      // Vertical posts with slight inward lean
+      const postMat = new THREE.LineBasicMaterial({
+        color: hslToHex(hue, 85, 65),
+        transparent: true,
+        opacity: 0.8
+      });
+      allMaterials.push(postMat);
       const postGeometry = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(x, 0, z),
-        new THREE.Vector3(x, postHeight, z)
+        new THREE.Vector3(x * 0.95, postHeight, z * 0.95)
       ]);
       allGeometries.push(postGeometry);
-      const post = new THREE.Line(postGeometry, wireframeMaterial);
-      scene.add(post);
+      const post = new THREE.Line(postGeometry, postMat);
+      colorShiftElements.push({ mesh: post, baseHue: hue, offset: i * 10 });
+      structureGroup.add(post);
 
-      // Horizontal beams
+      // Horizontal beams with kené patterns
       const nextAngle = ((i + 1) / postCount) * Math.PI * 2;
       const nextX = Math.cos(nextAngle) * radius;
       const nextZ = Math.sin(nextAngle) * radius;
 
-      const beamGeometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(x, postHeight, z),
-        new THREE.Vector3(nextX, postHeight, nextZ)
-      ]);
-      allGeometries.push(beamGeometry);
-      const beam = new THREE.Line(beamGeometry, wireframeMaterial);
-      scene.add(beam);
+      // Create zigzag beam pattern
+      const beamPoints = [];
+      const beamSegments = 12;
+      for (let j = 0; j <= beamSegments; j++) {
+        const t = j / beamSegments;
+        const bx = x + (nextX - x) * t;
+        const bz = z + (nextZ - z) * t;
+        const zigzag = (j % 2 === 0) ? 0.08 : -0.08;
+        beamPoints.push(new THREE.Vector3(bx * 0.95, postHeight + zigzag, bz * 0.95));
+      }
+      const beamGeo = new THREE.BufferGeometry().setFromPoints(beamPoints);
+      allGeometries.push(beamGeo);
+      const beamMat = new THREE.LineBasicMaterial({
+        color: hslToHex(hue + 30, 80, 60),
+        transparent: true,
+        opacity: 0.7
+      });
+      allMaterials.push(beamMat);
+      const beam = new THREE.Line(beamGeo, beamMat);
+      colorShiftElements.push({ mesh: beam, baseHue: hue + 30, offset: i * 15 });
+      structureGroup.add(beam);
 
-      // Roof beams to center
-      const roofGeometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(x, postHeight, z),
-        new THREE.Vector3(0, postHeight + 3, 0)
-      ]);
-      allGeometries.push(roofGeometry);
-      const roofBeam = new THREE.Line(roofGeometry, dimWireframeMaterial);
-      scene.add(roofBeam);
+      // Roof beams to center with sacred geometry
+      const roofPoints = [];
+      const roofSegments = 8;
+      for (let j = 0; j <= roofSegments; j++) {
+        const t = j / roofSegments;
+        const rx = x * 0.95 * (1 - t);
+        const rz = z * 0.95 * (1 - t);
+        const ry = postHeight + t * 3.5;
+        const wave = Math.sin(t * Math.PI * 3) * 0.15 * (1 - t);
+        roofPoints.push(new THREE.Vector3(rx + wave, ry, rz + wave));
+      }
+      const roofGeo = new THREE.BufferGeometry().setFromPoints(roofPoints);
+      allGeometries.push(roofGeo);
+      const roofMat = new THREE.LineBasicMaterial({
+        color: hslToHex(hue, 70, 55),
+        transparent: true,
+        opacity: 0.5
+      });
+      allMaterials.push(roofMat);
+      const roofBeam = new THREE.Line(roofGeo, roofMat);
+      colorShiftElements.push({ mesh: roofBeam, baseHue: hue, offset: i * 20 });
+      structureGroup.add(roofBeam);
     }
 
-    // Roof rings
-    for (let ring = 1; ring <= 5; ring++) {
-      const ringRadius = radius * (1 - ring * 0.18);
-      const ringHeight = postHeight + ring * 0.55;
+    // Roof rings with kené patterns
+    for (let ring = 1; ring <= 8; ring++) {
+      const ringRadius = radius * (1 - ring * 0.11) * 0.95;
+      const ringHeight = postHeight + ring * 0.42;
       const points = [];
+      const segments = 48 + ring * 4;
+      const zigzagAmp = 0.06 + (ring % 3) * 0.03;
 
-      for (let i = 0; i <= 32; i++) {
-        const angle = (i / 32) * Math.PI * 2;
+      for (let i = 0; i <= segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const zigzag = (i % 2 === 0) ? zigzagAmp : -zigzagAmp;
         points.push(new THREE.Vector3(
-          Math.cos(angle) * ringRadius,
+          Math.cos(angle) * (ringRadius + zigzag),
           ringHeight,
-          Math.sin(angle) * ringRadius
+          Math.sin(angle) * (ringRadius + zigzag)
         ));
       }
 
       const ringGeometry = new THREE.BufferGeometry().setFromPoints(points);
       allGeometries.push(ringGeometry);
-      const ringLine = new THREE.Line(ringGeometry, dimWireframeMaterial);
-      scene.add(ringLine);
+      const ringMat = new THREE.LineBasicMaterial({
+        color: hslToHex(hue + ring * 20, 75, 55 + ring * 2),
+        transparent: true,
+        opacity: 0.4 + ring * 0.05
+      });
+      allMaterials.push(ringMat);
+      const ringLine = new THREE.Line(ringGeometry, ringMat);
+      colorShiftElements.push({ mesh: ringLine, baseHue: hue + ring * 20, offset: ring * 25 });
+      animatedElements.push(ringLine);
+      structureGroup.add(ringLine);
     }
 
-    // Shipibo kené floor patterns
-    const patternMaterial = new THREE.LineBasicMaterial({
-      color: hslToHex(hue, 90, 70),
-      transparent: true,
-      opacity: 0.7
-    });
-    allMaterials.push(patternMaterial);
+    breathingElements.push(structureGroup);
+    scene.add(structureGroup);
 
-    const accentMaterial = new THREE.LineBasicMaterial({
-      color: hslToHex(hue + 180, 85, 65), // Complementary color
-      transparent: true,
-      opacity: 0.6
-    });
-    allMaterials.push(accentMaterial);
-
-    const dimMaterial = new THREE.LineBasicMaterial({
-      color: hslToHex(hue, 80, 60),
-      transparent: true,
-      opacity: 0.45
-    });
-    allMaterials.push(dimMaterial);
-
-    // Concentric zigzag circles
+    // Shipibo kené floor patterns - more intricate
     const patternGroup = new THREE.Group();
-    for (let ring = 1; ring <= 15; ring++) {
-      const ringRadius = ring * 0.45;
+
+    // Concentric morphing circles
+    for (let ring = 1; ring <= 20; ring++) {
+      const ringRadius = ring * 0.35;
       const points = [];
-      const zigzagAmp = 0.04 + (ring % 3) * 0.02;
-      const segments = 60 + ring * 3;
+      const segments = 80 + ring * 4;
+      const zigzagAmp = 0.03 + (ring % 4) * 0.015;
 
       for (let i = 0; i <= segments; i++) {
         const angle = (i / segments) * Math.PI * 2;
-        const zigzag = (i % 2 === 0) ? zigzagAmp : -zigzagAmp;
+        const zigzag = Math.sin(i * 0.5 + ring) * zigzagAmp;
         const r = ringRadius + zigzag;
         points.push(new THREE.Vector3(
           Math.cos(angle) * r,
@@ -5878,27 +5901,30 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       const geometry = new THREE.BufferGeometry().setFromPoints(points);
       allGeometries.push(geometry);
-      let mat;
-      if (ring % 3 === 0) mat = accentMaterial;
-      else if (ring % 3 === 1) mat = patternMaterial;
-      else mat = dimMaterial;
-
-      const line = new THREE.Line(geometry, mat.clone());
-      allMaterials.push(line.material);
+      const matHue = ring % 5 === 0 ? hue + 180 : (ring % 3 === 0 ? hue + 60 : hue);
+      const mat = new THREE.LineBasicMaterial({
+        color: hslToHex(matHue, 85, 60 + (ring % 3) * 5),
+        transparent: true,
+        opacity: 0.5 + (ring % 4) * 0.1
+      });
+      allMaterials.push(mat);
+      const line = new THREE.Line(geometry, mat);
       line.userData.ring = ring;
+      line.userData.baseRadius = ringRadius;
+      colorShiftElements.push({ mesh: line, baseHue: matHue, offset: ring * 8 });
       animatedElements.push(line);
       patternGroup.add(line);
     }
 
-    // Radiating stepped lines
-    for (let i = 0; i < 24; i++) {
-      const angle = (i / 24) * Math.PI * 2;
+    // Sacred geometry radiating lines
+    for (let i = 0; i < 36; i++) {
+      const angle = (i / 36) * Math.PI * 2;
       const points = [];
 
-      for (let j = 0; j < 30; j++) {
-        const dist = 0.5 + j * 0.22;
-        const stepOffset = (j % 2 === 0) ? 0.03 : -0.03;
-        const a = angle + stepOffset;
+      for (let j = 0; j < 40; j++) {
+        const dist = 0.3 + j * 0.18;
+        const wave = Math.sin(j * 0.3 + i * 0.2) * 0.04;
+        const a = angle + wave;
         points.push(new THREE.Vector3(
           Math.cos(a) * dist,
           0.01,
@@ -5908,94 +5934,206 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       const geo = new THREE.BufferGeometry().setFromPoints(points);
       allGeometries.push(geo);
-      const mat = i % 4 === 0 ? patternMaterial.clone() : dimMaterial.clone();
+      const matHue = i % 6 === 0 ? hue + 180 : (i % 3 === 0 ? hue + 90 : hue);
+      const mat = new THREE.LineBasicMaterial({
+        color: hslToHex(matHue, 80, 55),
+        transparent: true,
+        opacity: i % 4 === 0 ? 0.7 : 0.4
+      });
       allMaterials.push(mat);
       const line = new THREE.Line(geo, mat);
+      colorShiftElements.push({ mesh: line, baseHue: matHue, offset: i * 12 });
       animatedElements.push(line);
       patternGroup.add(line);
     }
 
     scene.add(patternGroup);
 
-    // Central fire
+    // Central fire with more embers
     const pitPoints = [];
-    const pitRadius = 0.3;
-    for (let i = 0; i <= 16; i++) {
-      const angle = (i / 16) * Math.PI * 2;
+    const pitRadius = 0.4;
+    for (let i = 0; i <= 24; i++) {
+      const angle = (i / 24) * Math.PI * 2;
+      const wave = Math.sin(i * 3) * 0.05;
       pitPoints.push(new THREE.Vector3(
-        Math.cos(angle) * pitRadius,
+        Math.cos(angle) * (pitRadius + wave),
         0.02,
-        Math.sin(angle) * pitRadius
+        Math.sin(angle) * (pitRadius + wave)
       ));
     }
     const pitGeo = new THREE.BufferGeometry().setFromPoints(pitPoints);
     allGeometries.push(pitGeo);
-    const pitMat = new THREE.LineBasicMaterial({ color: hslToHex(hue, 80, 60), transparent: true, opacity: 0.5 });
+    const pitMat = new THREE.LineBasicMaterial({ color: hslToHex(25, 100, 55), transparent: true, opacity: 0.7 });
     allMaterials.push(pitMat);
     const pit = new THREE.Line(pitGeo, pitMat);
     scene.add(pit);
 
-    // Rising embers
-    const emberCount = 15;
+    // More embers and spirits
+    const emberCount = 60;
     const emberGeometry = new THREE.BufferGeometry();
     const emberPositions = new Float32Array(emberCount * 3);
+    const emberData = [];
     for (let i = 0; i < emberCount; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const r = Math.random() * 0.15;
+      const r = Math.random() * 0.25;
       emberPositions[i * 3] = Math.cos(angle) * r;
-      emberPositions[i * 3 + 1] = Math.random() * 1.5;
+      emberPositions[i * 3 + 1] = Math.random() * 3;
       emberPositions[i * 3 + 2] = Math.sin(angle) * r;
+      emberData.push({
+        speed: 0.002 + Math.random() * 0.004,
+        drift: (Math.random() - 0.5) * 0.003,
+        spiral: Math.random() * 0.02
+      });
     }
     emberGeometry.setAttribute('position', new THREE.BufferAttribute(emberPositions, 3));
     allGeometries.push(emberGeometry);
 
     const emberMaterial = new THREE.PointsMaterial({
-      color: hslToHex(30, 100, 65), // Warm amber
-      size: 0.04,
+      color: hslToHex(30, 100, 65),
+      size: 0.05,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.9,
+      blending: THREE.AdditiveBlending
     });
     allMaterials.push(emberMaterial);
     const embers = new THREE.Points(emberGeometry, emberMaterial);
     scene.add(embers);
 
-    // Core glow
-    const glowGeo = new THREE.SphereGeometry(0.12, 8, 8);
+    // Spirit particles throughout space
+    const spiritCount = 100;
+    const spiritGeometry = new THREE.BufferGeometry();
+    const spiritPositions = new Float32Array(spiritCount * 3);
+    const spiritData = [];
+    for (let i = 0; i < spiritCount; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = 1 + Math.random() * 6;
+      const y = Math.random() * 6;
+      spiritPositions[i * 3] = Math.cos(angle) * r;
+      spiritPositions[i * 3 + 1] = y;
+      spiritPositions[i * 3 + 2] = Math.sin(angle) * r;
+      spiritData.push({
+        angle: angle,
+        radius: r,
+        y: y,
+        speed: 0.0005 + Math.random() * 0.001,
+        ySpeed: (Math.random() - 0.5) * 0.002,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+    spiritGeometry.setAttribute('position', new THREE.BufferAttribute(spiritPositions, 3));
+    allGeometries.push(spiritGeometry);
+
+    const spiritMaterial = new THREE.PointsMaterial({
+      color: hslToHex(hue, 60, 70),
+      size: 0.04,
+      transparent: true,
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending
+    });
+    allMaterials.push(spiritMaterial);
+    const spirits = new THREE.Points(spiritGeometry, spiritMaterial);
+    colorShiftElements.push({ mesh: spirits, baseHue: hue, offset: 0, isMaterial: true });
+    scene.add(spirits);
+
+    // Core glow - pulsing
+    const glowGeo = new THREE.SphereGeometry(0.2, 16, 16);
     allGeometries.push(glowGeo);
     const glowMat = new THREE.MeshBasicMaterial({
       color: hslToHex(30, 100, 60),
       transparent: true,
-      opacity: 0.6
+      opacity: 0.7
     });
     allMaterials.push(glowMat);
     const glow = new THREE.Mesh(glowGeo, glowMat);
-    glow.position.y = 0.1;
+    glow.position.y = 0.15;
     scene.add(glow);
 
-    // Serpent spiral
-    const serpentPoints = [];
-    const serpentSegments = 100;
-    for (let i = 0; i <= serpentSegments; i++) {
-      const t = i / serpentSegments;
-      const angle = t * Math.PI * 4;
-      const serpentRadius = 2 + t * 3;
-      const y = 0.5 + Math.sin(t * Math.PI * 2) * 1.5 + t * 2;
-      serpentPoints.push(new THREE.Vector3(
-        Math.cos(angle) * serpentRadius,
-        y,
-        Math.sin(angle) * serpentRadius
-      ));
+    // Multiple serpents intertwining
+    const serpents = [];
+    for (let s = 0; s < 3; s++) {
+      const serpentPoints = [];
+      const serpentSegments = 120;
+      const phaseOffset = (s / 3) * Math.PI * 2;
+      for (let i = 0; i <= serpentSegments; i++) {
+        const t = i / serpentSegments;
+        const angle = t * Math.PI * 5 + phaseOffset;
+        const serpentRadius = 1.5 + t * 4;
+        const y = 0.3 + Math.sin(t * Math.PI * 3 + phaseOffset) * 1.5 + t * 3;
+        const wobble = Math.sin(t * 20 + phaseOffset) * 0.1;
+        serpentPoints.push(new THREE.Vector3(
+          Math.cos(angle) * (serpentRadius + wobble),
+          y,
+          Math.sin(angle) * (serpentRadius + wobble)
+        ));
+      }
+      const serpentGeometry = new THREE.BufferGeometry().setFromPoints(serpentPoints);
+      allGeometries.push(serpentGeometry);
+      const serpentMaterial = new THREE.LineBasicMaterial({
+        color: hslToHex(hue + s * 60, 85, 65),
+        transparent: true,
+        opacity: 0.6,
+        linewidth: 2
+      });
+      allMaterials.push(serpentMaterial);
+      const serpent = new THREE.Line(serpentGeometry, serpentMaterial);
+      colorShiftElements.push({ mesh: serpent, baseHue: hue + s * 60, offset: s * 40 });
+      serpents.push({ mesh: serpent, material: serpentMaterial, phaseOffset });
+      scene.add(serpent);
     }
-    const serpentGeometry = new THREE.BufferGeometry().setFromPoints(serpentPoints);
-    allGeometries.push(serpentGeometry);
-    const serpentMaterial = new THREE.LineBasicMaterial({
-      color: hslToHex(hue, 90, 70),
-      transparent: true,
-      opacity: 0.6
-    });
-    allMaterials.push(serpentMaterial);
-    const serpent = new THREE.Line(serpentGeometry, serpentMaterial);
-    scene.add(serpent);
+
+    // Floating sacred geometry shapes
+    const sacredShapes = [];
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const r = 3 + Math.random() * 2;
+      const y = 2 + Math.random() * 3;
+
+      // Tetrahedron or octahedron
+      const shapeGeo = i % 2 === 0
+        ? new THREE.TetrahedronGeometry(0.3, 0)
+        : new THREE.OctahedronGeometry(0.25, 0);
+      allGeometries.push(shapeGeo);
+      const shapeMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue + i * 30, 70, 60),
+        wireframe: true,
+        transparent: true,
+        opacity: 0.4
+      });
+      allMaterials.push(shapeMat);
+      const shape = new THREE.Mesh(shapeGeo, shapeMat);
+      shape.position.set(Math.cos(angle) * r, y, Math.sin(angle) * r);
+      colorShiftElements.push({ mesh: shape, baseHue: hue + i * 30, offset: i * 35 });
+      sacredShapes.push({
+        mesh: shape,
+        angle: angle,
+        radius: r,
+        baseY: y,
+        rotSpeed: 0.005 + Math.random() * 0.01,
+        floatSpeed: 0.3 + Math.random() * 0.2,
+        floatAmp: 0.3 + Math.random() * 0.3
+      });
+      scene.add(shape);
+    }
+
+    // Pulsing rings from center
+    const pulseRings = [];
+    for (let i = 0; i < 5; i++) {
+      const ringGeo = new THREE.RingGeometry(0.1, 0.15, 32);
+      ringGeo.rotateX(-Math.PI / 2);
+      allGeometries.push(ringGeo);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue + i * 40, 80, 65),
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide
+      });
+      allMaterials.push(ringMat);
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.y = 0.02;
+      pulseRings.push({ mesh: ring, progress: i * 0.2, material: ringMat });
+      colorShiftElements.push({ mesh: ring, baseHue: hue + i * 40, offset: i * 50 });
+      scene.add(ring);
+    }
 
     const clock = new THREE.Clock();
 
@@ -6012,70 +6150,131 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clock.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
+      // Slow hue shift over time (full cycle every 60 seconds)
+      currentHue = hue + (elapsed * 6) % 360;
+
+      // Update colors on color-shifting elements
+      colorShiftElements.forEach(({ mesh, baseHue, offset, isMaterial }) => {
+        const shiftedHue = (baseHue + elapsed * 6 + offset) % 360;
+        tempColor.setHSL(shiftedHue / 360, 0.75, 0.6);
+        if (isMaterial) {
+          mesh.material.color.copy(tempColor);
+        } else if (mesh.material) {
+          mesh.material.color.copy(tempColor);
+        }
+      });
+
       // Touch-based look controls (gentle, meditative pace)
       const touchPoints = touchPointsRef.current;
       if (touchPoints.length > 0) {
         const touch = touchPoints[0];
-        // Normalize touch coordinates to -1 to 1 range
         const normalizedX = (touch.x / window.innerWidth - 0.5) * 2;
         const normalizedY = (touch.y / window.innerHeight - 0.5) * 2;
-        // Very slow rotation - like drifting through the space
-        targetRotationY = normalizedX * Math.PI * 0.15;
-        targetRotationX = normalizedY * Math.PI * 0.08;
+        targetRotationY = normalizedX * Math.PI * 0.2;
+        targetRotationX = normalizedY * Math.PI * 0.1;
       } else {
-        // Gentle decay when not touching
         targetRotationY *= 0.98;
         targetRotationX *= 0.98;
       }
 
-      // Very smooth interpolation (water-like feel)
       currentRotationX += (targetRotationX - currentRotationX) * 0.02;
       currentRotationY += (targetRotationY - currentRotationY) * 0.02;
 
-      // Apply camera rotation
-      const breathY = Math.sin(elapsed * 0.3) * 0.05;
-      const breathZ = Math.sin(elapsed * 0.25) * 0.1;
-      camera.position.y = baseCameraY + breathY;
-      camera.position.z = baseCameraZ + breathZ;
+      // Camera breathing and subtle FOV shift
+      const breathY = Math.sin(elapsed * 0.3) * 0.08;
+      const breathZ = Math.sin(elapsed * 0.25) * 0.15;
+      camera.position.y = baseCameraY + breathY + breath * 0.1;
+      camera.position.z = baseCameraZ + breathZ - breath * 0.2;
+      camera.fov = 75 + breath * 5; // FOV expands on inhale
+      camera.updateProjectionMatrix();
 
       const lookX = Math.sin(currentRotationY) * 5;
       const lookY = 1 - currentRotationX * 2;
       const lookZ = -Math.cos(currentRotationY) * 5;
       camera.lookAt(lookX, lookY, lookZ);
 
-      // Animate embers rising
-      const positions = emberGeometry.attributes.position.array;
-      for (let i = 0; i < emberCount; i++) {
-        positions[i * 3 + 1] += 0.003;
-        positions[i * 3] += (Math.random() - 0.5) * 0.001;
-        positions[i * 3 + 2] += (Math.random() - 0.5) * 0.001;
+      // Breathing structure
+      const structureScale = 1 + breath * 0.03;
+      structureGroup.scale.setScalar(structureScale);
 
-        if (positions[i * 3 + 1] > 1.8) {
+      // Animate embers rising with spiral
+      const emberPositions = emberGeometry.attributes.position.array;
+      for (let i = 0; i < emberCount; i++) {
+        const data = emberData[i];
+        emberPositions[i * 3 + 1] += data.speed * (1 + breath * 0.5);
+        emberPositions[i * 3] += data.drift + Math.sin(elapsed * 2 + i) * data.spiral;
+        emberPositions[i * 3 + 2] += data.drift + Math.cos(elapsed * 2 + i) * data.spiral;
+
+        if (emberPositions[i * 3 + 1] > 4) {
           const angle = Math.random() * Math.PI * 2;
-          const r = Math.random() * 0.1;
-          positions[i * 3] = Math.cos(angle) * r;
-          positions[i * 3 + 1] = 0;
-          positions[i * 3 + 2] = Math.sin(angle) * r;
+          const r = Math.random() * 0.2;
+          emberPositions[i * 3] = Math.cos(angle) * r;
+          emberPositions[i * 3 + 1] = 0;
+          emberPositions[i * 3 + 2] = Math.sin(angle) * r;
         }
       }
       emberGeometry.attributes.position.needsUpdate = true;
-      emberMaterial.opacity = 0.6 + breath * 0.25;
-      glowMat.opacity = 0.45 + breath * 0.2;
+      emberMaterial.opacity = 0.7 + breath * 0.3;
 
-      // Pulse patterns with breath
+      // Animate spirit particles
+      const spiritPositionsArray = spiritGeometry.attributes.position.array;
+      for (let i = 0; i < spiritCount; i++) {
+        const data = spiritData[i];
+        data.angle += data.speed;
+        data.y += data.ySpeed;
+        if (data.y > 6 || data.y < 0) data.ySpeed *= -1;
+
+        spiritPositionsArray[i * 3] = Math.cos(data.angle) * data.radius;
+        spiritPositionsArray[i * 3 + 1] = data.y + Math.sin(elapsed + data.phase) * 0.2;
+        spiritPositionsArray[i * 3 + 2] = Math.sin(data.angle) * data.radius;
+      }
+      spiritGeometry.attributes.position.needsUpdate = true;
+      spiritMaterial.opacity = 0.4 + breath * 0.3 + Math.sin(elapsed * 0.5) * 0.1;
+
+      // Glow pulsing
+      glow.scale.setScalar(1 + breath * 0.4 + Math.sin(elapsed * 2) * 0.1);
+      glowMat.opacity = 0.5 + breath * 0.4;
+
+      // Pulse floor patterns with breath
       animatedElements.forEach((child, i) => {
         if (child.material && child.material.opacity !== undefined) {
-          const baseOpacity = 0.5;
-          child.material.opacity = baseOpacity + breath * 0.2 + Math.sin(elapsed * 0.8 + i * 0.2) * 0.08;
+          const baseOpacity = 0.4;
+          const wave = Math.sin(elapsed * 0.5 + i * 0.15) * 0.15;
+          child.material.opacity = baseOpacity + breath * 0.25 + wave;
+        }
+        // Scale rings outward with breath
+        if (child.userData.baseRadius) {
+          const scale = 1 + breath * 0.05 + Math.sin(elapsed * 0.3 + child.userData.ring * 0.1) * 0.02;
+          child.scale.setScalar(scale);
         }
       });
 
-      // Rotate serpent
-      serpent.rotation.y += 0.001;
-      serpentMaterial.opacity = 0.5 + breath * 0.15;
+      // Rotate serpents
+      serpents.forEach((s, i) => {
+        s.mesh.rotation.y += 0.001 + i * 0.0003;
+        s.material.opacity = 0.5 + breath * 0.2 + Math.sin(elapsed * 0.7 + s.phaseOffset) * 0.1;
+      });
+
+      // Animate sacred shapes
+      sacredShapes.forEach((s) => {
+        s.mesh.rotation.x += s.rotSpeed;
+        s.mesh.rotation.y += s.rotSpeed * 0.7;
+        s.mesh.position.y = s.baseY + Math.sin(elapsed * s.floatSpeed) * s.floatAmp;
+        s.mesh.material.opacity = 0.3 + breath * 0.2 + Math.sin(elapsed + s.angle) * 0.1;
+      });
+
+      // Pulsing rings from center
+      pulseRings.forEach((r) => {
+        r.progress += 0.003 * (1 + breath * 0.5);
+        if (r.progress > 1) r.progress = 0;
+
+        const scale = 0.5 + r.progress * 8;
+        r.mesh.scale.setScalar(scale);
+        r.material.opacity = (1 - r.progress) * 0.4 * (0.5 + breath * 0.5);
+      });
 
       // Subtle pattern rotation
-      patternGroup.rotation.y += 0.0002;
+      patternGroup.rotation.y += 0.0003 * (1 + breath * 0.3);
 
       renderer.render(scene, camera);
     };
@@ -6835,11 +7034,11 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         breathSession={breathSession}
       />
 
-      {/* Phase text - bottom of screen, out of the visual */}
+      {/* Phase text - lower third of screen, readable while viewing visual */}
       {breathSession.isActive && (
         <div style={{
           position: 'absolute',
-          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6rem)',
+          bottom: '20%',
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 1,
