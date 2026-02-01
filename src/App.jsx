@@ -1668,13 +1668,19 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         const isHolding = p.name === 'holdFull' || p.name === 'holdEmpty';
 
         // Calculate visual phase (0-1) based on breath state
+        // Apply smooth easing for natural, calming motion (never linear, never jerky)
+        // ease-out cubic for inhale (gentle start, soft landing)
+        // ease-in cubic for exhale (slow release, gradual descent)
         let visualPhase;
         if (p.name === 'inhale') {
-          visualPhase = phaseProgress;
+          // ease-out: starts fast, settles gently into full breath
+          visualPhase = 1 - Math.pow(1 - phaseProgress, 3);
         } else if (p.name === 'holdFull') {
           visualPhase = 1;
         } else if (p.name === 'exhale') {
-          visualPhase = 1 - phaseProgress;
+          // ease-in: starts slow, accelerates gently through release
+          const easedProgress = Math.pow(phaseProgress, 3);
+          visualPhase = 1 - easedProgress;
         } else {
           visualPhase = 0;
         }
@@ -1764,6 +1770,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     mesh.material.opacity = 0.75;
     renderer.render(scene, camera);
 
+    // Spring physics for fluid breathing animation (water-like feel)
+    let currentScale = 1.0;
+    let scaleVelocity = 0;
+    let currentOpacity = 0.75;
+    let opacityVelocity = 0;
+    const springStiffness = 0.04; // Gentle stiffness for slow, calming motion
+    const springDamping = 0.88; // High damping for smooth settling
+
     let frameCount = 0;
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
@@ -1799,12 +1813,21 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           }
         }
 
-        // Breath-synced scale
+        // Breath-synced scale with spring physics for fluid motion
         const targetScale = 0.9 + breath * 0.2;
-        meshRef.current.scale.setScalar(targetScale);
+        const targetOpacity = 0.6 + breath * 0.25;
 
-        // Breath-synced opacity
-        meshRef.current.material.opacity = 0.6 + breath * 0.25;
+        // Spring physics: smooth interpolation toward target (feels like water)
+        const scaleForce = (targetScale - currentScale) * springStiffness;
+        scaleVelocity = (scaleVelocity + scaleForce) * springDamping;
+        currentScale += scaleVelocity;
+
+        const opacityForce = (targetOpacity - currentOpacity) * springStiffness;
+        opacityVelocity = (opacityVelocity + opacityForce) * springDamping;
+        currentOpacity += opacityVelocity;
+
+        meshRef.current.scale.setScalar(currentScale);
+        meshRef.current.material.opacity = currentOpacity;
       }
       renderer.render(scene, camera);
     };
@@ -2074,6 +2097,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     let lastRippleTime = 0;
 
+    // Spring physics for fluid breathing animation (water-like feel)
+    let currentScale = 1.0;
+    let scaleVelocity = 0;
+    let currentOpacity = 0.6;
+    let opacityVelocity = 0;
+    const springStiffness = 0.04; // Gentle stiffness for slow, calming motion
+    const springDamping = 0.88; // High damping for smooth settling
+
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime() * bgSpeed;
@@ -2106,11 +2137,22 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         rippleGroup.rotation.y += 0.00015 * bgSpeed;
       }
 
-      // Breath-synced core
+      // Breath-synced core with spring physics for fluid motion
       const breath = getBreathPhase(elapsed);
       const targetScale = 0.85 + breath * 0.3;
-      core.scale.setScalar(targetScale);
-      coreMat.opacity = 0.5 + breath * 0.35;
+      const targetOpacity = 0.5 + breath * 0.35;
+
+      // Spring physics: smooth interpolation toward target (feels like water)
+      const scaleForce = (targetScale - currentScale) * springStiffness;
+      scaleVelocity = (scaleVelocity + scaleForce) * springDamping;
+      currentScale += scaleVelocity;
+
+      const opacityForce = (targetOpacity - currentOpacity) * springStiffness;
+      opacityVelocity = (opacityVelocity + opacityForce) * springDamping;
+      currentOpacity += opacityVelocity;
+
+      core.scale.setScalar(currentScale);
+      coreMat.opacity = currentOpacity;
 
       // Animate ripples expanding outward (slower in background mode)
       const realElapsed = clockRef.current.getElapsedTime();
@@ -5930,66 +5972,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     glow.position.y = 0.1;
     scene.add(glow);
 
-    // Seated figures
-    const figureMaterial = new THREE.LineBasicMaterial({
-      color: hslToHex(hue, 85, 65),
-      transparent: true,
-      opacity: 0.7
-    });
-    allMaterials.push(figureMaterial);
-
-    const figureCount = 6;
-    for (let i = 0; i < figureCount; i++) {
-      const angle = (i / figureCount) * Math.PI * 2 + Math.PI / 6;
-      if (i !== 3) { // Leave gap for viewer
-        const figureGroup = new THREE.Group();
-        const x = Math.cos(angle) * 5;
-        const z = Math.sin(angle) * 5;
-
-        // Torso
-        const torsoGeometry = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(0, 0.3, 0),
-          new THREE.Vector3(0, 0.8, 0)
-        ]);
-        allGeometries.push(torsoGeometry);
-        const torso = new THREE.Line(torsoGeometry, figureMaterial);
-        figureGroup.add(torso);
-
-        // Head
-        const headGeometry = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(0, 0.8, 0),
-          new THREE.Vector3(0, 1.0, 0)
-        ]);
-        allGeometries.push(headGeometry);
-        const head = new THREE.Line(headGeometry, figureMaterial);
-        figureGroup.add(head);
-
-        // Arms
-        const armsGeometry = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(-0.2, 0.4, 0.1),
-          new THREE.Vector3(0, 0.6, 0),
-          new THREE.Vector3(0.2, 0.4, 0.1)
-        ]);
-        allGeometries.push(armsGeometry);
-        const arms = new THREE.Line(armsGeometry, figureMaterial);
-        figureGroup.add(arms);
-
-        // Legs
-        const legsGeometry = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(-0.25, 0.1, 0.2),
-          new THREE.Vector3(0, 0.3, 0),
-          new THREE.Vector3(0.25, 0.1, 0.2)
-        ]);
-        allGeometries.push(legsGeometry);
-        const legs = new THREE.Line(legsGeometry, figureMaterial);
-        figureGroup.add(legs);
-
-        figureGroup.position.set(x, 0, z);
-        figureGroup.lookAt(0, 0.5, 0);
-        scene.add(figureGroup);
-      }
-    }
-
     // Serpent spiral
     const serpentPoints = [];
     const serpentSegments = 100;
@@ -6030,22 +6012,25 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clock.getElapsedTime();
       const breath = getBreathPhase(elapsed);
 
-      // Touch-based look controls
+      // Touch-based look controls (gentle, meditative pace)
       const touchPoints = touchPointsRef.current;
       if (touchPoints.length > 0) {
         const touch = touchPoints[0];
-        const deltaX = (touch.x - 0.5) * 2;
-        const deltaY = (touch.y - 0.5) * 2;
-        targetRotationY = deltaX * Math.PI * 0.5;
-        targetRotationX = deltaY * Math.PI * 0.25;
+        // Normalize touch coordinates to -1 to 1 range
+        const normalizedX = (touch.x / window.innerWidth - 0.5) * 2;
+        const normalizedY = (touch.y / window.innerHeight - 0.5) * 2;
+        // Very slow rotation - like drifting through the space
+        targetRotationY = normalizedX * Math.PI * 0.15;
+        targetRotationX = normalizedY * Math.PI * 0.08;
       } else {
-        targetRotationY *= 0.95;
-        targetRotationX *= 0.95;
+        // Gentle decay when not touching
+        targetRotationY *= 0.98;
+        targetRotationX *= 0.98;
       }
 
-      // Smooth interpolation
-      currentRotationX += (targetRotationX - currentRotationX) * 0.08;
-      currentRotationY += (targetRotationY - currentRotationY) * 0.08;
+      // Very smooth interpolation (water-like feel)
+      currentRotationX += (targetRotationX - currentRotationX) * 0.02;
+      currentRotationY += (targetRotationY - currentRotationY) * 0.02;
 
       // Apply camera rotation
       const breathY = Math.sin(elapsed * 0.3) * 0.05;
@@ -6850,22 +6835,22 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         breathSession={breathSession}
       />
 
-      {/* Phase text - centered */}
+      {/* Phase text - bottom of screen, out of the visual */}
       {breathSession.isActive && (
         <div style={{
           position: 'absolute',
-          top: '50%',
+          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6rem)',
           left: '50%',
-          transform: 'translate(-50%, -50%)',
+          transform: 'translateX(-50%)',
           zIndex: 1,
           pointerEvents: 'none',
         }}>
           <div style={{
-            color: 'rgba(255, 255, 255, 0.7)',
-            fontSize: '1.5rem',
+            color: 'rgba(255, 255, 255, 0.5)',
+            fontSize: '0.9rem',
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
-            letterSpacing: '0.2em',
+            letterSpacing: '0.25em',
             textTransform: 'lowercase',
             textAlign: 'center',
             maxWidth: '80vw',
@@ -7788,6 +7773,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
   const voiceBufferRef = useRef(null);
   const rainstickBufferRef = useRef(null);
   const percBufferRef = useRef(null);
+  const fetchAbortControllerRef = useRef(null); // For cancelling sample loads on unmount
 
   // Breath pattern (4-7-8)
   const breathPattern = { inhale: 4, hold: 7, exhale: 8 };
@@ -7885,41 +7871,48 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
       dryGain.gain.setTargetAtTime(0.6, ctx.currentTime, 0.5); // Fade dry down
     }, 50); // Small delay to let first tap through
 
+    // Create AbortController for cancelling sample loads on unmount
+    if (fetchAbortControllerRef.current) {
+      fetchAbortControllerRef.current.abort();
+    }
+    fetchAbortControllerRef.current = new AbortController();
+    const { signal } = fetchAbortControllerRef.current;
+
     // Load piano sample (C3 = 130.81Hz base note)
-    fetch('piano.mp3')
+    fetch('piano.mp3', { signal })
       .then(response => response.arrayBuffer())
       .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
       .then(audioBuffer => {
         pianoBufferRef.current = audioBuffer;
       })
-      .catch(err => console.log('Piano sample not loaded:', err));
+      .catch(err => { if (err.name !== 'AbortError') console.log('Piano sample not loaded:', err); });
 
     // Load guitar sample (C3 = 130.81Hz base note)
-    fetch('guitar.wav')
+    fetch('guitar.wav', { signal })
       .then(response => response.arrayBuffer())
       .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
       .then(audioBuffer => {
         guitarBufferRef.current = audioBuffer;
       })
-      .catch(err => console.log('Guitar sample not loaded:', err));
+      .catch(err => { if (err.name !== 'AbortError') console.log('Guitar sample not loaded:', err); });
 
     // Load harp sample (C3 = 130.81Hz base note)
-    fetch('harp.mp3')
+    fetch('harp.mp3', { signal })
       .then(response => response.arrayBuffer())
       .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
       .then(audioBuffer => {
         harpBufferRef.current = audioBuffer;
       })
-      .catch(err => console.log('Harp sample not loaded:', err));
+      .catch(err => { if (err.name !== 'AbortError') console.log('Harp sample not loaded:', err); });
 
     // Load cello sample (C3 = 130.81Hz base note)
-    fetch('cello.mp3')
+    fetch('cello.mp3', { signal })
       .then(response => response.arrayBuffer())
       .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
       .then(audioBuffer => {
         celloBufferRef.current = audioBuffer;
       })
-      .catch(err => console.log('Cello sample not loaded:', err));
+      .catch(err => { if (err.name !== 'AbortError') console.log('Cello sample not loaded:', err); });
 
     // Load multi-sample handpan - C2 to C6 chromatic from real recordings
     const handpanSampleMap = [
@@ -7970,7 +7963,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
     setSamplesLoading(true);
     samplesLoadedCountRef.current = 0;
     handpanKeySamples.forEach(([file, freq]) => {
-      fetch(file)
+      fetch(file, { signal })
         .then(response => response.arrayBuffer())
         .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
         .then(audioBuffer => {
@@ -7984,34 +7977,36 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
           }
         })
         .catch(err => {
-          console.log(`Handpan ${file} not loaded:`, err);
-          samplesLoadedCountRef.current++;
+          if (err.name !== 'AbortError') {
+            console.log(`Handpan ${file} not loaded:`, err);
+            samplesLoadedCountRef.current++;
+          }
         });
     });
 
-    fetch('samples/voice-c3.m4a')
+    fetch('samples/voice-c3.m4a', { signal })
       .then(response => response.arrayBuffer())
       .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
       .then(audioBuffer => {
         voiceBufferRef.current = audioBuffer;
       })
-      .catch(err => console.log('Voice sample not loaded:', err));
+      .catch(err => { if (err.name !== 'AbortError') console.log('Voice sample not loaded:', err); });
 
-    fetch('samples/rainstick-c3.m4a')
+    fetch('samples/rainstick-c3.m4a', { signal })
       .then(response => response.arrayBuffer())
       .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
       .then(audioBuffer => {
         rainstickBufferRef.current = audioBuffer;
       })
-      .catch(err => console.log('Rainstick sample not loaded:', err));
+      .catch(err => { if (err.name !== 'AbortError') console.log('Rainstick sample not loaded:', err); });
 
-    fetch('samples/perc-c3.m4a')
+    fetch('samples/perc-c3.m4a', { signal })
       .then(response => response.arrayBuffer())
       .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
       .then(audioBuffer => {
         percBufferRef.current = audioBuffer;
       })
-      .catch(err => console.log('Perc sample not loaded:', err));
+      .catch(err => { if (err.name !== 'AbortError') console.log('Perc sample not loaded:', err); });
 
     // Start drone
     startDrone(ctx, masterGain);
@@ -8904,18 +8899,54 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
     return () => window.removeEventListener('wheel', handleWheel);
   }, [backgroundMode, isInitialized, showScaleSelector, currentTexture, updateTexture, displayLabel]);
 
-  // Cleanup
+  // Cleanup - properly disconnect and stop all audio nodes
   useEffect(() => {
     return () => {
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       if (foleyIntervalRef.current) clearInterval(foleyIntervalRef.current);
       if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
-      droneOscillatorsRef.current.forEach(node => {
-        try { node.osc.stop(); } catch {}
-      });
-      if (noiseNodeRef.current) {
-        try { noiseNodeRef.current.stop(); } catch {}
+
+      // Cancel any in-flight sample fetches
+      if (fetchAbortControllerRef.current) {
+        fetchAbortControllerRef.current.abort();
       }
+
+      // Disconnect and stop all drone oscillators
+      droneOscillatorsRef.current.forEach(node => {
+        try {
+          if (node.osc) {
+            node.osc.disconnect();
+            node.osc.stop();
+          }
+          if (node.gain) node.gain.disconnect();
+          if (node.panner) node.panner.disconnect();
+        } catch {}
+      });
+      droneOscillatorsRef.current = [];
+
+      // Stop and disconnect noise node
+      if (noiseNodeRef.current) {
+        try {
+          noiseNodeRef.current.disconnect();
+          noiseNodeRef.current.stop();
+        } catch {}
+      }
+
+      // Disconnect other audio nodes
+      if (masterGainRef.current) {
+        try { masterGainRef.current.disconnect(); } catch {}
+      }
+      if (reverbNodeRef.current) {
+        try { reverbNodeRef.current.disconnect(); } catch {}
+      }
+      if (reverbGainRef.current) {
+        try { reverbGainRef.current.disconnect(); } catch {}
+      }
+      if (dryGainRef.current) {
+        try { dryGainRef.current.disconnect(); } catch {}
+      }
+
+      // Close audio context
       if (ctxRef.current) {
         try { ctxRef.current.close(); } catch {}
       }
@@ -9621,24 +9652,28 @@ function Still() {
       return;
     }
 
+    // Track all timeouts for proper cleanup
+    let hideTimeout = null;
+
     // Show hint initially after 5 seconds
     const initialTimeout = setTimeout(() => {
       setShowSettingsHint(true);
       // Hide after 4 seconds (animation duration)
-      setTimeout(() => setShowSettingsHint(false), 4000);
+      hideTimeout = setTimeout(() => setShowSettingsHint(false), 4000);
     }, 5000);
 
     // Then show every 20 seconds
     const intervalId = setInterval(() => {
       if (!hasOpenedSettings) {
         setShowSettingsHint(true);
-        setTimeout(() => setShowSettingsHint(false), 4000);
+        hideTimeout = setTimeout(() => setShowSettingsHint(false), 4000);
       }
     }, 20000);
 
     return () => {
       clearTimeout(initialTimeout);
       clearInterval(intervalId);
+      if (hideTimeout) clearTimeout(hideTimeout);
     };
   }, [hasOpenedSettings]);
 
