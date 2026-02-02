@@ -951,17 +951,6 @@ const breathTechniques = {
     ],
     color: { inhale: '#1a3a5a', holdFull: '#2a4a5a', exhale: '#1a2a4a', holdEmpty: '#1a2a3a' },
   },
-  resonance: {
-    name: 'Resonance',
-    description: 'Syncs heart and breath',
-    recommendedCycles: 15, // ~2.5 min - HRV training
-    phases: [
-      { name: 'inhale', label: 'Inhale', duration: 5 },
-      { name: 'exhale', label: 'Exhale', duration: 5 },
-    ],
-    color: { inhale: '#2a3a4a', exhale: '#1a3a4a' },
-  },
-
   // PARASYMPATHETIC ACTIVATION TECHNIQUES
 
   physiologicalSigh: {
@@ -1051,42 +1040,6 @@ const breathTechniques = {
       { name: 'exhale', label: 'Nose exhale', duration: 6 },
     ],
     color: { inhale: '#1a4a5a', holdFull: '#2a5a5a', exhale: '#1a3a4a' },
-  },
-
-  moonBreath: {
-    name: 'Chandra Bhedana',
-    description: 'Left nostril only - calming',
-    recommendedCycles: 8, // ~1.6 min
-    phases: [
-      { name: 'inhale', label: 'Left in', duration: 4 },
-      { name: 'holdFull', label: 'Hold', duration: 2 },
-      { name: 'exhale', label: 'Right out', duration: 6 },
-    ],
-    color: { inhale: '#1a2a4a', holdFull: '#2a3a5a', exhale: '#1a2a3a' },
-  },
-
-  relaxingBreath: {
-    name: 'Relaxing 5-2-7',
-    description: 'Gentle sleep preparation',
-    recommendedCycles: 8, // ~1.9 min
-    phases: [
-      { name: 'inhale', label: 'Gentle inhale', duration: 5 },
-      { name: 'holdFull', label: 'Soft hold', duration: 2 },
-      { name: 'exhale', label: 'Releasing', duration: 7 },
-    ],
-    color: { inhale: '#1a2a4a', holdFull: '#2a3a4a', exhale: '#1a1a3a' },
-  },
-
-  triangle: {
-    name: 'Triangle Breath',
-    description: 'Equal inhale-hold-exhale',
-    recommendedCycles: 8, // ~1.6 min
-    phases: [
-      { name: 'inhale', label: 'Inhale', duration: 4 },
-      { name: 'holdFull', label: 'Hold', duration: 4 },
-      { name: 'exhale', label: 'Exhale', duration: 4 },
-    ],
-    color: { inhale: '#1a3a4a', holdFull: '#2a4a4a', exhale: '#1a2a4a' },
   },
 
   antiAnxiety: {
@@ -1730,7 +1683,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     return () => cancelAnimationFrame(animFrame);
   }, [getBreathInfo]);
 
-  // ========== SACRED GEOMETRY MODE ==========
+  // ========== LUNGS WIREFRAME MODE ==========
   React.useEffect(() => {
     if (currentMode !== 'geometry' || !containerRef.current || typeof THREE === 'undefined') return;
 
@@ -1740,7 +1693,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 8;
+    camera.position.set(0, 0.3, 8.5);
+    camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1751,8 +1705,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     rendererRef.current = renderer;
     clockRef.current = new THREE.Clock();
 
-    const shapeConfig = gazeShapes.find(s => s.key === currentShape) || gazeShapes[0];
-    const geometry = shapeConfig.create();
     // Convert HSL hue to hex color for THREE.js
     const hslToHex = (h, s, l) => {
       s /= 100; l /= 100;
@@ -1761,75 +1713,278 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
     };
     const dynamicColor = hslToHex(hue, 52, 68);
-    const material = new THREE.MeshBasicMaterial({ color: dynamicColor, wireframe: true, transparent: true, opacity: 0.8 });
-    const mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
-    meshRef.current = mesh;
 
-    // Set initial state before first render to avoid any startup artifacts
-    mesh.scale.setScalar(1.0);
-    mesh.material.opacity = 0.75;
-    renderer.render(scene, camera);
+    const lungsGroup = new THREE.Group();
+    scene.add(lungsGroup);
 
-    // Spring physics for fluid breathing animation (water-like feel)
-    let currentScale = 1.0;
-    let scaleVelocity = 0;
-    let currentOpacity = 0.75;
-    let opacityVelocity = 0;
-    const springStiffness = 0.04; // Gentle stiffness for slow, calming motion
-    const springDamping = 0.88; // High damping for smooth settling
+    const allGeometries = [];
+    const allMaterials = [];
 
-    let frameCount = 0;
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      frameCount++;
+    // Wireframe material using user's color scheme
+    const createWireMaterial = (opacity = 0.85) => {
+      const mat = new THREE.MeshBasicMaterial({
+        color: dynamicColor,
+        wireframe: true,
+        transparent: true,
+        opacity: opacity,
+      });
+      allMaterials.push(mat);
+      return mat;
+    };
 
-      // Skip first few frames to let everything settle
-      if (frameCount < 3) {
-        renderer.render(scene, camera);
-        return;
+    // ========== TRACHEA ==========
+    const tracheaGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.6, 16, 12, true);
+    allGeometries.push(tracheaGeo);
+    const trachea = new THREE.Mesh(tracheaGeo, createWireMaterial());
+    trachea.position.y = 1.6;
+    lungsGroup.add(trachea);
+
+    // Trachea rings (cartilage)
+    for (let i = 0; i < 8; i++) {
+      const ringGeo = new THREE.TorusGeometry(0.14, 0.025, 8, 24);
+      allGeometries.push(ringGeo);
+      const ring = new THREE.Mesh(ringGeo, createWireMaterial());
+      ring.position.y = 2.2 - i * 0.2;
+      ring.rotation.x = Math.PI / 2;
+      lungsGroup.add(ring);
+    }
+
+    // ========== MAIN BRONCHI ==========
+    // Left main bronchus
+    const leftMainPoints = [
+      new THREE.Vector3(0, 0.8, 0),
+      new THREE.Vector3(-0.2, 0.55, 0),
+      new THREE.Vector3(-0.4, 0.25, 0),
+      new THREE.Vector3(-0.6, 0, 0),
+    ];
+    const leftMainCurve = new THREE.CatmullRomCurve3(leftMainPoints);
+    const leftMainGeo = new THREE.TubeGeometry(leftMainCurve, 12, 0.07, 12, false);
+    allGeometries.push(leftMainGeo);
+    lungsGroup.add(new THREE.Mesh(leftMainGeo, createWireMaterial()));
+
+    // Left upper lobe bronchus
+    const leftUpperPoints = [
+      new THREE.Vector3(-0.6, 0, 0),
+      new THREE.Vector3(-0.75, 0.15, 0.02),
+      new THREE.Vector3(-0.9, 0.3, 0.03),
+      new THREE.Vector3(-1.0, 0.45, 0),
+    ];
+    const leftUpperCurve = new THREE.CatmullRomCurve3(leftUpperPoints);
+    const leftUpperGeo = new THREE.TubeGeometry(leftUpperCurve, 10, 0.05, 10, false);
+    allGeometries.push(leftUpperGeo);
+    lungsGroup.add(new THREE.Mesh(leftUpperGeo, createWireMaterial()));
+
+    // Left lower lobe bronchus
+    const leftLowerPoints = [
+      new THREE.Vector3(-0.6, 0, 0),
+      new THREE.Vector3(-0.75, -0.2, 0.02),
+      new THREE.Vector3(-0.9, -0.4, 0.03),
+      new THREE.Vector3(-1.0, -0.55, 0),
+    ];
+    const leftLowerCurve = new THREE.CatmullRomCurve3(leftLowerPoints);
+    const leftLowerGeo = new THREE.TubeGeometry(leftLowerCurve, 10, 0.05, 10, false);
+    allGeometries.push(leftLowerGeo);
+    lungsGroup.add(new THREE.Mesh(leftLowerGeo, createWireMaterial()));
+
+    // Right main bronchus
+    const rightMainPoints = [
+      new THREE.Vector3(0, 0.8, 0),
+      new THREE.Vector3(0.2, 0.6, 0),
+      new THREE.Vector3(0.4, 0.35, 0),
+      new THREE.Vector3(0.55, 0.15, 0),
+    ];
+    const rightMainCurve = new THREE.CatmullRomCurve3(rightMainPoints);
+    const rightMainGeo = new THREE.TubeGeometry(rightMainCurve, 12, 0.07, 12, false);
+    allGeometries.push(rightMainGeo);
+    lungsGroup.add(new THREE.Mesh(rightMainGeo, createWireMaterial()));
+
+    // Right upper lobe bronchus
+    const rightUpperPoints = [
+      new THREE.Vector3(0.55, 0.15, 0),
+      new THREE.Vector3(0.7, 0.35, 0.02),
+      new THREE.Vector3(0.85, 0.5, 0.02),
+      new THREE.Vector3(1.0, 0.6, 0),
+    ];
+    const rightUpperCurve = new THREE.CatmullRomCurve3(rightUpperPoints);
+    const rightUpperGeo = new THREE.TubeGeometry(rightUpperCurve, 10, 0.05, 10, false);
+    allGeometries.push(rightUpperGeo);
+    lungsGroup.add(new THREE.Mesh(rightUpperGeo, createWireMaterial()));
+
+    // Right middle lobe bronchus
+    const rightMiddlePoints = [
+      new THREE.Vector3(0.55, 0.15, 0),
+      new THREE.Vector3(0.7, 0.05, 0.03),
+      new THREE.Vector3(0.9, 0, 0.03),
+      new THREE.Vector3(1.05, 0, 0),
+    ];
+    const rightMiddleCurve = new THREE.CatmullRomCurve3(rightMiddlePoints);
+    const rightMiddleGeo = new THREE.TubeGeometry(rightMiddleCurve, 10, 0.045, 10, false);
+    allGeometries.push(rightMiddleGeo);
+    lungsGroup.add(new THREE.Mesh(rightMiddleGeo, createWireMaterial()));
+
+    // Right lower lobe bronchus
+    const rightLowerPoints = [
+      new THREE.Vector3(0.55, 0.15, 0),
+      new THREE.Vector3(0.65, -0.1, 0.02),
+      new THREE.Vector3(0.8, -0.35, 0.02),
+      new THREE.Vector3(1.0, -0.55, 0),
+    ];
+    const rightLowerCurve = new THREE.CatmullRomCurve3(rightLowerPoints);
+    const rightLowerGeo = new THREE.TubeGeometry(rightLowerCurve, 10, 0.05, 10, false);
+    allGeometries.push(rightLowerGeo);
+    lungsGroup.add(new THREE.Mesh(rightLowerGeo, createWireMaterial()));
+
+    // ========== LUNG LOBES ==========
+    const createLungLobe = (side, lobeType) => {
+      const isLeft = side === 'left';
+      const sideDir = isLeft ? -1 : 1;
+
+      let params;
+      if (lobeType === 'upper') {
+        params = {
+          x: sideDir * 1.15,
+          y: isLeft ? 0.5 : 0.6,
+          scaleX: 0.55,
+          scaleY: isLeft ? 0.75 : 0.65,
+          scaleZ: 0.4,
+        };
+      } else if (lobeType === 'middle') {
+        params = {
+          x: sideDir * 1.2,
+          y: 0,
+          scaleX: 0.5,
+          scaleY: 0.4,
+          scaleZ: 0.38,
+        };
+      } else {
+        params = {
+          x: sideDir * 1.2,
+          y: isLeft ? -0.55 : -0.6,
+          scaleX: 0.6,
+          scaleY: isLeft ? 0.8 : 0.75,
+          scaleZ: 0.45,
+        };
       }
 
-      const elapsed = clockRef.current.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
+      const geo = new THREE.SphereGeometry(1, 24, 18);
+      allGeometries.push(geo);
+      const positions = geo.attributes.position.array;
 
-      if (meshRef.current) {
-        // Skip rotation in breathwork mode to keep text visible in torus hole
-        const isBreathworkActive = externalBreathSessionRef.current?.isActive;
+      for (let i = 0; i < positions.length; i += 3) {
+        let x = positions[i];
+        let y = positions[i + 1];
+        let z = positions[i + 2];
 
-        if (!isBreathworkActive) {
-          // Touch-responsive rotation
-          if (touchPointsRef.current.length > 0) {
-            const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-            if (activeTouch) {
-              const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-              const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-              meshRef.current.rotation.y += normalizedX * 0.02;
-              meshRef.current.rotation.x += normalizedY * 0.02;
-            }
-          } else {
-            // Gentle auto-rotation when not touching
-            meshRef.current.rotation.y += 0.0004;
-            meshRef.current.rotation.x += 0.0002;
-          }
+        // Flatten medial side
+        if ((isLeft && x > 0) || (!isLeft && x < 0)) {
+          x *= 0.5;
         }
 
-        // Breath-synced scale with spring physics for fluid motion
-        const targetScale = 0.9 + breath * 0.2;
-        const targetOpacity = 0.6 + breath * 0.25;
+        // Bulge on lateral side
+        if ((isLeft && x < -0.3) || (!isLeft && x > 0.3)) {
+          const bulge = 1 + Math.abs(x) * 0.1;
+          z *= bulge;
+        }
 
-        // Spring physics: smooth interpolation toward target (feels like water)
-        const scaleForce = (targetScale - currentScale) * springStiffness;
-        scaleVelocity = (scaleVelocity + scaleForce) * springDamping;
-        currentScale += scaleVelocity;
+        // Cardiac notch (left lung only)
+        if (isLeft && lobeType === 'lower') {
+          const notchX = x + 0.4;
+          const notchY = y + 0.3;
+          const notchDist = Math.sqrt(notchX * notchX + notchY * notchY);
+          const notchDepth = Math.exp(-notchDist * notchDist * 4) * 0.35;
+          x += notchDepth;
+        }
 
-        const opacityForce = (targetOpacity - currentOpacity) * springStiffness;
-        opacityVelocity = (opacityVelocity + opacityForce) * springDamping;
-        currentOpacity += opacityVelocity;
+        // Pointed apex for upper lobes
+        if (lobeType === 'upper' && y > 0.6) {
+          const taper = 1 - (y - 0.6) * 0.5;
+          x *= taper;
+          z *= taper;
+        }
 
-        meshRef.current.scale.setScalar(currentScale);
-        meshRef.current.material.opacity = currentOpacity;
+        // Flatten base for lower lobes
+        if (lobeType === 'lower' && y < -0.7) {
+          y = -0.7 - (y + 0.7) * 0.3;
+        }
+
+        positions[i] = x * params.scaleX;
+        positions[i + 1] = y * params.scaleY;
+        positions[i + 2] = z * params.scaleZ;
       }
+
+      geo.computeVertexNormals();
+
+      const lobe = new THREE.Mesh(geo, createWireMaterial(0.7));
+      lobe.position.set(params.x, params.y, 0);
+      lobe.userData = { side, lobeType, baseScale: { ...params } };
+
+      return lobe;
+    };
+
+    // Create all 5 lobes
+    const leftUpper = createLungLobe('left', 'upper');
+    const leftLower = createLungLobe('left', 'lower');
+    const rightUpper = createLungLobe('right', 'upper');
+    const rightMiddle = createLungLobe('right', 'middle');
+    const rightLower = createLungLobe('right', 'lower');
+
+    lungsGroup.add(leftUpper);
+    lungsGroup.add(leftLower);
+    lungsGroup.add(rightUpper);
+    lungsGroup.add(rightMiddle);
+    lungsGroup.add(rightLower);
+
+    const allLobes = [leftUpper, leftLower, rightUpper, rightMiddle, rightLower];
+
+    // Position the whole group
+    lungsGroup.position.y = -0.3;
+    lungsGroup.rotation.x = 0.1;
+    meshRef.current = lungsGroup;
+
+    // Mouse/touch tracking for rotation
+    let mouseX = 0, mouseY = 0;
+
+    // Spring physics for smooth breathing (prevents glitching on phase transitions)
+    let currentBreath = 0.5;
+    let breathVelocity = 0;
+    const springStiffness = 0.06;
+    const springDamping = 0.85;
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+
+      const elapsed = clockRef.current.getElapsedTime();
+      const targetBreath = getBreathPhase(elapsed);
+
+      // Spring physics for smooth interpolation
+      const breathForce = (targetBreath - currentBreath) * springStiffness;
+      breathVelocity = (breathVelocity + breathForce) * springDamping;
+      currentBreath += breathVelocity;
+
+      // Breathing - expand/contract lobes with smoothed value
+      const breathExpand = 0.88 + currentBreath * 0.2;
+      const verticalExpand = 1 + currentBreath * 0.1;
+
+      allLobes.forEach(lobe => {
+        lobe.scale.set(breathExpand, breathExpand * verticalExpand, breathExpand);
+        lobe.material.opacity = 0.5 + currentBreath * 0.35;
+      });
+
+      // Gentle rotation with touch/mouse
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          mouseX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          mouseY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+        }
+      } else {
+        mouseX *= 0.98;
+        mouseY *= 0.98;
+      }
+
+      lungsGroup.rotation.y += (mouseX * 0.5 - lungsGroup.rotation.y) * 0.02;
+      lungsGroup.rotation.x += (0.1 + mouseY * 0.15 - lungsGroup.rotation.x) * 0.02;
+
       renderer.render(scene, camera);
     };
     animate();
@@ -1847,11 +2002,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
         containerRef.current.removeChild(rendererRef.current.domElement);
       }
-      geometry.dispose();
-      material.dispose();
+      allGeometries.forEach(g => g.dispose());
+      allMaterials.forEach(m => m.dispose());
       renderer.dispose();
     };
-  }, [currentMode, currentShape, hue]);
+  }, [currentMode, hue]);
 
   // ========== FRACTAL TREE MODE (3D) ==========
   React.useEffect(() => {
@@ -7152,11 +7307,11 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         breathSession={breathSession}
       />
 
-      {/* Phase text - lower third of screen, readable while viewing visual */}
+      {/* Phase text - positioned in the open space between lung lobes */}
       {breathSession.isActive && (
         <div style={{
           position: 'absolute',
-          bottom: '23%',
+          bottom: '32%',
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 1,
@@ -7778,7 +7933,7 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 8, 6);
+    camera.position.set(0, 9.5, 7);
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
@@ -7824,14 +7979,14 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
 
     // Ding (center note)
     const dingGroup = new THREE.Group();
-    const dingHit = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.3, 32), new THREE.MeshBasicMaterial({ visible: false }));
+    const dingHit = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.3, 32), new THREE.MeshBasicMaterial({ visible: false }));
     dingHit.userData = { noteIndex: 0, visualGroup: dingGroup };
     dingGroup.add(dingHit);
     hitTargetsRef.current.push(dingHit);
-    const dingRing = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.028, 12, 48), new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.65 }));
+    const dingRing = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.032, 12, 48), new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.65 }));
     dingRing.rotation.x = Math.PI / 2;
     dingGroup.add(dingRing);
-    const dingCenter = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.015, 8, 24), new THREE.MeshBasicMaterial({ color: aColor, transparent: true, opacity: 0.6 }));
+    const dingCenter = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.018, 8, 24), new THREE.MeshBasicMaterial({ color: aColor, transparent: true, opacity: 0.6 }));
     dingCenter.rotation.x = Math.PI / 2;
     dingGroup.add(dingCenter);
     dingGroup.position.y = 0.08;
@@ -7846,17 +8001,17 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
       // Scale factor: 1.0 for lowest note (i=0), down to 0.65 for highest (i=7)
       const ns = 1.0 - (i / (numFields - 1)) * 0.35;
       // Hit target sized to match visual
-      const hit = new THREE.Mesh(new THREE.CylinderGeometry(0.52 * ns, 0.52 * ns, 0.15, 32), new THREE.MeshBasicMaterial({ visible: false }));
+      const hit = new THREE.Mesh(new THREE.CylinderGeometry(0.62 * ns, 0.62 * ns, 0.15, 32), new THREE.MeshBasicMaterial({ visible: false }));
       hit.userData = { noteIndex: i + 1, visualGroup: g };
       g.add(hit);
       hitTargetsRef.current.push(hit);
       // Outer oval - scales with pitch
-      const oval = new THREE.Mesh(new THREE.TorusGeometry(0.45 * ns, 0.025, 12, 40), new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.6 }));
+      const oval = new THREE.Mesh(new THREE.TorusGeometry(0.55 * ns, 0.028, 12, 40), new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.6 }));
       oval.rotation.x = Math.PI / 2;
       oval.scale.set(1, 1.25, 1);
       g.add(oval);
       // Inner oval - scales proportionally
-      const innerOval = new THREE.Mesh(new THREE.TorusGeometry(0.14 * ns, 0.012, 8, 24), new THREE.MeshBasicMaterial({ color: aColor, transparent: true, opacity: 0.5 }));
+      const innerOval = new THREE.Mesh(new THREE.TorusGeometry(0.18 * ns, 0.014, 8, 24), new THREE.MeshBasicMaterial({ color: aColor, transparent: true, opacity: 0.5 }));
       innerOval.rotation.x = Math.PI / 2;
       innerOval.scale.set(1, 1.25, 1);
       g.add(innerOval);
@@ -9163,7 +9318,18 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
         return;
       }
 
-      // Only allow instrument/texture/key/scale changes when menu is open
+      // Horizontal swipe when menu is closed = change instrument
+      if (!showScaleSelector && Math.abs(wheelAccumXRef.current) > threshold && Math.abs(wheelAccumXRef.current) > Math.abs(wheelAccumYRef.current)) {
+        e.preventDefault();
+        const dir = wheelAccumXRef.current > 0 ? 1 : -1;
+        setCurrentInstrument(prev => (prev + dir + instruments.length) % instruments.length);
+        displayLabel();
+        wheelAccumXRef.current = 0;
+        wheelAccumYRef.current = 0;
+        return;
+      }
+
+      // Only allow texture/key/scale changes when menu is open
       if (!showScaleSelector) return;
 
       if (e.shiftKey) {
