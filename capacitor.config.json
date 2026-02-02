@@ -1,6 +1,6 @@
 {
-  "appId": "com.omhum.app",
-  "appName": "omhum",
+  "appId": "com.slohum.app",
+  "appName": "slohum",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

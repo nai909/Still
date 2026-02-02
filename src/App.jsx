@@ -1112,7 +1112,7 @@ const gazeModes = [
   { key: 'fern', name: 'Fern' },
   { key: 'succulent', name: 'Succulent' },
   { key: 'dandelion', name: 'Dandelion' },
-  { key: 'lungs', name: 'Breath Tree' },
+  { key: 'lungs', name: 'Lungs' },
   { key: 'ripples', name: 'Ripples' },
   { key: 'jellyfish2d', name: 'Deep Sea' },
   { key: 'mushrooms', name: 'Mushrooms' },
@@ -1685,7 +1685,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
   // ========== LUNGS WIREFRAME MODE ==========
   React.useEffect(() => {
-    if (currentMode !== 'geometry' || !containerRef.current || typeof THREE === 'undefined') return;
+    if (currentMode !== 'lungs' || !containerRef.current || typeof THREE === 'undefined') return;
 
     // Clear any residual touch data from navigation
     touchPointsRef.current = [];
@@ -1701,9 +1701,24 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
     containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'none';
+    // Only enable pointer events for OrbitControls in gaze mode (not breathe mode)
+    renderer.domElement.style.pointerEvents = backgroundMode ? 'none' : 'auto';
     rendererRef.current = renderer;
     clockRef.current = new THREE.Clock();
+
+    // Orbit controls for full exploration - only in gaze mode (not breathe mode)
+    let controls = null;
+    if (!backgroundMode) {
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+      controls.rotateSpeed = 0.25;
+      controls.enableZoom = true;
+      controls.minDistance = 3;
+      controls.maxDistance = 20;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.3;
+    }
 
     // Convert HSL hue to hex color for THREE.js
     const hslToHex = (h, s, l) => {
@@ -1716,6 +1731,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     const lungsGroup = new THREE.Group();
     scene.add(lungsGroup);
+
+    // In breathe mode, rotate the lungs to an angled view (locked position)
+    if (backgroundMode) {
+      lungsGroup.rotation.y = 0.4;  // Slight rotation to the side
+      lungsGroup.rotation.x = 0.15; // Slight tilt down
+    }
 
     const allGeometries = [];
     const allMaterials = [];
@@ -1938,11 +1959,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     // Position the whole group
     lungsGroup.position.y = -0.3;
-    lungsGroup.rotation.x = 0.1;
     meshRef.current = lungsGroup;
-
-    // Mouse/touch tracking for rotation
-    let mouseX = 0, mouseY = 0;
 
     // Spring physics for smooth breathing (prevents glitching on phase transitions)
     let currentBreath = 0.5;
@@ -1970,21 +1987,125 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         lobe.material.opacity = 0.5 + currentBreath * 0.35;
       });
 
-      // Gentle rotation with touch/mouse
-      if (touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          mouseX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-          mouseY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-        }
-      } else {
-        mouseX *= 0.98;
-        mouseY *= 0.98;
+      // Update orbit controls (only in gaze mode)
+      if (controls) controls.update();
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      if (controls) controls.dispose();
+      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
+        containerRef.current.removeChild(rendererRef.current.domElement);
+      }
+      allGeometries.forEach(g => g.dispose());
+      allMaterials.forEach(m => m.dispose());
+      renderer.dispose();
+    };
+  }, [currentMode, hue, backgroundMode]);
+
+  // ========== SACRED GEOMETRY MODE (TORUS) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'geometry' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    // Clear any residual touch data from navigation
+    touchPointsRef.current = [];
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 8;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    const shapeConfig = gazeShapes.find(s => s.key === currentShape) || gazeShapes[0];
+    const geometry = shapeConfig.create();
+    // Convert HSL hue to hex color for THREE.js
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+    const dynamicColor = hslToHex(hue, 52, 68);
+    const material = new THREE.MeshBasicMaterial({ color: dynamicColor, wireframe: true, transparent: true, opacity: 0.8 });
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+    meshRef.current = mesh;
+
+    // Set initial state before first render to avoid any startup artifacts
+    mesh.scale.setScalar(1.0);
+    mesh.material.opacity = 0.75;
+    renderer.render(scene, camera);
+
+    // Spring physics for fluid breathing animation (water-like feel)
+    let currentScale = 1.0;
+    let scaleVelocity = 0;
+    let currentOpacity = 0.75;
+    let opacityVelocity = 0;
+    const springStiffness = 0.04;
+    const springDamping = 0.88;
+
+    let frameCount = 0;
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      frameCount++;
+
+      if (frameCount < 3) {
+        renderer.render(scene, camera);
+        return;
       }
 
-      lungsGroup.rotation.y += (mouseX * 0.5 - lungsGroup.rotation.y) * 0.02;
-      lungsGroup.rotation.x += (0.1 + mouseY * 0.15 - lungsGroup.rotation.x) * 0.02;
+      const elapsed = clockRef.current.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
 
+      if (meshRef.current) {
+        // Touch-responsive rotation
+        if (touchPointsRef.current.length > 0) {
+          const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+          if (activeTouch) {
+            const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+            const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+            meshRef.current.rotation.y += normalizedX * 0.02;
+            meshRef.current.rotation.x += normalizedY * 0.02;
+          }
+        } else {
+          meshRef.current.rotation.y += 0.0004;
+          meshRef.current.rotation.x += 0.0002;
+        }
+
+        // Breath-synced scale with spring physics
+        const targetScale = 0.9 + breath * 0.2;
+        const targetOpacity = 0.6 + breath * 0.25;
+
+        const scaleForce = (targetScale - currentScale) * springStiffness;
+        scaleVelocity = (scaleVelocity + scaleForce) * springDamping;
+        currentScale += scaleVelocity;
+
+        const opacityForce = (targetOpacity - currentOpacity) * springStiffness;
+        opacityVelocity = (opacityVelocity + opacityForce) * springDamping;
+        currentOpacity += opacityVelocity;
+
+        meshRef.current.scale.setScalar(currentScale);
+        meshRef.current.material.opacity = currentOpacity;
+      }
       renderer.render(scene, camera);
     };
     animate();
@@ -2002,11 +2123,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
         containerRef.current.removeChild(rendererRef.current.domElement);
       }
-      allGeometries.forEach(g => g.dispose());
-      allMaterials.forEach(m => m.dispose());
+      geometry.dispose();
+      material.dispose();
       renderer.dispose();
     };
-  }, [currentMode, hue]);
+  }, [currentMode, currentShape, hue]);
 
   // ========== FRACTAL TREE MODE (3D) ==========
   React.useEffect(() => {
@@ -2872,178 +2993,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
-  // ========== BREATH TREE (LUNGS) MODE (3D) ==========
-  React.useEffect(() => {
-    if (currentMode !== 'lungs' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    // Clear any residual touch data from navigation
-    touchPointsRef.current = [];
-
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 9);
-    camera.lookAt(0, 0, 0);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'none';
-    rendererRef.current = renderer;
-    clockRef.current = new THREE.Clock();
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    const lungsGroup = new THREE.Group();
-    scene.add(lungsGroup);
-
-    const branches = [];
-    const alveoli = [];
-
-    // Recursive bronchial tree generation
-    const createBranch = (startPos, direction, length, depth, maxDepth, side) => {
-      if (depth > maxDepth) return;
-
-      const endPos = startPos.clone().add(direction.clone().multiplyScalar(length));
-
-      // Branch tube
-      const branchGeom = new THREE.CylinderGeometry(
-        0.015 * (maxDepth - depth + 1),
-        0.02 * (maxDepth - depth + 1),
-        length,
-        6
-      );
-      const branchMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue, 45, 45),
-        transparent: true,
-        opacity: 0.5,
-        wireframe: true
-      });
-      const branch = new THREE.Mesh(branchGeom, branchMat);
-
-      const midPoint = startPos.clone().add(endPos).multiplyScalar(0.5);
-      branch.position.copy(midPoint);
-      branch.lookAt(endPos);
-      branch.rotateX(Math.PI / 2);
-      branch.userData = { depth, side };
-      lungsGroup.add(branch);
-      branches.push(branch);
-
-      // Alveoli at tips
-      if (depth === maxDepth) {
-        const alveolusGeom = new THREE.SphereGeometry(0.04, 8, 8);
-        const alveolusMat = new THREE.MeshBasicMaterial({
-          color: hslToHex(hue, 55, 60),
-          transparent: true,
-          opacity: 0.4
-        });
-        const alveolus = new THREE.Mesh(alveolusGeom, alveolusMat);
-        alveolus.position.copy(endPos);
-        alveolus.userData = { phase: Math.random() * Math.PI * 2 };
-        lungsGroup.add(alveolus);
-        alveoli.push(alveolus);
-      }
-
-      // Create child branches
-      const spread = 0.5 - depth * 0.05;
-      const newLength = length * 0.7;
-
-      // Left branch
-      const leftDir = direction.clone();
-      leftDir.applyAxisAngle(new THREE.Vector3(0, 0, 1), spread * (side === 'left' ? 1 : -1));
-      leftDir.applyAxisAngle(new THREE.Vector3(1, 0, 0), (Math.random() - 0.5) * 0.3);
-      createBranch(endPos.clone(), leftDir, newLength, depth + 1, maxDepth, side);
-
-      // Right branch
-      const rightDir = direction.clone();
-      rightDir.applyAxisAngle(new THREE.Vector3(0, 0, 1), -spread * (side === 'left' ? 1 : -1));
-      rightDir.applyAxisAngle(new THREE.Vector3(1, 0, 0), (Math.random() - 0.5) * 0.3);
-      createBranch(endPos.clone(), rightDir, newLength, depth + 1, maxDepth, side);
-    };
-
-    // Trachea
-    const tracheaGeom = new THREE.CylinderGeometry(0.06, 0.05, 0.8, 8);
-    const tracheaMat = new THREE.MeshBasicMaterial({
-      color: hslToHex(hue, 35, 40),
-      transparent: true,
-      opacity: 0.5,
-      wireframe: true
-    });
-    const trachea = new THREE.Mesh(tracheaGeom, tracheaMat);
-    trachea.position.y = 2;
-    lungsGroup.add(trachea);
-
-    // Left and right lungs
-    const startY = 1.6;
-    createBranch(new THREE.Vector3(-0.3, startY, 0), new THREE.Vector3(-0.3, -1, 0).normalize(), 0.5, 0, 5, 'left');
-    createBranch(new THREE.Vector3(0.3, startY, 0), new THREE.Vector3(0.3, -1, 0).normalize(), 0.5, 0, 5, 'right');
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clockRef.current.getElapsedTime();
-
-      // Touch-responsive rotation - slow and meditative
-      if (touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          lungsGroup.rotation.y += normalizedX * 0.015;
-          lungsGroup.rotation.x += normalizedY * 0.008;
-        }
-      } else {
-        lungsGroup.rotation.y += 0.0002;
-      }
-
-      // Breath-synced scale - lungs expand and contract
-      const breath = getBreathPhase(elapsed);
-      const scaleY = 0.85 + breath * 0.3;
-      const scaleXZ = 0.9 + breath * 0.2;
-      lungsGroup.scale.set(scaleXZ, scaleY, scaleXZ * 0.8);
-
-      // Branches pulse with breath
-      branches.forEach(branch => {
-        branch.material.opacity = 0.55 + breath * 0.3;
-      });
-
-      // Alveoli expand with breath
-      alveoli.forEach(alveolus => {
-        const pulse = 0.7 + breath * 0.3 + Math.sin(elapsed * 0.2 + alveolus.userData.phase) * 0.05;
-        alveolus.scale.setScalar(pulse);
-        alveolus.material.opacity = 0.5 + breath * 0.35;
-      });
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
-      }
-      branches.forEach(b => { b.geometry.dispose(); b.material.dispose(); });
-      alveoli.forEach(a => { a.geometry.dispose(); a.material.dispose(); });
-      tracheaGeom.dispose(); tracheaMat.dispose();
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
-
   // ========== JELLYFISH MODE (THREE.JS 3D) ==========
   React.useEffect(() => {
     if (currentMode !== 'jellyfish' || !containerRef.current) return;
@@ -3107,8 +3056,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     if (THREE.OrbitControls) {
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
-      controls.dampingFactor = 0.12;
-      controls.rotateSpeed = 0.4; // Slower touch sensitivity
+      controls.dampingFactor = 0.08;
+      controls.rotateSpeed = 0.25;
       controls.minDistance = 1;
       controls.maxDistance = 15;
       controls.enablePan = true;
@@ -6066,9 +6015,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const pit = new THREE.Line(pitGeo, pitMat);
     scene.add(pit);
 
-    // Fire logs arranged in a pile
+    // Fire logs arranged in a pile - prominent feature
     const logGroup = new THREE.Group();
-    const logGeo = new THREE.CylinderGeometry(0.04, 0.05, 0.4, 8);
+    const logGeo = new THREE.CylinderGeometry(0.05, 0.06, 0.5, 8);
     allGeometries.push(logGeo);
     const logMat = new THREE.MeshBasicMaterial({
       color: hslToHex(hue, 30, 25),
@@ -6091,17 +6040,17 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     }
     scene.add(logGroup);
 
-    // Core fire glow at center
-    const glowGeo = new THREE.SphereGeometry(0.15, 16, 16);
+    // Core fire glow at center - smaller so logs are the feature
+    const glowGeo = new THREE.SphereGeometry(0.06, 16, 16);
     allGeometries.push(glowGeo);
     const glowMat = new THREE.MeshBasicMaterial({
       color: hslToHex(hue, 80, 60),
       transparent: true,
-      opacity: 0.6
+      opacity: 0.5
     });
     allMaterials.push(glowMat);
     const glow = new THREE.Mesh(glowGeo, glowMat);
-    glow.position.y = 0.2;
+    glow.position.y = 0.12;
     scene.add(glow);
 
     // Embers particle system - larger, slower rising particles
@@ -6116,9 +6065,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       emberPositions[i * 3 + 1] = Math.random() * 0.3;
       emberPositions[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
       emberVelocities.push({
-        x: (Math.random() - 0.5) * 0.01,
-        y: 0.01 + Math.random() * 0.02,
-        z: (Math.random() - 0.5) * 0.01
+        x: (Math.random() - 0.5) * 0.003,
+        y: 0.003 + Math.random() * 0.005,
+        z: (Math.random() - 0.5) * 0.003
       });
       emberLifetimes.push(Math.random());
     }
@@ -6220,23 +6169,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Animate embers rising
       const emberPos = embers.geometry.attributes.position.array;
       for (let i = 0; i < emberCount; i++) {
-        emberLifetimes[i] += 0.008;
+        emberLifetimes[i] += 0.002;
         if (emberLifetimes[i] > 1) {
           // Reset ember to fire center
           emberPos[i * 3] = (Math.random() - 0.5) * 0.2;
           emberPos[i * 3 + 1] = Math.random() * 0.1;
           emberPos[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
           emberVelocities[i] = {
-            x: (Math.random() - 0.5) * 0.01,
-            y: 0.01 + Math.random() * 0.02,
-            z: (Math.random() - 0.5) * 0.01
+            x: (Math.random() - 0.5) * 0.003,
+            y: 0.003 + Math.random() * 0.005,
+            z: (Math.random() - 0.5) * 0.003
           };
           emberLifetimes[i] = 0;
         }
-        // Apply velocity with some drift
-        emberPos[i * 3] += emberVelocities[i].x + Math.sin(elapsed + i) * 0.002;
+        // Apply velocity with gentle drift
+        emberPos[i * 3] += emberVelocities[i].x + Math.sin(elapsed * 0.5 + i) * 0.0005;
         emberPos[i * 3 + 1] += emberVelocities[i].y;
-        emberPos[i * 3 + 2] += emberVelocities[i].z + Math.cos(elapsed + i) * 0.002;
+        emberPos[i * 3 + 2] += emberVelocities[i].z + Math.cos(elapsed * 0.5 + i) * 0.0005;
       }
       embers.geometry.attributes.position.needsUpdate = true;
       emberMat.opacity = 0.6 + breath * 0.3;
@@ -6564,7 +6513,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // Orbit controls for full rotation
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
+    controls.dampingFactor = 0.08;
+    controls.rotateSpeed = 0.25;
     controls.enableZoom = true;
     controls.minDistance = 2;
     controls.maxDistance = 15;
@@ -7303,7 +7253,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       <GazeMode
         primaryHue={primaryHue}
         backgroundMode={true}
-        currentVisual="geometry"
+        currentVisual="lungs"
         breathSession={breathSession}
       />
 
@@ -7933,7 +7883,7 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 9.5, 7);
+    camera.position.set(0, 8.5, 6);
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
@@ -7963,7 +7913,7 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
 
     // Shell
     const shell = new THREE.Mesh(
-      new THREE.SphereGeometry(2.2, 72, 36, 0, Math.PI * 2, 0, Math.PI * 0.48),
+      new THREE.SphereGeometry(1.95, 72, 36, 0, Math.PI * 2, 0, Math.PI * 0.48),
       new THREE.MeshBasicMaterial({ color: pColor, wireframe: true, transparent: true, opacity: 0.18 })
     );
     shell.rotation.x = Math.PI;
@@ -7971,7 +7921,7 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
 
     // Rim
     const rim = new THREE.Mesh(
-      new THREE.TorusGeometry(2.2, 0.05, 16, 100),
+      new THREE.TorusGeometry(1.95, 0.05, 16, 100),
       new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.7 })
     );
     rim.rotation.x = Math.PI / 2;
@@ -7979,14 +7929,14 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
 
     // Ding (center note)
     const dingGroup = new THREE.Group();
-    const dingHit = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.3, 32), new THREE.MeshBasicMaterial({ visible: false }));
+    const dingHit = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.3, 32), new THREE.MeshBasicMaterial({ visible: false }));
     dingHit.userData = { noteIndex: 0, visualGroup: dingGroup };
     dingGroup.add(dingHit);
     hitTargetsRef.current.push(dingHit);
-    const dingRing = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.032, 12, 48), new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.65 }));
+    const dingRing = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.028, 12, 48), new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.65 }));
     dingRing.rotation.x = Math.PI / 2;
     dingGroup.add(dingRing);
-    const dingCenter = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.018, 8, 24), new THREE.MeshBasicMaterial({ color: aColor, transparent: true, opacity: 0.6 }));
+    const dingCenter = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.014, 8, 24), new THREE.MeshBasicMaterial({ color: aColor, transparent: true, opacity: 0.6 }));
     dingCenter.rotation.x = Math.PI / 2;
     dingGroup.add(dingCenter);
     dingGroup.position.y = 0.08;
@@ -8001,21 +7951,21 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
       // Scale factor: 1.0 for lowest note (i=0), down to 0.65 for highest (i=7)
       const ns = 1.0 - (i / (numFields - 1)) * 0.35;
       // Hit target sized to match visual
-      const hit = new THREE.Mesh(new THREE.CylinderGeometry(0.62 * ns, 0.62 * ns, 0.15, 32), new THREE.MeshBasicMaterial({ visible: false }));
+      const hit = new THREE.Mesh(new THREE.CylinderGeometry(0.52 * ns, 0.52 * ns, 0.15, 32), new THREE.MeshBasicMaterial({ visible: false }));
       hit.userData = { noteIndex: i + 1, visualGroup: g };
       g.add(hit);
       hitTargetsRef.current.push(hit);
       // Outer oval - scales with pitch
-      const oval = new THREE.Mesh(new THREE.TorusGeometry(0.55 * ns, 0.028, 12, 40), new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.6 }));
+      const oval = new THREE.Mesh(new THREE.TorusGeometry(0.46 * ns, 0.026, 12, 40), new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.6 }));
       oval.rotation.x = Math.PI / 2;
       oval.scale.set(1, 1.25, 1);
       g.add(oval);
       // Inner oval - scales proportionally
-      const innerOval = new THREE.Mesh(new THREE.TorusGeometry(0.18 * ns, 0.014, 8, 24), new THREE.MeshBasicMaterial({ color: aColor, transparent: true, opacity: 0.5 }));
+      const innerOval = new THREE.Mesh(new THREE.TorusGeometry(0.15 * ns, 0.013, 8, 24), new THREE.MeshBasicMaterial({ color: aColor, transparent: true, opacity: 0.5 }));
       innerOval.rotation.x = Math.PI / 2;
       innerOval.scale.set(1, 1.25, 1);
       g.add(innerOval);
-      g.position.set(Math.cos(angle) * 1.4, 0, Math.sin(angle) * 1.4);
+      g.position.set(Math.cos(angle) * 1.3, 0, Math.sin(angle) * 1.3);
       g.rotation.y = -angle - Math.PI / 2;
       handpan.add(g);
       toneFieldsRef.current.push(g);
@@ -8866,8 +8816,9 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
 
     // Haptic feedback - stronger for low notes (dings)
     if (freq < 150) {
-      // Low ding notes get heavy haptic
+      // Low ding notes get double heavy haptic for stronger feel
       Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => {});
+      setTimeout(() => Haptics.impact({ style: ImpactStyle.Heavy }).catch(() => {}), 50);
     } else if (freq < 300) {
       // Mid notes get medium haptic
       Haptics.impact({ style: ImpactStyle.Medium }).catch(() => {});
@@ -10699,16 +10650,16 @@ function Still() {
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 1,
-              fontSize: 'clamp(2.5rem, 10vw, 5rem)',
+              fontSize: 'clamp(1.8rem, 7vw, 3.5rem)',
               fontFamily: '"Jost", sans-serif',
               fontWeight: 300,
-              letterSpacing: '0.5em',
+              letterSpacing: '0.25em',
               margin: 0,
               color: 'rgba(255,255,255,0.95)',
               textShadow: `0 0 40px hsla(${settings.primaryHue}, 60%, 60%, 0.5), 0 0 80px hsla(${settings.primaryHue}, 60%, 60%, 0.3)`,
             }}
           >
-            omhum
+            slohum
           </h1>
 
           {/* Touch to begin - positioned below visual */}
@@ -10806,7 +10757,7 @@ function Still() {
                 opacity: hasOpenedSettings ? 0.9 : undefined,
               }}
             >
-              omhum
+              slohum
             </h1>
             {/* Settings hint that appears periodically */}
             {!hasOpenedSettings && (
