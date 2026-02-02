@@ -1124,7 +1124,6 @@ const gazeModes = [
   { key: 'lavaTouch', name: 'Lava Lamp' },
   // Landscape visuals
   { key: 'mountains', name: 'Mountains' },
-  { key: 'cave', name: 'Cave' },
   { key: 'maloka', name: 'Maloka' },
   { key: 'underwater', name: 'Abyss' },
   { key: 'lotus', name: 'Lotus' },
@@ -1693,8 +1692,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0.3, 8.5);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(0, -0.5, 8.5);
+    camera.lookAt(0, -0.5, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1734,8 +1733,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     // In breathe mode, rotate the lungs to an angled view (locked position)
     if (backgroundMode) {
-      lungsGroup.rotation.y = 0.4;  // Slight rotation to the side
-      lungsGroup.rotation.x = 0.15; // Slight tilt down
+      lungsGroup.rotation.x = 0.35; // Tilt forward to show top perspective
     }
 
     const allGeometries = [];
@@ -5574,261 +5572,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
-  // ========== CAVE MODE ==========
-  // First-person journey through endless crystalline cave tunnel
-  React.useEffect(() => {
-    if (currentMode !== 'cave' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    // Clear any residual touch data from navigation
-    touchPointsRef.current = [];
-
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x000000, 0.04);
-
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 0, 0);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'auto';
-    rendererRef.current = renderer;
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    // Tunnel segments - rings of stalactites/stalagmites
-    const tunnelSegments = [];
-    const segmentCount = 40;
-    const segmentSpacing = 3;
-    const tunnelRadius = 4;
-
-    // Create a single stalactite geometry to reuse
-    const createStalactite = (length, baseWidth) => {
-      const geometry = new THREE.ConeGeometry(baseWidth, length, 4, 1);
-      return geometry;
-    };
-
-    // Create tunnel segments
-    for (let seg = 0; seg < segmentCount; seg++) {
-      const segmentGroup = new THREE.Group();
-      const z = -seg * segmentSpacing;
-
-      // Random stalactites around the ceiling
-      const stalactiteCount = 8 + Math.floor(Math.random() * 6);
-      const stalactites = [];
-
-      for (let i = 0; i < stalactiteCount; i++) {
-        const angle = (i / stalactiteCount) * Math.PI * 2 + Math.random() * 0.3;
-        const length = 0.5 + Math.random() * 1.5;
-        const baseWidth = 0.08 + Math.random() * 0.12;
-
-        const geometry = createStalactite(length, baseWidth);
-        const material = new THREE.MeshBasicMaterial({
-          color: hslToHex(hue, 45, 35 + Math.random() * 20),
-          wireframe: true,
-          transparent: true,
-          opacity: 0.5 + Math.random() * 0.3
-        });
-
-        const stalactite = new THREE.Mesh(geometry, material);
-
-        // Position on ceiling (top half of tunnel)
-        const heightVariation = 0.7 + Math.random() * 0.3;
-        stalactite.position.x = Math.cos(angle) * tunnelRadius * heightVariation;
-        stalactite.position.y = Math.abs(Math.sin(angle)) * tunnelRadius * heightVariation + 1;
-        stalactite.position.z = z + (Math.random() - 0.5) * segmentSpacing * 0.5;
-
-        // Point downward with slight random tilt
-        stalactite.rotation.x = Math.PI + (Math.random() - 0.5) * 0.3;
-        stalactite.rotation.z = (Math.random() - 0.5) * 0.2;
-
-        // Store phase for animation
-        stalactite.userData.phase = Math.random() * Math.PI * 2;
-        stalactite.userData.pulseSpeed = 0.5 + Math.random() * 0.5;
-        stalactite.userData.baseOpacity = material.opacity;
-
-        scene.add(stalactite);
-        stalactites.push({ mesh: stalactite, material, geometry });
-      }
-
-      // Some stalagmites on the floor (fewer)
-      const stalagmiteCount = 3 + Math.floor(Math.random() * 4);
-      for (let i = 0; i < stalagmiteCount; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const length = 0.3 + Math.random() * 0.8;
-        const baseWidth = 0.06 + Math.random() * 0.08;
-
-        const geometry = createStalactite(length, baseWidth);
-        const material = new THREE.MeshBasicMaterial({
-          color: hslToHex(hue, 40, 25 + Math.random() * 15),
-          wireframe: true,
-          transparent: true,
-          opacity: 0.35 + Math.random() * 0.2
-        });
-
-        const stalagmite = new THREE.Mesh(geometry, material);
-
-        // Position on floor
-        const dist = 1 + Math.random() * (tunnelRadius - 1.5);
-        stalagmite.position.x = Math.cos(angle) * dist;
-        stalagmite.position.y = -2 + length / 2;
-        stalagmite.position.z = z + (Math.random() - 0.5) * segmentSpacing;
-
-        // Point upward
-        stalagmite.rotation.x = (Math.random() - 0.5) * 0.15;
-        stalagmite.rotation.z = (Math.random() - 0.5) * 0.15;
-
-        stalagmite.userData.phase = Math.random() * Math.PI * 2;
-        stalagmite.userData.pulseSpeed = 0.3 + Math.random() * 0.3;
-        stalagmite.userData.baseOpacity = material.opacity;
-
-        scene.add(stalagmite);
-        stalactites.push({ mesh: stalagmite, material, geometry });
-      }
-
-      tunnelSegments.push({ group: segmentGroup, stalactites, z: seg });
-    }
-
-    // Ambient particles (dust/sparkles in the air)
-    const particleCount = 150;
-    const particlePositions = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i++) {
-      particlePositions[i * 3] = (Math.random() - 0.5) * tunnelRadius * 2;
-      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 4;
-      particlePositions[i * 3 + 2] = -Math.random() * segmentCount * segmentSpacing;
-    }
-    const particleGeom = new THREE.BufferGeometry();
-    particleGeom.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-    const particleMat = new THREE.PointsMaterial({
-      color: hslToHex(hue, 50, 60),
-      size: 0.03,
-      transparent: true,
-      opacity: 0.4,
-      blending: THREE.AdditiveBlending
-    });
-    const particles = new THREE.Points(particleGeom, particleMat);
-    scene.add(particles);
-
-    const clock = new THREE.Clock();
-    let cameraZ = 0;
-
-    // Roaming state for touch controls
-    let lookAngle = 0, targetLookAngle = 0;
-    let lookPitch = 0, targetLookPitch = 0;
-    let moveSpeed = 0.015, targetMoveSpeed = 0.015;
-    let cameraX = 0, targetCameraX = 0;
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
-
-      // Touch controls for perspective
-      if (touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          // Horizontal: look left/right
-          targetLookAngle = (activeTouch.x / window.innerWidth - 0.5) * Math.PI * 0.4;
-          // Vertical: look up/down
-          const verticalPos = activeTouch.y / window.innerHeight;
-          targetLookPitch = (verticalPos - 0.5) * 0.4;
-          // Vertical also controls speed - touch higher to go faster
-          targetMoveSpeed = 0.008 + (1 - verticalPos) * 0.025;
-          // Slight lateral movement based on look direction
-          targetCameraX = -targetLookAngle * 0.5;
-        }
-      } else {
-        // Gentle autonomous drift when not touching
-        targetLookAngle = Math.sin(elapsed * 0.05) * 0.15;
-        targetLookPitch = Math.sin(elapsed * 0.04) * 0.08;
-        targetMoveSpeed = 0.012 + breath * 0.004;
-        targetCameraX = Math.sin(elapsed * 0.03) * 0.3;
-      }
-
-      // Smooth interpolation
-      lookAngle += (targetLookAngle - lookAngle) * 0.03;
-      lookPitch += (targetLookPitch - lookPitch) * 0.03;
-      moveSpeed += (targetMoveSpeed - moveSpeed) * 0.02;
-      cameraX += (targetCameraX - cameraX) * 0.02;
-
-      // Apply camera movement
-      cameraZ -= moveSpeed;
-      camera.position.z = cameraZ;
-      camera.position.x = cameraX;
-      camera.position.y = Math.sin(elapsed * 0.08) * 0.1;
-      camera.rotation.y = lookAngle;
-      camera.rotation.x = lookPitch;
-      camera.rotation.z = Math.sin(elapsed * 0.05) * 0.015;
-
-      // Animate stalactites - subtle pulse/glow
-      tunnelSegments.forEach(segment => {
-        segment.stalactites.forEach(({ mesh, material }) => {
-          const phase = mesh.userData.phase;
-          const speed = mesh.userData.pulseSpeed;
-          const pulse = 0.7 + Math.sin(elapsed * speed + phase) * 0.3;
-          material.opacity = mesh.userData.baseOpacity * pulse * (0.8 + breath * 0.2);
-
-          // Subtle sway
-          mesh.rotation.x += Math.sin(elapsed * 0.2 + phase) * 0.0003;
-        });
-      });
-
-      // Recycle segments that go behind camera
-      tunnelSegments.forEach(segment => {
-        segment.stalactites.forEach(({ mesh }) => {
-          if (mesh.position.z > cameraZ + 5) {
-            mesh.position.z -= segmentCount * segmentSpacing;
-          }
-        });
-      });
-
-      // Recycle particles
-      const pPos = particleGeom.attributes.position.array;
-      for (let i = 0; i < particleCount; i++) {
-        if (pPos[i * 3 + 2] > cameraZ + 3) {
-          pPos[i * 3 + 2] -= segmentCount * segmentSpacing;
-          pPos[i * 3] = (Math.random() - 0.5) * tunnelRadius * 2;
-          pPos[i * 3 + 1] = (Math.random() - 0.5) * 4;
-        }
-        // Gentle float
-        pPos[i * 3 + 1] += Math.sin(elapsed + i) * 0.001;
-      }
-      particleGeom.attributes.position.needsUpdate = true;
-      particleMat.opacity = 0.3 + breath * 0.2;
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      tunnelSegments.forEach(segment => {
-        segment.stalactites.forEach(({ geometry, material }) => {
-          geometry.dispose();
-          material.dispose();
-        });
-      });
-      particleGeom.dispose();
-      particleMat.dispose();
-      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
-
   // ========== MALOKA MODE ==========
   // Full ceremonial ayahuasca space - visionary and immersive
   React.useEffect(() => {
@@ -6086,8 +5829,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const embers = new THREE.Points(emberGeo, emberMat);
     scene.add(embers);
 
-    // Sparks particle system - smaller, faster, more erratic
-    const sparkCount = 20;
+    // Sparks particle system - slower, calmer
+    const sparkCount = 15;
     const sparkPositions = new Float32Array(sparkCount * 3);
     const sparkVelocities = [];
     const sparkLifetimes = [];
@@ -6097,9 +5840,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       sparkPositions[i * 3 + 1] = Math.random() * 0.2;
       sparkPositions[i * 3 + 2] = (Math.random() - 0.5) * 0.15;
       sparkVelocities.push({
-        x: (Math.random() - 0.5) * 0.03,
-        y: 0.03 + Math.random() * 0.04,
-        z: (Math.random() - 0.5) * 0.03
+        x: (Math.random() - 0.5) * 0.006,
+        y: 0.006 + Math.random() * 0.008,
+        z: (Math.random() - 0.5) * 0.006
       });
       sparkLifetimes.push(Math.random());
     }
@@ -6190,26 +5933,26 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       embers.geometry.attributes.position.needsUpdate = true;
       emberMat.opacity = 0.6 + breath * 0.3;
 
-      // Animate sparks rising (faster and more erratic)
+      // Animate sparks rising (slow and calm)
       const sparkPos = sparks.geometry.attributes.position.array;
       for (let i = 0; i < sparkCount; i++) {
-        sparkLifetimes[i] += 0.02;
+        sparkLifetimes[i] += 0.004;
         if (sparkLifetimes[i] > 1) {
           // Reset spark to fire center
           sparkPos[i * 3] = (Math.random() - 0.5) * 0.15;
           sparkPos[i * 3 + 1] = Math.random() * 0.15;
           sparkPos[i * 3 + 2] = (Math.random() - 0.5) * 0.15;
           sparkVelocities[i] = {
-            x: (Math.random() - 0.5) * 0.03,
-            y: 0.03 + Math.random() * 0.04,
-            z: (Math.random() - 0.5) * 0.03
+            x: (Math.random() - 0.5) * 0.006,
+            y: 0.006 + Math.random() * 0.008,
+            z: (Math.random() - 0.5) * 0.006
           };
           sparkLifetimes[i] = 0;
         }
-        // Apply velocity with erratic movement
-        sparkPos[i * 3] += sparkVelocities[i].x + Math.sin(elapsed * 3 + i * 2) * 0.005;
+        // Apply velocity with gentle drift
+        sparkPos[i * 3] += sparkVelocities[i].x + Math.sin(elapsed * 0.5 + i) * 0.001;
         sparkPos[i * 3 + 1] += sparkVelocities[i].y;
-        sparkPos[i * 3 + 2] += sparkVelocities[i].z + Math.cos(elapsed * 3 + i * 2) * 0.005;
+        sparkPos[i * 3 + 2] += sparkVelocities[i].z + Math.cos(elapsed * 0.5 + i) * 0.001;
       }
       sparks.geometry.attributes.position.needsUpdate = true;
       sparkMat.opacity = 0.7 + breath * 0.2;
@@ -7454,9 +7197,19 @@ function ZenWaterBoard({ primaryHue = 162 }) {
     "begin again.",
     "this moment is enough.",
     "let go.",
-    "nothing lasts. nothing is finished. nothing is perfect.",
-    "the obstacle is the path.",
-    "flow like water.",
+    "the obstacle is the path. — marcus aurelius",
+    "flow like water. — lao tzu",
+    "be here now. — ram dass",
+    "what you seek is seeking you. — rumi",
+    "let go, or be dragged. — zen proverb",
+    "become who you are. — nietzsche",
+    "live to the point of tears. — camus",
+    "the wound is the place where the light enters you. — rumi",
+    "we're all just walking each other home. — ram dass",
+    "the cave you fear to enter holds the treasure you seek. — joseph campbell",
+    "when I let go of what I am, I become what I might be. — lao tzu",
+    "there is a crack in everything. that's how the light gets in. — leonard cohen",
+    "the privilege of a lifetime is being who you are. — joseph campbell",
   ];
 
   const hslToRgba = (h, s, l, a) => `hsla(${h}, ${s}%, ${l}%, ${a})`;
