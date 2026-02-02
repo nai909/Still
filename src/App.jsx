@@ -1174,6 +1174,7 @@ const gazeModes = [
   { key: 'cave', name: 'Cave' },
   { key: 'maloka', name: 'Maloka' },
   { key: 'underwater', name: 'Abyss' },
+  { key: 'lotus', name: 'Lotus' },
 ];
 
 const gazeShapes = [
@@ -5753,21 +5754,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
     };
 
-    // Reusable color object to avoid allocations
-    const tempColor = new THREE.Color();
-
     const allGeometries = [];
     const allMaterials = [];
     const animatedElements = [];
-    const breathingElements = []; // Elements that scale with breath
-    const colorShiftElements = []; // Elements that shift hue over time
 
-    // Base hue for color shifting
-    let currentHue = hue;
-
-    // Create maloca structure (breathing)
+    // Maloka structure - posts that form the walls
     const structureGroup = new THREE.Group();
-    const postCount = 12; // More posts for denser structure
+    const postCount = 12;
     const radius = 8;
     const postHeight = 5;
 
@@ -5776,11 +5769,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
 
-      // Vertical posts with slight inward lean
+      // Vertical posts
       const postMat = new THREE.LineBasicMaterial({
-        color: hslToHex(hue, 85, 65),
+        color: hslToHex(hue, 50, 45),
         transparent: true,
-        opacity: 0.8
+        opacity: 0.5
       });
       allMaterials.push(postMat);
       const postGeometry = new THREE.BufferGeometry().setFromPoints([
@@ -5789,96 +5782,50 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       ]);
       allGeometries.push(postGeometry);
       const post = new THREE.Line(postGeometry, postMat);
-      colorShiftElements.push({ mesh: post, baseHue: hue, offset: i * 10 });
       structureGroup.add(post);
 
-      // Horizontal beams with kené patterns
-      const nextAngle = ((i + 1) / postCount) * Math.PI * 2;
-      const nextX = Math.cos(nextAngle) * radius;
-      const nextZ = Math.sin(nextAngle) * radius;
-
-      // Create zigzag beam pattern
-      const beamPoints = [];
-      const beamSegments = 12;
-      for (let j = 0; j <= beamSegments; j++) {
-        const t = j / beamSegments;
-        const bx = x + (nextX - x) * t;
-        const bz = z + (nextZ - z) * t;
-        const zigzag = (j % 2 === 0) ? 0.08 : -0.08;
-        beamPoints.push(new THREE.Vector3(bx * 0.95, postHeight + zigzag, bz * 0.95));
-      }
-      const beamGeo = new THREE.BufferGeometry().setFromPoints(beamPoints);
-      allGeometries.push(beamGeo);
-      const beamMat = new THREE.LineBasicMaterial({
-        color: hslToHex(hue + 30, 80, 60),
-        transparent: true,
-        opacity: 0.7
-      });
-      allMaterials.push(beamMat);
-      const beam = new THREE.Line(beamGeo, beamMat);
-      colorShiftElements.push({ mesh: beam, baseHue: hue + 30, offset: i * 15 });
-      structureGroup.add(beam);
-
-      // Roof beams to center with sacred geometry
+      // Roof beams to center
       const roofPoints = [];
-      const roofSegments = 8;
-      for (let j = 0; j <= roofSegments; j++) {
-        const t = j / roofSegments;
+      for (let j = 0; j <= 8; j++) {
+        const t = j / 8;
         const rx = x * 0.95 * (1 - t);
         const rz = z * 0.95 * (1 - t);
-        const ry = postHeight + t * 3.5;
-        const wave = Math.sin(t * Math.PI * 3) * 0.15 * (1 - t);
-        roofPoints.push(new THREE.Vector3(rx + wave, ry, rz + wave));
+        const ry = postHeight + t * 3;
+        roofPoints.push(new THREE.Vector3(rx, ry, rz));
       }
       const roofGeo = new THREE.BufferGeometry().setFromPoints(roofPoints);
       allGeometries.push(roofGeo);
       const roofMat = new THREE.LineBasicMaterial({
-        color: hslToHex(hue, 70, 55),
+        color: hslToHex(hue, 45, 40),
         transparent: true,
-        opacity: 0.5
+        opacity: 0.35
       });
       allMaterials.push(roofMat);
       const roofBeam = new THREE.Line(roofGeo, roofMat);
-      colorShiftElements.push({ mesh: roofBeam, baseHue: hue, offset: i * 20 });
       structureGroup.add(roofBeam);
     }
-
-    // Roof rings with kené patterns
-    for (let ring = 1; ring <= 8; ring++) {
-      const ringRadius = radius * (1 - ring * 0.11) * 0.95;
-      const ringHeight = postHeight + ring * 0.42;
-      const points = [];
-      const segments = 48 + ring * 4;
-      const zigzagAmp = 0.06 + (ring % 3) * 0.03;
-
-      for (let i = 0; i <= segments; i++) {
-        const angle = (i / segments) * Math.PI * 2;
-        const zigzag = (i % 2 === 0) ? zigzagAmp : -zigzagAmp;
-        points.push(new THREE.Vector3(
-          Math.cos(angle) * (ringRadius + zigzag),
-          ringHeight,
-          Math.sin(angle) * (ringRadius + zigzag)
-        ));
-      }
-
-      const ringGeometry = new THREE.BufferGeometry().setFromPoints(points);
-      allGeometries.push(ringGeometry);
-      const ringMat = new THREE.LineBasicMaterial({
-        color: hslToHex(hue + ring * 20, 75, 55 + ring * 2),
-        transparent: true,
-        opacity: 0.4 + ring * 0.05
-      });
-      allMaterials.push(ringMat);
-      const ringLine = new THREE.Line(ringGeometry, ringMat);
-      colorShiftElements.push({ mesh: ringLine, baseHue: hue + ring * 20, offset: ring * 25 });
-      animatedElements.push(ringLine);
-      structureGroup.add(ringLine);
-    }
-
-    breathingElements.push(structureGroup);
     scene.add(structureGroup);
 
-    // Shipibo kené floor patterns - more intricate
+    // Pulsing rings from center
+    const pulseRings = [];
+    for (let i = 0; i < 5; i++) {
+      const ringGeo = new THREE.RingGeometry(0.1, 0.15, 32);
+      ringGeo.rotateX(-Math.PI / 2);
+      allGeometries.push(ringGeo);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: hslToHex(hue, 60, 55),
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide
+      });
+      allMaterials.push(ringMat);
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.y = 0.02;
+      pulseRings.push({ mesh: ring, progress: i * 0.2, material: ringMat });
+      scene.add(ring);
+    }
+
+    // Shipibo kené floor patterns - minimal and calm
     const patternGroup = new THREE.Group();
 
     // Concentric morphing circles
@@ -5901,17 +5848,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       const geometry = new THREE.BufferGeometry().setFromPoints(points);
       allGeometries.push(geometry);
-      const matHue = ring % 5 === 0 ? hue + 180 : (ring % 3 === 0 ? hue + 60 : hue);
       const mat = new THREE.LineBasicMaterial({
-        color: hslToHex(matHue, 85, 60 + (ring % 3) * 5),
+        color: hslToHex(hue, 60, 50 + (ring % 3) * 5),
         transparent: true,
-        opacity: 0.5 + (ring % 4) * 0.1
+        opacity: 0.4 + (ring % 4) * 0.08
       });
       allMaterials.push(mat);
       const line = new THREE.Line(geometry, mat);
       line.userData.ring = ring;
       line.userData.baseRadius = ringRadius;
-      colorShiftElements.push({ mesh: line, baseHue: matHue, offset: ring * 8 });
       animatedElements.push(line);
       patternGroup.add(line);
     }
@@ -5934,15 +5879,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       const geo = new THREE.BufferGeometry().setFromPoints(points);
       allGeometries.push(geo);
-      const matHue = i % 6 === 0 ? hue + 180 : (i % 3 === 0 ? hue + 90 : hue);
       const mat = new THREE.LineBasicMaterial({
-        color: hslToHex(matHue, 80, 55),
+        color: hslToHex(hue, 55, 50),
         transparent: true,
-        opacity: i % 4 === 0 ? 0.7 : 0.4
+        opacity: i % 4 === 0 ? 0.5 : 0.3
       });
-      allMaterials.push(mat);
+      allMaterials.push(mat)
       const line = new THREE.Line(geo, mat);
-      colorShiftElements.push({ mesh: line, baseHue: matHue, offset: i * 12 });
       animatedElements.push(line);
       patternGroup.add(line);
     }
@@ -5963,177 +5906,113 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     }
     const pitGeo = new THREE.BufferGeometry().setFromPoints(pitPoints);
     allGeometries.push(pitGeo);
-    const pitMat = new THREE.LineBasicMaterial({ color: hslToHex(25, 100, 55), transparent: true, opacity: 0.7 });
+    const pitMat = new THREE.LineBasicMaterial({ color: hslToHex(hue, 70, 50), transparent: true, opacity: 0.4 });
     allMaterials.push(pitMat);
     const pit = new THREE.Line(pitGeo, pitMat);
     scene.add(pit);
 
-    // More embers and spirits
-    const emberCount = 60;
-    const emberGeometry = new THREE.BufferGeometry();
-    const emberPositions = new Float32Array(emberCount * 3);
-    const emberData = [];
-    for (let i = 0; i < emberCount; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const r = Math.random() * 0.25;
-      emberPositions[i * 3] = Math.cos(angle) * r;
-      emberPositions[i * 3 + 1] = Math.random() * 3;
-      emberPositions[i * 3 + 2] = Math.sin(angle) * r;
-      emberData.push({
-        speed: 0.002 + Math.random() * 0.004,
-        drift: (Math.random() - 0.5) * 0.003,
-        spiral: Math.random() * 0.02
-      });
-    }
-    emberGeometry.setAttribute('position', new THREE.BufferAttribute(emberPositions, 3));
-    allGeometries.push(emberGeometry);
+    // Fire logs arranged in a pile
+    const logGroup = new THREE.Group();
+    const logGeo = new THREE.CylinderGeometry(0.04, 0.05, 0.4, 8);
+    allGeometries.push(logGeo);
+    const logMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 30, 25),
+      transparent: true,
+      opacity: 0.8
+    });
+    allMaterials.push(logMat);
 
-    const emberMaterial = new THREE.PointsMaterial({
-      color: hslToHex(30, 100, 65),
-      size: 0.05,
+    // Create 6 logs in a teepee/pile arrangement
+    for (let i = 0; i < 6; i++) {
+      const log = new THREE.Mesh(logGeo, logMat);
+      const angle = (i / 6) * Math.PI * 2;
+      log.position.x = Math.cos(angle) * 0.12;
+      log.position.z = Math.sin(angle) * 0.12;
+      log.position.y = 0.15;
+      log.rotation.z = Math.PI * 0.15;
+      log.rotation.y = angle + Math.PI / 2;
+      log.rotation.x = Math.PI * 0.1;
+      logGroup.add(log);
+    }
+    scene.add(logGroup);
+
+    // Core fire glow at center
+    const glowGeo = new THREE.SphereGeometry(0.15, 16, 16);
+    allGeometries.push(glowGeo);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 80, 60),
+      transparent: true,
+      opacity: 0.6
+    });
+    allMaterials.push(glowMat);
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.position.y = 0.2;
+    scene.add(glow);
+
+    // Embers particle system - larger, slower rising particles
+    const emberCount = 30;
+    const emberPositions = new Float32Array(emberCount * 3);
+    const emberVelocities = [];
+    const emberLifetimes = [];
+
+    for (let i = 0; i < emberCount; i++) {
+      // Start at fire center
+      emberPositions[i * 3] = (Math.random() - 0.5) * 0.2;
+      emberPositions[i * 3 + 1] = Math.random() * 0.3;
+      emberPositions[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
+      emberVelocities.push({
+        x: (Math.random() - 0.5) * 0.01,
+        y: 0.01 + Math.random() * 0.02,
+        z: (Math.random() - 0.5) * 0.01
+      });
+      emberLifetimes.push(Math.random());
+    }
+
+    const emberGeo = new THREE.BufferGeometry();
+    emberGeo.setAttribute('position', new THREE.BufferAttribute(emberPositions, 3));
+    allGeometries.push(emberGeo);
+    const emberMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 90, 55),
+      size: 0.04,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending
+    });
+    allMaterials.push(emberMat);
+    const embers = new THREE.Points(emberGeo, emberMat);
+    scene.add(embers);
+
+    // Sparks particle system - smaller, faster, more erratic
+    const sparkCount = 20;
+    const sparkPositions = new Float32Array(sparkCount * 3);
+    const sparkVelocities = [];
+    const sparkLifetimes = [];
+
+    for (let i = 0; i < sparkCount; i++) {
+      sparkPositions[i * 3] = (Math.random() - 0.5) * 0.15;
+      sparkPositions[i * 3 + 1] = Math.random() * 0.2;
+      sparkPositions[i * 3 + 2] = (Math.random() - 0.5) * 0.15;
+      sparkVelocities.push({
+        x: (Math.random() - 0.5) * 0.03,
+        y: 0.03 + Math.random() * 0.04,
+        z: (Math.random() - 0.5) * 0.03
+      });
+      sparkLifetimes.push(Math.random());
+    }
+
+    const sparkGeo = new THREE.BufferGeometry();
+    sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPositions, 3));
+    allGeometries.push(sparkGeo);
+    const sparkMat = new THREE.PointsMaterial({
+      color: hslToHex(hue, 100, 70),
+      size: 0.02,
       transparent: true,
       opacity: 0.9,
       blending: THREE.AdditiveBlending
     });
-    allMaterials.push(emberMaterial);
-    const embers = new THREE.Points(emberGeometry, emberMaterial);
-    scene.add(embers);
-
-    // Spirit particles throughout space
-    const spiritCount = 100;
-    const spiritGeometry = new THREE.BufferGeometry();
-    const spiritPositions = new Float32Array(spiritCount * 3);
-    const spiritData = [];
-    for (let i = 0; i < spiritCount; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const r = 1 + Math.random() * 6;
-      const y = Math.random() * 6;
-      spiritPositions[i * 3] = Math.cos(angle) * r;
-      spiritPositions[i * 3 + 1] = y;
-      spiritPositions[i * 3 + 2] = Math.sin(angle) * r;
-      spiritData.push({
-        angle: angle,
-        radius: r,
-        y: y,
-        speed: 0.0005 + Math.random() * 0.001,
-        ySpeed: (Math.random() - 0.5) * 0.002,
-        phase: Math.random() * Math.PI * 2
-      });
-    }
-    spiritGeometry.setAttribute('position', new THREE.BufferAttribute(spiritPositions, 3));
-    allGeometries.push(spiritGeometry);
-
-    const spiritMaterial = new THREE.PointsMaterial({
-      color: hslToHex(hue, 60, 70),
-      size: 0.04,
-      transparent: true,
-      opacity: 0.5,
-      blending: THREE.AdditiveBlending
-    });
-    allMaterials.push(spiritMaterial);
-    const spirits = new THREE.Points(spiritGeometry, spiritMaterial);
-    colorShiftElements.push({ mesh: spirits, baseHue: hue, offset: 0, isMaterial: true });
-    scene.add(spirits);
-
-    // Core glow - pulsing
-    const glowGeo = new THREE.SphereGeometry(0.2, 16, 16);
-    allGeometries.push(glowGeo);
-    const glowMat = new THREE.MeshBasicMaterial({
-      color: hslToHex(30, 100, 60),
-      transparent: true,
-      opacity: 0.7
-    });
-    allMaterials.push(glowMat);
-    const glow = new THREE.Mesh(glowGeo, glowMat);
-    glow.position.y = 0.15;
-    scene.add(glow);
-
-    // Multiple serpents intertwining
-    const serpents = [];
-    for (let s = 0; s < 3; s++) {
-      const serpentPoints = [];
-      const serpentSegments = 120;
-      const phaseOffset = (s / 3) * Math.PI * 2;
-      for (let i = 0; i <= serpentSegments; i++) {
-        const t = i / serpentSegments;
-        const angle = t * Math.PI * 5 + phaseOffset;
-        const serpentRadius = 1.5 + t * 4;
-        const y = 0.3 + Math.sin(t * Math.PI * 3 + phaseOffset) * 1.5 + t * 3;
-        const wobble = Math.sin(t * 20 + phaseOffset) * 0.1;
-        serpentPoints.push(new THREE.Vector3(
-          Math.cos(angle) * (serpentRadius + wobble),
-          y,
-          Math.sin(angle) * (serpentRadius + wobble)
-        ));
-      }
-      const serpentGeometry = new THREE.BufferGeometry().setFromPoints(serpentPoints);
-      allGeometries.push(serpentGeometry);
-      const serpentMaterial = new THREE.LineBasicMaterial({
-        color: hslToHex(hue + s * 60, 85, 65),
-        transparent: true,
-        opacity: 0.6,
-        linewidth: 2
-      });
-      allMaterials.push(serpentMaterial);
-      const serpent = new THREE.Line(serpentGeometry, serpentMaterial);
-      colorShiftElements.push({ mesh: serpent, baseHue: hue + s * 60, offset: s * 40 });
-      serpents.push({ mesh: serpent, material: serpentMaterial, phaseOffset });
-      scene.add(serpent);
-    }
-
-    // Floating sacred geometry shapes
-    const sacredShapes = [];
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      const r = 3 + Math.random() * 2;
-      const y = 2 + Math.random() * 3;
-
-      // Tetrahedron or octahedron
-      const shapeGeo = i % 2 === 0
-        ? new THREE.TetrahedronGeometry(0.3, 0)
-        : new THREE.OctahedronGeometry(0.25, 0);
-      allGeometries.push(shapeGeo);
-      const shapeMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue + i * 30, 70, 60),
-        wireframe: true,
-        transparent: true,
-        opacity: 0.4
-      });
-      allMaterials.push(shapeMat);
-      const shape = new THREE.Mesh(shapeGeo, shapeMat);
-      shape.position.set(Math.cos(angle) * r, y, Math.sin(angle) * r);
-      colorShiftElements.push({ mesh: shape, baseHue: hue + i * 30, offset: i * 35 });
-      sacredShapes.push({
-        mesh: shape,
-        angle: angle,
-        radius: r,
-        baseY: y,
-        rotSpeed: 0.005 + Math.random() * 0.01,
-        floatSpeed: 0.3 + Math.random() * 0.2,
-        floatAmp: 0.3 + Math.random() * 0.3
-      });
-      scene.add(shape);
-    }
-
-    // Pulsing rings from center
-    const pulseRings = [];
-    for (let i = 0; i < 5; i++) {
-      const ringGeo = new THREE.RingGeometry(0.1, 0.15, 32);
-      ringGeo.rotateX(-Math.PI / 2);
-      allGeometries.push(ringGeo);
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue + i * 40, 80, 65),
-        transparent: true,
-        opacity: 0,
-        side: THREE.DoubleSide
-      });
-      allMaterials.push(ringMat);
-      const ring = new THREE.Mesh(ringGeo, ringMat);
-      ring.position.y = 0.02;
-      pulseRings.push({ mesh: ring, progress: i * 0.2, material: ringMat });
-      colorShiftElements.push({ mesh: ring, baseHue: hue + i * 40, offset: i * 50 });
-      scene.add(ring);
-    }
+    allMaterials.push(sparkMat);
+    const sparks = new THREE.Points(sparkGeo, sparkMat);
+    scene.add(sparks);
 
     const clock = new THREE.Clock();
 
@@ -6149,20 +6028,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       frameRef.current = requestAnimationFrame(animate);
       const elapsed = clock.getElapsedTime();
       const breath = getBreathPhase(elapsed);
-
-      // Slow hue shift over time (full cycle every 60 seconds)
-      currentHue = hue + (elapsed * 6) % 360;
-
-      // Update colors on color-shifting elements
-      colorShiftElements.forEach(({ mesh, baseHue, offset, isMaterial }) => {
-        const shiftedHue = (baseHue + elapsed * 6 + offset) % 360;
-        tempColor.setHSL(shiftedHue / 360, 0.75, 0.6);
-        if (isMaterial) {
-          mesh.material.color.copy(tempColor);
-        } else if (mesh.material) {
-          mesh.material.color.copy(tempColor);
-        }
-      });
 
       // Touch-based look controls (gentle, meditative pace)
       const touchPoints = touchPointsRef.current;
@@ -6193,88 +6058,84 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const lookZ = -Math.cos(currentRotationY) * 5;
       camera.lookAt(lookX, lookY, lookZ);
 
-      // Breathing structure
-      const structureScale = 1 + breath * 0.03;
-      structureGroup.scale.setScalar(structureScale);
-
-      // Animate embers rising with spiral
-      const emberPositions = emberGeometry.attributes.position.array;
-      for (let i = 0; i < emberCount; i++) {
-        const data = emberData[i];
-        emberPositions[i * 3 + 1] += data.speed * (1 + breath * 0.5);
-        emberPositions[i * 3] += data.drift + Math.sin(elapsed * 2 + i) * data.spiral;
-        emberPositions[i * 3 + 2] += data.drift + Math.cos(elapsed * 2 + i) * data.spiral;
-
-        if (emberPositions[i * 3 + 1] > 4) {
-          const angle = Math.random() * Math.PI * 2;
-          const r = Math.random() * 0.2;
-          emberPositions[i * 3] = Math.cos(angle) * r;
-          emberPositions[i * 3 + 1] = 0;
-          emberPositions[i * 3 + 2] = Math.sin(angle) * r;
-        }
-      }
-      emberGeometry.attributes.position.needsUpdate = true;
-      emberMaterial.opacity = 0.7 + breath * 0.3;
-
-      // Animate spirit particles
-      const spiritPositionsArray = spiritGeometry.attributes.position.array;
-      for (let i = 0; i < spiritCount; i++) {
-        const data = spiritData[i];
-        data.angle += data.speed;
-        data.y += data.ySpeed;
-        if (data.y > 6 || data.y < 0) data.ySpeed *= -1;
-
-        spiritPositionsArray[i * 3] = Math.cos(data.angle) * data.radius;
-        spiritPositionsArray[i * 3 + 1] = data.y + Math.sin(elapsed + data.phase) * 0.2;
-        spiritPositionsArray[i * 3 + 2] = Math.sin(data.angle) * data.radius;
-      }
-      spiritGeometry.attributes.position.needsUpdate = true;
-      spiritMaterial.opacity = 0.4 + breath * 0.3 + Math.sin(elapsed * 0.5) * 0.1;
-
       // Glow pulsing
       glow.scale.setScalar(1 + breath * 0.4 + Math.sin(elapsed * 2) * 0.1);
       glowMat.opacity = 0.5 + breath * 0.4;
 
-      // Pulse floor patterns with breath
+      // Animate embers rising
+      const emberPos = embers.geometry.attributes.position.array;
+      for (let i = 0; i < emberCount; i++) {
+        emberLifetimes[i] += 0.008;
+        if (emberLifetimes[i] > 1) {
+          // Reset ember to fire center
+          emberPos[i * 3] = (Math.random() - 0.5) * 0.2;
+          emberPos[i * 3 + 1] = Math.random() * 0.1;
+          emberPos[i * 3 + 2] = (Math.random() - 0.5) * 0.2;
+          emberVelocities[i] = {
+            x: (Math.random() - 0.5) * 0.01,
+            y: 0.01 + Math.random() * 0.02,
+            z: (Math.random() - 0.5) * 0.01
+          };
+          emberLifetimes[i] = 0;
+        }
+        // Apply velocity with some drift
+        emberPos[i * 3] += emberVelocities[i].x + Math.sin(elapsed + i) * 0.002;
+        emberPos[i * 3 + 1] += emberVelocities[i].y;
+        emberPos[i * 3 + 2] += emberVelocities[i].z + Math.cos(elapsed + i) * 0.002;
+      }
+      embers.geometry.attributes.position.needsUpdate = true;
+      emberMat.opacity = 0.6 + breath * 0.3;
+
+      // Animate sparks rising (faster and more erratic)
+      const sparkPos = sparks.geometry.attributes.position.array;
+      for (let i = 0; i < sparkCount; i++) {
+        sparkLifetimes[i] += 0.02;
+        if (sparkLifetimes[i] > 1) {
+          // Reset spark to fire center
+          sparkPos[i * 3] = (Math.random() - 0.5) * 0.15;
+          sparkPos[i * 3 + 1] = Math.random() * 0.15;
+          sparkPos[i * 3 + 2] = (Math.random() - 0.5) * 0.15;
+          sparkVelocities[i] = {
+            x: (Math.random() - 0.5) * 0.03,
+            y: 0.03 + Math.random() * 0.04,
+            z: (Math.random() - 0.5) * 0.03
+          };
+          sparkLifetimes[i] = 0;
+        }
+        // Apply velocity with erratic movement
+        sparkPos[i * 3] += sparkVelocities[i].x + Math.sin(elapsed * 3 + i * 2) * 0.005;
+        sparkPos[i * 3 + 1] += sparkVelocities[i].y;
+        sparkPos[i * 3 + 2] += sparkVelocities[i].z + Math.cos(elapsed * 3 + i * 2) * 0.005;
+      }
+      sparks.geometry.attributes.position.needsUpdate = true;
+      sparkMat.opacity = 0.7 + breath * 0.2;
+
+      // Pulse floor patterns with breath (slow, meditative)
       animatedElements.forEach((child, i) => {
         if (child.material && child.material.opacity !== undefined) {
           const baseOpacity = 0.4;
-          const wave = Math.sin(elapsed * 0.5 + i * 0.15) * 0.15;
-          child.material.opacity = baseOpacity + breath * 0.25 + wave;
+          const wave = Math.sin(elapsed * 0.3 + i * 0.1) * 0.1;
+          child.material.opacity = baseOpacity + breath * 0.2 + wave;
         }
         // Scale rings outward with breath
         if (child.userData.baseRadius) {
-          const scale = 1 + breath * 0.05 + Math.sin(elapsed * 0.3 + child.userData.ring * 0.1) * 0.02;
+          const scale = 1 + breath * 0.03 + Math.sin(elapsed * 0.2 + child.userData.ring * 0.1) * 0.01;
           child.scale.setScalar(scale);
         }
       });
 
-      // Rotate serpents
-      serpents.forEach((s, i) => {
-        s.mesh.rotation.y += 0.001 + i * 0.0003;
-        s.material.opacity = 0.5 + breath * 0.2 + Math.sin(elapsed * 0.7 + s.phaseOffset) * 0.1;
-      });
+      // Very subtle pattern rotation
+      patternGroup.rotation.y += 0.0001;
 
-      // Animate sacred shapes
-      sacredShapes.forEach((s) => {
-        s.mesh.rotation.x += s.rotSpeed;
-        s.mesh.rotation.y += s.rotSpeed * 0.7;
-        s.mesh.position.y = s.baseY + Math.sin(elapsed * s.floatSpeed) * s.floatAmp;
-        s.mesh.material.opacity = 0.3 + breath * 0.2 + Math.sin(elapsed + s.angle) * 0.1;
-      });
-
-      // Pulsing rings from center
+      // Pulsing rings expanding outward (slow, meditative)
       pulseRings.forEach((r) => {
-        r.progress += 0.003 * (1 + breath * 0.5);
+        r.progress += 0.002 * (1 + breath * 0.3);
         if (r.progress > 1) r.progress = 0;
 
-        const scale = 0.5 + r.progress * 8;
+        const scale = 0.5 + r.progress * 6;
         r.mesh.scale.setScalar(scale);
-        r.material.opacity = (1 - r.progress) * 0.4 * (0.5 + breath * 0.5);
+        r.material.opacity = (1 - r.progress) * 0.3 * (0.5 + breath * 0.5);
       });
-
-      // Subtle pattern rotation
-      patternGroup.rotation.y += 0.0003 * (1 + breath * 0.3);
 
       renderer.render(scene, camera);
     };
@@ -6529,6 +6390,263 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
+  // ========== LOTUS MODE ==========
+  // 3D lotus with full orbit controls
+  React.useEffect(() => {
+    if (currentMode !== 'lotus' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 4, 5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'auto';
+    rendererRef.current = renderer;
+
+    // Orbit controls for full rotation
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.enableZoom = true;
+    controls.minDistance = 2;
+    controls.maxDistance = 15;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.5;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    scene.add(ambientLight);
+
+    const mainLight = new THREE.PointLight(hslToHex(hue, 30, 90), 1.5, 100);
+    mainLight.position.set(0, 10, 5);
+    scene.add(mainLight);
+
+    const rimLight = new THREE.PointLight(hslToHex(hue, 60, 60), 0.8, 50);
+    rimLight.position.set(-5, 2, -5);
+    scene.add(rimLight);
+
+    const bottomLight = new THREE.PointLight(hslToHex(hue + 30, 50, 50), 0.4, 30);
+    bottomLight.position.set(0, -5, 0);
+    scene.add(bottomLight);
+
+    // Lotus group
+    const lotusGroup = new THREE.Group();
+    scene.add(lotusGroup);
+
+    // Create petal geometry
+    function createPetalGeometry() {
+      const shape = new THREE.Shape();
+      shape.moveTo(0, 0);
+      shape.bezierCurveTo(0.15, 0.3, 0.12, 0.7, 0, 1);
+      shape.bezierCurveTo(-0.12, 0.7, -0.15, 0.3, 0, 0);
+
+      const extrudeSettings = {
+        steps: 1,
+        depth: 0.02,
+        bevelEnabled: true,
+        bevelThickness: 0.01,
+        bevelSize: 0.02,
+        bevelSegments: 3
+      };
+
+      return new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    }
+
+    const petalGeometry = createPetalGeometry();
+    const allGeometries = [petalGeometry];
+    const allMaterials = [];
+
+    // Petal layers
+    const layers = [
+      { count: 8, radius: 0.3, height: 0, scale: 0.8, baseAngle: 75, lightness: 55 },
+      { count: 8, radius: 0.5, height: 0.1, scale: 1.0, baseAngle: 65, lightness: 58 },
+      { count: 12, radius: 0.7, height: 0.15, scale: 1.1, baseAngle: 55, lightness: 62 },
+      { count: 12, radius: 0.9, height: 0.2, scale: 1.25, baseAngle: 45, lightness: 66 },
+      { count: 16, radius: 1.1, height: 0.22, scale: 1.4, baseAngle: 35, lightness: 70 },
+      { count: 16, radius: 1.3, height: 0.2, scale: 1.5, baseAngle: 25, lightness: 75 },
+    ];
+
+    const allPetals = [];
+
+    layers.forEach((layer, layerIndex) => {
+      for (let i = 0; i < layer.count; i++) {
+        const angle = (i / layer.count) * Math.PI * 2;
+        const offsetAngle = layerIndex % 2 === 0 ? 0 : Math.PI / layer.count;
+
+        const petalMaterial = new THREE.MeshStandardMaterial({
+          color: hslToHex(hue, 50, layer.lightness),
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.9,
+          roughness: 0.3,
+          metalness: 0.1,
+          emissive: new THREE.Color(hslToHex(hue, 40, layer.lightness * 0.3)),
+        });
+        allMaterials.push(petalMaterial);
+
+        const petal = new THREE.Mesh(petalGeometry, petalMaterial);
+        petal.position.set(
+          Math.cos(angle + offsetAngle) * layer.radius,
+          layer.height,
+          Math.sin(angle + offsetAngle) * layer.radius
+        );
+        petal.scale.set(layer.scale, layer.scale, layer.scale);
+        petal.userData = {
+          baseAngle: layer.baseAngle,
+          orbitAngle: angle + offsetAngle,
+          radius: layer.radius,
+          layerIndex,
+          petalIndex: i
+        };
+        petal.rotation.y = -(angle + offsetAngle) + Math.PI;
+        petal.rotation.x = THREE.MathUtils.degToRad(layer.baseAngle);
+
+        lotusGroup.add(petal);
+        allPetals.push(petal);
+      }
+    });
+
+    // Center stamen cluster
+    const stamenGroup = new THREE.Group();
+    const stamenCount = 30;
+
+    for (let i = 0; i < stamenCount; i++) {
+      const stamenGeometry = new THREE.CylinderGeometry(0.015, 0.01, 0.3, 8);
+      allGeometries.push(stamenGeometry);
+      const stamenMaterial = new THREE.MeshStandardMaterial({
+        color: hslToHex(hue + 40, 70, 60),
+        emissive: hslToHex(hue + 40, 60, 40),
+        emissiveIntensity: 0.3,
+        roughness: 0.4,
+      });
+      allMaterials.push(stamenMaterial);
+
+      const stamen = new THREE.Mesh(stamenGeometry, stamenMaterial);
+      const angle = (i / stamenCount) * Math.PI * 2 + Math.random() * 0.3;
+      const radius = 0.08 + Math.random() * 0.12;
+      const heightVar = Math.random() * 0.1;
+
+      stamen.position.set(
+        Math.cos(angle) * radius,
+        0.15 + heightVar,
+        Math.sin(angle) * radius
+      );
+      stamen.rotation.x = (Math.random() - 0.5) * 0.4;
+      stamen.rotation.z = (Math.random() - 0.5) * 0.4;
+
+      const tipGeometry = new THREE.SphereGeometry(0.025, 8, 8);
+      allGeometries.push(tipGeometry);
+      const tipMaterial = new THREE.MeshStandardMaterial({
+        color: hslToHex(hue + 40, 65, 65),
+        emissive: hslToHex(hue + 40, 55, 50),
+        emissiveIntensity: 0.5,
+      });
+      allMaterials.push(tipMaterial);
+      const tip = new THREE.Mesh(tipGeometry, tipMaterial);
+      tip.position.y = 0.15;
+      stamen.add(tip);
+
+      stamen.userData = { baseHeight: 0.15 + heightVar };
+      stamenGroup.add(stamen);
+    }
+    lotusGroup.add(stamenGroup);
+
+    // Central glow
+    const glowGeometry = new THREE.SphereGeometry(0.15, 32, 32);
+    allGeometries.push(glowGeometry);
+    const glowMaterial = new THREE.MeshBasicMaterial({
+      color: hslToHex(hue, 40, 90),
+      transparent: true,
+      opacity: 0.6,
+    });
+    allMaterials.push(glowMaterial);
+    const glowSphere = new THREE.Mesh(glowGeometry, glowMaterial);
+    glowSphere.position.y = 0.1;
+    lotusGroup.add(glowSphere);
+
+    // Water base
+    const waterGeometry = new THREE.CircleGeometry(5, 64);
+    allGeometries.push(waterGeometry);
+    const waterMaterial = new THREE.MeshStandardMaterial({
+      color: hslToHex(hue, 30, 10),
+      transparent: true,
+      opacity: 0.8,
+      roughness: 0.1,
+      metalness: 0.9,
+    });
+    allMaterials.push(waterMaterial);
+    const water = new THREE.Mesh(waterGeometry, waterMaterial);
+    water.rotation.x = -Math.PI / 2;
+    water.position.y = -0.3;
+    scene.add(water);
+
+    const clock = new THREE.Clock();
+
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      controls.update();
+
+      // Bloom petals with breath
+      const bloomAmount = 0.3 + breath * 0.7;
+      allPetals.forEach((petal) => {
+        const { baseAngle, layerIndex } = petal.userData;
+        const targetAngle = baseAngle * (1 - bloomAmount * 0.6);
+        const currentAngle = THREE.MathUtils.degToRad(targetAngle);
+        const wave = Math.sin(elapsed * 1.5 + layerIndex * 0.5 + petal.userData.petalIndex * 0.3) * 0.03;
+        petal.rotation.x = currentAngle + wave;
+        petal.material.emissiveIntensity = 0.05 + breath * 0.15;
+      });
+
+      // Animate stamens
+      stamenGroup.children.forEach((stamen, i) => {
+        const wave = Math.sin(elapsed * 2 + i * 0.5) * 0.015;
+        stamen.position.y = stamen.userData.baseHeight + breath * 0.08 + wave;
+      });
+
+      // Glow pulse
+      glowSphere.scale.setScalar(1 + breath * 0.3);
+      glowMaterial.opacity = 0.4 + breath * 0.4;
+
+      // Animate lights
+      rimLight.intensity = 0.6 + breath * 0.4;
+      bottomLight.intensity = 0.3 + breath * 0.3;
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      controls.dispose();
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      allGeometries.forEach(g => g.dispose());
+      allMaterials.forEach(m => m.dispose());
+      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
+
   // Floating particles animation (stars in space effect)
   React.useEffect(() => {
     const canvas = particleCanvasRef.current;
@@ -6629,7 +6747,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'mountains' || currentMode === 'cave' || currentMode === 'maloka' || currentMode === 'underwater') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'mountains' || currentMode === 'cave' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -6651,7 +6769,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'mountains' && currentMode !== 'cave' && currentMode !== 'maloka' && currentMode !== 'underwater' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'mountains' && currentMode !== 'cave' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
@@ -7038,7 +7156,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       {breathSession.isActive && (
         <div style={{
           position: 'absolute',
-          bottom: '20%',
+          bottom: '23%',
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 1,
@@ -7046,7 +7164,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         }}>
           <div style={{
             color: 'rgba(255, 255, 255, 0.5)',
-            fontSize: '0.9rem',
+            fontSize: '1.3rem',
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
             letterSpacing: '0.25em',
