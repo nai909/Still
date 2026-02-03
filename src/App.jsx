@@ -8618,8 +8618,15 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
     } catch (e) {}
   }, [pairIndex]);
 
-  // Show mode label on mount, fade out after 2 seconds
+  // Auto-start session and show mode label on mount
   useEffect(() => {
+    // Initialize the mantra session immediately
+    const pair = mantraVisualPairs[pairIndex];
+    const newElements = pair.generate(175, 175);
+    setElements(newElements);
+    setStarted(true);
+
+    // Show label and fade out after 2 seconds
     setShowLabel(true);
     labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 2000);
     return () => {
@@ -8655,10 +8662,6 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
 
   const handleTap = () => {
     haptic.tap();
-    if (!started) {
-      initializeSession(false);
-      return;
-    }
     if (isComplete) {
       initializeSession(true);
       return;
@@ -8670,57 +8673,6 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
       haptic.success();
     }
   };
-
-  if (!started) {
-    return (
-      <div
-        onClick={handleTap}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '2rem',
-          cursor: 'pointer',
-          userSelect: 'none',
-          background: '#000',
-          fontFamily: "'Jost', system-ui, sans-serif",
-          zIndex: 2,
-        }}
-      >
-        {/* Mode label - fades in then out */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          fontSize: '2rem',
-          color: '#fff',
-          fontFamily: '"Jost", sans-serif',
-          fontWeight: 300,
-          letterSpacing: '0.3em',
-          textTransform: 'lowercase',
-          pointerEvents: 'none',
-          opacity: showLabel ? 1 : 0,
-          transition: 'opacity 0.5s ease',
-        }}>mantra</div>
-
-        <p
-          style={{
-            fontSize: '0.875rem',
-            letterSpacing: '0.15em',
-            color: 'rgba(255, 255, 255, 0.3)',
-            opacity: showLabel ? 0 : 1,
-            transition: 'opacity 0.5s ease',
-          }}
-        >
-          tap to begin
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div
@@ -8740,6 +8692,23 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
         zIndex: 2,
       }}
     >
+      {/* Mode label - fades in then out */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        fontSize: '2rem',
+        color: '#fff',
+        fontFamily: '"Jost", sans-serif',
+        fontWeight: 300,
+        letterSpacing: '0.3em',
+        textTransform: 'lowercase',
+        pointerEvents: 'none',
+        opacity: showLabel ? 1 : 0,
+        transition: 'opacity 0.5s ease',
+      }}>mantra</div>
+
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem' }}>
         <MantraGeometryCanvas
           elements={elements}
