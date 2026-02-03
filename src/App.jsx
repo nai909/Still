@@ -888,6 +888,495 @@ const allThemes = ['meaning', 'death', 'love', 'courage', 'change', 'self', 'suf
 const allSchools = [...new Set(allQuotes.map(q => q.school))].sort();
 
 // ============================================================================
+// MANTRA MODE - Geometry Generators
+// ============================================================================
+
+const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
+
+// Flower of Life - 42 elements (6 words x 7 reps)
+const generateFlowerOfLife = (cx, cy) => {
+  const elements = [];
+  const r = 30;
+  elements.push({ type: 'circle', x: cx, y: cy, radius: r });
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'circle', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, radius: r });
+  }
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+    const dist = i % 2 === 0 ? r * 2 : r * Math.sqrt(3);
+    elements.push({ type: 'circle', x: cx + Math.cos(angle) * dist, y: cy + Math.sin(angle) * dist, radius: r });
+  }
+  for (let i = 0; i < 18; i++) {
+    const angle = (i / 18) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'circle', x: cx + Math.cos(angle) * r * 2.8, y: cy + Math.sin(angle) * r * 2.8, radius: r });
+  }
+  elements.push({ type: 'circle', x: cx, y: cy, radius: r * 3.8 });
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 12, y: cy + Math.sin(angle) * 12, radius: 3 });
+  }
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  return elements;
+};
+
+// Spiral Galaxy - 28 elements (4 words x 7 reps)
+const generateSpiralGalaxy = (cx, cy) => {
+  const elements = [];
+  const arms = 4, dotsPerArm = 5, maxRadius = 130;
+  for (let arm = 0; arm < arms; arm++) {
+    const armOffset = (arm / arms) * Math.PI * 2;
+    for (let i = 0; i < dotsPerArm; i++) {
+      const progress = (i + 1) / (dotsPerArm + 1);
+      const radius = 25 + progress * (maxRadius - 25);
+      const angle = armOffset + progress * Math.PI * 2;
+      elements.push({ type: 'dot', x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius, radius: Math.max(2, 4 - progress * 2) });
+    }
+  }
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 30 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 20 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 12 });
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2 + Math.PI / 8;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * maxRadius, y: cy + Math.sin(angle) * maxRadius, radius: 2 });
+  }
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
+  return elements;
+};
+
+// Lotus Bloom - 35 elements (5 words x 7 reps)
+const generateLotusBlossom = (cx, cy) => {
+  const elements = [];
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'petal', cx, cy, angle, innerRadius: 18, outerRadius: 50, width: 0.38 });
+  }
+  for (let i = 0; i < 10; i++) {
+    const angle = (i / 10) * Math.PI * 2 - Math.PI / 2 + Math.PI / 20;
+    elements.push({ type: 'petal', cx, cy, angle, innerRadius: 35, outerRadius: 85, width: 0.28 });
+  }
+  for (let i = 0; i < 14; i++) {
+    const angle = (i / 14) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'petal', cx, cy, angle, innerRadius: 60, outerRadius: 130, width: 0.2 });
+  }
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 16 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 10 });
+  elements.push({ type: 'dot', x: cx - 5, y: cy, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 5, y: cy, radius: 3 });
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 4, isCenter: true });
+  return elements;
+};
+
+// Ocean Waves - 28 elements
+const generateOceanWaves = (cx, cy) => {
+  const elements = [];
+  for (let w = 0; w < 8; w++) {
+    elements.push({ type: 'wave', cx, cy, radius: 20 + w * 15, amplitude: 3 + w * 0.6, frequency: 6, phase: w * 0.4 });
+  }
+  const dropAngles = [0, Math.PI * 0.35, Math.PI * 0.7, Math.PI * 1.3, Math.PI * 1.65, Math.PI * 2 * 0.95];
+  dropAngles.forEach((angle) => {
+    elements.push({ type: 'droplet', x: cx + Math.cos(angle) * 55, y: cy + Math.sin(angle) * 55 - 15, size: 7 });
+  });
+  for (let i = 0; i < 10; i++) {
+    const angle = (i / 10) * Math.PI * 2;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 12, y: cy + Math.sin(angle) * 12, radius: 2 });
+  }
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 18 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 10 });
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  return elements;
+};
+
+// Tree of Life - 28 elements
+const generateTreeOfLife = (cx, cy) => {
+  const elements = [];
+  const rootAngles = [-0.5, -0.2, 0.2, 0.5];
+  rootAngles.forEach((offset) => {
+    elements.push({ type: 'branch', x1: cx, y1: cy + 50, angle: Math.PI / 2 + offset, length: 45 + Math.abs(offset) * 30, curve: offset * 0.6, thickness: 2 });
+  });
+  elements.push({ type: 'branch', x1: cx, y1: cy + 50, angle: -Math.PI / 2, length: 90, curve: 0, thickness: 4 });
+  const branchConfigs = [
+    { angle: -Math.PI / 2 - 0.7, length: 55, start: { x: cx - 6, y: cy } },
+    { angle: -Math.PI / 2 + 0.7, length: 55, start: { x: cx + 6, y: cy } },
+    { angle: -Math.PI / 2 - 0.4, length: 50, start: { x: cx - 3, y: cy - 20 } },
+    { angle: -Math.PI / 2 + 0.4, length: 50, start: { x: cx + 3, y: cy - 20 } },
+    { angle: -Math.PI / 2 - 0.15, length: 40, start: { x: cx, y: cy - 35 } },
+    { angle: -Math.PI / 2 + 0.15, length: 40, start: { x: cx, y: cy - 35 } },
+  ];
+  branchConfigs.forEach((config, i) => {
+    elements.push({ type: 'branch', x1: config.start.x, y1: config.start.y, angle: config.angle, length: config.length, curve: (i % 2 === 0 ? -1 : 1) * 0.25, thickness: 1.5 });
+  });
+  const leafSpots = [
+    { x: cx - 50, y: cy - 45 }, { x: cx + 50, y: cy - 45 }, { x: cx - 40, y: cy - 60 }, { x: cx + 40, y: cy - 60 },
+    { x: cx - 55, y: cy - 30 }, { x: cx + 55, y: cy - 30 }, { x: cx - 25, y: cy - 70 }, { x: cx + 25, y: cy - 70 },
+    { x: cx - 35, y: cy - 80 }, { x: cx + 35, y: cy - 80 }, { x: cx - 10, y: cy - 85 }, { x: cx + 10, y: cy - 85 },
+  ];
+  leafSpots.forEach((pos) => { elements.push({ type: 'dot', x: pos.x, y: pos.y, radius: 3 }); });
+  elements.push({ type: 'circle', x: cx, y: cy - 50, radius: 70 });
+  elements.push({ type: 'circle', x: cx, y: cy + 55, radius: 35 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 10 });
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  return elements;
+};
+
+// Cosmic Eye - 28 elements
+const generateCosmicEye = (cx, cy) => {
+  const elements = [];
+  elements.push({ type: 'eyeLid', cx, cy, radiusX: 130, radiusY: 60, isTop: true });
+  elements.push({ type: 'eyeLid', cx, cy, radiusX: 130, radiusY: 60, isTop: false });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 55 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 42 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 30 });
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2;
+    elements.push({ type: 'line', x1: cx + Math.cos(angle) * 22, y1: cy + Math.sin(angle) * 22, x2: cx + Math.cos(angle) * 50, y2: cy + Math.sin(angle) * 50 });
+  }
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 18 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 12 });
+  for (let i = 0; i < 6; i++) {
+    const t = (i + 1) / 7;
+    const angle = Math.PI + t * Math.PI;
+    const x = cx + Math.cos(angle) * 130;
+    const y = cy - Math.sin(t * Math.PI) * 60;
+    elements.push({ type: 'lash', x, y, angle: -Math.PI / 2 + (t - 0.5) * 0.6, length: 12 + Math.sin(t * Math.PI) * 8 });
+  }
+  elements.push({ type: 'dot', x: cx - 6, y: cy - 6, radius: 5 });
+  elements.push({ type: 'dot', x: cx + 4, y: cy + 4, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
+  return elements;
+};
+
+// Mandala Star - 21 elements
+const generateMandalaStar = (cx, cy) => {
+  const elements = [];
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 130 });
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'line', x1: cx + Math.cos(angle) * 115, y1: cy + Math.sin(angle) * 115, x2: cx + Math.cos(angle) * 140, y2: cy + Math.sin(angle) * 140 });
+  }
+  for (let i = 0; i < 6; i++) {
+    const angle1 = (i / 6) * Math.PI * 2 - Math.PI / 2;
+    const angle2 = ((i + 1) / 6) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'line', x1: cx + Math.cos(angle1) * 90, y1: cy + Math.sin(angle1) * 90, x2: cx + Math.cos(angle2) * 90, y2: cy + Math.sin(angle2) * 90 });
+  }
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 55 });
+  for (let i = 0; i < 3; i++) {
+    const angle1 = (i / 3) * Math.PI * 2 - Math.PI / 2;
+    const angle2 = ((i + 1) / 3) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'line', x1: cx + Math.cos(angle1) * 40, y1: cy + Math.sin(angle1) * 40, x2: cx + Math.cos(angle2) * 40, y2: cy + Math.sin(angle2) * 40 });
+  }
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 20 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 10 });
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  return elements;
+};
+
+// Sacred Spiral - 35 elements
+const generateSacredSpiral = (cx, cy) => {
+  const elements = [];
+  const goldenRatio = 1.618;
+  let prevX = cx, prevY = cy;
+  for (let i = 1; i <= 25; i++) {
+    const angle = i * 0.35;
+    const radius = 4 * Math.pow(goldenRatio, angle / Math.PI);
+    const x = cx + Math.cos(angle - Math.PI / 2) * Math.min(radius, 135);
+    const y = cy + Math.sin(angle - Math.PI / 2) * Math.min(radius, 135);
+    elements.push({ type: 'line', x1: prevX, y1: prevY, x2: x, y2: y });
+    prevX = x; prevY = y;
+  }
+  const fibRadii = [12, 20, 32, 52, 84];
+  fibRadii.forEach((r, i) => {
+    const angle = i * Math.PI / 2.5;
+    elements.push({ type: 'circle', x: cx + Math.cos(angle) * r * 0.4, y: cy + Math.sin(angle) * r * 0.4, radius: r * 0.35 });
+  });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 140 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 15 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 8 });
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  return elements;
+};
+
+// Infinity Loop - 28 elements
+const generateInfinityLoop = (cx, cy) => {
+  const elements = [];
+  for (let i = 0; i < 16; i++) {
+    const t1 = i / 16, t2 = (i + 1) / 16;
+    const angle1 = t1 * Math.PI * 2, angle2 = t2 * Math.PI * 2;
+    const scale = 55;
+    const x1 = cx + scale * Math.cos(angle1) / (1 + Math.pow(Math.sin(angle1), 2));
+    const y1 = cy + scale * Math.sin(angle1) * Math.cos(angle1) / (1 + Math.pow(Math.sin(angle1), 2));
+    const x2 = cx + scale * Math.cos(angle2) / (1 + Math.pow(Math.sin(angle2), 2));
+    const y2 = cy + scale * Math.sin(angle2) * Math.cos(angle2) / (1 + Math.pow(Math.sin(angle2), 2));
+    elements.push({ type: 'line', x1, y1, x2, y2 });
+  }
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 100 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 115 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 130 });
+  for (let i = 0; i < 6; i++) {
+    const t = i / 6;
+    const angle = t * Math.PI * 2;
+    const scale = 55;
+    const x = cx + scale * Math.cos(angle) / (1 + Math.pow(Math.sin(angle), 2));
+    const y = cy + scale * Math.sin(angle) * Math.cos(angle) / (1 + Math.pow(Math.sin(angle), 2));
+    elements.push({ type: 'dot', x, y, radius: 3 });
+  }
+  elements.push({ type: 'dot', x: cx - 40, y: cy, radius: 4 });
+  elements.push({ type: 'dot', x: cx + 40, y: cy, radius: 4 });
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  return elements;
+};
+
+// Nested Circles - 21 elements
+const generateNestedCircles = (cx, cy) => {
+  const elements = [];
+  const radii = [15, 25, 35, 45, 55, 65, 78, 91, 104, 117, 130, 143];
+  radii.forEach(r => { elements.push({ type: 'circle', x: cx, y: cy, radius: r }); });
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * (80 + (i % 2) * 30), y: cy + Math.sin(angle) * (80 + (i % 2) * 30), radius: 3 });
+  }
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
+  return elements;
+};
+
+// Falling Leaves - 35 elements
+const generateFallingLeaves = (cx, cy) => {
+  const elements = [];
+  const leafPositions = [
+    { x: -60, y: -80 }, { x: 70, y: -90 }, { x: -90, y: -40 }, { x: 95, y: -50 }, { x: -40, y: -60 }, { x: 50, y: -70 },
+    { x: -80, y: 0 }, { x: 85, y: -10 }, { x: -50, y: -20 }, { x: 55, y: -30 }, { x: -100, y: 40 }, { x: 100, y: 30 },
+    { x: -30, y: 20 }, { x: 35, y: 10 }, { x: -70, y: 60 }, { x: 75, y: 50 }, { x: -45, y: 80 }, { x: 50, y: 70 },
+    { x: -90, y: 100 }, { x: 85, y: 90 }, { x: -20, y: 100 }, { x: 25, y: 110 }, { x: -60, y: 120 }, { x: 60, y: 115 },
+    { x: 0, y: -95 }, { x: -15, y: 60 }, { x: 10, y: -50 }, { x: -5, y: 90 },
+  ];
+  leafPositions.forEach(({ x, y }) => { elements.push({ type: 'dot', x: cx + x, y: cy + y, radius: 2.5 + Math.random() * 2 }); });
+  elements.push({ type: 'circle', x: cx - 80, y: cy - 50, radius: 18 });
+  elements.push({ type: 'circle', x: cx + 70, y: cy + 10, radius: 15 });
+  elements.push({ type: 'circle', x: cx + 20, y: cy - 90, radius: 12 });
+  elements.push({ type: 'circle', x: cx - 30, y: cy + 80, radius: 14 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 25 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 12 });
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  return elements;
+};
+
+// Rippling Water - 21 elements
+const generateRipplingWater = (cx, cy) => {
+  const elements = [];
+  for (let i = 0; i < 9; i++) {
+    elements.push({ type: 'wave', cx, cy, radius: 15 + i * 15, amplitude: 2 + i * 0.3, frequency: 8, phase: i * 0.3 });
+  }
+  const dotPositions = [{ x: -50, y: -60 }, { x: 60, y: -50 }, { x: -70, y: 20 }, { x: 80, y: 10 }, { x: -40, y: 70 }, { x: 50, y: 80 }, { x: -90, y: -20 }, { x: 95, y: -30 }];
+  dotPositions.forEach(({ x, y }) => { elements.push({ type: 'dot', x: cx + x, y: cy + y, radius: 2.5 }); });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 12 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 7 });
+  elements.push({ type: 'dot', x: cx, y: cy - 15, radius: 3 });
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 4, isCenter: true });
+  return elements;
+};
+
+// Forgiveness Release - 28 elements
+const generateForgivenessRelease = (cx, cy) => {
+  const elements = [];
+  for (let i = 0; i < 18; i++) {
+    const spread = (i % 6) - 2.5;
+    const height = Math.floor(i / 6);
+    elements.push({ type: 'dot', x: cx + spread * 22 + ((i * 7) % 11 - 5), y: cy + 50 - height * 45 - (i % 3) * 12, radius: 3.5 - height * 0.6 });
+  }
+  for (let i = 0; i < 3; i++) {
+    const offset = i * 18;
+    elements.push({ type: 'branch', x1: cx - 8, y1: cy + 70, angle: -Math.PI / 2 - 0.35 - i * 0.12, length: 45 + offset, curve: -0.25, thickness: 1.5 });
+    elements.push({ type: 'branch', x1: cx + 8, y1: cy + 70, angle: -Math.PI / 2 + 0.35 + i * 0.12, length: 45 + offset, curve: 0.25, thickness: 1.5 });
+  }
+  elements.push({ type: 'circle', x: cx, y: cy + 75, radius: 22 });
+  elements.push({ type: 'circle', x: cx, y: cy + 75, radius: 14 });
+  elements.push({ type: 'circle', x: cx, y: cy + 75, radius: 7 });
+  elements.push({ type: 'dot', x: cx, y: cy + 75, radius: 4, isCenter: true });
+  return elements;
+};
+
+// Self Acceptance - 28 elements
+const generateSelfAcceptance = (cx, cy) => {
+  const elements = [];
+  for (let i = 0; i < 12; i++) {
+    const angle1 = (i / 12) * Math.PI * 2 - Math.PI / 2;
+    const angle2 = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
+    const r = 95 + Math.sin(i * 1.5) * 12;
+    elements.push({ type: 'line', x1: cx + Math.cos(angle1) * r, y1: cy + Math.sin(angle1) * r, x2: cx + Math.cos(angle2) * (95 + Math.sin((i + 1) * 1.5) * 12), y2: cy + Math.sin(angle2) * (95 + Math.sin((i + 1) * 1.5) * 12) });
+  }
+  [70, 55, 42, 30, 20, 12, 6].forEach(r => { elements.push({ type: 'circle', x: cx, y: cy, radius: r }); });
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 120, y: cy + Math.sin(angle) * 120, radius: 3 });
+  }
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  return elements;
+};
+
+// Open to Receive - 35 elements
+const generateOpenToReceive = (cx, cy) => {
+  const elements = [];
+  for (let i = 0; i < 12; i++) {
+    const x = cx - 100 + i * 18;
+    const variance = Math.sin(i * 0.8) * 20;
+    elements.push({ type: 'line', x1: x + variance * 0.5, y1: cy - 130, x2: x, y2: cy - 40 + Math.abs(variance) });
+  }
+  for (let i = 0; i < 8; i++) {
+    const angle1 = Math.PI + (i / 8) * Math.PI;
+    const angle2 = Math.PI + ((i + 1) / 8) * Math.PI;
+    elements.push({ type: 'line', x1: cx + Math.cos(angle1) * 80, y1: cy + 30 + Math.sin(angle1) * 40, x2: cx + Math.cos(angle2) * 80, y2: cy + 30 + Math.sin(angle2) * 40 });
+  }
+  for (let i = 0; i < 10; i++) {
+    const angle = Math.PI + (i / 9) * Math.PI;
+    const r = 50 + (i % 3) * 15;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + 20 + Math.sin(angle) * (r * 0.5), radius: 2.5 });
+  }
+  elements.push({ type: 'circle', x: cx, y: cy + 30, radius: 28 });
+  elements.push({ type: 'circle', x: cx, y: cy + 30, radius: 18 });
+  elements.push({ type: 'circle', x: cx, y: cy + 30, radius: 10 });
+  elements.push({ type: 'circle', x: cx, y: cy + 30, radius: 5 });
+  elements.push({ type: 'dot', x: cx, y: cy + 30, radius: 3, isCenter: true });
+  return elements;
+};
+
+// Release - 42 elements
+const generateRelease = (cx, cy) => {
+  const elements = [];
+  for (let ring = 0; ring < 4; ring++) {
+    const baseRadius = 30 + ring * 28;
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2 + ring * 0.25;
+      elements.push({ type: 'dot', x: cx + Math.cos(angle) * (baseRadius + ring * 4), y: cy + Math.sin(angle) * (baseRadius + ring * 4), radius: 4 - ring * 0.6 });
+    }
+  }
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2;
+    elements.push({ type: 'line', x1: cx + Math.cos(angle) * 25, y1: cy + Math.sin(angle) * 25, x2: cx + Math.cos(angle) * 140, y2: cy + Math.sin(angle) * 140 });
+  }
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 145 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 22 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 14 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 8 });
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  return elements;
+};
+
+// Connected to All - 35 elements
+const generateConnectedToAll = (cx, cy) => {
+  const elements = [];
+  const outerNodes = [], middleNodes = [];
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
+    outerNodes.push({ x: cx + Math.cos(angle) * 120, y: cy + Math.sin(angle) * 120 });
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 120, y: cy + Math.sin(angle) * 120, radius: 4 });
+  }
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2 + Math.PI / 12;
+    middleNodes.push({ x: cx + Math.cos(angle) * 65, y: cy + Math.sin(angle) * 65 });
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 65, y: cy + Math.sin(angle) * 65, radius: 3 });
+  }
+  for (let i = 0; i < 6; i++) {
+    elements.push({ type: 'line', x1: outerNodes[i].x, y1: outerNodes[i].y, x2: middleNodes[i].x, y2: middleNodes[i].y });
+    elements.push({ type: 'line', x1: outerNodes[(i + 1) % 8].x, y1: outerNodes[(i + 1) % 8].y, x2: middleNodes[i].x, y2: middleNodes[i].y });
+  }
+  for (let i = 0; i < 6; i++) {
+    elements.push({ type: 'line', x1: middleNodes[i].x, y1: middleNodes[i].y, x2: cx, y2: cy });
+  }
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 18 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 10 });
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  return elements;
+};
+
+// We Are One - 28 elements
+const generateWeAreOne = (cx, cy) => {
+  const elements = [];
+  const positions = [{ x: 0, y: -40 }, { x: 35, y: -20 }, { x: -35, y: -20 }, { x: 45, y: 25 }, { x: -45, y: 25 }, { x: 20, y: 50 }, { x: -20, y: 50 }];
+  positions.forEach(({ x, y }) => { elements.push({ type: 'circle', x: cx + x, y: cy + y, radius: 35 }); });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 100 });
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2;
+    elements.push({ type: 'line', x1: cx + Math.cos(angle) * 45, y1: cy + Math.sin(angle) * 45, x2: cx + Math.cos(angle) * 95, y2: cy + Math.sin(angle) * 95 });
+  }
+  for (let i = 0; i < 7; i++) {
+    const angle = (i / 7) * Math.PI * 2;
+    const r = i === 0 ? 0 : 22;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, radius: i === 0 ? 5 : 2.5, isCenter: i === 0 });
+  }
+  return elements;
+};
+
+// Safe Right Now - 35 elements
+const generateSafeRightNow = (cx, cy) => {
+  const elements = [];
+  for (let i = 0; i < 8; i++) {
+    const baseY = cy - 70 + i * 20;
+    const width = 110 - i * 10;
+    elements.push({ type: 'line', x1: cx - width, y1: baseY + 12, x2: cx, y2: baseY });
+    elements.push({ type: 'line', x1: cx, y1: baseY, x2: cx + width, y2: baseY + 12 });
+  }
+  for (let i = 0; i < 8; i++) {
+    const spread = (i - 3.5) * 14;
+    elements.push({ type: 'branch', x1: cx + spread * 0.4, y1: cy + 75, angle: Math.PI / 2 + (i - 3.5) * 0.1, length: 35 + Math.abs(i - 3.5) * 6, curve: (i - 3.5) * 0.08, thickness: 1.5 });
+  }
+  [45, 35, 25, 16, 9].forEach(r => { elements.push({ type: 'circle', x: cx, y: cy, radius: r }); });
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2 - Math.PI / 4;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 20, y: cy + Math.sin(angle) * 20, radius: 2 });
+  }
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  return elements;
+};
+
+// Trust the Process - 28 elements
+const generateTrustProcess = (cx, cy) => {
+  const elements = [];
+  let prevX = cx - 110, prevY = cy + 70;
+  for (let i = 0; i < 16; i++) {
+    const progress = (i + 1) / 16;
+    const x = cx - 110 + progress * 220;
+    const y = cy + 70 - progress * 140 + Math.sin(progress * Math.PI * 2.5) * 30;
+    elements.push({ type: 'line', x1: prevX, y1: prevY, x2: x, y2: y });
+    prevX = x; prevY = y;
+  }
+  for (let i = 0; i < 8; i++) {
+    const progress = (i + 0.5) / 8;
+    const x = cx - 110 + progress * 220;
+    const y = cy + 70 - progress * 140 + Math.sin(progress * Math.PI * 2.5) * 30;
+    elements.push({ type: 'dot', x, y, radius: 3 });
+  }
+  elements.push({ type: 'circle', x: cx + 110, y: cy - 70, radius: 25 });
+  elements.push({ type: 'circle', x: cx + 110, y: cy - 70, radius: 15 });
+  elements.push({ type: 'circle', x: cx + 110, y: cy - 70, radius: 8 });
+  elements.push({ type: 'dot', x: cx + 110, y: cy - 70, radius: 4, isCenter: true });
+  return elements;
+};
+
+// Mantra-Visual Pairs
+const mantraVisualPairs = [
+  { text: 'I am grateful for this moment', words: ['I', 'am', 'grateful', 'for', 'this', 'moment'], generate: generateFlowerOfLife },
+  { text: 'Abundance flows to me', words: ['Abundance', 'flows', 'to', 'me'], generate: generateSpiralGalaxy },
+  { text: 'I am worthy of love', words: ['I', 'am', 'worthy', 'of', 'love'], generate: generateLotusBlossom },
+  { text: 'Love flows through me', words: ['Love', 'flows', 'through', 'me'], generate: generateOceanWaves },
+  { text: 'I am here now', words: ['I', 'am', 'here', 'now'], generate: generateTreeOfLife },
+  { text: 'This moment is enough', words: ['This', 'moment', 'is', 'enough'], generate: generateCosmicEye },
+  { text: 'Peace begins within', words: ['Peace', 'begins', 'within'], generate: generateMandalaStar },
+  { text: 'I am calm and centered', words: ['I', 'am', 'calm', 'and', 'centered'], generate: generateSacredSpiral },
+  { text: 'I am loving awareness', words: ['I', 'am', 'loving', 'awareness'], generate: generateInfinityLoop },
+  { text: 'I am enough', words: ['I', 'am', 'enough'], generate: generateNestedCircles },
+  { text: 'I let go with grace', words: ['I', 'let', 'go', 'with', 'grace'], generate: generateFallingLeaves },
+  { text: 'All is well', words: ['All', 'is', 'well'], generate: generateRipplingWater },
+  { text: 'I forgive and release', words: ['I', 'forgive', 'and', 'release'], generate: generateForgivenessRelease },
+  { text: 'I accept myself completely', words: ['I', 'accept', 'myself', 'completely'], generate: generateSelfAcceptance },
+  { text: 'I am open to receive', words: ['I', 'am', 'open', 'to', 'receive'], generate: generateOpenToReceive },
+  { text: 'I release what no longer serves', words: ['I', 'release', 'what', 'no', 'longer', 'serves'], generate: generateRelease },
+  { text: 'I am connected to all', words: ['I', 'am', 'connected', 'to', 'all'], generate: generateConnectedToAll },
+  { text: 'We are all one', words: ['We', 'are', 'all', 'one'], generate: generateWeAreOne },
+  { text: 'I am safe right now', words: ['I', 'am', 'safe', 'right', 'now'], generate: generateSafeRightNow },
+  { text: 'I trust the process', words: ['I', 'trust', 'the', 'process'], generate: generateTrustProcess },
+];
+
+// ============================================================================
 // THEME SYSTEM
 // ============================================================================
 
@@ -7889,6 +8378,410 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
   return <div ref={containerRef} style={{ position: 'absolute', inset: 0, touchAction: 'none' }} />;
 });
 
+// ============================================================================
+// MANTRA MODE - Tap-driven mantra practice with sacred geometry
+// ============================================================================
+
+function MantraGeometryCanvas({ elements, revealedCount, isComplete, primaryHue }) {
+  const canvasRef = useRef(null);
+  const animationRef = useRef(null);
+  const timeRef = useRef(0);
+  const elementAnimations = useRef({});
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Convert HSL hue to RGB for rgba() usage
+    const hslToRgb = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => {
+        const k = (n + h / 30) % 12;
+        return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+      };
+      return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+    };
+    const [r, g, b] = hslToRgb(primaryHue, 52, 68);
+    const themeColor = (opacity) => `rgba(${r}, ${g}, ${b}, ${opacity})`;
+
+    const animate = () => {
+      const now = Date.now();
+      timeRef.current += 0.016;
+
+      ctx.clearRect(0, 0, width, height);
+
+      const glowPulse = Math.sin(timeRef.current * 1.2) * 0.08 + 0.92;
+
+      if (isComplete) {
+        const cx = width / 2;
+        const cy = height / 2;
+        const bgGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 180);
+        bgGlow.addColorStop(0, themeColor(0.08));
+        bgGlow.addColorStop(0.5, themeColor(0.02));
+        bgGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = bgGlow;
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      elements.forEach((el, index) => {
+        if (index >= revealedCount) return;
+
+        if (!elementAnimations.current[index]) {
+          elementAnimations.current[index] = { startTime: now, progress: 0 };
+        }
+
+        const anim = elementAnimations.current[index];
+        const elapsed = (now - anim.startTime) / 1000;
+        const duration = 1.2;
+        anim.progress = Math.min(1, elapsed / duration);
+
+        const easedProgress = easeOutQuart(anim.progress);
+        const opacity = 0.7 * easedProgress * glowPulse;
+        const color = themeColor(opacity);
+
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        if (el.type === 'dot') {
+          const rad = el.radius * easedProgress;
+          ctx.beginPath();
+          ctx.arc(el.x, el.y, rad + 3, 0, Math.PI * 2);
+          ctx.fillStyle = themeColor(0.1 * easedProgress);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(el.x, el.y, rad, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.fill();
+        } else if (el.type === 'circle') {
+          const arcEnd = Math.PI * 2 * easedProgress;
+          ctx.beginPath();
+          ctx.arc(el.x, el.y, el.radius, -Math.PI / 2, -Math.PI / 2 + arcEnd);
+          ctx.stroke();
+        } else if (el.type === 'line') {
+          const x = el.x1 + (el.x2 - el.x1) * easedProgress;
+          const y = el.y1 + (el.y2 - el.y1) * easedProgress;
+          ctx.beginPath();
+          ctx.moveTo(el.x1, el.y1);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+        } else if (el.type === 'petal') {
+          const { cx, cy, angle, innerRadius, outerRadius, width: petalWidth } = el;
+          const midRadius = (innerRadius + outerRadius) / 2;
+          const spread = petalWidth * easedProgress;
+          ctx.beginPath();
+          const innerX = cx + Math.cos(angle) * innerRadius;
+          const innerY = cy + Math.sin(angle) * innerRadius;
+          ctx.moveTo(innerX, innerY);
+          const leftMidX = cx + Math.cos(angle - spread) * midRadius;
+          const leftMidY = cy + Math.sin(angle - spread) * midRadius;
+          const outerX = cx + Math.cos(angle) * outerRadius * easedProgress;
+          const outerY = cy + Math.sin(angle) * outerRadius * easedProgress;
+          ctx.quadraticCurveTo(leftMidX, leftMidY, outerX, outerY);
+          const rightMidX = cx + Math.cos(angle + spread) * midRadius;
+          const rightMidY = cy + Math.sin(angle + spread) * midRadius;
+          ctx.quadraticCurveTo(rightMidX, rightMidY, innerX, innerY);
+          ctx.stroke();
+        } else if (el.type === 'wave') {
+          const { cx, cy, radius, amplitude, frequency, phase } = el;
+          const segments = 72;
+          ctx.beginPath();
+          for (let i = 0; i <= segments * easedProgress; i++) {
+            const a = (i / segments) * Math.PI * 2;
+            const wave = Math.sin(a * frequency + phase + timeRef.current) * amplitude;
+            const rad = radius + wave;
+            const x = cx + Math.cos(a) * rad;
+            const y = cy + Math.sin(a) * rad;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        } else if (el.type === 'droplet') {
+          const { x, y, size } = el;
+          const s = size * easedProgress;
+          ctx.beginPath();
+          ctx.moveTo(x, y - s * 1.5);
+          ctx.bezierCurveTo(x - s, y - s * 0.5, x - s, y + s * 0.5, x, y + s);
+          ctx.bezierCurveTo(x + s, y + s * 0.5, x + s, y - s * 0.5, x, y - s * 1.5);
+          ctx.stroke();
+        } else if (el.type === 'branch') {
+          const { x1, y1, angle, length, curve, thickness } = el;
+          const len = length * easedProgress;
+          const x2 = x1 + Math.cos(angle) * len;
+          const y2 = y1 + Math.sin(angle) * len;
+          const cpX = x1 + Math.cos(angle) * len * 0.5 + Math.cos(angle + Math.PI / 2) * curve * len;
+          const cpY = y1 + Math.sin(angle) * len * 0.5 + Math.sin(angle + Math.PI / 2) * curve * len;
+          ctx.lineWidth = thickness;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.quadraticCurveTo(cpX, cpY, x2, y2);
+          ctx.stroke();
+          ctx.lineWidth = 1.5;
+        } else if (el.type === 'eyeLid') {
+          const { cx, cy, radiusX, radiusY, isTop } = el;
+          const segments = 36;
+          ctx.beginPath();
+          for (let i = 0; i <= segments * easedProgress; i++) {
+            const t = i / segments;
+            const a = (isTop ? Math.PI : 0) + t * Math.PI;
+            const x = cx + Math.cos(a) * radiusX;
+            const curveIntensity = Math.sin(t * Math.PI);
+            const y = cy + (isTop ? -1 : 1) * curveIntensity * radiusY;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        } else if (el.type === 'lash') {
+          const { x, y, angle, length } = el;
+          const len = length * easedProgress;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + Math.cos(angle) * len, y + Math.sin(angle) * len);
+          ctx.stroke();
+        }
+      });
+
+      if (isComplete) {
+        const cx = width / 2;
+        const cy = height / 2;
+        const pulseRadius = 155 + Math.sin(timeRef.current * 1.5) * 4;
+        ctx.beginPath();
+        ctx.arc(cx, cy, pulseRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = themeColor(0.25 * glowPulse);
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, [elements, revealedCount, isComplete, primaryHue]);
+
+  useEffect(() => {
+    elementAnimations.current = {};
+  }, [elements]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={350}
+      height={350}
+      style={{ display: 'block' }}
+    />
+  );
+}
+
+function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
+  // Load saved mantra index from localStorage
+  const getSavedMantraIndex = () => {
+    try {
+      const saved = localStorage.getItem('mantraIndex');
+      if (saved !== null) {
+        const idx = parseInt(saved, 10);
+        if (!isNaN(idx) && idx >= 0 && idx < mantraVisualPairs.length) {
+          return idx;
+        }
+      }
+    } catch (e) {}
+    return 0;
+  };
+
+  const [elements, setElements] = useState([]);
+  const [tapCount, setTapCount] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
+  const [started, setStarted] = useState(false);
+  const [pairIndex, setPairIndex] = useState(getSavedMantraIndex);
+  const [displayWord, setDisplayWord] = useState('');
+  const [wordOpacity, setWordOpacity] = useState(0);
+  const [showLabel, setShowLabel] = useState(true);
+  const labelTimeoutRef = useRef(null);
+
+  const currentPair = mantraVisualPairs[pairIndex];
+  const totalElements = elements.length;
+
+  // Save mantra index whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('mantraIndex', pairIndex.toString());
+    } catch (e) {}
+  }, [pairIndex]);
+
+  // Show mode label on mount, fade out after 2 seconds
+  useEffect(() => {
+    setShowLabel(true);
+    labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 2000);
+    return () => {
+      if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
+    };
+  }, []);
+
+  // Handle word fade in/out
+  useEffect(() => {
+    if (tapCount > 0 && !isComplete) {
+      const newWord = currentPair.words[(tapCount - 1) % currentPair.words.length];
+      setWordOpacity(0);
+      const fadeInTimer = setTimeout(() => {
+        setDisplayWord(newWord);
+        setWordOpacity(1);
+      }, 150);
+      return () => clearTimeout(fadeInTimer);
+    } else if (isComplete) {
+      setWordOpacity(0);
+    }
+  }, [tapCount, isComplete, currentPair]);
+
+  const initializeSession = (advance = false) => {
+    const newPairIndex = advance ? (pairIndex + 1) % mantraVisualPairs.length : pairIndex;
+    const pair = mantraVisualPairs[newPairIndex];
+    const newElements = pair.generate(175, 175);
+    setElements(newElements);
+    setPairIndex(newPairIndex);
+    setTapCount(0);
+    setIsComplete(false);
+    setStarted(true);
+  };
+
+  const handleTap = () => {
+    haptic.tap();
+    if (!started) {
+      initializeSession(false);
+      return;
+    }
+    if (isComplete) {
+      initializeSession(true);
+      return;
+    }
+    const nextTapCount = tapCount + 1;
+    setTapCount(nextTapCount);
+    if (nextTapCount >= totalElements) {
+      setIsComplete(true);
+      haptic.success();
+    }
+  };
+
+  if (!started) {
+    return (
+      <div
+        onClick={handleTap}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem',
+          cursor: 'pointer',
+          userSelect: 'none',
+          background: '#000',
+          fontFamily: "'Jost', system-ui, sans-serif",
+          zIndex: 2,
+        }}
+      >
+        {/* Mode label - fades in then out */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          fontSize: '2rem',
+          color: '#fff',
+          fontFamily: '"Jost", sans-serif',
+          fontWeight: 300,
+          letterSpacing: '0.3em',
+          textTransform: 'lowercase',
+          pointerEvents: 'none',
+          opacity: showLabel ? 1 : 0,
+          transition: 'opacity 0.5s ease',
+        }}>mantra</div>
+
+        <p
+          style={{
+            fontSize: '0.875rem',
+            letterSpacing: '0.15em',
+            color: 'rgba(255, 255, 255, 0.3)',
+            opacity: showLabel ? 0 : 1,
+            transition: 'opacity 0.5s ease',
+          }}
+        >
+          tap to begin
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={handleTap}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1.5rem',
+        cursor: 'pointer',
+        userSelect: 'none',
+        background: '#000',
+        fontFamily: "'Jost', system-ui, sans-serif",
+        zIndex: 2,
+      }}
+    >
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem' }}>
+        <MantraGeometryCanvas
+          elements={elements}
+          revealedCount={tapCount}
+          isComplete={isComplete}
+          primaryHue={primaryHue}
+        />
+      </div>
+
+      <div style={{ textAlign: 'center', height: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {!isComplete && tapCount > 0 && (
+          <span
+            style={{
+              fontSize: '1.875rem',
+              letterSpacing: '0.1em',
+              color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
+              fontWeight: 300,
+              opacity: wordOpacity,
+              transition: 'opacity 0.4s ease-in-out',
+            }}
+          >
+            {displayWord}
+          </span>
+        )}
+      </div>
+
+      {isComplete && (
+        <p
+          style={{
+            marginTop: '2rem',
+            fontSize: '0.875rem',
+            letterSpacing: '0.15em',
+            color: 'rgba(255, 255, 255, 0.3)',
+          }}
+        >
+          tap to continue
+        </p>
+      )}
+    </div>
+  );
+}
+
 const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }, ref) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [samplesLoading, setSamplesLoading] = useState(false);
@@ -10606,6 +11499,7 @@ function Still() {
             {[
               { key: 'zenboard', icon: '∞', label: 'Draw' },
               { key: 'gaze', icon: '◯', label: 'Gaze' },
+              { key: 'mantra', icon: '◇', label: 'Mantra' },
               { key: 'breathwork', icon: '◎', label: 'Breathe' },
               { key: 'drone', icon: '∿', label: 'Drone' },
             ].map(({ key, icon, label }) => {
@@ -11139,6 +12033,14 @@ function Still() {
             }}
             currentVisual={gazeVisual}
             onVisualChange={setGazeVisual}
+          />
+        )}
+
+        {/* Mantra View - Tap-driven mantra practice */}
+        {view === 'mantra' && (
+          <MantraMode
+            primaryHue={primaryHue}
+            primaryColor={primaryColor}
           />
         )}
 
