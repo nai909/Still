@@ -1129,7 +1129,6 @@ const gazeModes = [
   { key: 'underwater', name: 'Abyss' },
   { key: 'lotus', name: 'Lotus' },
   // Breath-focused visuals
-  { key: 'feather', name: 'Feather' },
   { key: 'mycelium', name: 'Mycelium' },
 ];
 
@@ -6515,165 +6514,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
-  // ========== FEATHER MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'feather' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    touchPointsRef.current = [];
-
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 6;
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(MOBILE_PIXEL_RATIO);
-    renderer.setClearColor(0x000000, 0);
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'none';
-    rendererRef.current = renderer;
-    clockRef.current = new THREE.Clock();
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    // Create feather shape using line segments (rachis + barbs)
-    const featherGroup = new THREE.Group();
-    const featherColor = hslToHex(hue, 40, 75);
-    const material = new THREE.LineBasicMaterial({ color: featherColor, transparent: true, opacity: 0.8 });
-
-    // Central rachis (shaft)
-    const rachisPoints = [];
-    const rachisLength = 3;
-    for (let i = 0; i <= 30; i++) {
-      const t = i / 30;
-      const curve = Math.sin(t * Math.PI) * 0.1;
-      rachisPoints.push(new THREE.Vector3(curve, t * rachisLength - rachisLength / 2, 0));
-    }
-    const rachisGeometry = new THREE.BufferGeometry().setFromPoints(rachisPoints);
-    const rachis = new THREE.Line(rachisGeometry, material);
-    featherGroup.add(rachis);
-
-    // Barbs (vanes) on each side
-    const barbCount = 25;
-    const barbs = [];
-    for (let i = 0; i < barbCount; i++) {
-      const t = (i + 2) / (barbCount + 3);
-      const y = t * rachisLength - rachisLength / 2;
-      const barbLength = Math.sin(t * Math.PI) * 1.2;
-
-      // Left barb
-      const leftPoints = [
-        new THREE.Vector3(Math.sin(t * Math.PI) * 0.1, y, 0),
-        new THREE.Vector3(-barbLength, y + 0.05, 0)
-      ];
-      const leftGeom = new THREE.BufferGeometry().setFromPoints(leftPoints);
-      const leftBarb = new THREE.Line(leftGeom, material.clone());
-      featherGroup.add(leftBarb);
-      barbs.push({ mesh: leftBarb, baseLength: barbLength, side: -1, t });
-
-      // Right barb
-      const rightPoints = [
-        new THREE.Vector3(Math.sin(t * Math.PI) * 0.1, y, 0),
-        new THREE.Vector3(barbLength, y + 0.05, 0)
-      ];
-      const rightGeom = new THREE.BufferGeometry().setFromPoints(rightPoints);
-      const rightBarb = new THREE.Line(rightGeom, material.clone());
-      featherGroup.add(rightBarb);
-      barbs.push({ mesh: rightBarb, baseLength: barbLength, side: 1, t });
-    }
-
-    scene.add(featherGroup);
-
-    // Spring physics
-    let currentY = 0;
-    let velocityY = 0;
-    let currentRotZ = 0;
-    let rotVelocityZ = 0;
-    let currentRotX = 0;
-    let rotVelocityX = 0;
-    const springStiffness = 0.03;
-    const springDamping = 0.92;
-
-    let frameCount = 0;
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      frameCount++;
-
-      if (frameCount < 3) {
-        renderer.render(scene, camera);
-        return;
-      }
-
-      const elapsed = clockRef.current.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
-
-      // Feather rises on inhale, floats down on exhale
-      const targetY = (breath - 0.5) * 2; // -1 to 1 range
-      const forceY = (targetY - currentY) * springStiffness;
-      velocityY = (velocityY + forceY) * springDamping;
-      currentY += velocityY;
-
-      // Gentle rotation based on breath
-      const targetRotZ = Math.sin(elapsed * 0.5) * 0.15;
-      const forceRotZ = (targetRotZ - currentRotZ) * springStiffness;
-      rotVelocityZ = (rotVelocityZ + forceRotZ) * springDamping;
-      currentRotZ += rotVelocityZ;
-
-      // Touch interaction - tilt feather toward touch
-      let targetRotX = Math.sin(elapsed * 0.3) * 0.1;
-      if (touchPointsRef.current.length > 0) {
-        const touch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (touch) {
-          const normalizedX = (touch.x / window.innerWidth - 0.5) * 2;
-          const normalizedY = (touch.y / window.innerHeight - 0.5) * 2;
-          targetRotX = normalizedY * 0.5;
-          const touchRotZ = -normalizedX * 0.3;
-          const forceZ = (touchRotZ - currentRotZ) * 0.05;
-          rotVelocityZ = (rotVelocityZ + forceZ) * springDamping;
-        }
-      }
-      const forceRotX = (targetRotX - currentRotX) * springStiffness;
-      rotVelocityX = (rotVelocityX + forceRotX) * springDamping;
-      currentRotX += rotVelocityX;
-
-      featherGroup.position.y = currentY;
-      featherGroup.rotation.z = currentRotZ;
-      featherGroup.rotation.x = currentRotX;
-
-      // Subtle barb flutter
-      barbs.forEach((barb, i) => {
-        const flutter = Math.sin(elapsed * 3 + i * 0.2) * 0.02 * (1 - breath * 0.5);
-        barb.mesh.rotation.z = flutter * barb.side;
-      });
-
-      // Opacity sync with breath
-      material.opacity = 0.6 + breath * 0.3;
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
-
   // ========== MYCELIUM NETWORK MODE ==========
   React.useEffect(() => {
     if (currentMode !== 'mycelium' || !containerRef.current || typeof THREE === 'undefined') return;
@@ -6948,7 +6788,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'mountains' || currentMode === 'cave' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'feather' || currentMode === 'mycelium') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'mountains' || currentMode === 'cave' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'mycelium') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -6970,7 +6810,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'mountains' && currentMode !== 'cave' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && currentMode !== 'feather' && currentMode !== 'mycelium' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'mountains' && currentMode !== 'cave' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && currentMode !== 'mycelium' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
