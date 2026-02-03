@@ -9745,6 +9745,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
                   top: '3px',
                   left: showNotes ? '23px' : '3px',
                   transition: 'all 0.2s ease',
+                  pointerEvents: 'none',
                 }} />
               </button>
             </div>
@@ -9789,6 +9790,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
                   top: '3px',
                   left: droneEnabled ? '23px' : '3px',
                   transition: 'all 0.2s ease',
+                  pointerEvents: 'none',
                 }} />
               </button>
             </div>
