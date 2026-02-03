@@ -1703,24 +1703,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
     containerRef.current.appendChild(renderer.domElement);
-    // Only enable pointer events for OrbitControls in gaze mode (not breathe mode)
-    renderer.domElement.style.pointerEvents = backgroundMode ? 'none' : 'auto';
+    renderer.domElement.style.pointerEvents = 'none';
     rendererRef.current = renderer;
     clockRef.current = new THREE.Clock();
-
-    // Orbit controls for full exploration - only in gaze mode (not breathe mode)
-    let controls = null;
-    if (!backgroundMode) {
-      controls = new OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.08;
-      controls.rotateSpeed = 0.25;
-      controls.enableZoom = true;
-      controls.minDistance = 3;
-      controls.maxDistance = 20;
-      controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.3;
-    }
 
     // Convert HSL hue to hex color for THREE.js
     const hslToHex = (h, s, l) => {
@@ -1979,6 +1964,20 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       breathVelocity = (breathVelocity + breathForce) * springDamping;
       currentBreath += breathVelocity;
 
+      // Touch-responsive rotation (same as Torus)
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          lungsGroup.rotation.y += normalizedX * 0.02;
+          lungsGroup.rotation.x += normalizedY * 0.02;
+        }
+      } else if (!backgroundMode) {
+        // Auto-rotate when not touching (only in gaze mode)
+        lungsGroup.rotation.y += 0.002;
+      }
+
       // Breathing - expand/contract lobes with smoothed value
       const breathExpand = 0.88 + currentBreath * 0.2;
       const verticalExpand = 1 + currentBreath * 0.1;
@@ -1987,9 +1986,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         lobe.scale.set(breathExpand, breathExpand * verticalExpand, breathExpand);
         lobe.material.opacity = 0.5 + currentBreath * 0.35;
       });
-
-      // Update orbit controls (only in gaze mode)
-      if (controls) controls.update();
 
       renderer.render(scene, camera);
     };
@@ -2005,7 +2001,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     return () => {
       window.removeEventListener('resize', handleResize);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (controls) controls.dispose();
       if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
         containerRef.current.removeChild(rendererRef.current.domElement);
       }
@@ -4883,6 +4878,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const intersectPoint = new THREE.Vector3();
 
     let lastTouchTime = 0;
+    let feedPoint = null; // Point where fish should swim towards (like feeding)
+    let feedTime = 0; // When feed point was created
 
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
@@ -4913,6 +4910,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
               const localPoint = intersectPoint.clone();
               localPoint.applyMatrix4(pondGroup.matrixWorld.clone().invert());
               createRipple(localPoint.x, localPoint.z);
+
+              // Set feed point for fish to swim towards
+              feedPoint = { x: localPoint.x, z: localPoint.z };
+              feedTime = elapsed;
             }
             lastTouchTime = elapsed;
           }
@@ -4921,39 +4922,76 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         pondGroup.rotation.y += 0.0001;
       }
 
+      // Clear feed point after 4 seconds (fish lose interest)
+      if (feedPoint && elapsed - feedTime > 4) {
+        feedPoint = null;
+      }
+
       // Breath-synced scale
       const breath = getBreathPhase(elapsed);
       const targetScale = 0.95 + breath * 0.1;
       pondGroup.scale.setScalar(targetScale);
 
       // Animate fish with breath-synced speed
-      fishArray.forEach((fish) => {
+      fishArray.forEach((fish, index) => {
         const data = fish.userData;
         const speedMod = 0.35 + breath * 0.15; // Speed varies with breath
 
-        // Figure-8 swimming pattern - slow and graceful
-        const t = elapsed * data.speed * speedMod + data.baseAngle;
-        const x = Math.sin(t) * data.orbitRadius;
-        const z = Math.sin(t * 2) * data.orbitRadius * 0.5;
+        let targetX, targetZ;
 
-        // Very smooth position update
-        fish.position.x += (x - fish.position.x) * 0.008;
-        fish.position.z += (z - fish.position.z) * 0.008;
+        if (feedPoint) {
+          // Swim towards feed point (like feeding fish)
+          // Each fish approaches from slightly different angle with delay
+          const delay = index * 0.3;
+          const feedStrength = Math.max(0, 1 - (elapsed - feedTime - delay) * 0.15);
+          if (feedStrength > 0) {
+            // Add slight offset so fish don't all pile up at same spot
+            const offsetAngle = (index / fishArray.length) * Math.PI * 2;
+            const offsetDist = 0.3;
+            targetX = feedPoint.x + Math.cos(offsetAngle) * offsetDist;
+            targetZ = feedPoint.z + Math.sin(offsetAngle) * offsetDist;
+
+            // Blend between feed target and normal swimming based on strength
+            const t = elapsed * data.speed * speedMod + data.baseAngle;
+            const normalX = Math.sin(t) * data.orbitRadius;
+            const normalZ = Math.sin(t * 2) * data.orbitRadius * 0.5;
+            targetX = targetX * feedStrength + normalX * (1 - feedStrength);
+            targetZ = targetZ * feedStrength + normalZ * (1 - feedStrength);
+          } else {
+            // Normal swimming
+            const t = elapsed * data.speed * speedMod + data.baseAngle;
+            targetX = Math.sin(t) * data.orbitRadius;
+            targetZ = Math.sin(t * 2) * data.orbitRadius * 0.5;
+          }
+        } else {
+          // Figure-8 swimming pattern - slow and graceful
+          const t = elapsed * data.speed * speedMod + data.baseAngle;
+          targetX = Math.sin(t) * data.orbitRadius;
+          targetZ = Math.sin(t * 2) * data.orbitRadius * 0.5;
+        }
+
+        // Smooth position update (faster when feeding)
+        const moveSpeed = feedPoint ? 0.025 : 0.008;
+        fish.position.x += (targetX - fish.position.x) * moveSpeed;
+        fish.position.z += (targetZ - fish.position.z) * moveSpeed;
 
         // Depth variation with breath
         const depthWave = Math.sin(elapsed * 0.15 + data.depthPhase) * 0.1;
         fish.position.y = -0.15 + depthWave + breath * 0.02;
 
         // Face direction of movement
-        const dx = x - fish.position.x;
-        const dz = z - fish.position.z;
+        const dx = targetX - fish.position.x;
+        const dz = targetZ - fish.position.z;
         if (Math.abs(dx) > 0.001 || Math.abs(dz) > 0.001) {
           const targetAngle = Math.atan2(dz, dx);
-          fish.rotation.y = targetAngle;
+          // Smooth rotation towards target
+          const angleDiff = targetAngle - fish.rotation.y;
+          fish.rotation.y += angleDiff * 0.05;
         }
 
-        // Tail waggle - slow and flowing
-        data.tail.rotation.y = Math.sin(elapsed * 2.5 * speedMod + data.wobblePhase) * 0.2;
+        // Tail waggle - faster when swimming to food
+        const waggleSpeed = feedPoint ? 4 : 2.5;
+        data.tail.rotation.y = Math.sin(elapsed * waggleSpeed * speedMod + data.wobblePhase) * 0.2;
 
         // Body undulation - gentle
         fish.rotation.z = Math.sin(elapsed * 1.2 * speedMod + data.wobblePhase) * 0.03;
