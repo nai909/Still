@@ -8636,7 +8636,7 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
 
   // Handle word fade in/out
   useEffect(() => {
-    if (tapCount > 0 && !isComplete) {
+    if (tapCount > 0) {
       const newWord = currentPair.words[(tapCount - 1) % currentPair.words.length];
       setWordOpacity(0);
       const fadeInTimer = setTimeout(() => {
@@ -8644,10 +8644,8 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
         setWordOpacity(1);
       }, 150);
       return () => clearTimeout(fadeInTimer);
-    } else if (isComplete) {
-      setWordOpacity(0);
     }
-  }, [tapCount, isComplete, currentPair]);
+  }, [tapCount, currentPair]);
 
   const initializeSession = (advance = false) => {
     const newPairIndex = advance ? (pairIndex + 1) % mantraVisualPairs.length : pairIndex;
@@ -8719,7 +8717,7 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
       </div>
 
       <div style={{ textAlign: 'center', height: '4rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {!isComplete && tapCount > 0 && (
+        {tapCount > 0 && (
           <span
             style={{
               fontSize: '1.875rem',
@@ -8734,24 +8732,11 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
           </span>
         )}
       </div>
-
-      {isComplete && (
-        <p
-          style={{
-            marginTop: '2rem',
-            fontSize: '0.875rem',
-            letterSpacing: '0.15em',
-            color: 'rgba(255, 255, 255, 0.3)',
-          }}
-        >
-          tap to continue
-        </p>
-      )}
     </div>
   );
 }
 
-const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false }, ref) {
+const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false, onSamplesReady = null }, ref) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [samplesLoading, setSamplesLoading] = useState(false);
   const [samplesReady, setSamplesReady] = useState(false);
@@ -9074,6 +9059,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
             samplesReadyRef.current = true;
             setSamplesReady(true);
             setSamplesLoading(false);
+            if (onSamplesReady) onSamplesReady();
           }
         })
         .catch(err => {
@@ -10575,14 +10561,29 @@ function Still() {
   // Intro screen state
   const [showIntro, setShowIntro] = useState(true);
   const [introFading, setIntroFading] = useState(false);
+  const [introLoading, setIntroLoading] = useState(false);
   const [audioInitialized, setAudioInitialized] = useState(false);
 
   // Ref for DroneMode to trigger audio initialization
   const droneModeRef = useRef(null);
 
+  // Called when samples are loaded and ready
+  const handleSamplesReady = useCallback(() => {
+    // Start fade out animation
+    setIntroFading(true);
+
+    // Remove intro screen after animation
+    setTimeout(() => {
+      setShowIntro(false);
+    }, 800);
+  }, []);
+
   // Handler for dismissing intro screen and initializing audio
   const handleIntroTouch = useCallback(() => {
-    if (introFading) return; // Prevent double-tap
+    if (introFading || introLoading) return; // Prevent double-tap
+
+    // Show loading state
+    setIntroLoading(true);
 
     // Initialize DroneMode audio (samples, AudioContext, etc.)
     // This must happen in a user gesture handler for iOS
@@ -10600,15 +10601,7 @@ function Still() {
           // Autoplay blocked, will try again on next interaction
         });
     }
-
-    // Start fade out animation
-    setIntroFading(true);
-
-    // Remove intro screen after animation
-    setTimeout(() => {
-      setShowIntro(false);
-    }, 800);
-  }, [introFading, audioInitialized]);
+  }, [introFading, introLoading, audioInitialized]);
 
   // Core state
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -11344,7 +11337,7 @@ function Still() {
 
           {/* Touch to begin - positioned below visual */}
           <p
-            className="intro-touch-pulse"
+            className={introLoading ? '' : 'intro-touch-pulse'}
             style={{
               position: 'absolute',
               bottom: '18%',
@@ -11358,9 +11351,10 @@ function Still() {
               textTransform: 'lowercase',
               margin: 0,
               color: 'rgba(255,255,255,0.5)',
+              opacity: introLoading ? 0.3 : 0.5,
             }}
           >
-            touch to begin
+            {introLoading ? 'loading...' : 'touch to begin'}
           </p>
         </div>
       )}
@@ -12031,6 +12025,7 @@ function Still() {
           primaryHue={primaryHue}
           primaryColor={primaryColor}
           backgroundMode={view !== 'drone'}
+          onSamplesReady={handleSamplesReady}
         />
         {false && view === 'breathwork-old' && (
           <main
