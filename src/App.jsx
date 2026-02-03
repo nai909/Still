@@ -894,6 +894,7 @@ const allSchools = [...new Set(allQuotes.map(q => q.school))].sort();
 const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 
 // Flower of Life - 42 elements (6 words x 7 reps)
+// Flower of Life - 42 elements (6 words × 7 cycles)
 const generateFlowerOfLife = (cx, cy) => {
   const elements = [];
   const r = 30;
@@ -907,8 +908,9 @@ const generateFlowerOfLife = (cx, cy) => {
     const dist = i % 2 === 0 ? r * 2 : r * Math.sqrt(3);
     elements.push({ type: 'circle', x: cx + Math.cos(angle) * dist, y: cy + Math.sin(angle) * dist, radius: r });
   }
-  for (let i = 0; i < 18; i++) {
-    const angle = (i / 18) * Math.PI * 2 - Math.PI / 2;
+  // 17 outer circles instead of 18 to reach exactly 42 elements
+  for (let i = 0; i < 17; i++) {
+    const angle = (i / 17) * Math.PI * 2 - Math.PI / 2;
     elements.push({ type: 'circle', x: cx + Math.cos(angle) * r * 2.8, y: cy + Math.sin(angle) * r * 2.8, radius: r });
   }
   elements.push({ type: 'circle', x: cx, y: cy, radius: r * 3.8 });
@@ -920,27 +922,37 @@ const generateFlowerOfLife = (cx, cy) => {
   return elements;
 };
 
-// Spiral Galaxy - 28 elements (4 words x 7 reps)
+// Abundance Inflow - 28 elements (4 words × 7 cycles)
+// "Abundance flows to me" - streams converging inward toward the self
 const generateSpiralGalaxy = (cx, cy) => {
   const elements = [];
-  const arms = 4, dotsPerArm = 5, maxRadius = 130;
-  for (let arm = 0; arm < arms; arm++) {
-    const armOffset = (arm / arms) * Math.PI * 2;
-    for (let i = 0; i < dotsPerArm; i++) {
-      const progress = (i + 1) / (dotsPerArm + 1);
-      const radius = 25 + progress * (maxRadius - 25);
-      const angle = armOffset + progress * Math.PI * 2;
-      elements.push({ type: 'dot', x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius, radius: Math.max(2, 4 - progress * 2) });
+  // Four rivers of abundance flowing inward
+  const streams = 4;
+  for (let s = 0; s < streams; s++) {
+    const baseAngle = (s / streams) * Math.PI * 2 - Math.PI / 2;
+    // Each stream has particles flowing inward (outer to inner)
+    for (let i = 0; i < 4; i++) {
+      const t = i / 4;
+      const radius = 130 - t * 90; // Flowing inward
+      const curve = t * 0.4; // Slight spiral as it approaches
+      const angle = baseAngle + curve;
+      const size = 2 + t * 2; // Gets larger as it approaches (more abundance gathered)
+      elements.push({ type: 'dot', x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius, radius: size });
     }
   }
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 30 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 20 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 12 });
-  for (let i = 0; i < 4; i++) {
-    const angle = (i / 4) * Math.PI * 2 + Math.PI / 8;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * maxRadius, y: cy + Math.sin(angle) * maxRadius, radius: 2 });
+  // Outer source ring - where abundance originates
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 135 });
+  // Gathering circles - abundance collecting
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 70 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 45 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 25 });
+  // Inner glow - abundance received
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 15, y: cy + Math.sin(angle) * 15, radius: 3 });
   }
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
+  // Center - you, receiving abundance
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 8, isCenter: true });
   return elements;
 };
 
@@ -967,7 +979,7 @@ const generateLotusBlossom = (cx, cy) => {
   return elements;
 };
 
-// Ocean Waves - 28 elements
+// Ocean Waves - 28 elements (4 words × 7 cycles)
 const generateOceanWaves = (cx, cy) => {
   const elements = [];
   for (let w = 0; w < 8; w++) {
@@ -983,11 +995,12 @@ const generateOceanWaves = (cx, cy) => {
   }
   elements.push({ type: 'circle', x: cx, y: cy, radius: 18 });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 10 });
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 5 }); // Added inner circle for 28 total
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 3, isCenter: true });
   return elements;
 };
 
-// Tree of Life - 28 elements
+// Tree of Life - 28 elements (4 words × 7 cycles)
 const generateTreeOfLife = (cx, cy) => {
   const elements = [];
   const rootAngles = [-0.5, -0.2, 0.2, 0.5];
@@ -1014,39 +1027,57 @@ const generateTreeOfLife = (cx, cy) => {
   leafSpots.forEach((pos) => { elements.push({ type: 'dot', x: pos.x, y: pos.y, radius: 3 }); });
   elements.push({ type: 'circle', x: cx, y: cy - 50, radius: 70 });
   elements.push({ type: 'circle', x: cx, y: cy + 55, radius: 35 });
+  elements.push({ type: 'circle', x: cx, y: cy + 55, radius: 20 }); // Added inner root circle
   elements.push({ type: 'circle', x: cx, y: cy, radius: 10 });
   elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
   return elements;
 };
 
-// Cosmic Eye - 28 elements
+// The Eternal Now - 28 elements (4 words × 7 cycles)
+// "This moment is enough" - breath held at peak, time suspended
 const generateCosmicEye = (cx, cy) => {
   const elements = [];
-  elements.push({ type: 'eyeLid', cx, cy, radiusX: 130, radiusY: 60, isTop: true });
-  elements.push({ type: 'eyeLid', cx, cy, radiusX: 130, radiusY: 60, isTop: false });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 55 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 42 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 30 });
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2;
-    elements.push({ type: 'line', x1: cx + Math.cos(angle) * 22, y1: cy + Math.sin(angle) * 22, x2: cx + Math.cos(angle) * 50, y2: cy + Math.sin(angle) * 50 });
-  }
+  // Hourglass shape - time vessel
+  // Upper chamber (past released)
+  elements.push({ type: 'line', x1: cx - 50, y1: cy - 90, x2: cx - 15, y2: cy - 20 });
+  elements.push({ type: 'line', x1: cx + 50, y1: cy - 90, x2: cx + 15, y2: cy - 20 });
+  elements.push({ type: 'line', x1: cx - 50, y1: cy - 90, x2: cx + 50, y2: cy - 90 });
+  // Lower chamber (future unwritten)
+  elements.push({ type: 'line', x1: cx - 50, y1: cy + 90, x2: cx - 15, y2: cy + 20 });
+  elements.push({ type: 'line', x1: cx + 50, y1: cy + 90, x2: cx + 15, y2: cy + 20 });
+  elements.push({ type: 'line', x1: cx - 50, y1: cy + 90, x2: cx + 50, y2: cy + 90 });
+  // The narrow passage - the present moment
   elements.push({ type: 'circle', x: cx, y: cy, radius: 18 });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 12 });
-  for (let i = 0; i < 6; i++) {
-    const t = (i + 1) / 7;
-    const angle = Math.PI + t * Math.PI;
-    const x = cx + Math.cos(angle) * 130;
-    const y = cy - Math.sin(t * Math.PI) * 60;
-    elements.push({ type: 'lash', x, y, angle: -Math.PI / 2 + (t - 0.5) * 0.6, length: 12 + Math.sin(t * Math.PI) * 8 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 7 });
+  // Sand grains suspended in time (not falling)
+  // Upper chamber - a few grains at rest
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 2;
+    const r = 20 + (i % 2) * 10;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r * 0.6, y: cy - 55 + Math.sin(angle) * r * 0.3, radius: 2.5 });
   }
-  elements.push({ type: 'dot', x: cx - 6, y: cy - 6, radius: 5 });
-  elements.push({ type: 'dot', x: cx + 4, y: cy + 4, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
+  // Lower chamber - collected grains
+  for (let i = 0; i < 7; i++) {
+    const spread = (i - 3) * 8;
+    const depth = Math.abs(i - 3) * 3;
+    elements.push({ type: 'dot', x: cx + spread, y: cy + 65 - depth, radius: 2.5 });
+  }
+  // The single grain at center - suspended in the NOW
+  elements.push({ type: 'dot', x: cx, y: cy - 5, radius: 3.5 });
+  elements.push({ type: 'dot', x: cx - 4, y: cy + 5, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 4, y: cy + 3, radius: 2 });
+  // Radiating stillness from the present
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 35, y: cy + Math.sin(angle) * 35, radius: 2 });
+  }
+  // Center - the eternal now
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
   return elements;
 };
 
-// Mandala Star - 21 elements
+// Mandala Star - 21 elements (3 words × 7 cycles)
 const generateMandalaStar = (cx, cy) => {
   const elements = [];
   elements.push({ type: 'circle', x: cx, y: cy, radius: 130 });
@@ -1065,13 +1096,14 @@ const generateMandalaStar = (cx, cy) => {
     const angle2 = ((i + 1) / 3) * Math.PI * 2 - Math.PI / 2;
     elements.push({ type: 'line', x1: cx + Math.cos(angle1) * 40, y1: cy + Math.sin(angle1) * 40, x2: cx + Math.cos(angle2) * 40, y2: cy + Math.sin(angle2) * 40 });
   }
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 30 }); // Added middle circle for 21 total
   elements.push({ type: 'circle', x: cx, y: cy, radius: 20 });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 10 });
   elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
   return elements;
 };
 
-// Sacred Spiral - 35 elements
+// Sacred Spiral - 35 elements (5 words × 7 cycles)
 const generateSacredSpiral = (cx, cy) => {
   const elements = [];
   const goldenRatio = 1.618;
@@ -1090,6 +1122,7 @@ const generateSacredSpiral = (cx, cy) => {
     elements.push({ type: 'circle', x: cx + Math.cos(angle) * r * 0.4, y: cy + Math.sin(angle) * r * 0.4, radius: r * 0.35 });
   });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 140 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 100 }); // Added mid-outer circle for 35 total
   elements.push({ type: 'circle', x: cx, y: cy, radius: 15 });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 8 });
   elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
@@ -1126,52 +1159,95 @@ const generateInfinityLoop = (cx, cy) => {
   return elements;
 };
 
-// Nested Circles - 21 elements
+// Radiating Wholeness - 21 elements (3 words × 7 cycles)
+// "I am enough" - a warm core radiating completeness outward
 const generateNestedCircles = (cx, cy) => {
   const elements = [];
-  const radii = [15, 25, 35, 45, 55, 65, 78, 91, 104, 117, 130, 143];
-  radii.forEach(r => { elements.push({ type: 'circle', x: cx, y: cy, radius: r }); });
+  // Inner warmth - heart-like core
+  elements.push({ type: 'circle', x: cx, y: cy - 8, radius: 18 });
+  elements.push({ type: 'circle', x: cx - 12, y: cy - 18, radius: 14 });
+  elements.push({ type: 'circle', x: cx + 12, y: cy - 18, radius: 14 });
+  // Radiating waves of completeness
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 40 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 60 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 85 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 115 });
+  // Points of inner light radiating outward
   for (let i = 0; i < 8; i++) {
     const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * (80 + (i % 2) * 30), y: cy + Math.sin(angle) * (80 + (i % 2) * 30), radius: 3 });
+    const r = 30 + (i % 2) * 25;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, radius: 3 });
   }
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
+  // Outer glow points
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2 - Math.PI / 4;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 100, y: cy + Math.sin(angle) * 100, radius: 4 });
+  }
+  // Center - the self, complete
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 8, isCenter: true });
   return elements;
 };
 
-// Falling Leaves - 35 elements
+// Graceful Release - 35 elements (5 words × 7 cycles)
+// "I let go with grace" - leaves spiraling down in intentional, beautiful descent
 const generateFallingLeaves = (cx, cy) => {
   const elements = [];
-  const leafPositions = [
-    { x: -60, y: -80 }, { x: 70, y: -90 }, { x: -90, y: -40 }, { x: 95, y: -50 }, { x: -40, y: -60 }, { x: 50, y: -70 },
-    { x: -80, y: 0 }, { x: 85, y: -10 }, { x: -50, y: -20 }, { x: 55, y: -30 }, { x: -100, y: 40 }, { x: 100, y: 30 },
-    { x: -30, y: 20 }, { x: 35, y: 10 }, { x: -70, y: 60 }, { x: 75, y: 50 }, { x: -45, y: 80 }, { x: 50, y: 70 },
-    { x: -90, y: 100 }, { x: 85, y: 90 }, { x: -20, y: 100 }, { x: 25, y: 110 }, { x: -60, y: 120 }, { x: 60, y: 115 },
-    { x: 0, y: -95 }, { x: -15, y: 60 }, { x: 10, y: -50 }, { x: -5, y: 90 },
-  ];
-  leafPositions.forEach(({ x, y }) => { elements.push({ type: 'dot', x: cx + x, y: cy + y, radius: 2.5 + Math.random() * 2 }); });
-  elements.push({ type: 'circle', x: cx - 80, y: cy - 50, radius: 18 });
-  elements.push({ type: 'circle', x: cx + 70, y: cy + 10, radius: 15 });
-  elements.push({ type: 'circle', x: cx + 20, y: cy - 90, radius: 12 });
-  elements.push({ type: 'circle', x: cx - 30, y: cy + 80, radius: 14 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 25 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 12 });
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
+  // The branch we release from (top)
+  elements.push({ type: 'branch', x1: cx - 30, y1: cy - 110, angle: Math.PI * 0.1, length: 35, curve: 0.2, thickness: 3 });
+  elements.push({ type: 'branch', x1: cx + 10, y1: cy - 115, angle: Math.PI * -0.15, length: 40, curve: -0.15, thickness: 2.5 });
+  elements.push({ type: 'branch', x1: cx - 10, y1: cy - 100, angle: Math.PI * 0.5, length: 25, curve: 0, thickness: 4 });
+  // Leaves in graceful spiral descent - fibonacci-like spacing
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // ~137.5 degrees
+  for (let i = 0; i < 21; i++) {
+    const t = i / 20;
+    const angle = i * goldenAngle;
+    const radius = 15 + t * 95;
+    const y = cy - 85 + t * 200;
+    const x = cx + Math.cos(angle) * radius * (0.3 + t * 0.7);
+    const size = 3.5 - t * 1.5; // Leaves get smaller as they fall further
+    elements.push({ type: 'dot', x, y, radius: Math.max(2, size) });
+  }
+  // Soft landing - collected leaves at bottom
+  for (let i = 0; i < 5; i++) {
+    const spread = (i - 2) * 25;
+    elements.push({ type: 'dot', x: cx + spread, y: cy + 115 + Math.abs(spread) * 0.15, radius: 3 });
+  }
+  // Ground/earth circle - where leaves return
+  elements.push({ type: 'circle', x: cx, y: cy + 100, radius: 50 });
+  elements.push({ type: 'circle', x: cx, y: cy + 100, radius: 30 });
+  elements.push({ type: 'circle', x: cx, y: cy + 100, radius: 15 });
+  // Center - the peaceful letting go
+  elements.push({ type: 'dot', x: cx, y: cy + 100, radius: 6, isCenter: true });
   return elements;
 };
 
-// Rippling Water - 21 elements
+// Still Pond - 21 elements (3 words × 7 cycles)
+// "All is well" - perfect stillness, a single drop creating gentle ripples
 const generateRipplingWater = (cx, cy) => {
   const elements = [];
-  for (let i = 0; i < 9; i++) {
-    elements.push({ type: 'wave', cx, cy, radius: 15 + i * 15, amplitude: 2 + i * 0.3, frequency: 8, phase: i * 0.3 });
-  }
-  const dotPositions = [{ x: -50, y: -60 }, { x: 60, y: -50 }, { x: -70, y: 20 }, { x: 80, y: 10 }, { x: -40, y: 70 }, { x: 50, y: 80 }, { x: -90, y: -20 }, { x: 95, y: -30 }];
-  dotPositions.forEach(({ x, y }) => { elements.push({ type: 'dot', x: cx + x, y: cy + y, radius: 2.5 }); });
+  // The drop falling (above center)
+  elements.push({ type: 'dot', x: cx, y: cy - 80, radius: 4 });
+  elements.push({ type: 'dot', x: cx, y: cy - 60, radius: 3 });
+  elements.push({ type: 'dot', x: cx, y: cy - 45, radius: 2.5 });
+  // Perfect concentric ripples - no waves, just circles (stillness)
   elements.push({ type: 'circle', x: cx, y: cy, radius: 12 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 7 });
-  elements.push({ type: 'dot', x: cx, y: cy - 15, radius: 3 });
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 4, isCenter: true });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 28 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 48 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 72 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 100 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 130 });
+  // Floating lotus petals on the still surface
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+    const r = 55 + (i % 2) * 30;
+    elements.push({ type: 'petal', cx, cy, angle, innerRadius: r - 8, outerRadius: r + 8, width: 0.25 });
+  }
+  // Reflection dots - subtle light on water
+  elements.push({ type: 'dot', x: cx - 35, y: cy + 20, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 40, y: cy - 15, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 15, y: cy + 45, radius: 2 });
+  // Center - the point of contact, perfect stillness
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
   return elements;
 };
 
@@ -1239,7 +1315,7 @@ const generateOpenToReceive = (cx, cy) => {
   return elements;
 };
 
-// Release - 42 elements
+// Release - 42 elements (6 words × 7 cycles)
 const generateRelease = (cx, cy) => {
   const elements = [];
   for (let ring = 0; ring < 4; ring++) {
@@ -1254,6 +1330,7 @@ const generateRelease = (cx, cy) => {
     elements.push({ type: 'line', x1: cx + Math.cos(angle) * 25, y1: cy + Math.sin(angle) * 25, x2: cx + Math.cos(angle) * 140, y2: cy + Math.sin(angle) * 140 });
   }
   elements.push({ type: 'circle', x: cx, y: cy, radius: 145 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 80 }); // Added mid circle for 42 total
   elements.push({ type: 'circle', x: cx, y: cy, radius: 22 });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 14 });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 8 });
@@ -1288,12 +1365,13 @@ const generateConnectedToAll = (cx, cy) => {
   return elements;
 };
 
-// We Are One - 28 elements
+// We Are One - 28 elements (4 words × 7 cycles)
 const generateWeAreOne = (cx, cy) => {
   const elements = [];
   const positions = [{ x: 0, y: -40 }, { x: 35, y: -20 }, { x: -35, y: -20 }, { x: 45, y: 25 }, { x: -45, y: 25 }, { x: 20, y: 50 }, { x: -20, y: 50 }];
   positions.forEach(({ x, y }) => { elements.push({ type: 'circle', x: cx + x, y: cy + y, radius: 35 }); });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 100 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 60 }); // Added inner circle for 28 total
   for (let i = 0; i < 12; i++) {
     const angle = (i / 12) * Math.PI * 2;
     elements.push({ type: 'line', x1: cx + Math.cos(angle) * 45, y1: cy + Math.sin(angle) * 45, x2: cx + Math.cos(angle) * 95, y2: cy + Math.sin(angle) * 95 });
@@ -1306,7 +1384,7 @@ const generateWeAreOne = (cx, cy) => {
   return elements;
 };
 
-// Safe Right Now - 35 elements
+// Safe Right Now - 35 elements (5 words × 7 cycles)
 const generateSafeRightNow = (cx, cy) => {
   const elements = [];
   for (let i = 0; i < 8; i++) {
@@ -1319,7 +1397,7 @@ const generateSafeRightNow = (cx, cy) => {
     const spread = (i - 3.5) * 14;
     elements.push({ type: 'branch', x1: cx + spread * 0.4, y1: cy + 75, angle: Math.PI / 2 + (i - 3.5) * 0.1, length: 35 + Math.abs(i - 3.5) * 6, curve: (i - 3.5) * 0.08, thickness: 1.5 });
   }
-  [45, 35, 25, 16, 9].forEach(r => { elements.push({ type: 'circle', x: cx, y: cy, radius: r }); });
+  [55, 45, 35, 25, 16, 9].forEach(r => { elements.push({ type: 'circle', x: cx, y: cy, radius: r }); }); // Added outer circle for 35 total
   for (let i = 0; i < 4; i++) {
     const angle = (i / 4) * Math.PI * 2 - Math.PI / 4;
     elements.push({ type: 'dot', x: cx + Math.cos(angle) * 20, y: cy + Math.sin(angle) * 20, radius: 2 });
@@ -7437,18 +7515,22 @@ const toRoman = (num) => {
 
 function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
   const [showUI, setShowUI] = useState(false);
-  const [showLabel, setShowLabel] = useState(true);
+  const [showLabel, setShowLabel] = useState(false);
   const swipeStartRef = useRef(null);
   const wheelAccumRef = useRef(0);
   const wheelTimeoutRef = useRef(null);
   const labelTimeoutRef = useRef(null);
+  const fadeInTimeoutRef = useRef(null);
 
-  // Reset breath session and show label when view opens
+  // Reset breath session and show label when view opens (fade in then out)
   useEffect(() => {
     stopBreathSession();
-    setShowLabel(true);
+    // Fade in after brief delay
+    fadeInTimeoutRef.current = setTimeout(() => setShowLabel(true), 50);
+    // Fade out after 2 seconds
     labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 2000);
     return () => {
+      if (fadeInTimeoutRef.current) clearTimeout(fadeInTimeoutRef.current);
       if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
     };
   }, []);
@@ -7583,7 +7665,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         textTransform: 'lowercase',
         pointerEvents: 'none',
         opacity: showLabel && !breathSession.isActive ? 1 : 0,
-        transition: 'opacity 0.5s ease',
+        transition: 'opacity 1s ease',
       }}>breathe</div>
 
       {/* Technique selector - bottom drawer */}
@@ -8605,8 +8687,9 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
   const [pairIndex, setPairIndex] = useState(getSavedMantraIndex);
   const [displayWord, setDisplayWord] = useState('');
   const [wordOpacity, setWordOpacity] = useState(0);
-  const [showLabel, setShowLabel] = useState(true);
+  const [showLabel, setShowLabel] = useState(false);
   const labelTimeoutRef = useRef(null);
+  const fadeInTimeoutRef = useRef(null);
 
   const currentPair = mantraVisualPairs[pairIndex];
   const totalElements = elements.length;
@@ -8618,7 +8701,7 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
     } catch (e) {}
   }, [pairIndex]);
 
-  // Auto-start session and show mode label on mount
+  // Auto-start session and show mode label on mount (fade in then out)
   useEffect(() => {
     // Initialize the mantra session immediately
     const pair = mantraVisualPairs[pairIndex];
@@ -8626,10 +8709,12 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
     setElements(newElements);
     setStarted(true);
 
-    // Show label and fade out after 2 seconds
-    setShowLabel(true);
+    // Fade in label after brief delay
+    fadeInTimeoutRef.current = setTimeout(() => setShowLabel(true), 50);
+    // Fade out after 2 seconds
     labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 2000);
     return () => {
+      if (fadeInTimeoutRef.current) clearTimeout(fadeInTimeoutRef.current);
       if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
     };
   }, []);
@@ -8704,7 +8789,7 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
         textTransform: 'lowercase',
         pointerEvents: 'none',
         opacity: showLabel ? 1 : 0,
-        transition: 'opacity 0.5s ease',
+        transition: 'opacity 1s ease',
       }}>mantra</div>
 
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem' }}>
@@ -10103,7 +10188,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
           textAlign: 'center',
           pointerEvents: 'none',
           opacity: showLabel ? 1 : 0,
-          transition: 'opacity 0.5s ease',
+          transition: 'opacity 1s ease',
           zIndex: 10,
         }}
       >
