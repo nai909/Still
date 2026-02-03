@@ -4878,6 +4878,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       rippleRings.push(ring);
     };
 
+    // Raycaster for touch-to-world coordinate conversion
+    const raycaster = new THREE.Raycaster();
+    const waterPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.1); // Water at y=0.1
+    const intersectPoint = new THREE.Vector3();
+
     let lastTouchTime = 0;
 
     const animate = () => {
@@ -4894,11 +4899,22 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           camera.position.y = 5 + normalizedY * 0.5;
           camera.lookAt(0, 0, 0);
 
-          // Create ripples on touch
+          // Create ripples at touch location using raycasting
           if (elapsed - lastTouchTime > 0.5) {
-            const touchX = normalizedX * 3;
-            const touchZ = normalizedY * 3;
-            createRipple(touchX, touchZ);
+            // Convert screen coordinates to normalized device coordinates (-1 to 1)
+            const ndcX = (activeTouch.x / window.innerWidth) * 2 - 1;
+            const ndcY = -(activeTouch.y / window.innerHeight) * 2 + 1;
+
+            // Set up raycaster from camera through touch point
+            raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+
+            // Find intersection with water plane
+            if (raycaster.ray.intersectPlane(waterPlane, intersectPoint)) {
+              // Account for pond group rotation when placing ripple
+              const localPoint = intersectPoint.clone();
+              localPoint.applyMatrix4(pondGroup.matrixWorld.clone().invert());
+              createRipple(localPoint.x, localPoint.z);
+            }
             lastTouchTime = elapsed;
           }
         }
