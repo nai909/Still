@@ -1128,8 +1128,6 @@ const gazeModes = [
   { key: 'maloka', name: 'Maloka' },
   { key: 'underwater', name: 'Abyss' },
   { key: 'lotus', name: 'Lotus' },
-  // Breath-focused visuals
-  { key: 'mycelium', name: 'Mycelium' },
 ];
 
 const gazeShapes = [
@@ -6552,180 +6550,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
-  // ========== MYCELIUM NETWORK MODE ==========
-  React.useEffect(() => {
-    if (currentMode !== 'mycelium' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    touchPointsRef.current = [];
-
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 8;
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(MOBILE_PIXEL_RATIO);
-    renderer.setClearColor(0x000000, 0);
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'none';
-    rendererRef.current = renderer;
-    clockRef.current = new THREE.Clock();
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    const networkGroup = new THREE.Group();
-    const glowColor = hslToHex(hue, 70, 60);
-    const dimColor = hslToHex(hue, 40, 30);
-
-    // Generate branching network
-    const branches = [];
-    const nodes = [];
-    const maxDepth = isMobile ? 4 : 5;
-
-    const createBranch = (start, direction, depth, parentIndex) => {
-      if (depth > maxDepth) return;
-
-      const length = 1.5 - depth * 0.2 + Math.random() * 0.3;
-      const end = new THREE.Vector3(
-        start.x + direction.x * length,
-        start.y + direction.y * length,
-        start.z + direction.z * length
-      );
-
-      // Create line
-      const points = [start.clone(), end.clone()];
-      const geom = new THREE.BufferGeometry().setFromPoints(points);
-      const mat = new THREE.LineBasicMaterial({
-        color: dimColor,
-        transparent: true,
-        opacity: 0.3
-      });
-      const line = new THREE.Line(geom, mat);
-      line.userData = { depth, glowProgress: 0, parentIndex, startPoint: start.clone(), endPoint: end.clone() };
-      branches.push(line);
-      networkGroup.add(line);
-
-      // Node at end
-      const nodeGeom = new THREE.SphereGeometry(0.05 - depth * 0.008, 8, 8);
-      const nodeMat = new THREE.MeshBasicMaterial({ color: glowColor, transparent: true, opacity: 0.2 });
-      const node = new THREE.Mesh(nodeGeom, nodeMat);
-      node.position.copy(end);
-      node.userData = { depth };
-      nodes.push(node);
-      networkGroup.add(node);
-
-      // Branch further
-      const branchCount = Math.floor(2 + Math.random() * 2);
-      for (let i = 0; i < branchCount; i++) {
-        const newDir = direction.clone();
-        newDir.x += (Math.random() - 0.5) * 1.2;
-        newDir.y += (Math.random() - 0.5) * 1.2;
-        newDir.z += (Math.random() - 0.5) * 0.8;
-        newDir.normalize();
-        createBranch(end, newDir, depth + 1, branches.length - 1);
-      }
-    };
-
-    // Start from center with multiple initial branches
-    const startBranches = 5;
-    for (let i = 0; i < startBranches; i++) {
-      const angle = (i / startBranches) * Math.PI * 2;
-      const dir = new THREE.Vector3(Math.cos(angle), Math.sin(angle) * 0.5, Math.sin(angle) * 0.3);
-      createBranch(new THREE.Vector3(0, 0, 0), dir, 0, -1);
-    }
-
-    scene.add(networkGroup);
-
-    let pulseTime = 0;
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const elapsed = clockRef.current.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
-      const delta = clockRef.current.getDelta();
-
-      // Pulse propagates from center on inhale
-      pulseTime += delta * (0.5 + breath * 1.5);
-
-      // Touch creates new pulse origin
-      let touchPulseX = 0, touchPulseY = 0;
-      if (touchPointsRef.current.length > 0) {
-        const touch = touchPointsRef.current.find(p => p.active);
-        if (touch) {
-          touchPulseX = (touch.x / window.innerWidth - 0.5) * 8;
-          touchPulseY = -(touch.y / window.innerHeight - 0.5) * 6;
-        }
-      }
-
-      // Update branches
-      branches.forEach(branch => {
-        const data = branch.userData;
-        const distFromCenter = data.startPoint.length();
-        const distFromTouch = Math.sqrt(
-          Math.pow(data.startPoint.x - touchPulseX, 2) +
-          Math.pow(data.startPoint.y - touchPulseY, 2)
-        );
-
-        // Pulse wave
-        const pulseWave = Math.sin(pulseTime * 2 - distFromCenter * 0.8);
-        const touchWave = touchPulseX !== 0 || touchPulseY !== 0
-          ? Math.sin(elapsed * 3 - distFromTouch * 0.5) * 0.5
-          : 0;
-        const glow = Math.max(0, pulseWave * breath + touchWave);
-
-        // Interpolate color and opacity
-        branch.material.opacity = 0.2 + glow * 0.6;
-        const colorLerp = glow;
-        const r = ((dimColor >> 16) & 255) / 255;
-        const g = ((dimColor >> 8) & 255) / 255;
-        const b = (dimColor & 255) / 255;
-        const gr = ((glowColor >> 16) & 255) / 255;
-        const gg = ((glowColor >> 8) & 255) / 255;
-        const gb = (glowColor & 255) / 255;
-        branch.material.color.setRGB(
-          r + (gr - r) * colorLerp,
-          g + (gg - g) * colorLerp,
-          b + (gb - b) * colorLerp
-        );
-      });
-
-      // Update nodes
-      nodes.forEach(node => {
-        const dist = node.position.length();
-        const pulseWave = Math.sin(pulseTime * 2 - dist * 0.8);
-        const glow = Math.max(0, pulseWave * breath);
-        node.material.opacity = 0.1 + glow * 0.7;
-        node.scale.setScalar(1 + glow * 0.5);
-      });
-
-      // Slow rotation
-      networkGroup.rotation.y += 0.001;
-      networkGroup.rotation.z = Math.sin(elapsed * 0.2) * 0.1;
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
-      renderer.dispose();
-    };
-  }, [currentMode, hue, getBreathPhase]);
-
   // Floating particles animation (stars in space effect)
   React.useEffect(() => {
     const canvas = particleCanvasRef.current;
@@ -6826,7 +6650,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'mountains' || currentMode === 'cave' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'mycelium') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'mountains' || currentMode === 'cave' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -6848,7 +6672,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'mountains' && currentMode !== 'cave' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && currentMode !== 'mycelium' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'mountains' && currentMode !== 'cave' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
