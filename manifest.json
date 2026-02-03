@@ -1,6 +1,6 @@
 {
-  "name": "slohum",
-  "short_name": "slohum",
+  "name": "Still",
+  "short_name": "Still",
   "description": "Meditation and breathwork app with immersive visuals",
   "start_url": "/",
   "display": "standalone",

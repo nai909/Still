@@ -1,6 +1,6 @@
 {
-  "appId": "com.slohum.app",
-  "appName": "slohum",
+  "appId": "com.still.app",
+  "appName": "Still",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"
