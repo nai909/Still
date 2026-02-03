@@ -943,6 +943,7 @@ const generateSpiralGalaxy = (cx, cy) => {
   // Outer source ring - where abundance originates
   elements.push({ type: 'circle', x: cx, y: cy, radius: 135 });
   // Gathering circles - abundance collecting
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 100 }); // Added for 28 total
   elements.push({ type: 'circle', x: cx, y: cy, radius: 70 });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 45 });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 25 });
@@ -1057,10 +1058,10 @@ const generateCosmicEye = (cx, cy) => {
     const r = 20 + (i % 2) * 10;
     elements.push({ type: 'dot', x: cx + Math.cos(angle) * r * 0.6, y: cy - 55 + Math.sin(angle) * r * 0.3, radius: 2.5 });
   }
-  // Lower chamber - collected grains
-  for (let i = 0; i < 7; i++) {
-    const spread = (i - 3) * 8;
-    const depth = Math.abs(i - 3) * 3;
+  // Lower chamber - collected grains (6 instead of 7)
+  for (let i = 0; i < 6; i++) {
+    const spread = (i - 2.5) * 9;
+    const depth = Math.abs(i - 2.5) * 3;
     elements.push({ type: 'dot', x: cx + spread, y: cy + 65 - depth, radius: 2.5 });
   }
   // The single grain at center - suspended in the NOW
@@ -1183,6 +1184,8 @@ const generateNestedCircles = (cx, cy) => {
     const angle = (i / 4) * Math.PI * 2 - Math.PI / 4;
     elements.push({ type: 'dot', x: cx + Math.cos(angle) * 100, y: cy + Math.sin(angle) * 100, radius: 4 });
   }
+  // Inner glow
+  elements.push({ type: 'dot', x: cx, y: cy - 25, radius: 3 });
   // Center - the self, complete
   elements.push({ type: 'dot', x: cx, y: cy, radius: 8, isCenter: true });
   return elements;
@@ -1196,10 +1199,10 @@ const generateFallingLeaves = (cx, cy) => {
   elements.push({ type: 'branch', x1: cx - 30, y1: cy - 110, angle: Math.PI * 0.1, length: 35, curve: 0.2, thickness: 3 });
   elements.push({ type: 'branch', x1: cx + 10, y1: cy - 115, angle: Math.PI * -0.15, length: 40, curve: -0.15, thickness: 2.5 });
   elements.push({ type: 'branch', x1: cx - 10, y1: cy - 100, angle: Math.PI * 0.5, length: 25, curve: 0, thickness: 4 });
-  // Leaves in graceful spiral descent - fibonacci-like spacing
+  // Leaves in graceful spiral descent - fibonacci-like spacing (22 leaves)
   const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // ~137.5 degrees
-  for (let i = 0; i < 21; i++) {
-    const t = i / 20;
+  for (let i = 0; i < 22; i++) {
+    const t = i / 21;
     const angle = i * goldenAngle;
     const radius = 15 + t * 95;
     const y = cy - 85 + t * 200;
@@ -1207,7 +1210,7 @@ const generateFallingLeaves = (cx, cy) => {
     const size = 3.5 - t * 1.5; // Leaves get smaller as they fall further
     elements.push({ type: 'dot', x, y, radius: Math.max(2, size) });
   }
-  // Soft landing - collected leaves at bottom
+  // Soft landing - collected leaves at bottom (5 leaves)
   for (let i = 0; i < 5; i++) {
     const spread = (i - 2) * 25;
     elements.push({ type: 'dot', x: cx + spread, y: cy + 115 + Math.abs(spread) * 0.15, radius: 3 });
@@ -1216,6 +1219,8 @@ const generateFallingLeaves = (cx, cy) => {
   elements.push({ type: 'circle', x: cx, y: cy + 100, radius: 50 });
   elements.push({ type: 'circle', x: cx, y: cy + 100, radius: 30 });
   elements.push({ type: 'circle', x: cx, y: cy + 100, radius: 15 });
+  // Outer containment
+  elements.push({ type: 'circle', x: cx, y: cy + 100, radius: 70 });
   // Center - the peaceful letting go
   elements.push({ type: 'dot', x: cx, y: cy + 100, radius: 6, isCenter: true });
   return elements;
@@ -1236,9 +1241,9 @@ const generateRipplingWater = (cx, cy) => {
   elements.push({ type: 'circle', x: cx, y: cy, radius: 72 });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 100 });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 130 });
-  // Floating lotus petals on the still surface
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+  // Floating lotus petals on the still surface (4 petals)
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2 - Math.PI / 2;
     const r = 55 + (i % 2) * 30;
     elements.push({ type: 'petal', cx, cy, angle, innerRadius: r - 8, outerRadius: r + 8, width: 0.25 });
   }
@@ -1246,6 +1251,8 @@ const generateRipplingWater = (cx, cy) => {
   elements.push({ type: 'dot', x: cx - 35, y: cy + 20, radius: 2 });
   elements.push({ type: 'dot', x: cx + 40, y: cy - 15, radius: 2 });
   elements.push({ type: 'dot', x: cx + 15, y: cy + 45, radius: 2 });
+  elements.push({ type: 'dot', x: cx - 55, y: cy - 30, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 60, y: cy + 25, radius: 2 });
   // Center - the point of contact, perfect stillness
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
   return elements;
