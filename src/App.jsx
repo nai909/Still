@@ -1,4 +1,5 @@
 import React from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
@@ -7972,11 +7973,14 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    // Bring camera closer for larger handpan view
-    if (isMobile) {
-      camera.position.set(0, 6, 4.5); // Closer camera for larger handpan on mobile
+    // Camera position: native iOS keeps original size, web gets larger handpan
+    const isNativeApp = Capacitor.isNativePlatform();
+    if (isNativeApp) {
+      camera.position.set(0, 8.5, 6); // Original size for iOS native app
+    } else if (isMobile) {
+      camera.position.set(0, 6, 4.5); // Larger handpan for mobile web browser
     } else {
-      camera.position.set(0, 6, 4.2); // Closer camera = larger handpan on desktop
+      camera.position.set(0, 6, 4.2); // Larger handpan for desktop
     }
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
