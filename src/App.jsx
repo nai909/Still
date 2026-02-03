@@ -7972,9 +7972,9 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    // Larger handpan on desktop (camera closer), smaller on mobile
+    // Bring camera closer for larger handpan view
     if (isMobile) {
-      camera.position.set(0, 8.5, 6);
+      camera.position.set(0, 6, 4.5); // Closer camera for larger handpan on mobile
     } else {
       camera.position.set(0, 6, 4.2); // Closer camera = larger handpan on desktop
     }
