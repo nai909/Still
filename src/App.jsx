@@ -9249,7 +9249,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
       <div
         style={{
           position: 'absolute',
-          top: Capacitor.isNativePlatform() ? '22%' : '10%',
+          top: Capacitor.isNativePlatform() ? '22%' : '16%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
           textAlign: 'center',
