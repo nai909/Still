@@ -12,11 +12,11 @@ import { MarchingCubes } from 'three/examples/jsm/objects/MarchingCubes';
 import { allQuotes, allThemes, allSchools } from './data/quotes';
 import { breathTechniques } from './data/breathTechniques';
 import { haptic } from './config/haptic';
-import { gazeModes, BREATH_CYCLE, BREATH_SPEED } from './config/constants';
+import { gazeModes, BREATH_CYCLE, BREATH_SPEED, KEYS, KEY_FREQUENCIES, SCALE_TYPES } from './config/constants';
 import GazeMode from './components/GazeMode';
 
 // Destructure React hooks for compatibility with original code
-const { useState, useEffect, useRef, useCallback, createContext, useContext } = React;
+const { useState, useEffect, useRef, useCallback } = React;
 
 // ============================================================================
 // MANTRA MODE - Geometry Generators
@@ -688,8 +688,6 @@ const themes = {
   },
 };
 
-const ThemeContext = createContext(themes.void);
-
 // ============================================================================
 // SETTINGS
 // ============================================================================
@@ -764,14 +762,6 @@ const saveSettings = (settings) => {
 // ============================================================================
 // BREATHWORK VIEW COMPONENT
 // ============================================================================
-
-// Convert number to Roman numeral
-const toRoman = (num) => {
-  if (num <= 0 || num > 20) return num.toString();
-  const numerals = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X',
-                    'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX'];
-  return numerals[num] || num.toString();
-};
 
 function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', isActive = false }) {
   const [showUI, setShowUI] = useState(false);
@@ -1412,32 +1402,6 @@ function ZenWaterBoard({ primaryHue = 162 }) {
 // ============================================================================
 // DRONE MODE COMPONENT
 // ============================================================================
-
-// Musical keys and scales (like Ableton)
-const KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const KEY_FREQUENCIES = {
-  'C': 130.81, 'C#': 138.59, 'D': 146.83, 'D#': 155.56, 'E': 164.81, 'F': 174.61,
-  'F#': 185.00, 'G': 196.00, 'G#': 207.65, 'A': 220.00, 'A#': 233.08, 'B': 246.94
-};
-
-const SCALE_TYPES = [
-  { name: 'major', intervals: [0, 2, 4, 5, 7, 9, 11] },
-  { name: 'minor', intervals: [0, 2, 3, 5, 7, 8, 10] },
-  { name: 'dorian', intervals: [0, 2, 3, 5, 7, 9, 10] },
-  { name: 'phrygian', intervals: [0, 1, 3, 5, 7, 8, 10] },
-  { name: 'lydian', intervals: [0, 2, 4, 6, 7, 9, 11] },
-  { name: 'mixolydian', intervals: [0, 2, 4, 5, 7, 9, 10] },
-  { name: 'locrian', intervals: [0, 1, 3, 5, 6, 8, 10] },
-  { name: 'harmonic minor', intervals: [0, 2, 3, 5, 7, 8, 11] },
-  { name: 'melodic minor', intervals: [0, 2, 3, 5, 7, 9, 11] },
-  { name: 'pentatonic major', intervals: [0, 2, 4, 7, 9] },
-  { name: 'pentatonic minor', intervals: [0, 3, 5, 7, 10] },
-  { name: 'blues', intervals: [0, 3, 5, 6, 7, 10] },
-  { name: 'whole tone', intervals: [0, 2, 4, 6, 8, 10] },
-  { name: 'insen', intervals: [0, 1, 5, 7, 8] },
-  { name: 'hijaz', intervals: [0, 1, 4, 5, 7, 8, 11] },
-  { name: 'hungarian minor', intervals: [0, 2, 3, 6, 7, 8, 11] },
-];
 
 // Generate scale frequencies from key and scale type
 const generateScale = (keyName, scaleType, targetNotes = 9) => {
@@ -4520,7 +4484,7 @@ function Still() {
   // ============================================================================
 
   return (
-    <ThemeContext.Provider value={currentTheme}>
+    <>
       {/* Simple intro - touch to begin, then handpan fades in */}
       {showIntro && (
         <div
@@ -5535,7 +5499,7 @@ function Still() {
           }
         `}</style>
       </div>
-    </ThemeContext.Provider>
+    </>
   );
 }
 

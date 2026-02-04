@@ -63,3 +63,32 @@ export const gazeShapes = [
   { key: 'torus', name: 'Torus', create: () => new THREE.TorusGeometry(1, 0.4, 16, 100) },
   { key: 'torusKnot', name: 'Knot', create: () => new THREE.TorusKnotGeometry(0.7, 0.25, 100, 16) },
 ];
+
+// ============================================================================
+// MUSIC CONSTANTS
+// ============================================================================
+export const KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+export const KEY_FREQUENCIES = {
+  'C': 130.81, 'C#': 138.59, 'D': 146.83, 'D#': 155.56, 'E': 164.81, 'F': 174.61,
+  'F#': 185.00, 'G': 196.00, 'G#': 207.65, 'A': 220.00, 'A#': 233.08, 'B': 246.94
+};
+
+export const SCALE_TYPES = [
+  { name: 'major', intervals: [0, 2, 4, 5, 7, 9, 11] },
+  { name: 'minor', intervals: [0, 2, 3, 5, 7, 8, 10] },
+  { name: 'dorian', intervals: [0, 2, 3, 5, 7, 9, 10] },
+  { name: 'phrygian', intervals: [0, 1, 3, 5, 7, 8, 10] },
+  { name: 'lydian', intervals: [0, 2, 4, 6, 7, 9, 11] },
+  { name: 'mixolydian', intervals: [0, 2, 4, 5, 7, 9, 10] },
+  { name: 'locrian', intervals: [0, 1, 3, 5, 6, 8, 10] },
+  { name: 'harmonic minor', intervals: [0, 2, 3, 5, 7, 8, 11] },
+  { name: 'melodic minor', intervals: [0, 2, 3, 5, 7, 9, 11] },
+  { name: 'pentatonic major', intervals: [0, 2, 4, 7, 9] },
+  { name: 'pentatonic minor', intervals: [0, 3, 5, 7, 10] },
+  { name: 'blues', intervals: [0, 3, 5, 6, 7, 10] },
+  { name: 'whole tone', intervals: [0, 2, 4, 6, 8, 10] },
+  { name: 'insen', intervals: [0, 1, 5, 7, 8] },
+  { name: 'hijaz', intervals: [0, 1, 4, 5, 7, 8, 11] },
+  { name: 'hungarian minor', intervals: [0, 2, 3, 6, 7, 8, 11] },
+];
