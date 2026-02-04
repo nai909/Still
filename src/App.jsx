@@ -896,881 +896,989 @@ const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 // Flower of Life - 42 elements (6 words x 7 reps)
 // Flower of Life - 42 elements (6 words × 7 cycles)
 // I Am Grateful For This Moment - 42 elements (6 words × 7 cycles)
-// Gratitude as sunrise from the heart - light radiating into the infinite present
-// Like hands opening to receive the gift of now
+// SUNRISE OVER MOUNTAINS - dawn breaking, birds rising, the gift of a new day
 const generateFlowerOfLife = (cx, cy) => {
   const elements = [];
-  const phi = 1.618; // Golden ratio
 
-  // The heart-sun at center - source of gratitude (3 circles)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 12 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 22 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 35 });
+  // The rising sun - half circle at horizon (1 large arc suggested by dots)
+  elements.push({ type: 'circle', x: cx, y: cy + 20, radius: 45 }); // sun body
 
-  // Rays of thankfulness emanating - 12 golden rays
+  // Sun rays reaching upward and outward - 12 rays of morning light
   for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-    const innerR = 40;
-    const outerR = 85 + Math.sin(i * phi) * 15; // Golden variation
-    elements.push({ type: 'line', x1: cx + Math.cos(angle) * innerR, y1: cy + Math.sin(angle) * innerR, x2: cx + Math.cos(angle) * outerR, y2: cy + Math.sin(angle) * outerR });
+    const angle = -Math.PI + (i / 11) * Math.PI; // upper hemisphere only
+    const inner = 50;
+    const outer = 85 + Math.sin(i * 0.7) * 20;
+    elements.push({ type: 'line', x1: cx + Math.cos(angle) * inner, y1: cy + 20 + Math.sin(angle) * inner, x2: cx + Math.cos(angle) * outer, y2: cy + 20 + Math.sin(angle) * outer });
   }
 
-  // Light particles along the rays - fibonacci positioned (12 particles)
-  const fibPositions = [0.236, 0.382, 0.5, 0.618, 0.786, 1]; // Fibonacci ratios
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2 - Math.PI / 2 + Math.PI / 12;
-    const r = 55 + fibPositions[i % 6] * 50;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, radius: 2.5 });
-  }
+  // Mountain range silhouette - 6 peaks across the horizon
+  elements.push({ type: 'line', x1: cx - 130, y1: cy + 40, x2: cx - 80, y2: cy - 30 }); // left peak up
+  elements.push({ type: 'line', x1: cx - 80, y1: cy - 30, x2: cx - 50, y2: cy + 20 }); // left peak down
+  elements.push({ type: 'line', x1: cx - 50, y1: cy + 20, x2: cx - 10, y2: cy - 50 }); // center-left peak up
+  elements.push({ type: 'line', x1: cx - 10, y1: cy - 50, x2: cx + 30, y2: cy + 10 }); // center peak down
+  elements.push({ type: 'line', x1: cx + 30, y1: cy + 10, x2: cx + 70, y2: cy - 25 }); // right peak up
+  elements.push({ type: 'line', x1: cx + 70, y1: cy - 25, x2: cx + 130, y2: cy + 40 }); // right slope down
 
-  // The gifts received - 6 blessing circles (one for each word)
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'circle', x: cx + Math.cos(angle) * 115, y: cy + Math.sin(angle) * 115, radius: 18 });
-  }
+  // Birds in flight - 6 V-shapes rising with the dawn (12 lines)
+  const birdPositions = [{x: -60, y: -70}, {x: -20, y: -90}, {x: 30, y: -75}, {x: 70, y: -95}, {x: -40, y: -110}, {x: 50, y: -115}];
+  birdPositions.forEach(pos => {
+    elements.push({ type: 'line', x1: cx + pos.x - 12, y1: cy + pos.y + 5, x2: cx + pos.x, y2: cy + pos.y });
+    elements.push({ type: 'line', x1: cx + pos.x, y1: cy + pos.y, x2: cx + pos.x + 12, y2: cy + pos.y + 5 });
+  });
 
-  // Outer field of infinite present - where gratitude expands into
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 100 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 140 });
+  // Stars fading in morning sky - 5 dots
+  elements.push({ type: 'dot', x: cx - 90, y: cy - 100, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 100, y: cy - 85, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx - 30, y: cy - 130, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 60, y: cy - 120, radius: 1.5 });
+  elements.push({ type: 'dot', x: cx - 110, y: cy - 60, radius: 2 });
 
-  // Inner warmth - the felt sense of thanks (6 inner dots)
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 18, y: cy + Math.sin(angle) * 18, radius: 3 });
-  }
+  // Horizon line
+  elements.push({ type: 'line', x1: cx - 130, y1: cy + 40, x2: cx + 130, y2: cy + 40 });
 
-  // The moment itself - center of presence
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 7, isCenter: true });
+  // Clouds touched by dawn light - 4 small clusters
+  elements.push({ type: 'dot', x: cx - 100, y: cy - 40, radius: 4 });
+  elements.push({ type: 'dot', x: cx - 85, y: cy - 35, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 90, y: cy - 50, radius: 5 });
+  elements.push({ type: 'dot', x: cx + 110, y: cy - 45, radius: 3 });
+
+  // The grateful heart - center of the sun
+  elements.push({ type: 'dot', x: cx, y: cy + 20, radius: 8, isCenter: true });
   return elements;
 };
 
 // Abundance Flows To Me - 28 elements (4 words × 7 cycles)
-// Golden spirals converging like rivers of light - the universe pouring toward you
-// Nautilus mathematics: each particle closer than the last by phi ratio
+// FRUIT TREE - branches heavy with gifts, abundance hanging ripe
 const generateSpiralGalaxy = (cx, cy) => {
   const elements = [];
-  const phi = 1.618;
 
-  // Four golden spiral arms flowing inward (5 particles each = 20)
-  for (let arm = 0; arm < 4; arm++) {
-    const baseAngle = (arm / 4) * Math.PI * 2 - Math.PI / 2;
-    for (let i = 0; i < 5; i++) {
-      // Golden spiral: r = a * phi^(theta/90°)
-      const t = i / 4;
-      const spiralAngle = baseAngle + t * Math.PI * 0.6;
-      const r = 130 * Math.pow(1 / phi, t * 2);
-      const size = 2 + t * 3; // Growing as it approaches
-      elements.push({ type: 'dot', x: cx + Math.cos(spiralAngle) * r, y: cy + Math.sin(spiralAngle) * r, radius: size });
-    }
-  }
+  // Tree trunk - strong and rooted (2 lines)
+  elements.push({ type: 'line', x1: cx - 8, y1: cy + 80, x2: cx - 5, y2: cy + 20 });
+  elements.push({ type: 'line', x1: cx + 8, y1: cy + 80, x2: cx + 5, y2: cy + 20 });
 
-  // Gathering pools - where abundance collects (4 circles)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 130 }); // Source field
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 80 });  // Gathering
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 50 });  // Pooling
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 28 });  // Receiving
+  // Main branches spreading outward (6 branches)
+  elements.push({ type: 'branch', x1: cx, y1: cy + 20, angle: -Math.PI/2 - 0.8, length: 55, curve: -0.3, thickness: 2 });
+  elements.push({ type: 'branch', x1: cx, y1: cy + 20, angle: -Math.PI/2 + 0.8, length: 55, curve: 0.3, thickness: 2 });
+  elements.push({ type: 'branch', x1: cx, y1: cy, angle: -Math.PI/2 - 0.4, length: 70, curve: -0.2, thickness: 2 });
+  elements.push({ type: 'branch', x1: cx, y1: cy, angle: -Math.PI/2 + 0.4, length: 70, curve: 0.2, thickness: 2 });
+  elements.push({ type: 'branch', x1: cx, y1: cy - 15, angle: -Math.PI/2 - 0.15, length: 50, curve: -0.1, thickness: 1.5 });
+  elements.push({ type: 'branch', x1: cx, y1: cy - 15, angle: -Math.PI/2 + 0.15, length: 50, curve: 0.1, thickness: 1.5 });
 
-  // Inner chalice - where gifts are held (3 dots)
-  for (let i = 0; i < 3; i++) {
-    const angle = (i / 3) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 14, y: cy + Math.sin(angle) * 14, radius: 3.5 });
-  }
+  // Fruits hanging from branches - 12 abundant circles
+  const fruitPos = [
+    {x: -70, y: -40}, {x: -55, y: -65}, {x: -35, y: -50}, {x: -45, y: -85},
+    {x: 70, y: -40}, {x: 55, y: -70}, {x: 35, y: -55}, {x: 50, y: -90},
+    {x: -15, y: -75}, {x: 15, y: -80}, {x: 0, y: -95}, {x: -25, y: -100}
+  ];
+  fruitPos.forEach(pos => {
+    elements.push({ type: 'circle', x: cx + pos.x, y: cy + pos.y, radius: 10 });
+  });
 
-  // The self receiving - center of abundance
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 8, isCenter: true });
+  // Leaves among the fruit - 6 small petals
+  elements.push({ type: 'petal', cx: cx - 60, cy: cy - 55, angle: Math.PI * 0.3, innerRadius: 0, outerRadius: 12, width: 0.4 });
+  elements.push({ type: 'petal', cx: cx + 65, cy: cy - 55, angle: Math.PI * 0.7, innerRadius: 0, outerRadius: 12, width: 0.4 });
+  elements.push({ type: 'petal', cx: cx - 30, cy: cy - 90, angle: Math.PI * 0.4, innerRadius: 0, outerRadius: 10, width: 0.4 });
+  elements.push({ type: 'petal', cx: cx + 30, cy: cy - 95, angle: Math.PI * 0.6, innerRadius: 0, outerRadius: 10, width: 0.4 });
+  elements.push({ type: 'petal', cx: cx, cy: cy - 110, angle: -Math.PI/2, innerRadius: 0, outerRadius: 8, width: 0.4 });
+  elements.push({ type: 'petal', cx: cx + 20, cy: cy - 105, angle: Math.PI * 0.55, innerRadius: 0, outerRadius: 9, width: 0.4 });
+
+  // Ground line
+  elements.push({ type: 'line', x1: cx - 50, y1: cy + 85, x2: cx + 50, y2: cy + 85 });
+
+  // The receiving self - root center
+  elements.push({ type: 'dot', x: cx, y: cy + 80, radius: 7, isCenter: true });
   return elements;
 };
 
 // I Am Worthy Of Love - 35 elements (5 words × 7 cycles)
-// A heart-lotus opening - the courage to believe you deserve tenderness
-// Each petal unfurls the truth: you are worthy simply because you exist
+// BLOOMING ROSE - spiral petals unfurling, the courage to open
 const generateLotusBlossom = (cx, cy) => {
   const elements = [];
 
-  // The heart at center - two lobes meeting (5 elements)
-  elements.push({ type: 'circle', x: cx - 15, y: cy - 10, radius: 20 }); // Left lobe
-  elements.push({ type: 'circle', x: cx + 15, y: cy - 10, radius: 20 }); // Right lobe
-  elements.push({ type: 'line', x1: cx - 25, y1: cy, x2: cx, y2: cy + 35 }); // Left curve to point
-  elements.push({ type: 'line', x1: cx + 25, y1: cy, x2: cx, y2: cy + 35 }); // Right curve to point
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 25 }); // Heart field
+  // Rose center - tight spiral bud (golden spiral with 8 points)
+  for (let i = 0; i < 8; i++) {
+    const angle = i * 0.8 - Math.PI / 2;
+    const r = 5 + i * 3;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, radius: 2 + i * 0.3 });
+  }
 
-  // First ring of worthiness - 5 inner petals (one for each word)
+  // Inner petals - 5 tight curves (one for each word)
   for (let i = 0; i < 5; i++) {
     const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'petal', cx, cy, angle, innerRadius: 30, outerRadius: 55, width: 0.35 });
+    elements.push({ type: 'petal', cx, cy, angle, innerRadius: 15, outerRadius: 40, width: 0.5 });
   }
 
-  // Second ring - 8 petals opening wider
+  // Middle petals - 8 opening wider
   for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2 + Math.PI / 16;
-    elements.push({ type: 'petal', cx, cy, angle, innerRadius: 50, outerRadius: 90, width: 0.28 });
+    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2 + 0.2;
+    elements.push({ type: 'petal', cx, cy, angle, innerRadius: 35, outerRadius: 75, width: 0.4 });
   }
 
-  // Outer petals - 10 reaching into the world
-  for (let i = 0; i < 10; i++) {
-    const angle = (i / 10) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'petal', cx, cy, angle, innerRadius: 80, outerRadius: 130, width: 0.22 });
+  // Outer petals - 7 fully opened
+  for (let i = 0; i < 7; i++) {
+    const angle = (i / 7) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'petal', cx, cy, angle, innerRadius: 65, outerRadius: 115, width: 0.35 });
   }
 
-  // Love arriving - 6 particles descending toward the heart
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI - Math.PI / 2;
-    const r = 95 + Math.sin(i) * 10;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r * 0.5, y: cy - r, radius: 3 });
-  }
+  // Stem below - connection to earth (3 lines)
+  elements.push({ type: 'line', x1: cx, y1: cy + 50, x2: cx - 5, y2: cy + 100 });
+  elements.push({ type: 'line', x1: cx - 5, y1: cy + 100, x2: cx - 8, y2: cy + 140 });
+  elements.push({ type: 'branch', x1: cx - 5, y1: cy + 90, angle: Math.PI * 0.7, length: 25, curve: 0.3, thickness: 1 });
 
-  // The worthy self - center where love lands
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 7, isCenter: true });
+  // Two leaves on stem
+  elements.push({ type: 'petal', cx: cx - 25, cy: cy + 95, angle: Math.PI * 0.8, innerRadius: 0, outerRadius: 20, width: 0.5 });
+  elements.push({ type: 'petal', cx: cx + 15, cy: cy + 110, angle: Math.PI * 0.2, innerRadius: 0, outerRadius: 18, width: 0.5 });
+
+  // A thorn - vulnerability
+  elements.push({ type: 'dot', x: cx + 8, y: cy + 85, radius: 2 });
+
+  // The worthy heart - center of the rose
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
   return elements;
 };
 
 // Love Flows Through Me - 28 elements (4 words × 7 cycles)
-// Being a sacred channel - love enters from the infinite, passes through, blesses all
-// Like a river through a valley, like light through a prism
+// RIVER WITH FISH - flowing water, life swimming through
 const generateOceanWaves = (cx, cy) => {
   const elements = [];
 
-  // Love descending from above - 6 particles entering
-  for (let i = 0; i < 6; i++) {
-    const spread = (i - 2.5) * 15;
-    const y = cy - 110 + Math.abs(i - 2.5) * 12;
-    elements.push({ type: 'dot', x: cx + spread, y: y, radius: 3 });
-  }
+  // River banks - curved lines showing the channel (4 lines)
+  elements.push({ type: 'line', x1: cx - 80, y1: cy - 120, x2: cx - 50, y2: cy - 40 });
+  elements.push({ type: 'line', x1: cx - 50, y1: cy - 40, x2: cx - 70, y2: cy + 60 });
+  elements.push({ type: 'line', x1: cx + 60, y1: cy - 120, x2: cx + 35, y2: cy - 20 });
+  elements.push({ type: 'line', x1: cx + 35, y1: cy - 20, x2: cx + 55, y2: cy + 80 });
 
-  // The channel - the self as vessel (4 vertical flow lines)
-  elements.push({ type: 'line', x1: cx - 20, y1: cy - 80, x2: cx - 25, y2: cy + 80 });
-  elements.push({ type: 'line', x1: cx + 20, y1: cy - 80, x2: cx + 25, y2: cy + 80 });
-  elements.push({ type: 'line', x1: cx - 8, y1: cy - 60, x2: cx - 8, y2: cy + 60 });
-  elements.push({ type: 'line', x1: cx + 8, y1: cy - 60, x2: cx + 8, y2: cy + 60 });
+  // River current lines - flowing water (6 wavy suggestions)
+  elements.push({ type: 'line', x1: cx - 30, y1: cy - 90, x2: cx - 15, y2: cy - 50 });
+  elements.push({ type: 'line', x1: cx + 10, y1: cy - 100, x2: cx - 5, y2: cy - 30 });
+  elements.push({ type: 'line', x1: cx - 20, y1: cy - 20, x2: cx - 10, y2: cy + 30 });
+  elements.push({ type: 'line', x1: cx + 15, y1: cy - 10, x2: cx + 5, y2: cy + 50 });
+  elements.push({ type: 'line', x1: cx - 35, y1: cy + 40, x2: cx - 25, y2: cy + 90 });
+  elements.push({ type: 'line', x1: cx + 25, y1: cy + 60, x2: cx + 15, y2: cy + 110 });
 
-  // Heart center where love is felt (4 circles)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 35 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 25 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 16 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 8 });
+  // Fish swimming with the current - 6 fish (each = 2 elements: body + tail)
+  // Fish 1 - upper left
+  elements.push({ type: 'circle', x: cx - 25, y: cy - 70, radius: 8 });
+  elements.push({ type: 'petal', cx: cx - 35, cy: cy - 70, angle: Math.PI, innerRadius: 0, outerRadius: 10, width: 0.6 });
+  // Fish 2 - upper right
+  elements.push({ type: 'circle', x: cx + 20, y: cy - 55, radius: 7 });
+  elements.push({ type: 'petal', cx: cx + 30, cy: cy - 55, angle: Math.PI * 0.9, innerRadius: 0, outerRadius: 9, width: 0.6 });
+  // Fish 3 - middle
+  elements.push({ type: 'circle', x: cx - 10, y: cy + 10, radius: 9 });
+  elements.push({ type: 'petal', cx: cx - 22, cy: cy + 10, angle: Math.PI * 1.1, innerRadius: 0, outerRadius: 11, width: 0.6 });
+  // Fish 4 - lower left
+  elements.push({ type: 'circle', x: cx - 30, y: cy + 55, radius: 7 });
+  elements.push({ type: 'petal', cx: cx - 40, cy: cy + 55, angle: Math.PI, innerRadius: 0, outerRadius: 9, width: 0.6 });
+  // Fish 5 - lower right
+  elements.push({ type: 'circle', x: cx + 10, y: cy + 75, radius: 6 });
+  elements.push({ type: 'petal', cx: cx + 18, cy: cy + 75, angle: Math.PI * 0.85, innerRadius: 0, outerRadius: 8, width: 0.6 });
 
-  // Love radiating outward - 8 rays blessing the world
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2;
-    const inner = 40;
-    const outer = 90;
-    elements.push({ type: 'line', x1: cx + Math.cos(angle) * inner, y1: cy + Math.sin(angle) * inner, x2: cx + Math.cos(angle) * outer, y2: cy + Math.sin(angle) * outer });
-  }
+  // Bubbles rising - 3 dots
+  elements.push({ type: 'dot', x: cx + 25, y: cy - 80, radius: 3 });
+  elements.push({ type: 'dot', x: cx - 5, y: cy + 25, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx + 30, y: cy + 40, radius: 2 });
 
-  // Love continuing below - 5 particles flowing outward
-  for (let i = 0; i < 5; i++) {
-    const spread = (i - 2) * 20;
-    elements.push({ type: 'dot', x: cx + spread, y: cy + 100 + Math.abs(i - 2) * 8, radius: 2.5 });
-  }
-
-  // The heart of the channel
+  // The heart in the flow - center
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
   return elements;
 };
 
-// Tree of Life - 28 elements (4 words × 7 cycles)
 // I Am Here Now - 28 elements (4 words × 7 cycles)
-// Roots in earth, grounded presence - being fully where you are
+// ANCIENT OAK TREE - rooted presence, the eternal now embodied in living wood
+// As above, so below - branches mirror roots, heaven meets earth
 const generateTreeOfLife = (cx, cy) => {
   const elements = [];
 
-  // The present being - circles of presence
-  elements.push({ type: 'circle', x: cx, y: cy - 30, radius: 35 });
-  elements.push({ type: 'circle', x: cx, y: cy - 30, radius: 25 });
-  elements.push({ type: 'circle', x: cx, y: cy - 30, radius: 15 });
-  elements.push({ type: 'circle', x: cx, y: cy - 30, radius: 8 });
+  // Mighty trunk - solid presence (2 lines forming trunk edges)
+  elements.push({ type: 'line', x1: cx - 15, y1: cy + 70, x2: cx - 12, y2: cy - 10 });
+  elements.push({ type: 'line', x1: cx + 15, y1: cy + 70, x2: cx + 12, y2: cy - 10 });
 
-  // Roots reaching deep into earth - grounding connection
-  for (let i = 0; i < 8; i++) {
-    const spread = (i - 3.5) * 18;
-    const depth = 45 + Math.abs(i - 3.5) * 15;
-    const curve = (i - 3.5) * 0.15;
-    elements.push({ type: 'branch', x1: cx + spread * 0.3, y1: cy + 20, angle: Math.PI / 2 + curve, length: depth, curve: curve * 0.5, thickness: 2 - Math.abs(i - 3.5) * 0.2 });
-  }
+  // Crown branches spreading wide (6 branches reaching for sky)
+  elements.push({ type: 'branch', x1: cx, y1: cy - 10, angle: -Math.PI/2 - 0.7, length: 60, curve: -0.4, thickness: 2 });
+  elements.push({ type: 'branch', x1: cx, y1: cy - 10, angle: -Math.PI/2 + 0.7, length: 60, curve: 0.4, thickness: 2 });
+  elements.push({ type: 'branch', x1: cx - 8, y1: cy - 25, angle: -Math.PI/2 - 0.3, length: 50, curve: -0.2, thickness: 1.5 });
+  elements.push({ type: 'branch', x1: cx + 8, y1: cy - 25, angle: -Math.PI/2 + 0.3, length: 50, curve: 0.2, thickness: 1.5 });
+  elements.push({ type: 'branch', x1: cx, y1: cy - 35, angle: -Math.PI/2, length: 45, curve: 0, thickness: 1.5 });
+  elements.push({ type: 'branch', x1: cx - 35, y1: cy - 40, angle: -Math.PI/2 - 0.5, length: 30, curve: -0.3, thickness: 1 });
 
-  // Earth nodes - where roots meet the deep earth
-  for (let i = 0; i < 8; i++) {
-    const spread = (i - 3.5) * 18;
-    const depth = 65 + Math.abs(i - 3.5) * 15;
-    elements.push({ type: 'dot', x: cx + spread, y: cy + 20 + depth, radius: 3 });
-  }
+  // Foliage clusters - life at the crown (6 circles as leaf masses)
+  elements.push({ type: 'circle', x: cx - 55, y: cy - 65, radius: 22 });
+  elements.push({ type: 'circle', x: cx + 55, y: cy - 65, radius: 20 });
+  elements.push({ type: 'circle', x: cx - 25, y: cy - 80, radius: 18 });
+  elements.push({ type: 'circle', x: cx + 25, y: cy - 75, radius: 19 });
+  elements.push({ type: 'circle', x: cx, y: cy - 90, radius: 16 });
+  elements.push({ type: 'circle', x: cx - 45, y: cy - 45, radius: 15 });
 
-  // Earth layers - the stable ground beneath
-  elements.push({ type: 'line', x1: cx - 100, y1: cy + 10, x2: cx + 100, y2: cy + 10 });
-  elements.push({ type: 'line', x1: cx - 80, y1: cy + 100, x2: cx + 80, y2: cy + 100 });
-  elements.push({ type: 'line', x1: cx - 60, y1: cy + 130, x2: cx + 60, y2: cy + 130 });
+  // Earth line - the horizon, the NOW
+  elements.push({ type: 'line', x1: cx - 100, y1: cy + 70, x2: cx + 100, y2: cy + 70 });
 
-  // Grounding circles - energy flowing between
-  elements.push({ type: 'circle', x: cx, y: cy + 50, radius: 45 });
-  elements.push({ type: 'circle', x: cx, y: cy + 50, radius: 30 });
+  // Root system mirroring branches (6 roots reaching down)
+  elements.push({ type: 'branch', x1: cx, y1: cy + 70, angle: Math.PI/2 + 0.6, length: 50, curve: 0.3, thickness: 2 });
+  elements.push({ type: 'branch', x1: cx, y1: cy + 70, angle: Math.PI/2 - 0.6, length: 50, curve: -0.3, thickness: 2 });
+  elements.push({ type: 'branch', x1: cx - 10, y1: cy + 80, angle: Math.PI/2 + 0.25, length: 40, curve: 0.2, thickness: 1.5 });
+  elements.push({ type: 'branch', x1: cx + 10, y1: cy + 80, angle: Math.PI/2 - 0.25, length: 40, curve: -0.2, thickness: 1.5 });
+  elements.push({ type: 'branch', x1: cx, y1: cy + 85, angle: Math.PI/2, length: 35, curve: 0, thickness: 1 });
+  elements.push({ type: 'branch', x1: cx + 30, y1: cy + 90, angle: Math.PI/2 - 0.4, length: 25, curve: -0.2, thickness: 1 });
 
-  // Present moment markers - the now
-  elements.push({ type: 'dot', x: cx - 50, y: cy - 30, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 50, y: cy - 30, radius: 3 });
+  // Root nodes - where roots anchor deep (4 dots)
+  elements.push({ type: 'dot', x: cx - 40, y: cy + 115, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 40, y: cy + 115, radius: 3 });
+  elements.push({ type: 'dot', x: cx, y: cy + 120, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx + 55, y: cy + 105, radius: 2 });
 
-  // The center of presence - I am here
-  elements.push({ type: 'dot', x: cx, y: cy - 30, radius: 6, isCenter: true });
+  // The heart of the oak - where I AM HERE NOW
+  elements.push({ type: 'dot', x: cx, y: cy + 30, radius: 7, isCenter: true });
   return elements;
 };
 
 // This Moment Is Enough - 28 elements (4 words × 7 cycles)
-// The infinite sufficiency of now - time stopped, breath held at fullness
-// Like a dewdrop containing the entire sky, complete in itself
+// FULL MOON OVER STILL WATER - perfect completeness reflected
+// Nothing to add, nothing to take away - the moment complete unto itself
 const generateCosmicEye = (cx, cy) => {
   const elements = [];
 
-  // The vessel of now - a perfect sphere holding everything (4 circles)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 110 }); // Outer boundary of moment
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 85 });  // First layer of sufficiency
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 60 });  // Deepening presence
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 38 });  // Inner fullness
+  // The full moon - luminous and complete (1 large circle)
+  elements.push({ type: 'circle', x: cx, y: cy - 50, radius: 55 });
 
-  // The horizon line - where past meets future in the now
-  elements.push({ type: 'line', x1: cx - 100, y1: cy, x2: cx - 45, y2: cy });
-  elements.push({ type: 'line', x1: cx + 45, y1: cy, x2: cx + 100, y2: cy });
+  // Moon's inner glow rings (2 circles)
+  elements.push({ type: 'circle', x: cx, y: cy - 50, radius: 40 });
+  elements.push({ type: 'circle', x: cx, y: cy - 50, radius: 25 });
 
-  // What the moment contains - 8 scattered blessings (fibonacci placed)
-  const fibR = [25, 40, 52, 67, 78, 88, 96, 102];
-  for (let i = 0; i < 8; i++) {
-    const angle = i * 1.618 - Math.PI / 2; // Golden angle placement
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * fibR[i] * 0.8, y: cy + Math.sin(angle) * fibR[i] * 0.8, radius: 3 });
-  }
+  // Craters on moon surface - imperfection is perfection (4 small circles)
+  elements.push({ type: 'circle', x: cx - 20, y: cy - 60, radius: 8 });
+  elements.push({ type: 'circle', x: cx + 15, y: cy - 35, radius: 6 });
+  elements.push({ type: 'circle', x: cx + 25, y: cy - 65, radius: 5 });
+  elements.push({ type: 'circle', x: cx - 10, y: cy - 40, radius: 4 });
 
-  // Inner radiance of sufficiency - 8 rays from center
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2;
-    elements.push({ type: 'line', x1: cx + Math.cos(angle) * 18, y1: cy + Math.sin(angle) * 18, x2: cx + Math.cos(angle) * 32, y2: cy + Math.sin(angle) * 32 });
-  }
+  // Stars scattered in night sky (6 dots)
+  elements.push({ type: 'dot', x: cx - 90, y: cy - 100, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 85, y: cy - 90, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx - 70, y: cy - 50, radius: 1.5 });
+  elements.push({ type: 'dot', x: cx + 100, y: cy - 60, radius: 2 });
+  elements.push({ type: 'dot', x: cx - 110, y: cy - 75, radius: 1.5 });
+  elements.push({ type: 'dot', x: cx + 60, y: cy - 110, radius: 2 });
 
-  // Core circles of presence
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 18 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 10 });
+  // Water's edge - the horizon of stillness
+  elements.push({ type: 'line', x1: cx - 120, y1: cy + 25, x2: cx + 120, y2: cy + 25 });
 
-  // Inner fullness dots - trinity of presence
-  elements.push({ type: 'dot', x: cx - 6, y: cy - 3, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx + 6, y: cy - 3, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx, y: cy + 6, radius: 2.5 });
+  // Moon's reflection in water - shimmering, broken (4 horizontal lines)
+  elements.push({ type: 'line', x1: cx - 35, y1: cy + 45, x2: cx + 35, y2: cy + 45 });
+  elements.push({ type: 'line', x1: cx - 25, y1: cy + 65, x2: cx + 25, y2: cy + 65 });
+  elements.push({ type: 'line', x1: cx - 40, y1: cy + 85, x2: cx + 40, y2: cy + 85 });
+  elements.push({ type: 'line', x1: cx - 20, y1: cy + 105, x2: cx + 20, y2: cy + 105 });
 
-  // The moment itself - enough
+  // Ripple circles on water from reflection (3 elliptical suggestions)
+  elements.push({ type: 'circle', x: cx, y: cy + 70, radius: 50 });
+  elements.push({ type: 'circle', x: cx, y: cy + 70, radius: 35 });
+  elements.push({ type: 'circle', x: cx, y: cy + 70, radius: 20 });
+
+  // The moon's heart - luminous center
+  elements.push({ type: 'dot', x: cx, y: cy - 50, radius: 8, isCenter: true });
+  return elements;
+};
+
+// Peace Begins Within - 21 elements (3 words × 7 cycles)
+// SLEEPING SWAN - head tucked in feathers, floating on still water
+// The embodiment of grace at rest, peace made visible
+const generateMandalaStar = (cx, cy) => {
+  const elements = [];
+
+  // Swan's body - graceful oval (1 large circle)
+  elements.push({ type: 'circle', x: cx + 10, y: cy, radius: 45 });
+
+  // Swan's elegant neck curving back (3 lines forming S-curve)
+  elements.push({ type: 'line', x1: cx - 30, y1: cy - 5, x2: cx - 50, y2: cy - 35 });
+  elements.push({ type: 'line', x1: cx - 50, y1: cy - 35, x2: cx - 35, y2: cy - 55 });
+  elements.push({ type: 'line', x1: cx - 35, y1: cy - 55, x2: cx - 10, y2: cy - 45 });
+
+  // Swan's head tucked into feathers (small circle)
+  elements.push({ type: 'circle', x: cx - 15, y: cy - 40, radius: 12 });
+
+  // Beak - resting (1 small line)
+  elements.push({ type: 'line', x1: cx - 25, y1: cy - 42, x2: cx - 35, y2: cy - 45 });
+
+  // Wing folded on back - feather layers (3 petal shapes)
+  elements.push({ type: 'petal', cx: cx + 25, cy: cy - 15, angle: -Math.PI * 0.15, innerRadius: 0, outerRadius: 30, width: 0.5 });
+  elements.push({ type: 'petal', cx: cx + 30, cy: cy - 10, angle: -Math.PI * 0.1, innerRadius: 0, outerRadius: 35, width: 0.4 });
+  elements.push({ type: 'petal', cx: cx + 35, cy: cy - 5, angle: 0, innerRadius: 0, outerRadius: 32, width: 0.45 });
+
+  // Tail feathers - slight upturn (2 lines)
+  elements.push({ type: 'line', x1: cx + 55, y1: cy + 5, x2: cx + 75, y2: cy - 15 });
+  elements.push({ type: 'line', x1: cx + 55, y1: cy + 10, x2: cx + 70, y2: cy - 5 });
+
+  // Water line - perfectly still
+  elements.push({ type: 'line', x1: cx - 100, y1: cy + 45, x2: cx + 100, y2: cy + 45 });
+
+  // Reflection in water - soft mirror (3 lines suggesting reflection)
+  elements.push({ type: 'line', x1: cx - 20, y1: cy + 60, x2: cx + 40, y2: cy + 60 });
+  elements.push({ type: 'line', x1: cx - 10, y1: cy + 75, x2: cx + 30, y2: cy + 75 });
+  elements.push({ type: 'line', x1: cx, y1: cy + 88, x2: cx + 20, y2: cy + 88 });
+
+  // Gentle ripples around swan (2 small circles)
+  elements.push({ type: 'circle', x: cx, y: cy + 45, radius: 60 });
+  elements.push({ type: 'circle', x: cx, y: cy + 45, radius: 40 });
+
+  // The peaceful heart - within the swan
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
   return elements;
 };
 
-// Mandala Star - 21 elements (3 words × 7 cycles)
-// Peace Begins Within - 21 elements (3 words × 7 cycles)
-// The seed of stillness - all potential held in perfect dormancy
-const generateMandalaStar = (cx, cy) => {
-  const elements = [];
-  const phi = 1.618; // Golden ratio
-
-  // Outer seed shell - protective vessel (teardrop shape)
-  elements.push({ type: 'line', x1: cx, y1: cy - 100, x2: cx - 55, y2: cy + 20 }); // left contour
-  elements.push({ type: 'line', x1: cx, y1: cy - 100, x2: cx + 55, y2: cy + 20 }); // right contour
-  elements.push({ type: 'line', x1: cx - 55, y1: cy + 20, x2: cx, y2: cy + 70 }); // left base
-  elements.push({ type: 'line', x1: cx + 55, y1: cy + 20, x2: cx, y2: cy + 70 }); // right base
-
-  // Inner membrane - second layer of protection
-  elements.push({ type: 'line', x1: cx, y1: cy - 70, x2: cx - 35, y2: cy + 10 });
-  elements.push({ type: 'line', x1: cx, y1: cy - 70, x2: cx + 35, y2: cy + 10 });
-  elements.push({ type: 'line', x1: cx - 35, y1: cy + 10, x2: cx + 35, y2: cy + 10 });
-
-  // Embryonic spiral - life force curled in stillness (7 fibonacci positions)
-  for (let i = 0; i < 7; i++) {
-    const r = 6 + i * 5;
-    const angle = i * phi - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy - 10 + Math.sin(angle) * r * 0.7, radius: 2 + i * 0.3 });
-  }
-
-  // Stillness rings - concentric peace at the heart
-  elements.push({ type: 'circle', x: cx, y: cy - 10, radius: 45 });
-  elements.push({ type: 'circle', x: cx, y: cy - 10, radius: 32 });
-  elements.push({ type: 'circle', x: cx, y: cy - 10, radius: 20 });
-  elements.push({ type: 'circle', x: cx, y: cy - 10, radius: 10 });
-
-  // The trinity of peace - three points at the base
-  elements.push({ type: 'dot', x: cx - 25, y: cy + 40, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 25, y: cy + 40, radius: 3 });
-
-  // The seed of peace - the still point from which all grows
-  elements.push({ type: 'dot', x: cx, y: cy - 10, radius: 6, isCenter: true });
-  return elements;
-};
-
-// Sacred Spiral - 35 elements (5 words × 7 cycles)
 // I Am Calm And Centered - 35 elements (5 words × 7 cycles)
-// The still point at the heart of the turning world
-// Like a lake at dawn, perfectly reflecting, undisturbed
+// SACRED MOUNTAIN - immovable, eternal, touching the sky
+// The mountain does not strive - it simply IS, calm and centered
 const generateSacredSpiral = (cx, cy) => {
   const elements = [];
 
-  // Concentric rings of calm - 7 perfect circles (fibonacci spaced)
-  const calmRadii = [8, 18, 30, 48, 78, 110, 140];
-  calmRadii.forEach(r => {
-    elements.push({ type: 'circle', x: cx, y: cy, radius: r });
-  });
+  // Mountain peak silhouette - the great triangle (4 lines)
+  elements.push({ type: 'line', x1: cx - 120, y1: cy + 80, x2: cx - 30, y2: cy - 60 }); // left slope to sub-peak
+  elements.push({ type: 'line', x1: cx - 30, y1: cy - 60, x2: cx, y2: cy - 100 }); // to summit
+  elements.push({ type: 'line', x1: cx, y1: cy - 100, x2: cx + 25, y2: cy - 55 }); // summit to right ridge
+  elements.push({ type: 'line', x1: cx + 25, y1: cy - 55, x2: cx + 120, y2: cy + 80 }); // right slope down
 
-  // The four directions - anchoring the center (8 lines in cross pattern)
-  const directions = [0, Math.PI/4, Math.PI/2, Math.PI*3/4, Math.PI, Math.PI*5/4, Math.PI*3/2, Math.PI*7/4];
-  directions.forEach((angle, i) => {
-    const inner = 52;
-    const outer = i % 2 === 0 ? 105 : 85; // Cardinal directions longer
-    elements.push({ type: 'line', x1: cx + Math.cos(angle) * inner, y1: cy + Math.sin(angle) * inner, x2: cx + Math.cos(angle) * outer, y2: cy + Math.sin(angle) * outer });
-  });
+  // Snow cap on peak (3 lines suggesting snow line)
+  elements.push({ type: 'line', x1: cx - 40, y1: cy - 45, x2: cx - 15, y2: cy - 70 });
+  elements.push({ type: 'line', x1: cx - 15, y1: cy - 70, x2: cx + 12, y2: cy - 42 });
+  elements.push({ type: 'line', x1: cx - 25, y1: cy - 55, x2: cx + 18, y2: cy - 48 });
 
-  // Stillness markers - 12 dots in outer field (like hours on a clock)
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-    const r = 125 + (i % 2) * 10;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, radius: 2.5 });
-  }
+  // Distant mountain range behind (4 lines)
+  elements.push({ type: 'line', x1: cx - 130, y1: cy + 80, x2: cx - 100, y2: cy + 30 });
+  elements.push({ type: 'line', x1: cx - 100, y1: cy + 30, x2: cx - 70, y2: cy + 50 });
+  elements.push({ type: 'line', x1: cx + 80, y1: cy + 40, x2: cx + 105, y2: cy + 25 });
+  elements.push({ type: 'line', x1: cx + 105, y1: cy + 25, x2: cx + 130, y2: cy + 80 });
 
-  // Inner peace markers - 5 dots (one for each word)
-  for (let i = 0; i < 5; i++) {
-    const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 22, y: cy + Math.sin(angle) * 22, radius: 3 });
-  }
+  // Ground/horizon line
+  elements.push({ type: 'line', x1: cx - 130, y1: cy + 80, x2: cx + 130, y2: cy + 80 });
 
-  // The breath held - 2 dots flanking center
-  elements.push({ type: 'dot', x: cx - 6, y: cy, radius: 2 });
-  elements.push({ type: 'dot', x: cx + 6, y: cy, radius: 2 });
+  // Clouds drifting past (4 small circles)
+  elements.push({ type: 'circle', x: cx - 80, y: cy - 30, radius: 12 });
+  elements.push({ type: 'circle', x: cx - 65, y: cy - 25, radius: 10 });
+  elements.push({ type: 'circle', x: cx + 75, y: cy - 20, radius: 11 });
+  elements.push({ type: 'circle', x: cx + 90, y: cy - 15, radius: 9 });
 
-  // The center itself - perfectly still
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 7, isCenter: true });
+  // Pine trees at base (6 small triangular suggestions using lines)
+  elements.push({ type: 'line', x1: cx - 90, y1: cy + 80, x2: cx - 85, y2: cy + 55 });
+  elements.push({ type: 'line', x1: cx - 85, y1: cy + 55, x2: cx - 80, y2: cy + 80 });
+  elements.push({ type: 'line', x1: cx - 65, y1: cy + 80, x2: cx - 60, y2: cy + 50 });
+  elements.push({ type: 'line', x1: cx - 60, y1: cy + 50, x2: cx - 55, y2: cy + 80 });
+  elements.push({ type: 'line', x1: cx + 70, y1: cy + 80, x2: cx + 75, y2: cy + 52 });
+  elements.push({ type: 'line', x1: cx + 75, y1: cy + 52, x2: cx + 80, y2: cy + 80 });
+
+  // Stars appearing in clear sky (5 dots)
+  elements.push({ type: 'dot', x: cx - 100, y: cy - 80, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 95, y: cy - 85, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx - 50, y: cy - 110, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 40, y: cy - 105, radius: 1.5 });
+  elements.push({ type: 'dot', x: cx + 110, y: cy - 50, radius: 2 });
+
+  // Meditation stones at foreground (3 circles)
+  elements.push({ type: 'circle', x: cx - 20, y: cy + 95, radius: 8 });
+  elements.push({ type: 'circle', x: cx + 5, y: cy + 100, radius: 6 });
+  elements.push({ type: 'circle', x: cx + 25, y: cy + 97, radius: 7 });
+
+  // The mountain's heart - the centered self
+  elements.push({ type: 'dot', x: cx, y: cy - 100, radius: 7, isCenter: true });
   return elements;
 };
 
-// Loving Awareness - 28 elements (4 words × 7 cycles)
-// "I am loving awareness" - the witnessing heart, an eye made of love
-// Like Ram Dass's teaching: consciousness that watches with infinite tenderness
+// I Am Loving Awareness - 28 elements (4 words × 7 cycles)
+// THE EYE OF THE HEART - Ram Dass's teaching made visual
+// An eye that sees with love, where the pupil is a heart
 const generateInfinityLoop = (cx, cy) => {
   const elements = [];
-  // The iris of awareness - concentric rings like ripples of seeing
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 18 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 32 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 48 });
-  // Rays of loving attention - 12 rays like hours, like directions of compassion
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
-    const inner = 55;
-    const outer = 90 + Math.sin(i * Math.PI / 6) * 12; // gentle wave
-    elements.push({ type: 'line', x1: cx + Math.cos(angle) * inner, y1: cy + Math.sin(angle) * inner, x2: cx + Math.cos(angle) * outer, y2: cy + Math.sin(angle) * outer });
-  }
-  // Heart essence surrounding - upper lobes of heart suggested
-  elements.push({ type: 'circle', x: cx - 25, y: cy - 100, radius: 22 });
-  elements.push({ type: 'circle', x: cx + 25, y: cy - 100, radius: 22 });
-  // Heart's point
-  elements.push({ type: 'dot', x: cx, y: cy - 70, radius: 4 });
-  // The infinite field that holds all
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 110 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 125 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 140 });
-  // Inner light - the spark of pure awareness
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 10, y: cy + Math.sin(angle) * 10, radius: 2 });
-  }
+
+  // Eye shape - almond form (4 lines forming eye outline)
+  elements.push({ type: 'line', x1: cx - 100, y1: cy, x2: cx - 40, y2: cy - 45 }); // left upper lid
+  elements.push({ type: 'line', x1: cx - 40, y1: cy - 45, x2: cx + 40, y2: cy - 45 }); // top curve
+  elements.push({ type: 'line', x1: cx + 40, y1: cy - 45, x2: cx + 100, y2: cy }); // right upper lid
+  elements.push({ type: 'line', x1: cx + 100, y1: cy, x2: cx + 40, y2: cy + 40 }); // right lower lid
+  elements.push({ type: 'line', x1: cx + 40, y1: cy + 40, x2: cx - 40, y2: cy + 40 }); // bottom curve
+  elements.push({ type: 'line', x1: cx - 40, y1: cy + 40, x2: cx - 100, y2: cy }); // left lower lid
+
+  // Iris - the field of awareness (2 circles)
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 50 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 38 });
+
+  // The heart-pupil - love at the center of seeing (heart shape)
+  // Heart's two lobes (2 circles)
+  elements.push({ type: 'circle', x: cx - 10, y: cy - 8, radius: 14 });
+  elements.push({ type: 'circle', x: cx + 10, y: cy - 8, radius: 14 });
+  // Heart's point (2 lines meeting)
+  elements.push({ type: 'line', x1: cx - 20, y1: cy, x2: cx, y2: cy + 25 });
+  elements.push({ type: 'line', x1: cx + 20, y1: cy, x2: cx, y2: cy + 25 });
+
+  // Light reflection in the eye - awareness spark (2 dots)
+  elements.push({ type: 'dot', x: cx - 25, y: cy - 18, radius: 5 });
+  elements.push({ type: 'dot', x: cx - 18, y: cy - 12, radius: 3 });
+
+  // Eyelashes - tenderness reaching out (6 short lines)
+  elements.push({ type: 'line', x1: cx - 60, y1: cy - 35, x2: cx - 65, y2: cy - 55 });
+  elements.push({ type: 'line', x1: cx - 30, y1: cy - 42, x2: cx - 32, y2: cy - 60 });
+  elements.push({ type: 'line', x1: cx, y1: cy - 45, x2: cx, y2: cy - 65 });
+  elements.push({ type: 'line', x1: cx + 30, y1: cy - 42, x2: cx + 32, y2: cy - 60 });
+  elements.push({ type: 'line', x1: cx + 60, y1: cy - 35, x2: cx + 65, y2: cy - 55 });
+  elements.push({ type: 'line', x1: cx - 45, y1: cy - 40, x2: cx - 50, y2: cy - 58 });
+
+  // Radiance from the eye - love emanating (4 dots)
+  elements.push({ type: 'dot', x: cx - 80, y: cy - 60, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 80, y: cy - 60, radius: 2 });
+  elements.push({ type: 'dot', x: cx - 90, y: cy + 50, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 90, y: cy + 50, radius: 2 });
+
   // The center - where love and awareness are one
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 8, isCenter: true });
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
   return elements;
 };
 
-// Radiating Wholeness - 21 elements (3 words × 7 cycles)
-// "I am enough" - a warm core radiating completeness outward
 // I Am Enough - 21 elements (3 words × 7 cycles)
-// The most radical truth: you are complete, lacking nothing
-// A perfect sphere needs nothing added or removed
+// PEARL IN OPEN SHELL - already perfect, already complete
+// The pearl doesn't strive to become more pearlescent - it simply IS
 const generateNestedCircles = (cx, cy) => {
   const elements = [];
 
-  // The whole self - 7 concentric circles (completeness)
-  // Golden ratio spacing: each ring is phi times the previous
-  const phi = 1.618;
-  let r = 10;
-  for (let i = 0; i < 7; i++) {
-    elements.push({ type: 'circle', x: cx, y: cy, radius: r });
-    r = Math.min(r * phi * 0.72, 130);
-  }
+  // Open shell - left half (3 curved lines)
+  elements.push({ type: 'line', x1: cx - 100, y1: cy + 30, x2: cx - 70, y2: cy - 40 });
+  elements.push({ type: 'line', x1: cx - 70, y1: cy - 40, x2: cx - 20, y2: cy - 55 });
+  elements.push({ type: 'line', x1: cx - 100, y1: cy + 30, x2: cx - 30, y2: cy + 50 });
 
-  // The three words embodied - I, Am, Enough (3 sets of inner light)
-  // "I" - the individual spark
-  elements.push({ type: 'dot', x: cx, y: cy - 35, radius: 4 });
-  // "Am" - being itself
-  elements.push({ type: 'dot', x: cx - 30, y: cy + 18, radius: 4 });
-  elements.push({ type: 'dot', x: cx + 30, y: cy + 18, radius: 4 });
-  // "Enough" - completion radiating (6 dots)
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 75, y: cy + Math.sin(angle) * 75, radius: 3 });
-  }
+  // Open shell - right half (3 curved lines)
+  elements.push({ type: 'line', x1: cx + 100, y1: cy + 30, x2: cx + 70, y2: cy - 40 });
+  elements.push({ type: 'line', x1: cx + 70, y1: cy - 40, x2: cx + 20, y2: cy - 55 });
+  elements.push({ type: 'line', x1: cx + 100, y1: cy + 30, x2: cx + 30, y2: cy + 50 });
 
-  // Inner trinity of wholeness - surrounding the center
-  elements.push({ type: 'dot', x: cx - 6, y: cy + 4, radius: 2 });
-  elements.push({ type: 'dot', x: cx + 6, y: cy + 4, radius: 2 });
-  elements.push({ type: 'dot', x: cx, y: cy - 7, radius: 2 });
-  elements.push({ type: 'dot', x: cx, y: cy + 12, radius: 2 });
+  // Shell ridges - texture of life's journey (4 lines)
+  elements.push({ type: 'line', x1: cx - 85, y1: cy + 10, x2: cx - 50, y2: cy - 25 });
+  elements.push({ type: 'line', x1: cx - 75, y1: cy + 25, x2: cx - 40, y2: cy - 10 });
+  elements.push({ type: 'line', x1: cx + 85, y1: cy + 10, x2: cx + 50, y2: cy - 25 });
+  elements.push({ type: 'line', x1: cx + 75, y1: cy + 25, x2: cx + 40, y2: cy - 10 });
 
-  // The complete self - center
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 7, isCenter: true });
+  // The perfect pearl - nestled in center (3 concentric circles)
+  elements.push({ type: 'circle', x: cx, y: cy + 10, radius: 35 });
+  elements.push({ type: 'circle', x: cx, y: cy + 10, radius: 25 });
+  elements.push({ type: 'circle', x: cx, y: cy + 10, radius: 15 });
+
+  // Pearl's lustrous highlight (2 dots)
+  elements.push({ type: 'dot', x: cx - 12, y: cy, radius: 5 });
+  elements.push({ type: 'dot', x: cx - 6, y: cy + 3, radius: 3 });
+
+  // Shell bed/cushion beneath pearl (1 line)
+  elements.push({ type: 'line', x1: cx - 40, y1: cy + 50, x2: cx + 40, y2: cy + 50 });
+
+  // Tiny sand grains around shell (3 dots)
+  elements.push({ type: 'dot', x: cx - 80, y: cy + 60, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 75, y: cy + 65, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx + 90, y: cy + 55, radius: 2 });
+
+  // The pearl's heart - enough
+  elements.push({ type: 'dot', x: cx, y: cy + 10, radius: 6, isCenter: true });
   return elements;
 };
 
 // I Let Go With Grace - 35 elements (5 words × 7 cycles)
-// Autumn leaves releasing from a branch, spiraling down with beauty
-// The tree doesn't grieve what falls - it trusts the seasons
+// DANDELION RELEASING SEEDS - the most graceful letting go in nature
+// Each seed carries a wish, a blessing released to the wind
 const generateFallingLeaves = (cx, cy) => {
   const elements = [];
 
-  // The branch at top - what once held (3 lines)
-  elements.push({ type: 'line', x1: cx - 80, y1: cy - 90, x2: cx, y2: cy - 80 });
-  elements.push({ type: 'line', x1: cx, y1: cy - 80, x2: cx + 70, y2: cy - 95 });
-  elements.push({ type: 'line', x1: cx - 20, y1: cy - 82, x2: cx - 40, y2: cy - 70 });
+  // Dandelion stem - slender and tall (2 lines)
+  elements.push({ type: 'line', x1: cx, y1: cy + 110, x2: cx - 3, y2: cy + 30 });
+  elements.push({ type: 'line', x1: cx - 3, y1: cy + 30, x2: cx, y2: cy - 10 });
 
-  // Leaves at different stages of release (12 petals spiraling down)
-  // Still attached
-  elements.push({ type: 'petal', cx: cx - 50, cy: cy - 85, angle: Math.PI * 0.7, innerRadius: 0, outerRadius: 15, width: 0.5 });
-  elements.push({ type: 'petal', cx: cx + 40, cy: cy - 90, angle: Math.PI * 0.3, innerRadius: 0, outerRadius: 14, width: 0.5 });
-  // Just releasing
-  elements.push({ type: 'petal', cx: cx - 30, cy: cy - 55, angle: Math.PI * 0.5, innerRadius: 0, outerRadius: 13, width: 0.5 });
-  elements.push({ type: 'petal', cx: cx + 25, cy: cy - 45, angle: Math.PI * 0.8, innerRadius: 0, outerRadius: 12, width: 0.5 });
-  // Floating gracefully
-  elements.push({ type: 'petal', cx: cx - 55, cy: cy - 15, angle: Math.PI * 0.2, innerRadius: 0, outerRadius: 11, width: 0.5 });
-  elements.push({ type: 'petal', cx: cx + 50, cy: cy, angle: Math.PI * 0.6, innerRadius: 0, outerRadius: 11, width: 0.5 });
-  elements.push({ type: 'petal', cx: cx - 20, cy: cy + 25, angle: Math.PI * 0.4, innerRadius: 0, outerRadius: 10, width: 0.5 });
-  elements.push({ type: 'petal', cx: cx + 35, cy: cy + 40, angle: Math.PI * 0.9, innerRadius: 0, outerRadius: 10, width: 0.5 });
-  // Drifting lower
-  elements.push({ type: 'petal', cx: cx - 45, cy: cy + 65, angle: Math.PI * 0.1, innerRadius: 0, outerRadius: 9, width: 0.5 });
-  elements.push({ type: 'petal', cx: cx + 20, cy: cy + 75, angle: Math.PI * 0.7, innerRadius: 0, outerRadius: 9, width: 0.5 });
-  // Coming to rest
-  elements.push({ type: 'petal', cx: cx - 30, cy: cy + 100, angle: 0, innerRadius: 0, outerRadius: 8, width: 0.5 });
-  elements.push({ type: 'petal', cx: cx + 40, cy: cy + 105, angle: Math.PI, innerRadius: 0, outerRadius: 8, width: 0.5 });
+  // Seed head - the remaining fluff (1 circle)
+  elements.push({ type: 'circle', x: cx, y: cy - 10, radius: 25 });
 
-  // The spiral path of descent - 10 dots tracing the journey
-  for (let i = 0; i < 10; i++) {
-    const t = i / 9;
-    const x = cx + Math.sin(t * Math.PI * 2.5) * (40 - t * 20);
-    const y = cy - 70 + t * 180;
-    elements.push({ type: 'dot', x, y, radius: 2 });
+  // Seeds still attached - radiating from center (8 lines with dots)
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
+    const length = 18 + (i % 2) * 5;
+    elements.push({ type: 'line', x1: cx, y1: cy - 10, x2: cx + Math.cos(angle) * length, y2: cy - 10 + Math.sin(angle) * length });
   }
 
-  // Ground where leaves rest - 6 dots
-  for (let i = 0; i < 6; i++) {
-    const spread = (i - 2.5) * 25;
-    elements.push({ type: 'dot', x: cx + spread, y: cy + 120 + Math.abs(i - 2.5) * 3, radius: 2.5 });
-  }
+  // Seeds floating away - parachutes drifting (12 seed representations)
+  // Each seed = dot (seed) + tiny lines suggesting the fluff
+  const seedPositions = [
+    {x: -45, y: -50}, {x: -70, y: -30}, {x: -85, y: 10}, {x: -60, y: 40},
+    {x: 50, y: -60}, {x: 75, y: -25}, {x: 90, y: 15}, {x: 65, y: 50},
+    {x: -30, y: -80}, {x: 20, y: -90}, {x: -50, y: 70}, {x: 40, y: 80}
+  ];
+  seedPositions.forEach(pos => {
+    elements.push({ type: 'dot', x: cx + pos.x, y: cy + pos.y, radius: 3 });
+  });
 
-  // The grace in letting go - circles of peace
-  elements.push({ type: 'circle', x: cx, y: cy + 20, radius: 70 });
-  elements.push({ type: 'circle', x: cx, y: cy + 20, radius: 50 });
-  elements.push({ type: 'circle', x: cx, y: cy + 20, radius: 30 });
+  // Wispy trails suggesting seed movement (6 short lines)
+  elements.push({ type: 'line', x1: cx - 45, y1: cy - 50, x2: cx - 40, y2: cy - 45 });
+  elements.push({ type: 'line', x1: cx + 50, y1: cy - 60, x2: cx + 45, y2: cy - 55 });
+  elements.push({ type: 'line', x1: cx - 85, y1: cy + 10, x2: cx - 80, y2: cy + 15 });
+  elements.push({ type: 'line', x1: cx + 90, y1: cy + 15, x2: cx + 85, y2: cy + 20 });
+  elements.push({ type: 'line', x1: cx - 30, y1: cy - 80, x2: cx - 25, y2: cy - 75 });
+  elements.push({ type: 'line', x1: cx + 20, y1: cy - 90, x2: cx + 15, y2: cy - 85 });
 
-  // Center - the peaceful heart that releases
-  elements.push({ type: 'dot', x: cx, y: cy + 20, radius: 6, isCenter: true });
+  // Ground with grass (3 lines)
+  elements.push({ type: 'line', x1: cx - 80, y1: cy + 115, x2: cx + 80, y2: cy + 115 });
+  elements.push({ type: 'line', x1: cx - 20, y1: cy + 115, x2: cx - 25, y2: cy + 95 });
+  elements.push({ type: 'line', x1: cx + 25, y1: cy + 115, x2: cx + 30, y2: cy + 100 });
+
+  // Leaves at base of dandelion (2 petals)
+  elements.push({ type: 'petal', cx: cx - 15, cy: cy + 100, angle: Math.PI * 0.7, innerRadius: 0, outerRadius: 25, width: 0.4 });
+  elements.push({ type: 'petal', cx: cx + 15, cy: cy + 100, angle: Math.PI * 0.3, innerRadius: 0, outerRadius: 25, width: 0.4 });
+
+  // The releasing heart - center of the dandelion
+  elements.push({ type: 'dot', x: cx, y: cy - 10, radius: 6, isCenter: true });
   return elements;
 };
 
 // All Is Well - 21 elements (3 words × 7 cycles)
-// The universe breathing in perfect order - nothing out of place
-// A cosmos of stillness where every point is exactly where it belongs
+// CONSTELLATION - stars in their eternal dance, cosmic order
+// The universe arranged with perfect intention - every star in its place
 const generateRipplingWater = (cx, cy) => {
   const elements = [];
 
-  // The three words as cosmic truths
-  // "All" - the infinite field (3 expanding circles)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 130 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 100 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 70 });
+  // Main constellation stars - Big Dipper shape (7 bright stars as dots)
+  elements.push({ type: 'dot', x: cx - 70, y: cy - 40, radius: 5 }); // bowl corner 1
+  elements.push({ type: 'dot', x: cx - 40, y: cy - 60, radius: 6 }); // bowl corner 2
+  elements.push({ type: 'dot', x: cx + 10, y: cy - 50, radius: 5 }); // bowl corner 3
+  elements.push({ type: 'dot', x: cx - 20, y: cy - 20, radius: 5 }); // bowl corner 4
+  elements.push({ type: 'dot', x: cx + 40, y: cy - 30, radius: 4 }); // handle 1
+  elements.push({ type: 'dot', x: cx + 70, y: cy, radius: 5 }); // handle 2
+  elements.push({ type: 'dot', x: cx + 90, y: cy + 30, radius: 4 }); // handle end
 
-  // "Is" - the present moment bridge (3 elements)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 45 });
-  elements.push({ type: 'line', x1: cx - 35, y1: cy, x2: cx - 15, y2: cy });
-  elements.push({ type: 'line', x1: cx + 15, y1: cy, x2: cx + 35, y2: cy });
+  // Constellation lines connecting stars (6 lines)
+  elements.push({ type: 'line', x1: cx - 70, y1: cy - 40, x2: cx - 40, y2: cy - 60 });
+  elements.push({ type: 'line', x1: cx - 40, y1: cy - 60, x2: cx + 10, y2: cy - 50 });
+  elements.push({ type: 'line', x1: cx + 10, y1: cy - 50, x2: cx - 20, y2: cy - 20 });
+  elements.push({ type: 'line', x1: cx - 20, y1: cy - 20, x2: cx - 70, y2: cy - 40 });
+  elements.push({ type: 'line', x1: cx + 10, y1: cy - 50, x2: cx + 40, y2: cy - 30 });
+  elements.push({ type: 'line', x1: cx + 40, y1: cy - 30, x2: cx + 70, y2: cy });
 
-  // "Well" - the deep source (3 circles at core)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 25 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 15 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 8 });
+  // Background stars scattered (6 smaller dots)
+  elements.push({ type: 'dot', x: cx - 100, y: cy - 80, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 50, y: cy - 90, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx - 80, y: cy + 40, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 100, y: cy - 40, radius: 1.5 });
+  elements.push({ type: 'dot', x: cx - 30, y: cy + 70, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 30, y: cy + 80, radius: 2 });
 
-  // Points of rightness in the field - 8 markers that all is in order
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-    const r = 85 + (i % 2) * 25;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, radius: 3 });
-  }
-
-  // Inner peace markers - 3 dots
-  elements.push({ type: 'dot', x: cx, y: cy - 18, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx - 15, y: cy + 10, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx + 15, y: cy + 10, radius: 2.5 });
-
-  // The well of wellbeing - center
+  // The cosmic well at center - all is well
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
   return elements;
 };
 
-// Forgiveness Release - 28 elements
 // I Forgive and Release - 28 elements (4 words × 7 cycles)
-// Chains dissolving into light - bondage transforming to freedom
+// BIRD ESCAPING OPEN CAGE - freedom through forgiveness
+// The door is open - always was - now the bird knows it can fly
 const generateForgivenessRelease = (cx, cy) => {
   const elements = [];
 
-  // Chain links at bottom - the old bondage (interconnected circles)
-  for (let i = 0; i < 7; i++) {
-    const x = cx - 60 + i * 20;
-    elements.push({ type: 'circle', x: x, y: cy + 85, radius: 11 });
-  }
+  // Cage structure - vertical bars (4 lines)
+  elements.push({ type: 'line', x1: cx - 50, y1: cy + 60, x2: cx - 50, y2: cy - 40 });
+  elements.push({ type: 'line', x1: cx - 25, y1: cy + 60, x2: cx - 25, y2: cy - 40 });
+  elements.push({ type: 'line', x1: cx, y1: cy + 60, x2: cx, y2: cy - 40 });
+  elements.push({ type: 'line', x1: cx + 25, y1: cy + 60, x2: cx + 25, y2: cy - 40 });
 
-  // Chain breaking apart - links separating, rising
-  elements.push({ type: 'circle', x: cx - 50, y: cy + 45, radius: 10 });
-  elements.push({ type: 'circle', x: cx + 50, y: cy + 45, radius: 10 });
-  elements.push({ type: 'circle', x: cx - 30, y: cy + 20, radius: 8 });
-  elements.push({ type: 'circle', x: cx + 30, y: cy + 20, radius: 8 });
-  elements.push({ type: 'circle', x: cx, y: cy + 5, radius: 7 }); // center link transforming
+  // Cage top curve (2 lines)
+  elements.push({ type: 'line', x1: cx - 50, y1: cy - 40, x2: cx - 12, y2: cy - 60 });
+  elements.push({ type: 'line', x1: cx + 25, y1: cy - 40, x2: cx - 12, y2: cy - 60 });
 
-  // Particles of light ascending - chains becoming pure light (9 particles)
-  for (let i = 0; i < 9; i++) {
-    const spread = (i - 4) * 14;
-    const rise = 30 + Math.abs(i - 4) * 18;
-    elements.push({ type: 'dot', x: cx + spread, y: cy - rise, radius: 2.5 });
-  }
+  // Cage bottom (1 line)
+  elements.push({ type: 'line', x1: cx - 55, y1: cy + 60, x2: cx + 30, y2: cy + 60 });
 
-  // Liberation rings - expanding freedom
-  elements.push({ type: 'circle', x: cx, y: cy - 30, radius: 40 });
-  elements.push({ type: 'circle', x: cx, y: cy - 30, radius: 60 });
-  elements.push({ type: 'circle', x: cx, y: cy - 30, radius: 85 });
-  elements.push({ type: 'circle', x: cx, y: cy - 30, radius: 110 });
+  // Open door swung wide (2 lines forming open door)
+  elements.push({ type: 'line', x1: cx + 25, y1: cy - 40, x2: cx + 70, y2: cy - 25 });
+  elements.push({ type: 'line', x1: cx + 25, y1: cy + 20, x2: cx + 70, y2: cy + 5 });
 
-  // The last links dissolving into pure light
-  elements.push({ type: 'dot', x: cx - 15, y: cy - 30, radius: 4 });
-  elements.push({ type: 'dot', x: cx + 15, y: cy - 30, radius: 4 });
+  // The freed bird flying toward light (bird body + wings)
+  elements.push({ type: 'circle', x: cx + 85, y: cy - 60, radius: 10 }); // body
+  // Wings spread wide (4 lines as wing feathers)
+  elements.push({ type: 'line', x1: cx + 85, y1: cy - 60, x2: cx + 60, y2: cy - 85 });
+  elements.push({ type: 'line', x1: cx + 85, y1: cy - 60, x2: cx + 70, y2: cy - 90 });
+  elements.push({ type: 'line', x1: cx + 85, y1: cy - 60, x2: cx + 100, y2: cy - 85 });
+  elements.push({ type: 'line', x1: cx + 85, y1: cy - 60, x2: cx + 110, y2: cy - 80 });
+  // Tail feathers (1 petal)
+  elements.push({ type: 'petal', cx: cx + 75, cy: cy - 55, angle: Math.PI * 0.8, innerRadius: 0, outerRadius: 12, width: 0.4 });
 
-  // The freed heart - pure light at center
-  elements.push({ type: 'dot', x: cx, y: cy - 30, radius: 7, isCenter: true });
+  // Light rays calling the bird upward (4 lines)
+  elements.push({ type: 'line', x1: cx + 70, y1: cy - 110, x2: cx + 75, y2: cy - 90 });
+  elements.push({ type: 'line', x1: cx + 90, y1: cy - 115, x2: cx + 90, y2: cy - 95 });
+  elements.push({ type: 'line', x1: cx + 110, y1: cy - 105, x2: cx + 105, y2: cy - 88 });
+  elements.push({ type: 'line', x1: cx + 50, y1: cy - 100, x2: cx + 60, y2: cy - 85 });
+
+  // Empty perch inside cage (1 line)
+  elements.push({ type: 'line', x1: cx - 45, y1: cy + 30, x2: cx + 20, y2: cy + 30 });
+
+  // Scattered feathers left behind (3 small dots)
+  elements.push({ type: 'dot', x: cx - 30, y: cy + 45, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 10, y: cy + 40, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 55, y: cy - 30, radius: 2 });
+
+  // The freed spirit - center of the bird
+  elements.push({ type: 'dot', x: cx + 85, y: cy - 60, radius: 5, isCenter: true });
   return elements;
 };
 
 // I Accept Myself Completely - 28 elements (4 words × 7 cycles)
-// Arms wrapping around the self in tender embrace
-// The moment you stop fighting who you are and simply hold yourself
+// FIGURE TOUCHING MIRROR REFLECTION - meeting oneself with love
+// The moment you look in the mirror and say "I accept you"
 const generateSelfAcceptance = (cx, cy) => {
   const elements = [];
 
-  // The self being held - heart and soul (4 circles)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 35 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 25 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 16 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 8 });
+  // Mirror frame - ornate oval (4 curved lines)
+  elements.push({ type: 'line', x1: cx - 60, y1: cy - 80, x2: cx, y2: cy - 100 });
+  elements.push({ type: 'line', x1: cx, y1: cy - 100, x2: cx + 60, y2: cy - 80 });
+  elements.push({ type: 'line', x1: cx + 60, y1: cy - 80, x2: cx + 60, y2: cy + 70 });
+  elements.push({ type: 'line', x1: cx + 60, y1: cy + 70, x2: cx - 60, y2: cy + 70 });
+  elements.push({ type: 'line', x1: cx - 60, y1: cy + 70, x2: cx - 60, y2: cy - 80 });
 
-  // Left arm of embrace - 6 dots curving around
-  for (let i = 0; i < 6; i++) {
-    const t = i / 5;
-    const angle = Math.PI * 0.85 - t * Math.PI * 0.7;
-    const r = 50 + t * 40;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r * 0.8, radius: 4 - t * 0.5 });
-  }
+  // Figure standing before mirror - simplified human form
+  // Head (1 circle)
+  elements.push({ type: 'circle', x: cx, y: cy - 50, radius: 18 });
+  // Body (2 lines)
+  elements.push({ type: 'line', x1: cx, y1: cy - 32, x2: cx, y2: cy + 30 });
+  elements.push({ type: 'line', x1: cx - 20, y1: cy - 15, x2: cx + 20, y2: cy - 15 }); // shoulders
 
-  // Right arm of embrace - 6 dots curving around
-  for (let i = 0; i < 6; i++) {
-    const t = i / 5;
-    const angle = Math.PI * 0.15 + t * Math.PI * 0.7;
-    const r = 50 + t * 40;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r * 0.8, radius: 4 - t * 0.5 });
-  }
+  // Arms reaching toward mirror (2 lines)
+  elements.push({ type: 'line', x1: cx - 20, y1: cy - 15, x2: cx - 45, y2: cy - 30 });
+  elements.push({ type: 'line', x1: cx + 20, y1: cy - 15, x2: cx + 45, y2: cy - 30 });
 
-  // Hands meeting behind - completion of embrace (3 dots)
-  elements.push({ type: 'dot', x: cx - 12, y: cy + 70, radius: 4 });
-  elements.push({ type: 'dot', x: cx + 12, y: cy + 70, radius: 4 });
-  elements.push({ type: 'dot', x: cx, y: cy + 75, radius: 3 });
+  // Hands touching mirror surface (2 dots)
+  elements.push({ type: 'dot', x: cx - 50, y: cy - 35, radius: 5 });
+  elements.push({ type: 'dot', x: cx + 50, y: cy - 35, radius: 5 });
 
-  // Warmth radiating from the embrace (3 outer circles)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 60 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 95 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 130 });
+  // Legs (2 lines)
+  elements.push({ type: 'line', x1: cx, y1: cy + 30, x2: cx - 15, y2: cy + 65 });
+  elements.push({ type: 'line', x1: cx, y1: cy + 30, x2: cx + 15, y2: cy + 65 });
 
-  // Inner glow of self-love (5 dots - four words + one self)
-  elements.push({ type: 'dot', x: cx, y: cy - 22, radius: 3 });
-  elements.push({ type: 'dot', x: cx, y: cy + 22, radius: 3 });
-  elements.push({ type: 'dot', x: cx - 22, y: cy, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 22, y: cy, radius: 3 });
-  elements.push({ type: 'dot', x: cx, y: cy - 45, radius: 2.5 });
+  // Reflection in mirror - subtle mirror image suggested (5 dots forming face outline)
+  elements.push({ type: 'dot', x: cx, y: cy - 55, radius: 3 }); // reflection top
+  elements.push({ type: 'dot', x: cx - 10, y: cy - 48, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 10, y: cy - 48, radius: 2 });
+  elements.push({ type: 'dot', x: cx - 8, y: cy - 38, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 8, y: cy - 38, radius: 2 });
 
-  // The accepted self - center
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 7, isCenter: true });
+  // Heart glow between self and reflection (1 circle at heart level)
+  elements.push({ type: 'circle', x: cx, y: cy - 20, radius: 12 });
+
+  // Light emanating from the meeting (4 small dots)
+  elements.push({ type: 'dot', x: cx - 35, y: cy - 60, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 35, y: cy - 60, radius: 2 });
+  elements.push({ type: 'dot', x: cx - 40, y: cy, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 40, y: cy, radius: 2 });
+
+  // Ground line
+  elements.push({ type: 'line', x1: cx - 80, y1: cy + 70, x2: cx + 80, y2: cy + 70 });
+
+  // The accepted heart - where self meets reflection
+  elements.push({ type: 'dot', x: cx, y: cy - 20, radius: 5, isCenter: true });
   return elements;
 };
 
-// Open to Receive - 35 elements (5 words × 7 cycles)
-// "I am open to receive" - cupped hands open to the sky, light descending
 // I Am Open To Receive - 35 elements (5 words × 7 cycles)
-// A chalice formed by open hands, blessings pouring from the infinite
-// The courage of receptivity - allowing grace to find you
+// LOTUS OPENING TO SUNBEAM - receptivity as spiritual practice
+// The flower that opens only in the light, trusting it will come
 const generateOpenToReceive = (cx, cy) => {
   const elements = [];
 
-  // The chalice/vessel - cupped hands forming a sacred bowl (4 circles)
-  elements.push({ type: 'circle', x: cx, y: cy + 40, radius: 55 });
-  elements.push({ type: 'circle', x: cx, y: cy + 40, radius: 40 });
-  elements.push({ type: 'circle', x: cx, y: cy + 40, radius: 26 });
-  elements.push({ type: 'circle', x: cx, y: cy + 40, radius: 14 });
+  // Sunbeam descending from above (5 lines radiating down)
+  elements.push({ type: 'line', x1: cx, y1: cy - 120, x2: cx, y2: cy - 60 });
+  elements.push({ type: 'line', x1: cx - 25, y1: cy - 115, x2: cx - 10, y2: cy - 55 });
+  elements.push({ type: 'line', x1: cx + 25, y1: cy - 115, x2: cx + 10, y2: cy - 55 });
+  elements.push({ type: 'line', x1: cx - 45, y1: cy - 105, x2: cx - 20, y2: cy - 50 });
+  elements.push({ type: 'line', x1: cx + 45, y1: cy - 105, x2: cx + 20, y2: cy - 50 });
 
-  // Left hand curve - 5 dots
-  for (let i = 0; i < 5; i++) {
-    const t = i / 4;
-    const angle = Math.PI * 0.75 - t * Math.PI * 0.4;
-    elements.push({ type: 'dot', x: cx - 30 + Math.cos(angle) * 45, y: cy + 35 + Math.sin(angle) * 35, radius: 3.5 - t * 0.4 });
+  // Light particles descending (5 dots)
+  elements.push({ type: 'dot', x: cx, y: cy - 90, radius: 4 });
+  elements.push({ type: 'dot', x: cx - 15, y: cy - 80, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 15, y: cy - 75, radius: 3 });
+  elements.push({ type: 'dot', x: cx - 8, y: cy - 65, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx + 10, y: cy - 62, radius: 2.5 });
+
+  // Lotus petals opening upward (10 petals in layers)
+  // Inner petals - still partially closed
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2 - Math.PI / 2 + 0.4;
+    elements.push({ type: 'petal', cx, cy: cy + 20, angle, innerRadius: 8, outerRadius: 30, width: 0.4 });
+  }
+  // Outer petals - fully open
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'petal', cx, cy: cy + 20, angle, innerRadius: 25, outerRadius: 60, width: 0.35 });
   }
 
-  // Right hand curve - 5 dots
-  for (let i = 0; i < 5; i++) {
-    const t = i / 4;
-    const angle = Math.PI * 0.25 + t * Math.PI * 0.4;
-    elements.push({ type: 'dot', x: cx + 30 + Math.cos(angle) * 45, y: cy + 35 + Math.sin(angle) * 35, radius: 3.5 - t * 0.4 });
-  }
+  // Water surface the lotus floats on (3 lines)
+  elements.push({ type: 'line', x1: cx - 100, y1: cy + 70, x2: cx - 30, y2: cy + 70 });
+  elements.push({ type: 'line', x1: cx + 30, y1: cy + 70, x2: cx + 100, y2: cy + 70 });
+  elements.push({ type: 'line', x1: cx - 70, y1: cy + 85, x2: cx + 70, y2: cy + 85 });
 
-  // Blessings descending from above - 10 particles of grace
-  for (let i = 0; i < 10; i++) {
-    const spread = (i - 4.5) * 12;
-    const y = cy - 100 + Math.abs(i - 4.5) * 12 + (i % 3) * 15;
-    elements.push({ type: 'dot', x: cx + spread, y: y, radius: 3 - Math.abs(i - 4.5) * 0.2 });
-  }
+  // Lotus pad leaves (2 circles)
+  elements.push({ type: 'circle', x: cx - 65, y: cy + 60, radius: 25 });
+  elements.push({ type: 'circle', x: cx + 70, y: cy + 55, radius: 22 });
 
-  // Light rays descending - 5 lines
-  for (let i = 0; i < 5; i++) {
-    const spread = (i - 2) * 25;
-    elements.push({ type: 'line', x1: cx + spread, y1: cy - 85, x2: cx + spread * 0.4, y2: cy - 20 });
-  }
+  // Water ripples (2 lines)
+  elements.push({ type: 'line', x1: cx - 40, y1: cy + 75, x2: cx + 40, y2: cy + 75 });
+  elements.push({ type: 'line', x1: cx - 25, y1: cy + 80, x2: cx + 25, y2: cy + 80 });
 
-  // What has gathered in the vessel - 5 inner dots
-  for (let i = 0; i < 5; i++) {
-    const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 18, y: cy + 40 + Math.sin(angle) * 12, radius: 2.5 });
-  }
-
-  // The gift received - center
-  elements.push({ type: 'dot', x: cx, y: cy + 40, radius: 7, isCenter: true });
+  // The receptive heart of the lotus
+  elements.push({ type: 'dot', x: cx, y: cy + 20, radius: 7, isCenter: true });
   return elements;
 };
 
-// Release - 42 elements (6 words × 7 cycles)
 // I Release What No Longer Serves - 42 elements (6 words × 7 cycles)
-// An exhale made visible - heavy patterns dissolving outward into nothing
-// What was contracted expands, what was held disperses, what was dense becomes light
+// BUTTERFLY EMERGING FROM CHRYSALIS - transformation complete
+// The old form left behind, the new self taking flight
 const generateRelease = (cx, cy) => {
   const elements = [];
 
-  // The exhale - 12 rays of release expanding outward
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * Math.PI * 2;
-    const inner = 25;
-    const outer = 100 + Math.sin(i * 1.618) * 20; // Golden variation
-    elements.push({ type: 'line', x1: cx + Math.cos(angle) * inner, y1: cy + Math.sin(angle) * inner, x2: cx + Math.cos(angle) * outer, y2: cy + Math.sin(angle) * outer });
-  }
+  // Empty chrysalis hanging (shell left behind) - 4 lines
+  elements.push({ type: 'line', x1: cx - 70, y1: cy - 30, x2: cx - 65, y2: cy + 40 });
+  elements.push({ type: 'line', x1: cx - 50, y1: cy - 30, x2: cx - 55, y2: cy + 40 });
+  elements.push({ type: 'line', x1: cx - 70, y1: cy - 30, x2: cx - 50, y2: cy - 30 }); // top
+  elements.push({ type: 'line', x1: cx - 65, y1: cy + 40, x2: cx - 55, y2: cy + 40 }); // bottom split
 
-  // What is being released - 18 particles dissolving outward (6 words × 3 layers)
-  for (let ring = 0; ring < 3; ring++) {
-    const r = 45 + ring * 35;
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI * 2 + ring * 0.2;
-      const size = 4 - ring * 0.8;
-      elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, radius: size });
-    }
-  }
+  // Branch the chrysalis hangs from (2 lines)
+  elements.push({ type: 'line', x1: cx - 100, y1: cy - 50, x2: cx - 60, y2: cy - 35 });
+  elements.push({ type: 'line', x1: cx - 60, y1: cy - 35, x2: cx - 30, y2: cy - 45 });
 
-  // Expansion rings - the breath moving outward (5 circles)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 35 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 60 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 90 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 120 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 145 });
+  // THE BUTTERFLY - fully emerged and spreading wings
+  // Body (3 circles for head, thorax, abdomen)
+  elements.push({ type: 'circle', x: cx + 30, y: cy - 30, radius: 6 }); // head
+  elements.push({ type: 'circle', x: cx + 30, y: cy - 15, radius: 8 }); // thorax
+  elements.push({ type: 'circle', x: cx + 30, y: cy + 5, radius: 7 }); // abdomen
 
-  // Inner lightening - 6 dots becoming free
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 18, y: cy + Math.sin(angle) * 18, radius: 2.5 });
-  }
+  // Antennae (2 lines)
+  elements.push({ type: 'line', x1: cx + 27, y1: cy - 35, x2: cx + 15, y2: cy - 55 });
+  elements.push({ type: 'line', x1: cx + 33, y1: cy - 35, x2: cx + 45, y2: cy - 55 });
 
-  // The cleared center - what remains
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 7, isCenter: true });
+  // Left wings - upper and lower (4 petals)
+  elements.push({ type: 'petal', cx: cx + 30, cy: cy - 20, angle: Math.PI * 0.75, innerRadius: 10, outerRadius: 55, width: 0.5 });
+  elements.push({ type: 'petal', cx: cx + 30, cy: cy - 10, angle: Math.PI * 0.85, innerRadius: 8, outerRadius: 40, width: 0.45 });
+
+  // Right wings - upper and lower (4 petals)
+  elements.push({ type: 'petal', cx: cx + 30, cy: cy - 20, angle: Math.PI * 0.25, innerRadius: 10, outerRadius: 55, width: 0.5 });
+  elements.push({ type: 'petal', cx: cx + 30, cy: cy - 10, angle: Math.PI * 0.15, innerRadius: 8, outerRadius: 40, width: 0.45 });
+
+  // Wing patterns - spots on wings (8 dots)
+  elements.push({ type: 'dot', x: cx - 10, y: cy - 30, radius: 5 });
+  elements.push({ type: 'dot', x: cx + 70, y: cy - 30, radius: 5 });
+  elements.push({ type: 'dot', x: cx, y: cy - 15, radius: 4 });
+  elements.push({ type: 'dot', x: cx + 60, y: cy - 15, radius: 4 });
+  elements.push({ type: 'dot', x: cx - 5, y: cy + 5, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 65, y: cy + 5, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 10, y: cy - 40, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 50, y: cy - 40, radius: 3 });
+
+  // Motion lines - butterfly rising (4 lines)
+  elements.push({ type: 'line', x1: cx + 30, y1: cy + 30, x2: cx + 25, y2: cy + 50 });
+  elements.push({ type: 'line', x1: cx + 35, y1: cy + 35, x2: cx + 35, y2: cy + 55 });
+  elements.push({ type: 'line', x1: cx + 40, y1: cy + 30, x2: cx + 45, y2: cy + 50 });
+  elements.push({ type: 'line', x1: cx + 20, y1: cy + 25, x2: cx + 15, y2: cy + 45 });
+
+  // Remnants of chrysalis fluid (3 dots)
+  elements.push({ type: 'dot', x: cx - 60, y: cy + 55, radius: 2 });
+  elements.push({ type: 'dot', x: cx - 55, y: cy + 60, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx - 65, y: cy + 65, radius: 2 });
+
+  // Light calling the butterfly upward (3 dots)
+  elements.push({ type: 'dot', x: cx + 20, y: cy - 80, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 40, y: cy - 85, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx + 30, y: cy - 95, radius: 3 });
+
+  // The transformed self - center of the butterfly
+  elements.push({ type: 'dot', x: cx + 30, y: cy - 15, radius: 5, isCenter: true });
   return elements;
 };
 
 // I Am Connected To All - 35 elements (5 words × 7 cycles)
-// Mycelium network spreading in all directions - the hidden web beneath the forest
-// Every being linked through invisible threads of shared existence
+// SPIDER WEB WITH DEW DROPS - the sacred geometry of interconnection
+// Every strand touches every other - nothing exists in isolation
 const generateConnectedToAll = (cx, cy) => {
   const elements = [];
 
-  // Central self - the node of awareness (3 circles)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 22 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 14 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 7 });
-
-  // Mycelium threads spreading outward - 10 branch lines
-  for (let i = 0; i < 10; i++) {
-    const angle = (i / 10) * Math.PI * 2;
-    const wobble = Math.sin(i * 1.618) * 0.2;
-    elements.push({ type: 'branch', x1: cx, y1: cy, angle: angle + wobble, length: 60 + Math.sin(i) * 20, curve: wobble, thickness: 2 });
-  }
-
-  // Connection nodes - other beings in the network (8 outer nodes)
+  // Radial threads from center (8 main spokes)
   for (let i = 0; i < 8; i++) {
     const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-    const r = 90 + (i % 2) * 25;
-    elements.push({ type: 'circle', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, radius: 12 });
+    elements.push({ type: 'line', x1: cx, y1: cy, x2: cx + Math.cos(angle) * 110, y2: cy + Math.sin(angle) * 110 });
   }
 
-  // Secondary threads between nodes - 6 cross-connections
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2 + Math.PI / 6;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 55, y: cy + Math.sin(angle) * 55, radius: 3 });
-  }
+  // Spiral threads connecting the spokes (12 circular connection lines)
+  const spiralRadii = [25, 45, 65, 85, 105];
+  spiralRadii.forEach((r, idx) => {
+    // Create segments of the spiral
+    for (let i = 0; i < 8; i++) {
+      const angle1 = (i / 8) * Math.PI * 2 - Math.PI / 2;
+      const angle2 = ((i + 1) / 8) * Math.PI * 2 - Math.PI / 2;
+      // Slight wobble for organic feel
+      const wobble = Math.sin(i + idx) * 3;
+      elements.push({
+        type: 'line',
+        x1: cx + Math.cos(angle1) * (r + wobble),
+        y1: cy + Math.sin(angle1) * (r + wobble),
+        x2: cx + Math.cos(angle2) * (r - wobble),
+        y2: cy + Math.sin(angle2) * (r - wobble)
+      });
+    }
+  });
 
-  // The infinite field all are part of
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 130 });
+  // Morning dew drops on the web (8 dots at intersections)
+  const dewAngles = [0, Math.PI/4, Math.PI/2, Math.PI*3/4, Math.PI, Math.PI*5/4, Math.PI*3/2, Math.PI*7/4];
+  dewAngles.forEach((angle, i) => {
+    const r = 45 + (i % 3) * 30;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, radius: 3 + (i % 2) });
+  });
 
-  // Inner connection points - 6 nodes around center
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 30, y: cy + Math.sin(angle) * 30, radius: 2.5 });
-  }
+  // Branch corners where web attaches (2 lines suggesting branches)
+  elements.push({ type: 'line', x1: cx - 120, y1: cy - 100, x2: cx - 90, y2: cy - 75 });
+  elements.push({ type: 'line', x1: cx + 100, y1: cy + 90, x2: cx + 120, y2: cy + 110 });
 
-  // The self, connected - center
+  // The weaver at center - the connected self
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
   return elements;
 };
 
-// We Are One - 28 elements (4 words × 7 cycles)
 // We Are All One - 28 elements (4 words × 7 cycles)
-// Droplets merging into ocean - separation becoming unity
+// SCHOOL OF FISH - many moving as one, unity in motion
+// Individuals that together form a single living wave
 const generateWeAreOne = (cx, cy) => {
   const elements = [];
 
-  // Individual droplets at the edge - separate beings
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 120, y: cy + Math.sin(angle) * 120, radius: 6 });
-  }
+  // School of fish - each fish is circle (body) + petal (tail)
+  // Lead fish - larger, guiding the school
+  elements.push({ type: 'circle', x: cx + 60, y: cy - 20, radius: 12 });
+  elements.push({ type: 'petal', cx: cx + 45, cy: cy - 20, angle: Math.PI, innerRadius: 0, outerRadius: 14, width: 0.5 });
 
-  // Droplets converging - moving toward unity
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2 - Math.PI / 6;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 75, y: cy + Math.sin(angle) * 75, radius: 5 });
-  }
+  // Second row of fish
+  elements.push({ type: 'circle', x: cx + 30, y: cy - 45, radius: 10 });
+  elements.push({ type: 'petal', cx: cx + 18, cy: cy - 45, angle: Math.PI * 0.95, innerRadius: 0, outerRadius: 11, width: 0.5 });
+  elements.push({ type: 'circle', x: cx + 35, y: cy + 10, radius: 10 });
+  elements.push({ type: 'petal', cx: cx + 23, cy: cy + 10, angle: Math.PI * 1.05, innerRadius: 0, outerRadius: 11, width: 0.5 });
 
-  // Ripples where droplets meet - the moment of merging
-  for (let i = 0; i < 8; i++) {
-    const angle1 = (i / 8) * Math.PI * 2;
-    const angle2 = ((i + 1) / 8) * Math.PI * 2;
-    elements.push({ type: 'line', x1: cx + Math.cos(angle1) * 48, y1: cy + Math.sin(angle1) * 48, x2: cx + Math.cos(angle2) * 48, y2: cy + Math.sin(angle2) * 48 });
-  }
+  // Third row - the main body of the school
+  elements.push({ type: 'circle', x: cx, y: cy - 30, radius: 9 });
+  elements.push({ type: 'petal', cx: cx - 10, cy: cy - 30, angle: Math.PI, innerRadius: 0, outerRadius: 10, width: 0.5 });
+  elements.push({ type: 'circle', x: cx + 5, y: cy + 25, radius: 9 });
+  elements.push({ type: 'petal', cx: cx - 5, cy: cy + 25, angle: Math.PI * 1.05, innerRadius: 0, outerRadius: 10, width: 0.5 });
+  elements.push({ type: 'circle', x: cx - 5, y: cy, radius: 10 });
+  elements.push({ type: 'petal', cx: cx - 17, cy: cy, angle: Math.PI, innerRadius: 0, outerRadius: 11, width: 0.5 });
 
-  // The unified ocean - concentric waves of oneness
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 38 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 25 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 14 });
+  // Trailing fish - following the school
+  elements.push({ type: 'circle', x: cx - 35, y: cy - 15, radius: 8 });
+  elements.push({ type: 'petal', cx: cx - 45, cy: cy - 15, angle: Math.PI * 0.95, innerRadius: 0, outerRadius: 9, width: 0.5 });
+  elements.push({ type: 'circle', x: cx - 40, y: cy + 20, radius: 8 });
+  elements.push({ type: 'petal', cx: cx - 50, cy: cy + 20, angle: Math.PI * 1.05, innerRadius: 0, outerRadius: 9, width: 0.5 });
+  elements.push({ type: 'circle', x: cx - 30, y: cy + 45, radius: 7 });
+  elements.push({ type: 'petal', cx: cx - 39, cy: cy + 45, angle: Math.PI, innerRadius: 0, outerRadius: 8, width: 0.5 });
 
-  // Final droplets becoming one
-  elements.push({ type: 'dot', x: cx - 6, y: cy, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 6, y: cy, radius: 3 });
+  // Water current lines showing movement (4 lines)
+  elements.push({ type: 'line', x1: cx + 80, y1: cy - 10, x2: cx + 95, y2: cy - 15 });
+  elements.push({ type: 'line', x1: cx + 75, y1: cy + 5, x2: cx + 90, y2: cy });
+  elements.push({ type: 'line', x1: cx - 60, y1: cy - 5, x2: cx - 80, y2: cy - 10 });
+  elements.push({ type: 'line', x1: cx - 55, y1: cy + 35, x2: cx - 75, y2: cy + 30 });
 
-  // The one - where all merge
+  // Bubbles rising (3 dots)
+  elements.push({ type: 'dot', x: cx + 70, y: cy - 50, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 50, y: cy - 60, radius: 2 });
+  elements.push({ type: 'dot', x: cx - 20, y: cy - 55, radius: 2.5 });
+
+  // The unified center - the school as ONE
   elements.push({ type: 'dot', x: cx, y: cy, radius: 5, isCenter: true });
   return elements;
 };
 
-// Safe Right Now - 35 elements (5 words × 7 cycles)
 // I Am Safe Right Now - 35 elements (5 words × 7 cycles)
-// A protective dome of light surrounding the self
-// The recognition that in this very moment, you are held
+// BIRD'S NEST WITH EGGS - the sanctuary that already holds you
+// Woven with care, cradling precious life, safe in the tree's arms
 const generateSafeRightNow = (cx, cy) => {
   const elements = [];
 
-  // Protective dome above - curved shelter (8 lines forming arch)
-  for (let i = 0; i < 8; i++) {
-    const t = i / 7;
-    const angle = Math.PI * 0.1 + t * Math.PI * 0.8;
-    const r = 100;
-    const nextT = (i + 1) / 7;
-    const nextAngle = Math.PI * 0.1 + nextT * Math.PI * 0.8;
-    elements.push({ type: 'line', x1: cx + Math.cos(angle) * r, y1: cy - Math.sin(angle) * r * 0.8, x2: cx + Math.cos(nextAngle) * r, y2: cy - Math.sin(nextAngle) * r * 0.8 });
-  }
+  // Nest bowl - woven texture (8 curved lines forming nest shape)
+  elements.push({ type: 'line', x1: cx - 70, y1: cy, x2: cx - 55, y2: cy + 35 });
+  elements.push({ type: 'line', x1: cx - 55, y1: cy + 35, x2: cx - 25, y2: cy + 50 });
+  elements.push({ type: 'line', x1: cx - 25, y1: cy + 50, x2: cx + 25, y2: cy + 50 });
+  elements.push({ type: 'line', x1: cx + 25, y1: cy + 50, x2: cx + 55, y2: cy + 35 });
+  elements.push({ type: 'line', x1: cx + 55, y1: cy + 35, x2: cx + 70, y2: cy });
+  elements.push({ type: 'line', x1: cx + 70, y1: cy, x2: cx + 60, y2: cy - 15 });
+  elements.push({ type: 'line', x1: cx - 70, y1: cy, x2: cx - 60, y2: cy - 15 });
+  elements.push({ type: 'line', x1: cx - 60, y1: cy - 15, x2: cx + 60, y2: cy - 15 }); // rim
 
-  // Ground beneath - stable earth (3 lines)
-  elements.push({ type: 'line', x1: cx - 95, y1: cy + 50, x2: cx - 30, y2: cy + 45 });
-  elements.push({ type: 'line', x1: cx - 30, y1: cy + 45, x2: cx + 30, y2: cy + 45 });
-  elements.push({ type: 'line', x1: cx + 30, y1: cy + 45, x2: cx + 95, y2: cy + 50 });
+  // Woven texture inside nest (4 curved lines)
+  elements.push({ type: 'line', x1: cx - 50, y1: cy + 10, x2: cx, y2: cy + 35 });
+  elements.push({ type: 'line', x1: cx, y1: cy + 35, x2: cx + 50, y2: cy + 10 });
+  elements.push({ type: 'line', x1: cx - 40, y1: cy + 25, x2: cx + 40, y2: cy + 25 });
+  elements.push({ type: 'line', x1: cx - 30, y1: cy + 40, x2: cx + 30, y2: cy + 40 });
 
-  // Protective circles around the self (6 nested circles)
-  const safeRadii = [55, 45, 36, 28, 20, 12];
-  safeRadii.forEach(r => {
-    elements.push({ type: 'circle', x: cx, y: cy, radius: r });
-  });
+  // Three precious eggs nestled safely (3 circles)
+  elements.push({ type: 'circle', x: cx - 22, y: cy + 15, radius: 16 });
+  elements.push({ type: 'circle', x: cx + 22, y: cy + 15, radius: 16 });
+  elements.push({ type: 'circle', x: cx, y: cy + 8, radius: 17 });
 
-  // Guardian points at the perimeter - 8 protective markers
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 75, y: cy + Math.sin(angle) * 60, radius: 3 });
-  }
+  // Branch the nest sits on (3 lines)
+  elements.push({ type: 'line', x1: cx - 100, y1: cy + 55, x2: cx - 50, y2: cy + 48 });
+  elements.push({ type: 'line', x1: cx + 50, y1: cy + 48, x2: cx + 100, y2: cy + 60 });
+  elements.push({ type: 'line', x1: cx - 85, y1: cy + 50, x2: cx - 75, y2: cy + 70 }); // small branch
 
-  // Inner warmth markers - 5 dots (one for each word)
-  for (let i = 0; i < 5; i++) {
-    const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 25, y: cy + Math.sin(angle) * 25, radius: 2.5 });
-  }
+  // Leaves around the nest (4 petals)
+  elements.push({ type: 'petal', cx: cx - 85, cy: cy - 10, angle: Math.PI * 0.6, innerRadius: 0, outerRadius: 18, width: 0.4 });
+  elements.push({ type: 'petal', cx: cx + 80, cy: cy - 5, angle: Math.PI * 0.4, innerRadius: 0, outerRadius: 16, width: 0.4 });
+  elements.push({ type: 'petal', cx: cx - 75, cy: cy + 20, angle: Math.PI * 0.7, innerRadius: 0, outerRadius: 14, width: 0.4 });
+  elements.push({ type: 'petal', cx: cx + 75, cy: cy + 25, angle: Math.PI * 0.3, innerRadius: 0, outerRadius: 14, width: 0.4 });
 
-  // The corner anchors - 4 grounding dots
-  elements.push({ type: 'dot', x: cx - 85, y: cy + 35, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 85, y: cy + 35, radius: 3 });
-  elements.push({ type: 'dot', x: cx - 60, y: cy - 55, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx + 60, y: cy - 55, radius: 2.5 });
+  // Soft feathers lining the nest (3 small dots)
+  elements.push({ type: 'dot', x: cx - 35, y: cy + 30, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 35, y: cy + 30, radius: 3 });
+  elements.push({ type: 'dot', x: cx, y: cy + 38, radius: 2.5 });
 
-  // The safe self - center
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
+  // Warmth emanating (2 small dots)
+  elements.push({ type: 'dot', x: cx - 10, y: cy - 5, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 10, y: cy - 5, radius: 2 });
+
+  // The safe center - heart of the nest
+  elements.push({ type: 'dot', x: cx, y: cy + 15, radius: 5, isCenter: true });
   return elements;
 };
 
-// Trust the Process - 28 elements
 // I Trust the Process - 28 elements (4 words × 7 cycles)
-// Seed becoming flower - trusting the transformation
+// ACORN TO OAK - the entire journey shown in spiral growth
+// Every mighty oak was once an acorn that held its ground
 const generateTrustProcess = (cx, cy) => {
   const elements = [];
 
-  // The seed at bottom - potential held in darkness
-  elements.push({ type: 'circle', x: cx, y: cy + 90, radius: 18 });
-  elements.push({ type: 'circle', x: cx, y: cy + 90, radius: 12 });
-  elements.push({ type: 'circle', x: cx, y: cy + 90, radius: 6 });
+  // The acorn at beginning (left side) - small but complete
+  elements.push({ type: 'circle', x: cx - 90, y: cy + 50, radius: 12 }); // acorn body
+  elements.push({ type: 'circle', x: cx - 90, y: cy + 38, radius: 8 }); // acorn cap
+  elements.push({ type: 'line', x1: cx - 90, y1: cy + 30, x2: cx - 90, y2: cy + 20 }); // stem
 
-  // Roots reaching into earth - grounding, nourishment
-  for (let i = 0; i < 5; i++) {
-    const spread = (i - 2) * 12;
-    const depth = 20 + Math.abs(i - 2) * 8;
-    elements.push({ type: 'line', x1: cx + spread * 0.5, y1: cy + 100, x2: cx + spread, y2: cy + 100 + depth });
-  }
+  // Sprouting stage (2 elements)
+  elements.push({ type: 'line', x1: cx - 60, y1: cy + 55, x2: cx - 55, y2: cy + 35 }); // tiny stem
+  elements.push({ type: 'petal', cx: cx - 52, cy: cy + 30, angle: -Math.PI * 0.6, innerRadius: 0, outerRadius: 12, width: 0.5 }); // first leaf
 
-  // Stem rising toward light - faithful growth
-  elements.push({ type: 'line', x1: cx, y1: cy + 75, x2: cx, y2: cy + 40 });
-  elements.push({ type: 'line', x1: cx, y1: cy + 40, x2: cx - 3, y2: cy + 5 });
-  elements.push({ type: 'line', x1: cx - 3, y1: cy + 5, x2: cx, y2: cy - 30 });
+  // Sapling stage (3 elements)
+  elements.push({ type: 'line', x1: cx - 25, y1: cy + 60, x2: cx - 25, y2: cy + 10 }); // young trunk
+  elements.push({ type: 'petal', cx: cx - 25, cy: cy + 15, angle: -Math.PI * 0.7, innerRadius: 0, outerRadius: 18, width: 0.45 });
+  elements.push({ type: 'petal', cx: cx - 25, cy: cy + 15, angle: -Math.PI * 0.3, innerRadius: 0, outerRadius: 18, width: 0.45 });
 
-  // Leaves along the journey - signs of life unfolding
-  elements.push({ type: 'petal', cx: cx, cy: cy + 55, angle: -Math.PI * 0.7, innerRadius: 0, outerRadius: 18, width: 0.4 });
-  elements.push({ type: 'petal', cx: cx, cy: cy + 55, angle: -Math.PI * 0.3, innerRadius: 0, outerRadius: 18, width: 0.4 });
-  elements.push({ type: 'petal', cx: cx, cy: cy + 25, angle: -Math.PI * 0.8, innerRadius: 0, outerRadius: 15, width: 0.4 });
-  elements.push({ type: 'petal', cx: cx, cy: cy + 25, angle: -Math.PI * 0.2, innerRadius: 0, outerRadius: 15, width: 0.4 });
+  // Young tree stage (4 elements)
+  elements.push({ type: 'line', x1: cx + 10, y1: cy + 60, x2: cx + 10, y2: cy - 20 }); // trunk
+  elements.push({ type: 'branch', x1: cx + 10, y1: cy, angle: -Math.PI * 0.65, length: 25, curve: -0.2, thickness: 1.5 });
+  elements.push({ type: 'branch', x1: cx + 10, y1: cy, angle: -Math.PI * 0.35, length: 25, curve: 0.2, thickness: 1.5 });
+  elements.push({ type: 'circle', x: cx + 10, y: cy - 35, radius: 25 }); // canopy starting
 
-  // Flower petals opening - the blossoming
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'petal', cx: cx, cy: cy - 60, angle: angle, innerRadius: 12, outerRadius: 45, width: 0.35 });
-  }
+  // Mature oak (right side) - full grown glory (8 elements)
+  elements.push({ type: 'line', x1: cx + 70, y1: cy + 70, x2: cx + 65, y2: cy - 10 }); // trunk left
+  elements.push({ type: 'line', x1: cx + 90, y1: cy + 70, x2: cx + 85, y2: cy - 10 }); // trunk right
+  elements.push({ type: 'branch', x1: cx + 75, y1: cy - 10, angle: -Math.PI * 0.7, length: 45, curve: -0.3, thickness: 2 });
+  elements.push({ type: 'branch', x1: cx + 75, y1: cy - 10, angle: -Math.PI * 0.3, length: 45, curve: 0.3, thickness: 2 });
+  elements.push({ type: 'circle', x: cx + 50, y: cy - 50, radius: 30 }); // left canopy
+  elements.push({ type: 'circle', x: cx + 100, y: cy - 45, radius: 28 }); // right canopy
+  elements.push({ type: 'circle', x: cx + 75, y: cy - 65, radius: 25 }); // top canopy
+  elements.push({ type: 'branch', x1: cx + 75, y1: cy - 5, angle: -Math.PI * 0.5, length: 35, curve: 0, thickness: 1.5 });
 
-  // Stamen ring - inner beauty revealed
-  for (let i = 0; i < 4; i++) {
-    const angle = (i / 4) * Math.PI * 2 - Math.PI / 4;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 8, y: cy - 60 + Math.sin(angle) * 8, radius: 3 });
-  }
+  // Ground line showing passage of time
+  elements.push({ type: 'line', x1: cx - 110, y1: cy + 70, x2: cx + 110, y2: cy + 70 });
 
-  // The flower's heart - where seed becomes bloom
-  elements.push({ type: 'dot', x: cx, y: cy - 60, radius: 7, isCenter: true });
+  // Spiral of time connecting all stages (3 dots)
+  elements.push({ type: 'dot', x: cx - 75, y: cy + 40, radius: 2 });
+  elements.push({ type: 'dot', x: cx - 40, y: cy + 25, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx + 35, y: cy + 10, radius: 3 });
+
+  // The heart of trust - center of the mature oak
+  elements.push({ type: 'dot', x: cx + 75, y: cy - 50, radius: 6, isCenter: true });
   return elements;
 };
 
