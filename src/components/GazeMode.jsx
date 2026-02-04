@@ -5694,6 +5694,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     return () => clearInterval(gardenGuidanceTimerRef.current);
   }, [currentMode, gardenPaused, gardenStage, meditationStages]);
 
+  // Ref to track elapsed time without causing animation restarts
+  const gardenTotalElapsedRef = React.useRef(0);
+  React.useEffect(() => {
+    gardenTotalElapsedRef.current = gardenTotalElapsed;
+  }, [gardenTotalElapsed]);
+
   // Garden canvas animation
   React.useEffect(() => {
     if (currentMode !== 'heartGarden') return;
@@ -5916,7 +5922,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       for (let i = 0; i < length; i += 3) {
         const progress = i / length;
-        const curl = Math.sin(progress * Math.PI * 3 + t) * 21 * progress;
+        const curl = Math.sin(progress * Math.PI * 3 + t * 0.3) * 21 * progress;
         const vx = x + (i * dir) + curl * dir + sway * (1 - progress);
         const vy = y - progress * 55 * scale;
 
@@ -6091,7 +6097,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       ctx.clearRect(0, 0, W, H);
 
       const breath = easeInOutSine((Math.sin(time * 0.5) + 1) / 2);
-      const progress = Math.min(1, gardenTotalElapsed / gardenTotalDuration);
+      const progress = Math.min(1, gardenTotalElapsedRef.current / gardenTotalDuration);
 
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -6112,8 +6118,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
         const x = plant.x * W;
         const y = plant.y * H;
-        const scale = plant.scale * (0.8 + breath * 0.2);
-        const sway = Math.sin(time * 1.5 + index * 0.7) * 4 * plantProgress;
+        const scale = plant.scale;
+        // Gentle, slow sway like a light breeze - each plant has slightly different timing
+        const sway = Math.sin(time * 0.4 + index * 1.2) * 2 * plantProgress;
 
         ctx.globalAlpha = 0.5 + plantProgress * 0.4;
 
@@ -6151,7 +6158,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resize);
     };
-  }, [currentMode, hue, gardenTotalElapsed, gardenTotalDuration, gardenPlants]);
+  }, [currentMode, hue, gardenTotalDuration, gardenPlants]);
 
   // Floating particles animation (stars in space effect)
   React.useEffect(() => {
