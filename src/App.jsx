@@ -12,7 +12,7 @@ import { MarchingCubes } from 'three/examples/jsm/objects/MarchingCubes';
 import { allQuotes, allThemes, allSchools } from './data/quotes';
 import { breathTechniques } from './data/breathTechniques';
 import { haptic } from './config/haptic';
-import { gazeModes, BREATH_CYCLE, BREATH_SPEED, KEYS, KEY_FREQUENCIES, SCALE_TYPES } from './config/constants';
+import { gazeModes, BREATH_CYCLE, BREATH_SPEED, KEYS, KEY_FREQUENCIES, SCALE_TYPES, isMobile } from './config/constants';
 import GazeMode from './components/GazeMode';
 
 // Destructure React hooks for compatibility with original code
@@ -907,23 +907,6 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         </div>
       )}
 
-      {/* Breathe label - shows on open then fades */}
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        fontSize: '2rem',
-        color: '#fff',
-        fontFamily: '"Jost", sans-serif',
-        fontWeight: 300,
-        letterSpacing: '0.3em',
-        textTransform: 'lowercase',
-        pointerEvents: 'none',
-        opacity: showLabel && !breathSession.isActive ? 1 : 0,
-        transition: 'opacity 1s ease',
-      }}>breathe</div>
-
       {/* Technique selector - bottom drawer */}
       {showUI && (
         <>
@@ -1361,14 +1344,6 @@ function ZenWaterBoard({ primaryHue = 162 }) {
         onPointerLeave={handlePointerUp}
         onPointerCancel={handlePointerUp}
       />
-
-      {/* Impermanence text - fades in and out */}
-      <div style={{
-        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-        fontSize: '2rem', color: '#fff', fontFamily: '"Jost", sans-serif', fontWeight: 300,
-        letterSpacing: '0.3em', textTransform: 'lowercase', pointerEvents: 'none',
-        animation: 'zenTextPulse 4s ease-in-out forwards'
-      }}>impermanence</div>
 
       <div style={{
         position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
@@ -2011,23 +1986,6 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
         zIndex: 2,
       }}
     >
-      {/* Mode label - fades in then out */}
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        fontSize: '2rem',
-        color: '#fff',
-        fontFamily: '"Jost", sans-serif',
-        fontWeight: 300,
-        letterSpacing: '0.3em',
-        textTransform: 'lowercase',
-        pointerEvents: 'none',
-        opacity: showLabel ? 1 : 0,
-        transition: 'opacity 1s ease',
-      }}>mantra</div>
-
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem' }}>
         <MantraGeometryCanvas
           elements={elements}
@@ -3964,6 +3922,9 @@ function Still() {
   const [savedQuotes, setSavedQuotes] = useState([]);
   const [shuffledQuotes, setShuffledQuotes] = useState([]);
   const [view, setView] = useState('drone'); // Start with music/handpan
+  const [showModeMenu, setShowModeMenu] = useState(false);
+  const [modeTransition, setModeTransition] = useState({ active: false, modeName: '' });
+  const [visualOpacity, setVisualOpacity] = useState(1);
   const [selectedSchools, setSelectedSchools] = useState(new Set());
   const [selectedThemes, setSelectedThemes] = useState(new Set());
   const [showSavedOnly, setShowSavedOnly] = useState(false);
@@ -4005,6 +3966,30 @@ function Still() {
       if (hideTimeout) clearTimeout(hideTimeout);
     };
   }, [hasOpenedSettings]);
+
+  // Mode transition handler - black screen with text overlay, then visual fades in
+  const transitionToMode = useCallback((newMode, modeName) => {
+    if (newMode === view) return;
+
+    // First fade out current visual slowly
+    setVisualOpacity(0);
+
+    // After visual fades out, show overlay with text
+    setTimeout(() => {
+      setModeTransition({ active: true, modeName });
+    }, 1500);
+
+    // Switch mode while text is visible
+    setTimeout(() => {
+      setView(newMode);
+    }, 2500);
+
+    // After text fades out, remove overlay and fade in new visual
+    setTimeout(() => {
+      setModeTransition({ active: false, modeName: '' });
+      setVisualOpacity(1);
+    }, 4000);
+  }, [view]);
 
   // ============================================================================
   // SCROLL STATE
@@ -4589,7 +4574,7 @@ function Still() {
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)',
           zIndex: 100,
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <div style={{ position: 'relative' }}>
             <h1
               onClick={() => {
                 haptic.tap();
@@ -4598,7 +4583,7 @@ function Still() {
               }}
               className={hasOpenedSettings ? '' : 'still-pulse'}
               style={{
-                fontSize: 'clamp(1.2rem, 3vw, 1.5rem)',
+                fontSize: 'clamp(1.5rem, 4vw, 1.8rem)',
                 fontFamily: '"Jost", sans-serif',
                 fontWeight: 400,
                 letterSpacing: '0.2em',
@@ -4606,6 +4591,10 @@ function Still() {
                 cursor: 'pointer',
                 color: currentTheme.text,
                 opacity: hasOpenedSettings ? 0.9 : undefined,
+                lineHeight: 1,
+                height: '2.6rem',
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
               Still
@@ -4615,6 +4604,9 @@ function Still() {
               <div
                 className={showSettingsHint ? 'settings-hint-show' : 'settings-hint-hide'}
                 style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
                   fontSize: '0.55rem',
                   fontFamily: '"Jost", sans-serif',
                   letterSpacing: '0.1em',
@@ -4623,6 +4615,7 @@ function Still() {
                   color: `hsla(${primaryHue}, 52%, 68%, 0.7)`,
                   marginTop: '0.3rem',
                   cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                 }}
                 onClick={() => {
                   haptic.tap();
@@ -4634,45 +4627,148 @@ function Still() {
               </div>
             )}
           </div>
-          <nav style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            {/* Main mode buttons - always visible */}
-            {[
-              { key: 'zenboard', icon: '∞', label: 'Draw' },
-              { key: 'gaze', icon: '◯', label: 'Gaze' },
-              { key: 'mantra', icon: '◇', label: 'Mantra' },
-              { key: 'breathwork', icon: '◎', label: 'Breathe' },
-              { key: 'drone', icon: '∿', label: 'Drone' },
-            ].map(({ key, icon, label }) => {
-              const isActive = view === key;
+          {/* Mode menu */}
+          <div style={{ position: 'relative' }}>
+            {(() => {
+              const modes = [
+                { key: 'drone', icon: '∿', label: 'Drone' },
+                { key: 'breathwork', icon: '◎', label: 'Breathe' },
+                { key: 'gaze', icon: '◯', label: 'Gaze' },
+                { key: 'zenboard', icon: '∞', label: 'Impermanence' },
+                { key: 'mantra', icon: '◇', label: 'Mantra' },
+              ];
+              const currentMode = modes.find(m => m.key === view) || modes[0];
               return (
-                <button
-                  key={key}
-                  onClick={() => { haptic.tap(); setTimeout(() => setView(key), 80); }}
-                  style={{
-                    background: isActive ? `hsla(${primaryHue}, 52%, 68%, 0.13)` : `${currentTheme.text}08`,
-                    border: '1px solid',
-                    borderColor: isActive ? `hsla(${primaryHue}, 52%, 68%, 0.27)` : currentTheme.border,
-                    color: isActive ? primaryColor : currentTheme.textMuted,
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    fontFamily: '"Jost", sans-serif',
-                    letterSpacing: '0.05em',
-                    transition: 'all 0.5s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                  }}
-                >
-                  <span style={{ fontSize: '0.9rem' }}>{icon}</span>
-                  <span className="nav-label">{label}</span>
-                </button>
-              );
-            })}
+                <>
+                  {/* Menu button showing current mode icon only */}
+                  <button
+                    onClick={() => { haptic.tap(); setShowModeMenu(!showModeMenu); }}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      borderRadius: '8px',
+                      color: currentTheme.text,
+                      width: '2.6rem',
+                      height: '2.6rem',
+                      cursor: 'pointer',
+                      fontSize: '1.3rem',
+                      transition: 'all 0.3s ease',
+                      opacity: 0.9,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {currentMode.icon}
+                  </button>
 
-          </nav>
+                  {/* Dropdown menu */}
+                  {showModeMenu && (
+                    <>
+                      {/* Backdrop to close menu */}
+                      <div
+                        onClick={() => setShowModeMenu(false)}
+                        style={{
+                          position: 'fixed',
+                          inset: 0,
+                          zIndex: 199,
+                        }}
+                      />
+                      {/* Menu dropdown - icons only, black and white, aligned with button */}
+                      <div
+                        className="mode-menu-dropdown"
+                        style={{
+                          position: 'absolute',
+                          top: 'calc(100% + 0.35rem)',
+                          right: 0,
+                          background: 'rgba(0, 0, 0, 0.95)',
+                          backdropFilter: 'blur(20px)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '8px',
+                          padding: '0.2rem',
+                          zIndex: 200,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.1rem',
+                          width: '2.6rem',
+                          animation: 'menuFadeIn 0.5s ease-out',
+                        }}
+                      >
+                        {modes.map(({ key, icon, label }, index) => {
+                          const isActive = view === key;
+                          return (
+                            <button
+                              key={key}
+                              className="mode-menu-item"
+                              onClick={() => {
+                                haptic.tap();
+                                setShowModeMenu(false);
+                                setTimeout(() => transitionToMode(key, label), 80);
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '2.2rem',
+                                height: '2.2rem',
+                                padding: 0,
+                                background: isActive ? 'rgba(255, 255, 255, 0.12)' : 'transparent',
+                                border: 'none',
+                                borderRadius: '6px',
+                                color: isActive ? '#fff' : 'rgba(255, 255, 255, 0.5)',
+                                cursor: 'pointer',
+                                fontSize: '1.1rem',
+                                transition: 'all 0.2s ease',
+                                opacity: 0,
+                                animation: `menuItemReveal 0.6s ease-out ${index * 0.12}s forwards`,
+                              }}
+                            >
+                              {icon}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </>
+              );
+            })()}
+          </div>
         </header>
+
+        {/* Mode transition overlay - black screen with text (below header) */}
+        {modeTransition.active && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 50,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none',
+              background: '#000',
+            }}
+          >
+            <div
+              className="mode-transition-text"
+              style={{
+                fontSize: 'clamp(2rem, 8vw, 4rem)',
+                fontFamily: '"Jost", sans-serif',
+                fontWeight: 300,
+                letterSpacing: '0.3em',
+                color: 'rgba(255, 255, 255, 0.9)',
+                textTransform: 'lowercase',
+                animation: 'modeTextSlide 2.5s ease-in-out forwards',
+              }}
+            >
+              {modeTransition.modeName}
+            </div>
+          </div>
+        )}
+
+        {/* Visual content wrapper with fade transition */}
+        <div style={{ opacity: visualOpacity, transition: 'opacity 1.5s ease-in-out' }}>
 
         {/* Zen Water Board - Draw with water on stone */}
         {view === 'zenboard' && (
@@ -5069,7 +5165,7 @@ function Still() {
 
         {/* Gaze View - Sacred Geometry */}
         {view === 'gaze' && (
-          <div style={{ position: 'absolute', inset: 0, animation: 'fadeInSmooth 0.3s ease-out' }}>
+          <div style={{ position: 'absolute', inset: 0 }}>
             <GazeMode
               theme={currentTheme}
               primaryHue={settings.primaryHue}
@@ -5456,6 +5552,8 @@ function Still() {
           </div>
         )}
 
+        </div>{/* End visual content wrapper */}
+
         {/* Styles */}
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Jost:wght@300;400;500&display=swap');
@@ -5471,6 +5569,10 @@ function Still() {
           @keyframes fadeInSmooth { from { opacity: 0; } to { opacity: 1; } }
           @keyframes stillPulse { 0%, 100% { text-shadow: 0 0 0 transparent; opacity: 0.7; transform: scale(1); } 50% { text-shadow: 0 0 15px rgba(127, 219, 202, 0.8), 0 0 30px rgba(127, 219, 202, 0.5); opacity: 1; transform: scale(1.04); } }
           .still-pulse { animation: stillPulse 3s ease-in-out infinite; display: inline-block; }
+          @keyframes menuFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+          @keyframes menuItemReveal { from { opacity: 0; transform: translateY(-6px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+          .mode-menu-item:hover { background: rgba(255, 255, 255, 0.08) !important; }
+          @keyframes modeTextSlide { 0% { opacity: 0; } 40% { opacity: 1; } 60% { opacity: 1; } 100% { opacity: 0; } }
           @keyframes settingsHintPulse { 0% { opacity: 0; transform: translateY(-5px); } 15% { opacity: 1; transform: translateY(0); } 85% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-5px); } }
           .settings-hint-show { animation: settingsHintPulse 4s ease-in-out forwards; }
           .settings-hint-hide { opacity: 0; }

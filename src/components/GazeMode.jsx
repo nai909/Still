@@ -5583,24 +5583,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
-      {/* Gaze text - fades in and out (hidden in background mode) */}
-      {!backgroundMode && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          fontSize: '2rem',
-          color: '#fff',
-          fontFamily: '"Jost", sans-serif',
-          fontWeight: 300,
-          letterSpacing: '0.3em',
-          textTransform: 'lowercase',
-          pointerEvents: 'none',
-          animation: 'gazeTextPulse 4s ease-in-out forwards',
-        }}>gaze</div>
-      )}
-
       {/* Visual name toast - appears briefly when switching visuals (hidden in background mode) */}
       {!backgroundMode && (
         <div
