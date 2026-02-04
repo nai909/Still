@@ -3919,10 +3919,10 @@ function Still() {
     // Start intro fade out
     setIntroFading(true);
 
-    // After intro fades, show "drone" text on black screen
+    // After intro fades, show "hum" text on black screen
     setTimeout(() => {
       setShowIntro(false);
-      setModeTransition({ active: true, modeName: 'drone' });
+      setModeTransition({ active: true, modeName: 'hum' });
     }, 1200);
 
     // After text fades out, fade in the visual
@@ -3936,7 +3936,7 @@ function Still() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [savedQuotes, setSavedQuotes] = useState([]);
   const [shuffledQuotes, setShuffledQuotes] = useState([]);
-  const [view, setView] = useState('drone'); // Start with music/handpan
+  const [view, setView] = useState('hum'); // Start with music/handpan
   const [showModeMenu, setShowModeMenu] = useState(false);
   const [selectedSchools, setSelectedSchools] = useState(new Set());
   const [selectedThemes, setSelectedThemes] = useState(new Set());
@@ -4644,7 +4644,7 @@ function Still() {
           <div style={{ position: 'relative' }}>
             {(() => {
               const modes = [
-                { key: 'drone', icon: '∿', label: 'Drone' },
+                { key: 'hum', icon: '∿', label: 'Hum' },
                 { key: 'breathwork', icon: '◎', label: 'Breathe' },
                 { key: 'gaze', icon: '◯', label: 'Gaze' },
                 { key: 'zenboard', icon: '∞', label: 'Impermanence' },
@@ -5223,7 +5223,7 @@ function Still() {
           />
         </div>
 
-        {/* Drone Mode - Generative ambient soundscape (always mounted to keep audio playing) */}
+        {/* Hum Mode - Generative ambient soundscape (always mounted to keep audio playing) */}
         <div style={{
           opacity: !showIntro ? visualOpacity : 0,
           transition: 'opacity 1.5s ease-out',
@@ -5232,7 +5232,7 @@ function Still() {
             ref={droneModeRef}
             primaryHue={primaryHue}
             primaryColor={primaryColor}
-            backgroundMode={view !== 'drone'}
+            backgroundMode={view !== 'hum'}
             onSamplesReady={handleSamplesReady}
           />
         </div>
