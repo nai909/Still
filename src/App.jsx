@@ -1037,9 +1037,9 @@ const generateLotusBlossom = (cx, cy) => {
   return elements;
 };
 
-// This Moment Is Enough - 28 elements (4 words × 7 cycles)
-// FULL MOON OVER STILL WATER - perfect completeness reflected
-// Nothing to add, nothing to take away - the moment complete unto itself
+// All Is Well - 21 elements (3 words × 7 cycles)
+// FULL MOON OVER STILL WATER - cosmic peace and completeness
+// The universe at rest, everything in its place - all is well
 const generateCosmicEye = (cx, cy) => {
   const elements = [];
 
@@ -1226,9 +1226,9 @@ const generateInfinityLoop = (cx, cy) => {
   return elements;
 };
 
-// I Let Go With Grace - 35 elements (5 words × 7 cycles)
-// DANDELION RELEASING SEEDS - the most graceful letting go in nature
-// Each seed carries a wish, a blessing released to the wind
+// I Trust The Process - 28 elements (4 words × 7 cycles)
+// DANDELION RELEASING SEEDS - nature's perfect faith in the journey
+// Each seed trusts the wind to carry it where it needs to go
 const generateFallingLeaves = (cx, cy) => {
   const elements = [];
 
@@ -1536,11 +1536,11 @@ const mantraVisualPairs = [
   { text: 'I am grateful for this moment', words: ['I', 'am', 'grateful', 'for', 'this', 'moment'], generate: generateFlowerOfLife },
   { text: 'Abundance flows to me', words: ['Abundance', 'flows', 'to', 'me'], generate: generateSpiralGalaxy },
   { text: 'I am worthy of love', words: ['I', 'am', 'worthy', 'of', 'love'], generate: generateLotusBlossom },
-  { text: 'This moment is enough', words: ['This', 'moment', 'is', 'enough'], generate: generateCosmicEye },
+  { text: 'All is well', words: ['All', 'is', 'well'], generate: generateCosmicEye },
   { text: 'Peace begins within', words: ['Peace', 'begins', 'within'], generate: generateMandalaStar },
   { text: 'I am calm and centered', words: ['I', 'am', 'calm', 'and', 'centered'], generate: generateSacredSpiral },
   { text: 'I am loving awareness', words: ['I', 'am', 'loving', 'awareness'], generate: generateInfinityLoop },
-  { text: 'I let go with grace', words: ['I', 'let', 'go', 'with', 'grace'], generate: generateFallingLeaves },
+  { text: 'I trust the process', words: ['I', 'trust', 'the', 'process'], generate: generateFallingLeaves },
   { text: 'I forgive and release', words: ['I', 'forgive', 'and', 'release'], generate: generateForgivenessRelease },
   { text: 'I accept myself completely', words: ['I', 'accept', 'myself', 'completely'], generate: generateSelfAcceptance },
   { text: 'I am open to receive', words: ['I', 'am', 'open', 'to', 'receive'], generate: generateOpenToReceive },
