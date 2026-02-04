@@ -78,8 +78,8 @@ const generateFlowerOfLife = (cx, cy) => {
   return elements;
 };
 
-// Abundance Flows To Me - 28 elements (4 words × 7 cycles)
-// FRUIT TREE - branches heavy with gifts, abundance hanging ripe
+// Good Fortune Flows Towards Loved Ones And I - 32 elements (8 words × 4 cycles)
+// FRUIT TREE - branches heavy with gifts, fortune flowing to loved ones
 const generateSpiralGalaxy = (cx, cy) => {
   const elements = [];
 
@@ -95,11 +95,12 @@ const generateSpiralGalaxy = (cx, cy) => {
   elements.push({ type: 'branch', x1: cx, y1: cy - 15, angle: -Math.PI/2 - 0.15, length: 50, curve: -0.1, thickness: 1.5 });
   elements.push({ type: 'branch', x1: cx, y1: cy - 15, angle: -Math.PI/2 + 0.15, length: 50, curve: 0.1, thickness: 1.5 });
 
-  // Fruits hanging from branches - 12 abundant circles
+  // Fruits hanging from branches - 16 abundant circles (4 more for 8-word mantra)
   const fruitPos = [
     {x: -70, y: -40}, {x: -55, y: -65}, {x: -35, y: -50}, {x: -45, y: -85},
     {x: 70, y: -40}, {x: 55, y: -70}, {x: 35, y: -55}, {x: 50, y: -90},
-    {x: -15, y: -75}, {x: 15, y: -80}, {x: 0, y: -95}, {x: -25, y: -100}
+    {x: -15, y: -75}, {x: 15, y: -80}, {x: 0, y: -95}, {x: -25, y: -100},
+    {x: 25, y: -105}, {x: -60, y: -80}, {x: 60, y: -85}, {x: 0, y: -65}
   ];
   fruitPos.forEach(pos => {
     elements.push({ type: 'circle', x: cx + pos.x, y: cy + pos.y, radius: 10 });
@@ -641,7 +642,7 @@ const generateWeAreOne = (cx, cy) => {
 // Mantra-Visual Pairs
 const mantraVisualPairs = [
   { text: 'I am grateful for this moment', words: ['I', 'am', 'grateful', 'for', 'this', 'moment'], generate: generateFlowerOfLife },
-  { text: 'Abundance flows to me', words: ['Abundance', 'flows', 'to', 'me'], generate: generateSpiralGalaxy },
+  { text: 'Good fortune flows towards loved ones and I', words: ['Good', 'fortune', 'flows', 'towards', 'loved', 'ones', 'and', 'I'], generate: generateSpiralGalaxy },
   { text: 'I am worthy of love', words: ['I', 'am', 'worthy', 'of', 'love'], generate: generateLotusBlossom },
   { text: 'Peace begins within', words: ['Peace', 'begins', 'within'], generate: generateMandalaStar },
   { text: 'I am calm and centered', words: ['I', 'am', 'calm', 'and', 'centered'], generate: generateSacredSpiral },
