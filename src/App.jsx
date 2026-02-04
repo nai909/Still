@@ -3888,6 +3888,10 @@ function Still() {
   const [introFading, setIntroFading] = useState(false);
   const [audioInitialized, setAudioInitialized] = useState(false);
 
+  // Mode transition state (needed early for intro transition)
+  const [modeTransition, setModeTransition] = useState({ active: false, modeName: '' });
+  const [visualOpacity, setVisualOpacity] = useState(1);
+
   // Ref for DroneMode to trigger audio initialization
   const droneModeRef = useRef(null);
 
@@ -3908,13 +3912,23 @@ function Still() {
       droneModeRef.current.init();
     }
 
-    // Start fade out - handpan will fade in simultaneously
+    // Hide visual initially for transition
+    setVisualOpacity(0);
+
+    // Start intro fade out
     setIntroFading(true);
 
-    // Remove intro after fade completes
+    // After intro fades, show "drone" text on black screen
     setTimeout(() => {
       setShowIntro(false);
+      setModeTransition({ active: true, modeName: 'drone' });
     }, 1200);
+
+    // After text fades out, fade in the visual
+    setTimeout(() => {
+      setModeTransition({ active: false, modeName: '' });
+      setVisualOpacity(1);
+    }, 1200 + 2500); // intro fade + text animation
   }, [introFading]);
 
   // Core state
@@ -3923,8 +3937,6 @@ function Still() {
   const [shuffledQuotes, setShuffledQuotes] = useState([]);
   const [view, setView] = useState('drone'); // Start with music/handpan
   const [showModeMenu, setShowModeMenu] = useState(false);
-  const [modeTransition, setModeTransition] = useState({ active: false, modeName: '' });
-  const [visualOpacity, setVisualOpacity] = useState(1);
   const [selectedSchools, setSelectedSchools] = useState(new Set());
   const [selectedThemes, setSelectedThemes] = useState(new Set());
   const [showSavedOnly, setShowSavedOnly] = useState(false);
@@ -5212,7 +5224,7 @@ function Still() {
 
         {/* Drone Mode - Generative ambient soundscape (always mounted to keep audio playing) */}
         <div style={{
-          opacity: introFading || !showIntro ? 1 : 0,
+          opacity: !showIntro ? visualOpacity : 0,
           transition: 'opacity 1.5s ease-out',
         }}>
           <DroneMode
