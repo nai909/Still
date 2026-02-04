@@ -1686,49 +1686,44 @@ const generateRelease = (cx, cy) => {
 };
 
 // I Am Connected To All - 35 elements (5 words × 7 cycles)
-// SPIDER WEB WITH DEW DROPS - the sacred geometry of interconnection
-// Every strand touches every other - nothing exists in isolation
+// RIPPLES OF CONNECTION - waves expanding outward, touching all
+// Like a stone dropped in still water - one action touches everything
 const generateConnectedToAll = (cx, cy) => {
   const elements = [];
 
-  // Radial threads from center (8 main spokes)
+  // Concentric ripples expanding from center (5 circles) - perfect symmetry
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 20 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 45 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 70 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 95 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 120 });
+
+  // 8 radial lines of connection - perfect 8-fold symmetry
   for (let i = 0; i < 8; i++) {
     const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'line', x1: cx, y1: cy, x2: cx + Math.cos(angle) * 110, y2: cy + Math.sin(angle) * 110 });
+    elements.push({ type: 'line', x1: cx + Math.cos(angle) * 25, y1: cy + Math.sin(angle) * 25, x2: cx + Math.cos(angle) * 115, y2: cy + Math.sin(angle) * 115 });
   }
 
-  // Spiral threads connecting the spokes (12 circular connection lines)
-  const spiralRadii = [25, 45, 65, 85, 105];
-  spiralRadii.forEach((r, idx) => {
-    // Create segments of the spiral
-    for (let i = 0; i < 8; i++) {
-      const angle1 = (i / 8) * Math.PI * 2 - Math.PI / 2;
-      const angle2 = ((i + 1) / 8) * Math.PI * 2 - Math.PI / 2;
-      // Slight wobble for organic feel
-      const wobble = Math.sin(i + idx) * 3;
-      elements.push({
-        type: 'line',
-        x1: cx + Math.cos(angle1) * (r + wobble),
-        y1: cy + Math.sin(angle1) * (r + wobble),
-        x2: cx + Math.cos(angle2) * (r - wobble),
-        y2: cy + Math.sin(angle2) * (r - wobble)
-      });
-    }
-  });
+  // Nodes where ripples meet rays - 8 on inner ring
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 45, y: cy + Math.sin(angle) * 45, radius: 4 });
+  }
 
-  // Morning dew drops on the web (8 dots at intersections)
-  const dewAngles = [0, Math.PI/4, Math.PI/2, Math.PI*3/4, Math.PI, Math.PI*5/4, Math.PI*3/2, Math.PI*7/4];
-  dewAngles.forEach((angle, i) => {
-    const r = 45 + (i % 3) * 30;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, radius: 3 + (i % 2) });
-  });
+  // Nodes on middle ring - 8 more
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2 + Math.PI / 8; // offset
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 70, y: cy + Math.sin(angle) * 70, radius: 3 });
+  }
 
-  // Branch corners where web attaches (2 lines suggesting branches)
-  elements.push({ type: 'line', x1: cx - 120, y1: cy - 100, x2: cx - 90, y2: cy - 75 });
-  elements.push({ type: 'line', x1: cx + 100, y1: cy + 90, x2: cx + 120, y2: cy + 110 });
+  // Nodes on outer ring - 4 cardinal points
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 95, y: cy + Math.sin(angle) * 95, radius: 3 });
+  }
 
-  // The weaver at center - the connected self
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
+  // The source - where connection begins
+  elements.push({ type: 'dot', x: cx, y: cy, radius: 7, isCenter: true });
   return elements;
 };
 
