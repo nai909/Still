@@ -2586,9 +2586,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     let breathVelocity = 0;
     const springStiffness = 0.06;
     const springDamping = 0.85;
+    let animationId;
+    let isMounted = true;
 
     const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
+      if (!isMounted) return;
+      animationId = requestAnimationFrame(animate);
 
       const elapsed = clockRef.current.getElapsedTime();
       const targetBreath = getBreathPhase(elapsed);
@@ -2633,10 +2636,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     window.addEventListener('resize', handleResize);
 
     return () => {
+      isMounted = false;
       window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+      cancelAnimationFrame(animationId);
+      if (containerRef.current && containerRef.current.contains(renderer.domElement)) {
+        containerRef.current.removeChild(renderer.domElement);
       }
       allGeometries.forEach(g => g.dispose());
       allMaterials.forEach(m => m.dispose());
@@ -2694,8 +2698,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const springDamping = 0.88;
 
     let frameCount = 0;
+    let animationId;
+    let isMounted = true;
+
     const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
+      if (!isMounted) return;
+      animationId = requestAnimationFrame(animate);
       frameCount++;
 
       if (frameCount < 3) {
@@ -2748,10 +2756,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     window.addEventListener('resize', handleResize);
 
     return () => {
+      isMounted = false;
       window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+      cancelAnimationFrame(animationId);
+      if (containerRef.current && containerRef.current.contains(renderer.domElement)) {
+        containerRef.current.removeChild(renderer.domElement);
       }
       geometry.dispose();
       material.dispose();
@@ -2862,8 +2871,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     renderer.render(scene, camera);
 
     let frameCount = 0;
+    let animationId;
+    let isMounted = true;
+
     const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
+      if (!isMounted) return;
+      animationId = requestAnimationFrame(animate);
       frameCount++;
 
       // Skip first few frames to let everything settle
@@ -2919,10 +2932,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     window.addEventListener('resize', handleResize);
 
     return () => {
+      isMounted = false;
       window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+      cancelAnimationFrame(animationId);
+      if (containerRef.current && containerRef.current.contains(renderer.domElement)) {
+        containerRef.current.removeChild(renderer.domElement);
       }
       branches.forEach(b => { b.geometry.dispose(); b.material.dispose(); });
       leaves.forEach(l => { l.geometry.dispose(); l.material.dispose(); });
@@ -3011,9 +3025,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     let opacityVelocity = 0;
     const springStiffness = 0.04; // Gentle stiffness for slow, calming motion
     const springDamping = 0.88; // High damping for smooth settling
+    let animationId;
+    let isMounted = true;
 
     const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
+      if (!isMounted) return;
+      animationId = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime() * bgSpeed;
 
       // Spawn ripple at fixed interval - floating in space
@@ -3098,10 +3115,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     window.addEventListener('resize', handleResize);
 
     return () => {
+      isMounted = false;
       window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+      cancelAnimationFrame(animationId);
+      if (containerRef.current && containerRef.current.contains(renderer.domElement)) {
+        containerRef.current.removeChild(renderer.domElement);
       }
       coreGeom.dispose(); coreMat.dispose();
       ripples.forEach(r => { r.geometry.dispose(); r.material.dispose(); });
@@ -3196,8 +3214,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const fern = new THREE.Points(fernGeom, fernMat);
     fernGroup.add(fern);
 
+    let animationId;
+    let isMounted = true;
+
     const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
+      if (!isMounted) return;
+      animationId = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
 
       // Touch-responsive rotation
@@ -3238,10 +3260,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     window.addEventListener('resize', handleResize);
 
     return () => {
+      isMounted = false;
       window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+      cancelAnimationFrame(animationId);
+      if (containerRef.current && containerRef.current.contains(renderer.domElement)) {
+        containerRef.current.removeChild(renderer.domElement);
       }
       fernGeom.dispose();
       fernMat.dispose();
@@ -3353,9 +3376,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     }
 
     let lastSeedRelease = 0;
+    let animationId;
+    let isMounted = true;
 
     const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
+      if (!isMounted) return;
+      animationId = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
 
       // Touch-responsive rotation - slow and meditative
@@ -3476,10 +3502,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     window.addEventListener('resize', handleResize);
 
     return () => {
+      isMounted = false;
       window.removeEventListener('resize', handleResize);
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-      if (rendererRef.current && containerRef.current && containerRef.current.contains(rendererRef.current.domElement)) {
-        containerRef.current.removeChild(rendererRef.current.domElement);
+      cancelAnimationFrame(animationId);
+      if (containerRef.current && containerRef.current.contains(renderer.domElement)) {
+        containerRef.current.removeChild(renderer.domElement);
       }
       stemGeom.dispose(); stemMat.dispose();
       coreGeom.dispose(); coreMat.dispose();
@@ -3683,8 +3710,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     // === ORBIT CONTROLS ===
     let controls = null;
-    if (THREE.OrbitControls) {
-      controls = new THREE.OrbitControls(camera, renderer.domElement);
+    if (OrbitControls) {
+      controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.08;
       controls.rotateSpeed = 0.25;
