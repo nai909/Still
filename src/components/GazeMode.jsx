@@ -5598,32 +5598,35 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
   // Garden plant definitions
   const gardenPlants = React.useMemo(() => [
-    { type: 'sprout', x: 0.5, y: 0.8, bloomAt: 0.02, scale: 1 },
-    { type: 'sprout', x: 0.4, y: 0.78, bloomAt: 0.04, scale: 0.8 },
-    { type: 'sprout', x: 0.6, y: 0.79, bloomAt: 0.06, scale: 0.9 },
-    { type: 'herb', x: 0.34, y: 0.74, bloomAt: 0.10, scale: 0.7 },
-    { type: 'herb', x: 0.66, y: 0.75, bloomAt: 0.12, scale: 0.8 },
-    { type: 'fern', x: 0.26, y: 0.71, bloomAt: 0.14, scale: 0.6 },
-    { type: 'fern', x: 0.74, y: 0.73, bloomAt: 0.16, scale: 0.7 },
-    { type: 'tomato', x: 0.44, y: 0.68, bloomAt: 0.20, scale: 1 },
-    { type: 'carrot', x: 0.56, y: 0.7, bloomAt: 0.24, scale: 0.9 },
-    { type: 'leafy', x: 0.31, y: 0.66, bloomAt: 0.28, scale: 0.8 },
-    { type: 'squash', x: 0.69, y: 0.67, bloomAt: 0.32, scale: 0.85 },
-    { type: 'vine', x: 0.2, y: 0.63, bloomAt: 0.36, scale: 0.7, direction: 1 },
-    { type: 'vine', x: 0.8, y: 0.64, bloomAt: 0.40, scale: 0.7, direction: -1 },
-    { type: 'tomato', x: 0.37, y: 0.57, bloomAt: 0.44, scale: 0.9 },
-    { type: 'pepper', x: 0.63, y: 0.58, bloomAt: 0.48, scale: 0.85 },
-    { type: 'leafy', x: 0.5, y: 0.54, bloomAt: 0.52, scale: 1 },
-    { type: 'herb', x: 0.27, y: 0.53, bloomAt: 0.56, scale: 0.75 },
-    { type: 'herb', x: 0.73, y: 0.54, bloomAt: 0.60, scale: 0.8 },
-    { type: 'fern', x: 0.17, y: 0.5, bloomAt: 0.64, scale: 0.65 },
-    { type: 'fern', x: 0.83, y: 0.51, bloomAt: 0.68, scale: 0.7 },
-    { type: 'corn', x: 0.41, y: 0.43, bloomAt: 0.72, scale: 1 },
-    { type: 'corn', x: 0.59, y: 0.44, bloomAt: 0.76, scale: 0.95 },
-    { type: 'sunflower', x: 0.5, y: 0.34, bloomAt: 0.80, scale: 1 },
-    { type: 'vine', x: 0.14, y: 0.4, bloomAt: 0.84, scale: 0.6, direction: 1 },
-    { type: 'vine', x: 0.86, y: 0.41, bloomAt: 0.88, scale: 0.6, direction: -1 },
-    { type: 'butterfly', x: 0.5, y: 0.23, bloomAt: 0.92, scale: 1 },
+    // Bottom row - sprouts
+    { type: 'sprout', x: 0.5, y: 0.88, bloomAt: 0.02, scale: 0.9 },
+    { type: 'sprout', x: 0.38, y: 0.86, bloomAt: 0.04, scale: 0.7 },
+    { type: 'sprout', x: 0.62, y: 0.87, bloomAt: 0.06, scale: 0.8 },
+    // Second row - herbs and ferns
+    { type: 'herb', x: 0.30, y: 0.82, bloomAt: 0.10, scale: 0.6 },
+    { type: 'herb', x: 0.70, y: 0.83, bloomAt: 0.12, scale: 0.65 },
+    { type: 'fern', x: 0.22, y: 0.79, bloomAt: 0.14, scale: 0.5 },
+    { type: 'fern', x: 0.78, y: 0.80, bloomAt: 0.16, scale: 0.55 },
+    // Third row - vegetables
+    { type: 'tomato', x: 0.42, y: 0.78, bloomAt: 0.20, scale: 0.8 },
+    { type: 'carrot', x: 0.58, y: 0.79, bloomAt: 0.24, scale: 0.75 },
+    { type: 'leafy', x: 0.28, y: 0.75, bloomAt: 0.28, scale: 0.65 },
+    { type: 'squash', x: 0.72, y: 0.76, bloomAt: 0.32, scale: 0.7 },
+    // Fourth row - vines and more vegetables
+    { type: 'vine', x: 0.18, y: 0.73, bloomAt: 0.36, scale: 0.55, direction: 1 },
+    { type: 'vine', x: 0.82, y: 0.74, bloomAt: 0.40, scale: 0.55, direction: -1 },
+    { type: 'tomato', x: 0.35, y: 0.71, bloomAt: 0.44, scale: 0.7 },
+    { type: 'pepper', x: 0.65, y: 0.72, bloomAt: 0.48, scale: 0.7 },
+    // Fifth row - taller plants
+    { type: 'leafy', x: 0.5, y: 0.68, bloomAt: 0.52, scale: 0.75 },
+    { type: 'herb', x: 0.25, y: 0.67, bloomAt: 0.56, scale: 0.55 },
+    { type: 'herb', x: 0.75, y: 0.68, bloomAt: 0.60, scale: 0.6 },
+    // Sixth row - corn (scaled down)
+    { type: 'corn', x: 0.40, y: 0.62, bloomAt: 0.72, scale: 0.65 },
+    { type: 'corn', x: 0.60, y: 0.63, bloomAt: 0.76, scale: 0.6 },
+    // Top - sunflower and butterfly (scaled down, kept lower)
+    { type: 'sunflower', x: 0.5, y: 0.55, bloomAt: 0.80, scale: 0.7 },
+    { type: 'butterfly', x: 0.5, y: 0.48, bloomAt: 0.92, scale: 0.8 },
   ], []);
 
   // Reset garden state when mode changes
@@ -6107,8 +6110,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Ground line
       ctx.globalAlpha = 0.3 + breath * 0.1;
       ctx.beginPath();
-      ctx.moveTo(W * 0.08, H * 0.83);
-      ctx.quadraticCurveTo(W * 0.5, H * 0.86, W * 0.92, H * 0.83);
+      ctx.moveTo(W * 0.12, H * 0.91);
+      ctx.quadraticCurveTo(W * 0.5, H * 0.93, W * 0.88, H * 0.91);
       ctx.stroke();
 
       // Draw plants
@@ -6299,20 +6302,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
             paddingTop: 'calc(3rem + env(safe-area-inset-top, 0px))',
           }}
         >
-          {/* Stage title */}
-          <div
-            style={{
-              color: `hsla(${hue}, 52%, 68%, 0.5)`,
-              fontSize: '0.8rem',
-              fontFamily: '"Jost", sans-serif',
-              letterSpacing: '0.25em',
-              textTransform: 'uppercase',
-              marginBottom: '2rem',
-            }}
-          >
-            {meditationStages[gardenStage]?.title || ''}
-          </div>
-
           {/* Guidance text */}
           <div
             style={{
