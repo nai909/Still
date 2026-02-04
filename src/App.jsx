@@ -985,6 +985,9 @@ const generateSpiralGalaxy = (cx, cy) => {
   // Ground line
   elements.push({ type: 'line', x1: cx - 50, y1: cy + 85, x2: cx + 50, y2: cy + 85 });
 
+  // Root extending down
+  elements.push({ type: 'dot', x: cx, y: cy + 95, radius: 4 });
+
   // The receiving self - root center
   elements.push({ type: 'dot', x: cx, y: cy + 80, radius: 7, isCenter: true });
   return elements;
@@ -1029,57 +1032,12 @@ const generateLotusBlossom = (cx, cy) => {
   elements.push({ type: 'petal', cx: cx - 25, cy: cy + 95, angle: Math.PI * 0.8, innerRadius: 0, outerRadius: 20, width: 0.5 });
   elements.push({ type: 'petal', cx: cx + 15, cy: cy + 110, angle: Math.PI * 0.2, innerRadius: 0, outerRadius: 18, width: 0.5 });
 
-  // A thorn - vulnerability
+  // Thorns - vulnerability (2)
   elements.push({ type: 'dot', x: cx + 8, y: cy + 85, radius: 2 });
+  elements.push({ type: 'dot', x: cx - 6, y: cy + 105, radius: 2 });
 
   // The worthy heart - center of the rose
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
-  return elements;
-};
-
-// All Is Well - 21 elements (3 words × 7 cycles)
-// FULL MOON OVER STILL WATER - cosmic peace and completeness
-// The universe at rest, everything in its place - all is well
-const generateCosmicEye = (cx, cy) => {
-  const elements = [];
-
-  // The full moon - luminous and complete (1 large circle)
-  elements.push({ type: 'circle', x: cx, y: cy - 50, radius: 55 });
-
-  // Moon's inner glow rings (2 circles)
-  elements.push({ type: 'circle', x: cx, y: cy - 50, radius: 40 });
-  elements.push({ type: 'circle', x: cx, y: cy - 50, radius: 25 });
-
-  // Craters on moon surface - imperfection is perfection (4 small circles)
-  elements.push({ type: 'circle', x: cx - 20, y: cy - 60, radius: 8 });
-  elements.push({ type: 'circle', x: cx + 15, y: cy - 35, radius: 6 });
-  elements.push({ type: 'circle', x: cx + 25, y: cy - 65, radius: 5 });
-  elements.push({ type: 'circle', x: cx - 10, y: cy - 40, radius: 4 });
-
-  // Stars scattered in night sky (6 dots)
-  elements.push({ type: 'dot', x: cx - 90, y: cy - 100, radius: 2 });
-  elements.push({ type: 'dot', x: cx + 85, y: cy - 90, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx - 70, y: cy - 50, radius: 1.5 });
-  elements.push({ type: 'dot', x: cx + 100, y: cy - 60, radius: 2 });
-  elements.push({ type: 'dot', x: cx - 110, y: cy - 75, radius: 1.5 });
-  elements.push({ type: 'dot', x: cx + 60, y: cy - 110, radius: 2 });
-
-  // Water's edge - the horizon of stillness
-  elements.push({ type: 'line', x1: cx - 120, y1: cy + 25, x2: cx + 120, y2: cy + 25 });
-
-  // Moon's reflection in water - shimmering, broken (4 horizontal lines)
-  elements.push({ type: 'line', x1: cx - 35, y1: cy + 45, x2: cx + 35, y2: cy + 45 });
-  elements.push({ type: 'line', x1: cx - 25, y1: cy + 65, x2: cx + 25, y2: cy + 65 });
-  elements.push({ type: 'line', x1: cx - 40, y1: cy + 85, x2: cx + 40, y2: cy + 85 });
-  elements.push({ type: 'line', x1: cx - 20, y1: cy + 105, x2: cx + 20, y2: cy + 105 });
-
-  // Ripple circles on water from reflection (3 elliptical suggestions)
-  elements.push({ type: 'circle', x: cx, y: cy + 70, radius: 50 });
-  elements.push({ type: 'circle', x: cx, y: cy + 70, radius: 35 });
-  elements.push({ type: 'circle', x: cx, y: cy + 70, radius: 20 });
-
-  // The moon's heart - luminous center
-  elements.push({ type: 'dot', x: cx, y: cy - 50, radius: 8, isCenter: true });
   return elements;
 };
 
@@ -1114,6 +1072,9 @@ const generateMandalaStar = (cx, cy) => {
   elements.push({ type: 'circle', x: cx, y: cy, radius: 55 });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 75 });
   elements.push({ type: 'circle', x: cx, y: cy, radius: 95 });
+
+  // Outermost ripple
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 115 });
 
   // The peaceful heart - at the center where flower meets reflection
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
@@ -1167,10 +1128,11 @@ const generateSacredSpiral = (cx, cy) => {
   elements.push({ type: 'dot', x: cx + 40, y: cy - 105, radius: 1.5 });
   elements.push({ type: 'dot', x: cx + 110, y: cy - 50, radius: 2 });
 
-  // Meditation stones at foreground (3 circles)
+  // Meditation stones at foreground (4 circles)
   elements.push({ type: 'circle', x: cx - 20, y: cy + 95, radius: 8 });
   elements.push({ type: 'circle', x: cx + 5, y: cy + 100, radius: 6 });
   elements.push({ type: 'circle', x: cx + 25, y: cy + 97, radius: 7 });
+  elements.push({ type: 'circle', x: cx - 45, y: cy + 100, radius: 5 });
 
   // The mountain's heart - the centered self
   elements.push({ type: 'dot', x: cx, y: cy - 100, radius: 7, isCenter: true });
@@ -1215,11 +1177,12 @@ const generateInfinityLoop = (cx, cy) => {
   elements.push({ type: 'line', x1: cx + 60, y1: cy - 35, x2: cx + 65, y2: cy - 55 });
   elements.push({ type: 'line', x1: cx - 45, y1: cy - 40, x2: cx - 50, y2: cy - 58 });
 
-  // Radiance from the eye - love emanating (4 dots)
+  // Radiance from the eye - love emanating (5 dots)
   elements.push({ type: 'dot', x: cx - 80, y: cy - 60, radius: 2 });
   elements.push({ type: 'dot', x: cx + 80, y: cy - 60, radius: 2 });
   elements.push({ type: 'dot', x: cx - 90, y: cy + 50, radius: 2 });
   elements.push({ type: 'dot', x: cx + 90, y: cy + 50, radius: 2 });
+  elements.push({ type: 'dot', x: cx, y: cy + 70, radius: 2 });
 
   // The center - where love and awareness are one
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
@@ -1270,9 +1233,10 @@ const generateFallingLeaves = (cx, cy) => {
   elements.push({ type: 'line', x1: cx - 20, y1: cy + 115, x2: cx - 25, y2: cy + 95 });
   elements.push({ type: 'line', x1: cx + 25, y1: cy + 115, x2: cx + 30, y2: cy + 100 });
 
-  // Leaves at base of dandelion (2 petals)
+  // Leaves at base of dandelion (3 petals)
   elements.push({ type: 'petal', cx: cx - 15, cy: cy + 100, angle: Math.PI * 0.7, innerRadius: 0, outerRadius: 25, width: 0.4 });
   elements.push({ type: 'petal', cx: cx + 15, cy: cy + 100, angle: Math.PI * 0.3, innerRadius: 0, outerRadius: 25, width: 0.4 });
+  elements.push({ type: 'petal', cx: cx, cy: cy + 105, angle: Math.PI * 0.5, innerRadius: 0, outerRadius: 20, width: 0.35 });
 
   // The releasing heart - center of the dandelion
   elements.push({ type: 'dot', x: cx, y: cy - 10, radius: 6, isCenter: true });
@@ -1320,10 +1284,12 @@ const generateForgivenessRelease = (cx, cy) => {
   // Empty perch inside cage - symmetric
   elements.push({ type: 'line', x1: cx - 35, y1: cy + 40, x2: cx + 35, y2: cy + 40 });
 
-  // Feathers floating down - symmetric
+  // Feathers floating down - symmetric (5)
   elements.push({ type: 'dot', x: cx - 20, y: cy + 55, radius: 2 });
   elements.push({ type: 'dot', x: cx + 20, y: cy + 55, radius: 2 });
   elements.push({ type: 'dot', x: cx, y: cy + 50, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx - 10, y: cy + 62, radius: 1.5 });
+  elements.push({ type: 'dot', x: cx + 10, y: cy + 62, radius: 1.5 });
 
   // The freed spirit - center of the ascending bird
   elements.push({ type: 'dot', x: cx, y: cy - 60, radius: 5, isCenter: true });
@@ -1368,6 +1334,11 @@ const generateSelfAcceptance = (cx, cy) => {
 
   // Ground line - symmetric
   elements.push({ type: 'line', x1: cx - 80, y1: cy + 65, x2: cx + 80, y2: cy + 65 });
+
+  // Additional light particles
+  elements.push({ type: 'dot', x: cx - 55, y: cy - 40, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 55, y: cy - 40, radius: 2 });
+  elements.push({ type: 'dot', x: cx, y: cy - 55, radius: 2.5 });
 
   // The accepted heart - at the center of union
   elements.push({ type: 'dot', x: cx, y: cy - 15, radius: 6, isCenter: true });
@@ -1415,9 +1386,10 @@ const generateOpenToReceive = (cx, cy) => {
   elements.push({ type: 'circle', x: cx - 65, y: cy + 60, radius: 25 });
   elements.push({ type: 'circle', x: cx + 70, y: cy + 55, radius: 22 });
 
-  // Water ripples (2 lines)
+  // Water ripples (3 lines)
   elements.push({ type: 'line', x1: cx - 40, y1: cy + 75, x2: cx + 40, y2: cy + 75 });
   elements.push({ type: 'line', x1: cx - 25, y1: cy + 80, x2: cx + 25, y2: cy + 80 });
+  elements.push({ type: 'line', x1: cx - 55, y1: cy + 90, x2: cx + 55, y2: cy + 90 });
 
   // The receptive heart of the lotus
   elements.push({ type: 'dot', x: cx, y: cy + 20, radius: 7, isCenter: true });
@@ -1473,10 +1445,11 @@ const generateRelease = (cx, cy) => {
   elements.push({ type: 'line', x1: cx + 60, y1: cy + 60, x2: cx + 55, y2: cy + 85 });
   elements.push({ type: 'line', x1: cx + 50, y1: cy + 60, x2: cx + 55, y2: cy + 85 });
 
-  // Light particles above - symmetric
+  // Light particles above - symmetric (4)
   elements.push({ type: 'dot', x: cx, y: cy - 85, radius: 3 });
   elements.push({ type: 'dot', x: cx - 15, y: cy - 80, radius: 2 });
   elements.push({ type: 'dot', x: cx + 15, y: cy - 80, radius: 2 });
+  elements.push({ type: 'dot', x: cx, y: cy - 95, radius: 2 });
 
   // Rising energy below butterfly - symmetric motion lines
   elements.push({ type: 'line', x1: cx, y1: cy + 35, x2: cx, y2: cy + 55 });
@@ -1520,11 +1493,14 @@ const generateWeAreOne = (cx, cy) => {
   elements.push({ type: 'dot', x: cx + 15, y: cy + 10, radius: 3 });
   elements.push({ type: 'dot', x: cx - 10, y: cy + 15, radius: 3 });
 
-  // Bubbles in symmetric pattern (4 dots)
+  // Bubbles in symmetric pattern (7 dots for 28 total = 4 words × 7 cycles)
   elements.push({ type: 'dot', x: cx, y: cy - 95, radius: 3 });
   elements.push({ type: 'dot', x: cx + 95, y: cy, radius: 2.5 });
   elements.push({ type: 'dot', x: cx, y: cy + 95, radius: 2.5 });
   elements.push({ type: 'dot', x: cx - 95, y: cy, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 70, y: cy - 70, radius: 2 });
+  elements.push({ type: 'dot', x: cx - 70, y: cy - 70, radius: 2 });
+  elements.push({ type: 'dot', x: cx, y: cy + 105, radius: 2.5 });
 
   // The unified center - the school as ONE
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
@@ -1536,7 +1512,6 @@ const mantraVisualPairs = [
   { text: 'I am grateful for this moment', words: ['I', 'am', 'grateful', 'for', 'this', 'moment'], generate: generateFlowerOfLife },
   { text: 'Abundance flows to me', words: ['Abundance', 'flows', 'to', 'me'], generate: generateSpiralGalaxy },
   { text: 'I am worthy of love', words: ['I', 'am', 'worthy', 'of', 'love'], generate: generateLotusBlossom },
-  { text: 'All is well', words: ['All', 'is', 'well'], generate: generateCosmicEye },
   { text: 'Peace begins within', words: ['Peace', 'begins', 'within'], generate: generateMandalaStar },
   { text: 'I am calm and centered', words: ['I', 'am', 'calm', 'and', 'centered'], generate: generateSacredSpiral },
   { text: 'I am loving awareness', words: ['I', 'am', 'loving', 'awareness'], generate: generateInfinityLoop },
