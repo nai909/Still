@@ -8580,7 +8580,8 @@ function MantraGeometryCanvas({ elements, revealedCount, isComplete, primaryHue 
       }
 
       elements.forEach((el, index) => {
-        if (index >= revealedCount) return;
+        // Show element if revealed, or show isCenter when complete
+        if (index >= revealedCount && !(el.isCenter && isComplete)) return;
 
         if (!elementAnimations.current[index]) {
           elementAnimations.current[index] = { startTime: now, progress: 0 };
@@ -8761,7 +8762,8 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
   const fadeInTimeoutRef = useRef(null);
 
   const currentPair = mantraVisualPairs[pairIndex];
-  const totalElements = elements.length;
+  // Don't count isCenter element - it reveals on completion, not on a word
+  const totalElements = elements.filter(e => !e.isCenter).length;
 
   // Save mantra index whenever it changes
   useEffect(() => {
