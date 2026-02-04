@@ -4621,6 +4621,7 @@ function Still() {
                 { key: 'gaze', icon: '◯', label: 'Gaze' },
                 { key: 'zenboard', icon: '∞', label: 'Impermanence' },
                 { key: 'mantra', icon: '◇', label: 'Mantra' },
+                { key: 'heartGarden', icon: '❦', label: 'Metta' },
               ];
               const currentMode = modes.find(m => m.key === view) || modes[0];
               return (
@@ -5171,6 +5172,23 @@ function Still() {
             primaryHue={primaryHue}
             primaryColor={primaryColor}
           />
+        )}
+
+        {/* Heart Garden View - Loving-kindness meditation */}
+        {view === 'heartGarden' && (
+          <div style={{ position: 'absolute', inset: 0 }}>
+            <GazeMode
+              theme={currentTheme}
+              primaryHue={settings.primaryHue}
+              onHueChange={(hue) => {
+                const newSettings = { ...settings, primaryHue: hue };
+                setSettings(newSettings);
+                saveSettings(newSettings);
+              }}
+              currentVisual="heartGarden"
+              onVisualChange={() => {}}
+            />
+          </div>
         )}
 
         {/* Breathwork View is now always mounted below for WebGL warmup */}
