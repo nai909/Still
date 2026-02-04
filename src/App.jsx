@@ -1998,7 +1998,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
   const [currentInstrument, setCurrentInstrument] = useState(0); // handpan
   const [currentTexture, setCurrentTexture] = useState(2); // forest
   const [currentKey, setCurrentKey] = useState(3); // D#
-  const [currentScaleType, setCurrentScaleType] = useState(10); // pentatonic minor
+  const [currentScaleType, setCurrentScaleType] = useState(9); // pentatonic major
   const [showLabel, setShowLabel] = useState(false);
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
