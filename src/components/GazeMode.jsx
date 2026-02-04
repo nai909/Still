@@ -5456,6 +5456,698 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue, getBreathPhase]);
 
+  // ========== HEART GARDEN MODE ==========
+  // A loving-kindness meditation with a growing garden
+  // Adapted from Ven. Ayya Khema's "Garden in Your Heart"
+  const [gardenStage, setGardenStage] = React.useState(0);
+  const [gardenElapsed, setGardenElapsed] = React.useState(0);
+  const [gardenTotalElapsed, setGardenTotalElapsed] = React.useState(0);
+  const [gardenGuidanceIndex, setGardenGuidanceIndex] = React.useState(0);
+  const [gardenGuidanceOpacity, setGardenGuidanceOpacity] = React.useState(0);
+  const [gardenPaused, setGardenPaused] = React.useState(false);
+  const gardenTimerRef = React.useRef(null);
+  const gardenGuidanceTimerRef = React.useRef(null);
+  const gardenCanvasRef = React.useRef(null);
+
+  // Meditation stages - adapted from Ayya Khema's teaching
+  const meditationStages = React.useMemo(() => [
+    {
+      id: 'intro',
+      title: 'Settling',
+      duration: 30,
+      guidance: [
+        "Put your attention on the breath for a few moments.",
+        "Let each inhale be so gentle it barely stirs the hairs in your nose.",
+        "Don't force anything. Let the breath be smooth and natural."
+      ]
+    },
+    {
+      id: 'garden',
+      title: 'The Garden',
+      duration: 50,
+      guidance: [
+        "Imagine a garden growing in your heart.",
+        "Not flowers, but food — fruits and vegetables.",
+        "Tomatoes ripening in the sun. Leafy greens. Squash on the vine.",
+        "This garden is nourished by your attention and care.",
+        "Tend it gently. Watch it grow."
+      ]
+    },
+    {
+      id: 'self',
+      title: 'Yourself',
+      duration: 40,
+      guidance: [
+        "Walk through your garden and harvest something for yourself.",
+        "Choose whatever calls to you.",
+        "You have tended this garden. You deserve its fruits.",
+        "Let yourself be nourished by your own care."
+      ]
+    },
+    {
+      id: 'beloved',
+      title: 'Someone You Love',
+      duration: 50,
+      guidance: [
+        "Think of someone you love deeply.",
+        "Walk through your garden and harvest a gift for them.",
+        "Perhaps their favorite fruit. Something that would make them smile.",
+        "See yourself handing them this gift from the garden in your heart.",
+        "Notice how it feels to give."
+      ]
+    },
+    {
+      id: 'parents',
+      title: 'Parents or Elders',
+      duration: 50,
+      guidance: [
+        "Think of your parents, or those who raised you.",
+        "Whether still alive or passed, they exist in your heart.",
+        "Harvest the ripest, most perfect offering from the garden in your heart.",
+        "Hand it to them with gratitude.",
+        "Even if complicated, offer this gift freely."
+      ]
+    },
+    {
+      id: 'friends',
+      title: 'Friends and Family',
+      duration: 50,
+      guidance: [
+        "Think of your good friends, your relatives.",
+        "For each one, harvest a gift from the garden in your heart.",
+        "The more you give, the more it grows.",
+        "See each person receiving with joy.",
+        "Feel the warmth spreading outward."
+      ]
+    },
+    {
+      id: 'neutral',
+      title: 'Acquaintances',
+      duration: 50,
+      guidance: [
+        "Think of people you see in daily life.",
+        "The mail carrier. The grocery clerk. A neighbor.",
+        "For each, harvest something from the garden in your heart.",
+        "They too need nourishment.",
+        "Offer freely, expecting nothing."
+      ]
+    },
+    {
+      id: 'difficult',
+      title: 'A Difficult Person',
+      duration: 60,
+      guidance: [
+        "Now think of someone difficult in your life.",
+        "Or someone you feel indifferent toward.",
+        "This is the harder practice.",
+        "Harvest a gift for this person from the garden in your heart.",
+        "Hand it to them with respect.",
+        "Feel the relief of letting go."
+      ]
+    },
+    {
+      id: 'all',
+      title: 'All Beings',
+      duration: 70,
+      guidance: [
+        "Now let the garden expand beyond all boundaries.",
+        "Open the gates and let everyone enter.",
+        "All beings everywhere — human, animal, seen and unseen.",
+        "Each one takes what they need.",
+        "And the garden grows more abundant with every gift.",
+        "There is no scarcity here. Only overflow.",
+        "May all beings be nourished."
+      ]
+    },
+    {
+      id: 'return',
+      title: 'Returning',
+      duration: 50,
+      guidance: [
+        "Bring your attention back to yourself.",
+        "Notice that the garden in your heart is undiminished.",
+        "Giving has only made it more abundant.",
+        "This garden lives within you always.",
+        "Tend it daily. It will nourish you in return."
+      ]
+    }
+  ], []);
+
+  const gardenTotalDuration = React.useMemo(() =>
+    meditationStages.reduce((acc, stage) => acc + stage.duration, 0), [meditationStages]);
+
+  // Garden plant definitions
+  const gardenPlants = React.useMemo(() => [
+    { type: 'sprout', x: 0.5, y: 0.8, bloomAt: 0.02, scale: 1 },
+    { type: 'sprout', x: 0.4, y: 0.78, bloomAt: 0.04, scale: 0.8 },
+    { type: 'sprout', x: 0.6, y: 0.79, bloomAt: 0.06, scale: 0.9 },
+    { type: 'herb', x: 0.34, y: 0.74, bloomAt: 0.10, scale: 0.7 },
+    { type: 'herb', x: 0.66, y: 0.75, bloomAt: 0.12, scale: 0.8 },
+    { type: 'fern', x: 0.26, y: 0.71, bloomAt: 0.14, scale: 0.6 },
+    { type: 'fern', x: 0.74, y: 0.73, bloomAt: 0.16, scale: 0.7 },
+    { type: 'tomato', x: 0.44, y: 0.68, bloomAt: 0.20, scale: 1 },
+    { type: 'carrot', x: 0.56, y: 0.7, bloomAt: 0.24, scale: 0.9 },
+    { type: 'leafy', x: 0.31, y: 0.66, bloomAt: 0.28, scale: 0.8 },
+    { type: 'squash', x: 0.69, y: 0.67, bloomAt: 0.32, scale: 0.85 },
+    { type: 'vine', x: 0.2, y: 0.63, bloomAt: 0.36, scale: 0.7, direction: 1 },
+    { type: 'vine', x: 0.8, y: 0.64, bloomAt: 0.40, scale: 0.7, direction: -1 },
+    { type: 'tomato', x: 0.37, y: 0.57, bloomAt: 0.44, scale: 0.9 },
+    { type: 'pepper', x: 0.63, y: 0.58, bloomAt: 0.48, scale: 0.85 },
+    { type: 'leafy', x: 0.5, y: 0.54, bloomAt: 0.52, scale: 1 },
+    { type: 'herb', x: 0.27, y: 0.53, bloomAt: 0.56, scale: 0.75 },
+    { type: 'herb', x: 0.73, y: 0.54, bloomAt: 0.60, scale: 0.8 },
+    { type: 'fern', x: 0.17, y: 0.5, bloomAt: 0.64, scale: 0.65 },
+    { type: 'fern', x: 0.83, y: 0.51, bloomAt: 0.68, scale: 0.7 },
+    { type: 'corn', x: 0.41, y: 0.43, bloomAt: 0.72, scale: 1 },
+    { type: 'corn', x: 0.59, y: 0.44, bloomAt: 0.76, scale: 0.95 },
+    { type: 'sunflower', x: 0.5, y: 0.34, bloomAt: 0.80, scale: 1 },
+    { type: 'vine', x: 0.14, y: 0.4, bloomAt: 0.84, scale: 0.6, direction: 1 },
+    { type: 'vine', x: 0.86, y: 0.41, bloomAt: 0.88, scale: 0.6, direction: -1 },
+    { type: 'butterfly', x: 0.5, y: 0.23, bloomAt: 0.92, scale: 1 },
+  ], []);
+
+  // Reset garden state when mode changes
+  React.useEffect(() => {
+    if (currentMode === 'heartGarden') {
+      setGardenStage(0);
+      setGardenElapsed(0);
+      setGardenTotalElapsed(0);
+      setGardenGuidanceIndex(0);
+      setGardenPaused(false);
+      // Fade in first guidance after a brief delay
+      setTimeout(() => setGardenGuidanceOpacity(1), 500);
+    } else {
+      setGardenGuidanceOpacity(0);
+    }
+  }, [currentMode]);
+
+  // Garden timer
+  React.useEffect(() => {
+    if (currentMode !== 'heartGarden' || gardenPaused) return;
+    if (gardenTotalElapsed >= gardenTotalDuration) return;
+
+    gardenTimerRef.current = setInterval(() => {
+      setGardenElapsed(prev => {
+        const newElapsed = prev + 1;
+        const currentStageDuration = meditationStages[gardenStage]?.duration || 50;
+
+        if (newElapsed >= currentStageDuration) {
+          if (gardenStage < meditationStages.length - 1) {
+            setGardenStage(s => s + 1);
+            setGardenGuidanceIndex(0);
+            setGardenGuidanceOpacity(1);
+            return 0;
+          }
+        }
+        return newElapsed;
+      });
+      setGardenTotalElapsed(prev => Math.min(prev + 1, gardenTotalDuration));
+    }, 1000);
+
+    return () => clearInterval(gardenTimerRef.current);
+  }, [currentMode, gardenPaused, gardenStage, gardenTotalDuration, meditationStages]);
+
+  // Guidance text cycling - 10 seconds per line
+  React.useEffect(() => {
+    if (currentMode !== 'heartGarden' || gardenPaused) return;
+    if (gardenTotalElapsed >= gardenTotalDuration) return;
+
+    const stage = meditationStages[gardenStage];
+    if (!stage) return;
+    const guidanceCount = stage.guidance.length;
+
+    gardenGuidanceTimerRef.current = setInterval(() => {
+      if (gardenGuidanceIndex >= guidanceCount - 1) return;
+
+      setGardenGuidanceOpacity(0);
+      setTimeout(() => {
+        setGardenGuidanceIndex(prev => Math.min(prev + 1, guidanceCount - 1));
+        setGardenGuidanceOpacity(1);
+      }, 800);
+    }, 10000);
+
+    return () => clearInterval(gardenGuidanceTimerRef.current);
+  }, [currentMode, gardenPaused, gardenStage, gardenGuidanceIndex, gardenTotalElapsed, gardenTotalDuration, meditationStages]);
+
+  // Garden canvas animation
+  React.useEffect(() => {
+    if (currentMode !== 'heartGarden') return;
+
+    const canvas = gardenCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio, 2);
+    let animationId;
+    let time = 0;
+
+    const resize = () => {
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.scale(dpr, dpr);
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const TAU = Math.PI * 2;
+
+    // Convert hue to rgba
+    const hslToRgba = (h, s, l, a) => `hsla(${h}, ${s}%, ${l}%, ${a})`;
+    const primaryColor = hslToRgba(hue, 52, 68, 1);
+    const dimColor = hslToRgba(hue, 52, 68, 0.4);
+
+    const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
+
+    // Plant drawing functions
+    const drawSprout = (x, y, scale, growth, t, sway) => {
+      const h = 30 * scale * growth;
+      ctx.beginPath();
+      ctx.moveTo(x + sway, y);
+      ctx.lineTo(x + sway, y - h);
+      ctx.stroke();
+
+      if (growth > 0.5) {
+        const leafSize = 12 * scale * (growth - 0.5) * 2;
+        ctx.beginPath();
+        ctx.moveTo(x + sway, y - h * 0.7);
+        ctx.quadraticCurveTo(x + sway - leafSize, y - h * 0.7 - leafSize * 0.5, x + sway - leafSize * 0.3, y - h * 0.9);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x + sway, y - h * 0.7);
+        ctx.quadraticCurveTo(x + sway + leafSize, y - h * 0.7 - leafSize * 0.5, x + sway + leafSize * 0.3, y - h * 0.9);
+        ctx.stroke();
+      }
+    };
+
+    const drawHerb = (x, y, scale, growth, t, sway) => {
+      const h = 50 * scale * growth;
+      for (let i = -1; i <= 1; i++) {
+        const stemX = x + i * 8 * scale + sway;
+        const lean = i * 7 * growth;
+        ctx.beginPath();
+        ctx.moveTo(stemX, y);
+        ctx.quadraticCurveTo(stemX + lean * 0.5, y - h * 0.5, stemX + lean, y - h);
+        ctx.stroke();
+
+        if (growth > 0.3) {
+          for (let j = 0.3; j < growth; j += 0.25) {
+            const ly = y - h * j;
+            const lx = stemX + lean * j;
+            const leafSize = 7 * scale;
+            ctx.beginPath();
+            ctx.moveTo(lx, ly);
+            ctx.quadraticCurveTo(lx + leafSize * (i || 1), ly - leafSize, lx, ly - leafSize * 1.5);
+            ctx.stroke();
+          }
+        }
+      }
+    };
+
+    const drawFern = (x, y, scale, growth, t, sway) => {
+      const h = 70 * scale * growth;
+      ctx.beginPath();
+      ctx.moveTo(x + sway * 0.5, y);
+      ctx.quadraticCurveTo(x - 15 * scale + sway * 0.5, y - h * 0.5, x - 8 * scale + sway * 0.5, y - h);
+      ctx.stroke();
+
+      const frondCount = Math.floor(growth * 8);
+      for (let i = 0; i < frondCount; i++) {
+        const fy = y - (h * 0.2) - (i / 8) * h * 0.7;
+        const fx = x - 8 * scale * (i / 8) + sway * 0.5;
+        const frondLen = (22 - i * 1.8) * scale;
+        const side = i % 2 === 0 ? -1 : 1;
+
+        ctx.beginPath();
+        ctx.moveTo(fx, fy);
+        ctx.quadraticCurveTo(fx + frondLen * side, fy - 7, fx + frondLen * 1.2 * side, fy + 4);
+        ctx.stroke();
+      }
+    };
+
+    const drawTomato = (x, y, scale, growth, t, breath, sway) => {
+      const h = 65 * scale * growth;
+      ctx.beginPath();
+      ctx.moveTo(x + sway, y);
+      ctx.bezierCurveTo(x - 7 + sway, y - h * 0.3, x + 7 + sway, y - h * 0.6, x + sway, y - h);
+      ctx.stroke();
+
+      if (growth > 0.4) {
+        const leafGrowth = (growth - 0.4) / 0.6;
+        for (let i = 0; i < 3; i++) {
+          const ly = y - h * (0.3 + i * 0.2);
+          const side = i % 2 === 0 ? -1 : 1;
+          const leafSize = 22 * scale * leafGrowth;
+
+          ctx.beginPath();
+          ctx.moveTo(x + sway, ly);
+          ctx.bezierCurveTo(
+            x + leafSize * side * 0.5 + sway, ly - leafSize * 0.3,
+            x + leafSize * side + sway, ly - leafSize * 0.2,
+            x + leafSize * side * 0.8 + sway, ly + leafSize * 0.3
+          );
+          ctx.stroke();
+        }
+      }
+
+      if (growth > 0.7) {
+        const fruitGrowth = (growth - 0.7) / 0.3;
+        const fruitR = 12 * scale * fruitGrowth * (0.9 + breath * 0.1);
+
+        ctx.beginPath();
+        ctx.arc(x - 15 * scale + sway, y - h * 0.5, fruitR, 0, TAU);
+        ctx.stroke();
+
+        if (growth > 0.85) {
+          ctx.beginPath();
+          ctx.arc(x + 12 * scale + sway, y - h * 0.65, fruitR * 0.8, 0, TAU);
+          ctx.stroke();
+        }
+      }
+    };
+
+    const drawCarrot = (x, y, scale, growth, t, sway) => {
+      const h = 55 * scale * growth;
+      for (let i = -2; i <= 2; i++) {
+        const lean = i * 12 * scale;
+        ctx.beginPath();
+        ctx.moveTo(x + sway, y);
+        ctx.quadraticCurveTo(x + lean * 0.5 + sway, y - h * 0.6, x + lean + sway, y - h);
+        ctx.stroke();
+      }
+    };
+
+    const drawLeafy = (x, y, scale, growth, t, sway) => {
+      const layers = Math.floor(growth * 5);
+      for (let i = 0; i < layers; i++) {
+        const layerScale = (layers - i) / layers;
+        const w = 35 * scale * layerScale;
+        const h = 28 * scale * layerScale * growth;
+
+        ctx.beginPath();
+        ctx.ellipse(x + sway, y - i * 7 * scale, w, h, 0, Math.PI, 0);
+        ctx.stroke();
+      }
+    };
+
+    const drawSquash = (x, y, scale, growth, t, breath, sway) => {
+      ctx.beginPath();
+      ctx.moveTo(x + sway, y);
+      ctx.quadraticCurveTo(x - 28 * scale + sway, y - 14, x - 42 * scale + sway, y - 7);
+      ctx.stroke();
+
+      if (growth > 0.3) {
+        const leafSize = 28 * scale * growth;
+        ctx.beginPath();
+        ctx.moveTo(x - 21 * scale + sway, y - 11);
+        ctx.quadraticCurveTo(x - 21 * scale - leafSize + sway, y - leafSize, x - 21 * scale + sway, y - leafSize * 1.5);
+        ctx.quadraticCurveTo(x - 21 * scale + leafSize * 0.5 + sway, y - leafSize, x - 21 * scale + sway, y - 11);
+        ctx.stroke();
+      }
+
+      if (growth > 0.6) {
+        const fruitGrowth = (growth - 0.6) / 0.4;
+        const fw = 22 * scale * fruitGrowth * (0.95 + breath * 0.05);
+        const fh = 14 * scale * fruitGrowth;
+        ctx.beginPath();
+        ctx.ellipse(x - 35 * scale + sway, y, fw, fh, 0.3, 0, TAU);
+        ctx.stroke();
+      }
+    };
+
+    const drawPepper = (x, y, scale, growth, t, breath, sway) => {
+      const h = 55 * scale * growth;
+      ctx.beginPath();
+      ctx.moveTo(x + sway, y);
+      ctx.lineTo(x + sway, y - h);
+      ctx.stroke();
+
+      if (growth > 0.5) {
+        ctx.beginPath();
+        ctx.moveTo(x + sway, y - h * 0.6);
+        ctx.lineTo(x - 21 * scale + sway, y - h * 0.5);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x + sway, y - h * 0.7);
+        ctx.lineTo(x + 17 * scale + sway, y - h * 0.6);
+        ctx.stroke();
+
+        if (growth > 0.7) {
+          const pepperLen = 17 * scale * (0.9 + breath * 0.1);
+          ctx.beginPath();
+          ctx.moveTo(x - 21 * scale + sway, y - h * 0.5);
+          ctx.quadraticCurveTo(x - 25 * scale + sway, y - h * 0.5 + pepperLen * 0.5, x - 21 * scale + sway, y - h * 0.5 + pepperLen);
+          ctx.quadraticCurveTo(x - 17 * scale + sway, y - h * 0.5 + pepperLen * 0.5, x - 21 * scale + sway, y - h * 0.5);
+          ctx.stroke();
+        }
+      }
+    };
+
+    const drawVine = (x, y, scale, growth, t, dir, sway) => {
+      const length = 110 * scale * growth;
+      ctx.beginPath();
+
+      for (let i = 0; i < length; i += 3) {
+        const progress = i / length;
+        const curl = Math.sin(progress * Math.PI * 3 + t) * 21 * progress;
+        const vx = x + (i * dir) + curl * dir + sway * (1 - progress);
+        const vy = y - progress * 55 * scale;
+
+        if (i === 0) ctx.moveTo(vx, vy);
+        else ctx.lineTo(vx, vy);
+      }
+      ctx.stroke();
+
+      if (growth > 0.4) {
+        for (let i = 0.3; i < growth; i += 0.2) {
+          const tx = x + (length * i * dir) + sway * (1 - i);
+          const ty = y - i * 55 * scale;
+
+          ctx.beginPath();
+          ctx.moveTo(tx, ty);
+          for (let j = 0; j < 10; j++) {
+            const angle = j * 0.8;
+            const r = j * 2 * scale;
+            ctx.lineTo(tx + Math.cos(angle) * r * dir, ty - Math.sin(angle) * r - j * 2.5);
+          }
+          ctx.stroke();
+        }
+      }
+    };
+
+    const drawCorn = (x, y, scale, growth, t, sway) => {
+      const h = 110 * scale * growth;
+
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + sway * 0.3, y);
+      ctx.lineTo(x + sway * 0.3, y - h);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+
+      const leafCount = Math.floor(growth * 6);
+      for (let i = 0; i < leafCount; i++) {
+        const ly = y - (h * 0.2) - (i / 6) * h * 0.6;
+        const side = i % 2 === 0 ? -1 : 1;
+        const leafLen = (42 - i * 4) * scale;
+
+        ctx.beginPath();
+        ctx.moveTo(x + sway * 0.3, ly);
+        ctx.quadraticCurveTo(
+          x + leafLen * 0.5 * side + sway * 0.3, ly - 14,
+          x + leafLen * side + sway * 0.3, ly + 21
+        );
+        ctx.stroke();
+      }
+
+      if (growth > 0.7) {
+        const cobY = y - h * 0.5;
+        const cobH = 28 * scale;
+        const cobW = 11 * scale;
+
+        ctx.beginPath();
+        ctx.ellipse(x + 17 * scale + sway * 0.3, cobY, cobW, cobH, 0.3, 0, TAU);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x + 17 * scale + sway * 0.3, cobY - cobH);
+        for (let i = 0; i < 5; i++) {
+          ctx.lineTo(x + 17 * scale + (i - 2) * 4 + sway * 0.3, cobY - cobH - 14 - i * 3);
+        }
+        ctx.stroke();
+      }
+    };
+
+    const drawSunflower = (x, y, scale, growth, t, breath, sway) => {
+      const h = 140 * scale * growth;
+
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + sway * 0.5, y);
+      ctx.quadraticCurveTo(x - 7 + sway * 0.5, y - h * 0.5, x + sway * 0.5, y - h);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+
+      if (growth > 0.3) {
+        for (let i = 0; i < 3; i++) {
+          const ly = y - h * (0.2 + i * 0.2);
+          const side = i % 2 === 0 ? -1 : 1;
+          const leafSize = 35 * scale;
+
+          ctx.beginPath();
+          ctx.moveTo(x + sway * 0.5, ly);
+          ctx.quadraticCurveTo(
+            x + leafSize * side + sway * 0.5, ly - leafSize * 0.3,
+            x + leafSize * 0.7 * side + sway * 0.5, ly + leafSize * 0.5
+          );
+          ctx.stroke();
+        }
+      }
+
+      if (growth > 0.6) {
+        const flowerGrowth = (growth - 0.6) / 0.4;
+        const centerR = 21 * scale * flowerGrowth * (0.95 + breath * 0.05);
+        const petalCount = Math.floor(flowerGrowth * 16);
+        const petalLen = 28 * scale * flowerGrowth;
+
+        for (let i = 0; i < petalCount; i++) {
+          const angle = (i / 16) * TAU - Math.PI / 2;
+          const px = x + Math.cos(angle) * centerR + sway * 0.5;
+          const py = (y - h) + Math.sin(angle) * centerR;
+          const tipX = x + Math.cos(angle) * (centerR + petalLen) + sway * 0.5;
+          const tipY = (y - h) + Math.sin(angle) * (centerR + petalLen);
+
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.quadraticCurveTo(
+            x + Math.cos(angle + 0.2) * (centerR + petalLen * 0.5) + sway * 0.5,
+            (y - h) + Math.sin(angle + 0.2) * (centerR + petalLen * 0.5),
+            tipX, tipY
+          );
+          ctx.stroke();
+        }
+
+        ctx.beginPath();
+        ctx.arc(x + sway * 0.5, y - h, centerR, 0, TAU);
+        ctx.stroke();
+
+        if (flowerGrowth > 0.5) {
+          ctx.globalAlpha *= 0.5;
+          ctx.beginPath();
+          ctx.arc(x + sway * 0.5, y - h, centerR * 0.6, 0, TAU);
+          ctx.stroke();
+          ctx.globalAlpha *= 2;
+        }
+      }
+    };
+
+    const drawButterfly = (x, y, scale, growth, t) => {
+      const wingFlap = Math.sin(t * 8) * 0.3 + 0.7;
+      const wingW = 21 * scale * growth * wingFlap;
+      const wingH = 28 * scale * growth;
+      const floatX = Math.sin(t * 2) * 28;
+      const floatY = Math.cos(t * 1.5) * 14;
+
+      ctx.beginPath();
+      ctx.moveTo(x + floatX, y - 11 * scale + floatY);
+      ctx.lineTo(x + floatX, y + 11 * scale + floatY);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.ellipse(x - wingW * 0.7 + floatX, y - 3 * scale + floatY, wingW, wingH * 0.7, -0.3, 0, TAU);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.ellipse(x + wingW * 0.7 + floatX, y - 3 * scale + floatY, wingW, wingH * 0.7, 0.3, 0, TAU);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.ellipse(x - wingW * 0.5 + floatX, y + 7 * scale + floatY, wingW * 0.6, wingH * 0.4, -0.2, 0, TAU);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.ellipse(x + wingW * 0.5 + floatX, y + 7 * scale + floatY, wingW * 0.6, wingH * 0.4, 0.2, 0, TAU);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x + floatX, y - 11 * scale + floatY);
+      ctx.quadraticCurveTo(x - 7 * scale + floatX, y - 21 * scale + floatY, x - 4 * scale + floatX, y - 25 * scale + floatY);
+      ctx.moveTo(x + floatX, y - 11 * scale + floatY);
+      ctx.quadraticCurveTo(x + 7 * scale + floatX, y - 21 * scale + floatY, x + 4 * scale + floatX, y - 25 * scale + floatY);
+      ctx.stroke();
+    };
+
+    const animate = () => {
+      animationId = requestAnimationFrame(animate);
+      time += 0.016;
+
+      ctx.clearRect(0, 0, W, H);
+
+      const breath = easeInOutSine((Math.sin(time * 0.5) + 1) / 2);
+      const progress = Math.min(1, gardenTotalElapsed / gardenTotalDuration);
+
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = hslToRgba(hue, 52, 68, 0.8);
+      ctx.lineWidth = 1.5;
+
+      // Ground line
+      ctx.globalAlpha = 0.3 + breath * 0.1;
+      ctx.beginPath();
+      ctx.moveTo(W * 0.08, H * 0.83);
+      ctx.quadraticCurveTo(W * 0.5, H * 0.86, W * 0.92, H * 0.83);
+      ctx.stroke();
+
+      // Draw plants
+      gardenPlants.forEach((plant, index) => {
+        const plantProgress = Math.max(0, Math.min(1, (progress - plant.bloomAt) / 0.08));
+        if (plantProgress <= 0) return;
+
+        const x = plant.x * W;
+        const y = plant.y * H;
+        const scale = plant.scale * (0.8 + breath * 0.2);
+        const sway = Math.sin(time * 1.5 + index * 0.7) * 4 * plantProgress;
+
+        ctx.globalAlpha = 0.5 + plantProgress * 0.4;
+
+        switch (plant.type) {
+          case 'sprout': drawSprout(x, y, scale, plantProgress, time, sway); break;
+          case 'herb': drawHerb(x, y, scale, plantProgress, time, sway); break;
+          case 'fern': drawFern(x, y, scale, plantProgress, time, sway); break;
+          case 'tomato': drawTomato(x, y, scale, plantProgress, time, breath, sway); break;
+          case 'carrot': drawCarrot(x, y, scale, plantProgress, time, sway); break;
+          case 'leafy': drawLeafy(x, y, scale, plantProgress, time, sway); break;
+          case 'squash': drawSquash(x, y, scale, plantProgress, time, breath, sway); break;
+          case 'pepper': drawPepper(x, y, scale, plantProgress, time, breath, sway); break;
+          case 'vine': drawVine(x, y, scale, plantProgress, time, plant.direction || 1, sway); break;
+          case 'corn': drawCorn(x, y, scale, plantProgress, time, sway); break;
+          case 'sunflower': drawSunflower(x, y, scale, plantProgress, time, breath, sway); break;
+          case 'butterfly': drawButterfly(x, y, scale, plantProgress, time); break;
+        }
+      });
+
+      // Subtle center glow in later stages
+      if (progress > 0.5) {
+        const glowIntensity = (progress - 0.5) * 2;
+        const glowGrad = ctx.createRadialGradient(W * 0.5, H * 0.57, 0, W * 0.5, H * 0.57, H * 0.43);
+        glowGrad.addColorStop(0, hslToRgba(hue, 52, 68, 0.08 * glowIntensity * breath));
+        glowGrad.addColorStop(1, 'transparent');
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = glowGrad;
+        ctx.fillRect(0, 0, W, H);
+      }
+    };
+
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', resize);
+    };
+  }, [currentMode, hue, gardenTotalElapsed, gardenTotalDuration, gardenPlants]);
+
   // Floating particles animation (stars in space effect)
   React.useEffect(() => {
     const canvas = particleCanvasRef.current;
@@ -5556,13 +6248,126 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'mountains' || currentMode === 'cave' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'mountains' || currentMode === 'cave' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
           pointerEvents: 'none',
           animation: 'fadeInSmooth 0.4s ease-out',
         }} />
+      )}
+
+      {/* Heart Garden canvas */}
+      {currentMode === 'heartGarden' && (
+        <canvas
+          ref={gardenCanvasRef}
+          onClick={() => setGardenPaused(!gardenPaused)}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'auto',
+            cursor: 'pointer',
+          }}
+        />
+      )}
+
+      {/* Heart Garden guidance overlay */}
+      {currentMode === 'heartGarden' && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            pointerEvents: 'none',
+            paddingTop: 'calc(3rem + env(safe-area-inset-top, 0px))',
+          }}
+        >
+          {/* Stage title */}
+          <div
+            style={{
+              color: `hsla(${hue}, 52%, 68%, 0.6)`,
+              fontSize: '0.75rem',
+              fontFamily: '"Jost", sans-serif',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              marginBottom: '1.5rem',
+              transition: 'opacity 0.8s ease',
+              opacity: gardenGuidanceOpacity * 0.8,
+            }}
+          >
+            {meditationStages[gardenStage]?.title || ''}
+          </div>
+
+          {/* Guidance text */}
+          <div
+            style={{
+              color: `hsla(${hue}, 52%, 78%, ${gardenGuidanceOpacity * 0.95})`,
+              fontSize: '1.1rem',
+              fontFamily: '"Jost", sans-serif',
+              fontWeight: 300,
+              lineHeight: 1.7,
+              textAlign: 'center',
+              maxWidth: '85%',
+              padding: '0 1.5rem',
+              transition: 'opacity 0.8s ease',
+              textShadow: '0 2px 20px rgba(0,0,0,0.7)',
+            }}
+          >
+            {meditationStages[gardenStage]?.guidance[gardenGuidanceIndex] || ''}
+          </div>
+
+          {/* Paused indicator */}
+          {gardenPaused && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                color: `hsla(${hue}, 52%, 68%, 0.7)`,
+                fontSize: '0.85rem',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                animation: 'fadeIn 0.3s ease',
+              }}
+            >
+              Paused
+            </div>
+          )}
+
+          {/* Progress dots */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              gap: '0.5rem',
+            }}
+          >
+            {meditationStages.map((stage, i) => (
+              <div
+                key={stage.id}
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: i <= gardenStage
+                    ? `hsla(${hue}, 52%, 68%, ${i === gardenStage ? 0.9 : 0.5})`
+                    : `hsla(${hue}, 52%, 68%, 0.2)`,
+                  transition: 'background-color 0.5s ease',
+                }}
+              />
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Floating particles overlay (stars in space) */}
