@@ -1037,100 +1037,6 @@ const generateLotusBlossom = (cx, cy) => {
   return elements;
 };
 
-// Love Flows Through Me - 28 elements (4 words × 7 cycles)
-// RIVER WITH FISH - flowing water, life swimming through
-const generateOceanWaves = (cx, cy) => {
-  const elements = [];
-
-  // River banks - curved lines showing the channel (4 lines)
-  elements.push({ type: 'line', x1: cx - 80, y1: cy - 120, x2: cx - 50, y2: cy - 40 });
-  elements.push({ type: 'line', x1: cx - 50, y1: cy - 40, x2: cx - 70, y2: cy + 60 });
-  elements.push({ type: 'line', x1: cx + 60, y1: cy - 120, x2: cx + 35, y2: cy - 20 });
-  elements.push({ type: 'line', x1: cx + 35, y1: cy - 20, x2: cx + 55, y2: cy + 80 });
-
-  // River current lines - flowing water (6 wavy suggestions)
-  elements.push({ type: 'line', x1: cx - 30, y1: cy - 90, x2: cx - 15, y2: cy - 50 });
-  elements.push({ type: 'line', x1: cx + 10, y1: cy - 100, x2: cx - 5, y2: cy - 30 });
-  elements.push({ type: 'line', x1: cx - 20, y1: cy - 20, x2: cx - 10, y2: cy + 30 });
-  elements.push({ type: 'line', x1: cx + 15, y1: cy - 10, x2: cx + 5, y2: cy + 50 });
-  elements.push({ type: 'line', x1: cx - 35, y1: cy + 40, x2: cx - 25, y2: cy + 90 });
-  elements.push({ type: 'line', x1: cx + 25, y1: cy + 60, x2: cx + 15, y2: cy + 110 });
-
-  // Fish swimming with the current - 6 fish (each = 2 elements: body + tail)
-  // Fish 1 - upper left
-  elements.push({ type: 'circle', x: cx - 25, y: cy - 70, radius: 8 });
-  elements.push({ type: 'petal', cx: cx - 35, cy: cy - 70, angle: Math.PI, innerRadius: 0, outerRadius: 10, width: 0.6 });
-  // Fish 2 - upper right
-  elements.push({ type: 'circle', x: cx + 20, y: cy - 55, radius: 7 });
-  elements.push({ type: 'petal', cx: cx + 30, cy: cy - 55, angle: Math.PI * 0.9, innerRadius: 0, outerRadius: 9, width: 0.6 });
-  // Fish 3 - middle
-  elements.push({ type: 'circle', x: cx - 10, y: cy + 10, radius: 9 });
-  elements.push({ type: 'petal', cx: cx - 22, cy: cy + 10, angle: Math.PI * 1.1, innerRadius: 0, outerRadius: 11, width: 0.6 });
-  // Fish 4 - lower left
-  elements.push({ type: 'circle', x: cx - 30, y: cy + 55, radius: 7 });
-  elements.push({ type: 'petal', cx: cx - 40, cy: cy + 55, angle: Math.PI, innerRadius: 0, outerRadius: 9, width: 0.6 });
-  // Fish 5 - lower right
-  elements.push({ type: 'circle', x: cx + 10, y: cy + 75, radius: 6 });
-  elements.push({ type: 'petal', cx: cx + 18, cy: cy + 75, angle: Math.PI * 0.85, innerRadius: 0, outerRadius: 8, width: 0.6 });
-
-  // Bubbles rising - 3 dots
-  elements.push({ type: 'dot', x: cx + 25, y: cy - 80, radius: 3 });
-  elements.push({ type: 'dot', x: cx - 5, y: cy + 25, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx + 30, y: cy + 40, radius: 2 });
-
-  // The heart in the flow - center
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
-  return elements;
-};
-
-// I Am Here Now - 28 elements (4 words × 7 cycles)
-// ANCIENT OAK TREE - rooted presence, the eternal now embodied in living wood
-// As above, so below - branches mirror roots, heaven meets earth
-const generateTreeOfLife = (cx, cy) => {
-  const elements = [];
-
-  // Mighty trunk - solid presence (2 lines forming trunk edges)
-  elements.push({ type: 'line', x1: cx - 15, y1: cy + 70, x2: cx - 12, y2: cy - 10 });
-  elements.push({ type: 'line', x1: cx + 15, y1: cy + 70, x2: cx + 12, y2: cy - 10 });
-
-  // Crown branches spreading wide (6 branches reaching for sky)
-  elements.push({ type: 'branch', x1: cx, y1: cy - 10, angle: -Math.PI/2 - 0.7, length: 60, curve: -0.4, thickness: 2 });
-  elements.push({ type: 'branch', x1: cx, y1: cy - 10, angle: -Math.PI/2 + 0.7, length: 60, curve: 0.4, thickness: 2 });
-  elements.push({ type: 'branch', x1: cx - 8, y1: cy - 25, angle: -Math.PI/2 - 0.3, length: 50, curve: -0.2, thickness: 1.5 });
-  elements.push({ type: 'branch', x1: cx + 8, y1: cy - 25, angle: -Math.PI/2 + 0.3, length: 50, curve: 0.2, thickness: 1.5 });
-  elements.push({ type: 'branch', x1: cx, y1: cy - 35, angle: -Math.PI/2, length: 45, curve: 0, thickness: 1.5 });
-  elements.push({ type: 'branch', x1: cx - 35, y1: cy - 40, angle: -Math.PI/2 - 0.5, length: 30, curve: -0.3, thickness: 1 });
-
-  // Foliage clusters - life at the crown (6 circles as leaf masses)
-  elements.push({ type: 'circle', x: cx - 55, y: cy - 65, radius: 22 });
-  elements.push({ type: 'circle', x: cx + 55, y: cy - 65, radius: 20 });
-  elements.push({ type: 'circle', x: cx - 25, y: cy - 80, radius: 18 });
-  elements.push({ type: 'circle', x: cx + 25, y: cy - 75, radius: 19 });
-  elements.push({ type: 'circle', x: cx, y: cy - 90, radius: 16 });
-  elements.push({ type: 'circle', x: cx - 45, y: cy - 45, radius: 15 });
-
-  // Earth line - the horizon, the NOW
-  elements.push({ type: 'line', x1: cx - 100, y1: cy + 70, x2: cx + 100, y2: cy + 70 });
-
-  // Root system mirroring branches (6 roots reaching down)
-  elements.push({ type: 'branch', x1: cx, y1: cy + 70, angle: Math.PI/2 + 0.6, length: 50, curve: 0.3, thickness: 2 });
-  elements.push({ type: 'branch', x1: cx, y1: cy + 70, angle: Math.PI/2 - 0.6, length: 50, curve: -0.3, thickness: 2 });
-  elements.push({ type: 'branch', x1: cx - 10, y1: cy + 80, angle: Math.PI/2 + 0.25, length: 40, curve: 0.2, thickness: 1.5 });
-  elements.push({ type: 'branch', x1: cx + 10, y1: cy + 80, angle: Math.PI/2 - 0.25, length: 40, curve: -0.2, thickness: 1.5 });
-  elements.push({ type: 'branch', x1: cx, y1: cy + 85, angle: Math.PI/2, length: 35, curve: 0, thickness: 1 });
-  elements.push({ type: 'branch', x1: cx + 30, y1: cy + 90, angle: Math.PI/2 - 0.4, length: 25, curve: -0.2, thickness: 1 });
-
-  // Root nodes - where roots anchor deep (4 dots)
-  elements.push({ type: 'dot', x: cx - 40, y: cy + 115, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 40, y: cy + 115, radius: 3 });
-  elements.push({ type: 'dot', x: cx, y: cy + 120, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx + 55, y: cy + 105, radius: 2 });
-
-  // The heart of the oak - where I AM HERE NOW
-  elements.push({ type: 'dot', x: cx, y: cy + 30, radius: 7, isCenter: true });
-  return elements;
-};
-
 // This Moment Is Enough - 28 elements (4 words × 7 cycles)
 // FULL MOON OVER STILL WATER - perfect completeness reflected
 // Nothing to add, nothing to take away - the moment complete unto itself
@@ -1320,50 +1226,6 @@ const generateInfinityLoop = (cx, cy) => {
   return elements;
 };
 
-// I Am Enough - 21 elements (3 words × 7 cycles)
-// PEARL IN OPEN SHELL - already perfect, already complete
-// The pearl doesn't strive to become more pearlescent - it simply IS
-const generateNestedCircles = (cx, cy) => {
-  const elements = [];
-
-  // Open shell - left half (3 curved lines)
-  elements.push({ type: 'line', x1: cx - 100, y1: cy + 30, x2: cx - 70, y2: cy - 40 });
-  elements.push({ type: 'line', x1: cx - 70, y1: cy - 40, x2: cx - 20, y2: cy - 55 });
-  elements.push({ type: 'line', x1: cx - 100, y1: cy + 30, x2: cx - 30, y2: cy + 50 });
-
-  // Open shell - right half (3 curved lines)
-  elements.push({ type: 'line', x1: cx + 100, y1: cy + 30, x2: cx + 70, y2: cy - 40 });
-  elements.push({ type: 'line', x1: cx + 70, y1: cy - 40, x2: cx + 20, y2: cy - 55 });
-  elements.push({ type: 'line', x1: cx + 100, y1: cy + 30, x2: cx + 30, y2: cy + 50 });
-
-  // Shell ridges - texture of life's journey (4 lines)
-  elements.push({ type: 'line', x1: cx - 85, y1: cy + 10, x2: cx - 50, y2: cy - 25 });
-  elements.push({ type: 'line', x1: cx - 75, y1: cy + 25, x2: cx - 40, y2: cy - 10 });
-  elements.push({ type: 'line', x1: cx + 85, y1: cy + 10, x2: cx + 50, y2: cy - 25 });
-  elements.push({ type: 'line', x1: cx + 75, y1: cy + 25, x2: cx + 40, y2: cy - 10 });
-
-  // The perfect pearl - nestled in center (3 concentric circles)
-  elements.push({ type: 'circle', x: cx, y: cy + 10, radius: 35 });
-  elements.push({ type: 'circle', x: cx, y: cy + 10, radius: 25 });
-  elements.push({ type: 'circle', x: cx, y: cy + 10, radius: 15 });
-
-  // Pearl's lustrous highlight (2 dots)
-  elements.push({ type: 'dot', x: cx - 12, y: cy, radius: 5 });
-  elements.push({ type: 'dot', x: cx - 6, y: cy + 3, radius: 3 });
-
-  // Shell bed/cushion beneath pearl (1 line)
-  elements.push({ type: 'line', x1: cx - 40, y1: cy + 50, x2: cx + 40, y2: cy + 50 });
-
-  // Tiny sand grains around shell (3 dots)
-  elements.push({ type: 'dot', x: cx - 80, y: cy + 60, radius: 2 });
-  elements.push({ type: 'dot', x: cx + 75, y: cy + 65, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx + 90, y: cy + 55, radius: 2 });
-
-  // The pearl's heart - enough
-  elements.push({ type: 'dot', x: cx, y: cy + 10, radius: 6, isCenter: true });
-  return elements;
-};
-
 // I Let Go With Grace - 35 elements (5 words × 7 cycles)
 // DANDELION RELEASING SEEDS - the most graceful letting go in nature
 // Each seed carries a wish, a blessing released to the wind
@@ -1414,39 +1276,6 @@ const generateFallingLeaves = (cx, cy) => {
 
   // The releasing heart - center of the dandelion
   elements.push({ type: 'dot', x: cx, y: cy - 10, radius: 6, isCenter: true });
-  return elements;
-};
-
-// All Is Well - 21 elements (3 words × 7 cycles)
-// STAR MANDALA - eight-pointed star of cosmic order
-// Perfect symmetry reflecting the universe's harmony - all in its place
-const generateRipplingWater = (cx, cy) => {
-  const elements = [];
-
-  // Central star body - 8-pointed star shape (8 lines radiating out)
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-    const length = i % 2 === 0 ? 70 : 45; // alternating long/short points
-    elements.push({ type: 'line', x1: cx, y1: cy, x2: cx + Math.cos(angle) * length, y2: cy + Math.sin(angle) * length });
-  }
-
-  // Inner circle of harmony
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 25 });
-
-  // Stars at the 4 cardinal points - bright and steady
-  elements.push({ type: 'dot', x: cx, y: cy - 70, radius: 6 }); // top
-  elements.push({ type: 'dot', x: cx + 70, y: cy, radius: 6 }); // right
-  elements.push({ type: 'dot', x: cx, y: cy + 70, radius: 6 }); // bottom
-  elements.push({ type: 'dot', x: cx - 70, y: cy, radius: 6 }); // left
-
-  // Stars at the 4 diagonal points - slightly smaller
-  elements.push({ type: 'dot', x: cx + 32, y: cy - 32, radius: 4 }); // top-right
-  elements.push({ type: 'dot', x: cx + 32, y: cy + 32, radius: 4 }); // bottom-right
-  elements.push({ type: 'dot', x: cx - 32, y: cy + 32, radius: 4 }); // bottom-left
-  elements.push({ type: 'dot', x: cx - 32, y: cy - 32, radius: 4 }); // top-left
-
-  // The cosmic well at center - all is well
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 7, isCenter: true });
   return elements;
 };
 
@@ -1659,48 +1488,6 @@ const generateRelease = (cx, cy) => {
   return elements;
 };
 
-// I Am Connected To All - 35 elements (5 words × 7 cycles)
-// RIPPLES OF CONNECTION - waves expanding outward, touching all
-// Like a stone dropped in still water - one action touches everything
-const generateConnectedToAll = (cx, cy) => {
-  const elements = [];
-
-  // Concentric ripples expanding from center (5 circles) - perfect symmetry
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 20 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 45 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 70 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 95 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 120 });
-
-  // 8 radial lines of connection - perfect 8-fold symmetry
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'line', x1: cx + Math.cos(angle) * 25, y1: cy + Math.sin(angle) * 25, x2: cx + Math.cos(angle) * 115, y2: cy + Math.sin(angle) * 115 });
-  }
-
-  // Nodes where ripples meet rays - 8 on inner ring
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 45, y: cy + Math.sin(angle) * 45, radius: 4 });
-  }
-
-  // Nodes on middle ring - 8 more
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2 + Math.PI / 8; // offset
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 70, y: cy + Math.sin(angle) * 70, radius: 3 });
-  }
-
-  // Nodes on outer ring - 4 cardinal points
-  for (let i = 0; i < 4; i++) {
-    const angle = (i / 4) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 95, y: cy + Math.sin(angle) * 95, radius: 3 });
-  }
-
-  // The source - where connection begins
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 7, isCenter: true });
-  return elements;
-};
-
 // We Are All One - 28 elements (4 words × 7 cycles)
 // FISH CIRCLING AS ONE - unity in circular motion
 // Many individuals moving together in perfect harmony around a shared center
@@ -1744,125 +1531,21 @@ const generateWeAreOne = (cx, cy) => {
   return elements;
 };
 
-// I Am Safe Right Now - 35 elements (5 words × 7 cycles)
-// BIRD'S NEST WITH EGGS - the sanctuary that already holds you
-// Woven with care, cradling precious life, safe in the tree's arms
-const generateSafeRightNow = (cx, cy) => {
-  const elements = [];
-
-  // Nest bowl - woven texture (8 curved lines forming nest shape)
-  elements.push({ type: 'line', x1: cx - 70, y1: cy, x2: cx - 55, y2: cy + 35 });
-  elements.push({ type: 'line', x1: cx - 55, y1: cy + 35, x2: cx - 25, y2: cy + 50 });
-  elements.push({ type: 'line', x1: cx - 25, y1: cy + 50, x2: cx + 25, y2: cy + 50 });
-  elements.push({ type: 'line', x1: cx + 25, y1: cy + 50, x2: cx + 55, y2: cy + 35 });
-  elements.push({ type: 'line', x1: cx + 55, y1: cy + 35, x2: cx + 70, y2: cy });
-  elements.push({ type: 'line', x1: cx + 70, y1: cy, x2: cx + 60, y2: cy - 15 });
-  elements.push({ type: 'line', x1: cx - 70, y1: cy, x2: cx - 60, y2: cy - 15 });
-  elements.push({ type: 'line', x1: cx - 60, y1: cy - 15, x2: cx + 60, y2: cy - 15 }); // rim
-
-  // Woven texture inside nest (4 curved lines)
-  elements.push({ type: 'line', x1: cx - 50, y1: cy + 10, x2: cx, y2: cy + 35 });
-  elements.push({ type: 'line', x1: cx, y1: cy + 35, x2: cx + 50, y2: cy + 10 });
-  elements.push({ type: 'line', x1: cx - 40, y1: cy + 25, x2: cx + 40, y2: cy + 25 });
-  elements.push({ type: 'line', x1: cx - 30, y1: cy + 40, x2: cx + 30, y2: cy + 40 });
-
-  // Three precious eggs nestled safely (3 circles)
-  elements.push({ type: 'circle', x: cx - 22, y: cy + 15, radius: 16 });
-  elements.push({ type: 'circle', x: cx + 22, y: cy + 15, radius: 16 });
-  elements.push({ type: 'circle', x: cx, y: cy + 8, radius: 17 });
-
-  // Branch the nest sits on (3 lines)
-  elements.push({ type: 'line', x1: cx - 100, y1: cy + 55, x2: cx - 50, y2: cy + 48 });
-  elements.push({ type: 'line', x1: cx + 50, y1: cy + 48, x2: cx + 100, y2: cy + 60 });
-  elements.push({ type: 'line', x1: cx - 85, y1: cy + 50, x2: cx - 75, y2: cy + 70 }); // small branch
-
-  // Leaves around the nest (4 petals)
-  elements.push({ type: 'petal', cx: cx - 85, cy: cy - 10, angle: Math.PI * 0.6, innerRadius: 0, outerRadius: 18, width: 0.4 });
-  elements.push({ type: 'petal', cx: cx + 80, cy: cy - 5, angle: Math.PI * 0.4, innerRadius: 0, outerRadius: 16, width: 0.4 });
-  elements.push({ type: 'petal', cx: cx - 75, cy: cy + 20, angle: Math.PI * 0.7, innerRadius: 0, outerRadius: 14, width: 0.4 });
-  elements.push({ type: 'petal', cx: cx + 75, cy: cy + 25, angle: Math.PI * 0.3, innerRadius: 0, outerRadius: 14, width: 0.4 });
-
-  // Soft feathers lining the nest (3 small dots)
-  elements.push({ type: 'dot', x: cx - 35, y: cy + 30, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 35, y: cy + 30, radius: 3 });
-  elements.push({ type: 'dot', x: cx, y: cy + 38, radius: 2.5 });
-
-  // Warmth emanating (2 small dots)
-  elements.push({ type: 'dot', x: cx - 10, y: cy - 5, radius: 2 });
-  elements.push({ type: 'dot', x: cx + 10, y: cy - 5, radius: 2 });
-
-  // The safe center - heart of the nest
-  elements.push({ type: 'dot', x: cx, y: cy + 15, radius: 5, isCenter: true });
-  return elements;
-};
-
-// I Trust the Process - 28 elements (4 words × 7 cycles)
-// SEED OF LIFE BECOMING - the acorn's potential radiating outward
-// Perfect symmetry: seed at center, growth rings expanding like tree rings
-const generateTrustProcess = (cx, cy) => {
-  const elements = [];
-
-  // The seed/acorn at center - source of all potential
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 15 }); // seed body
-  elements.push({ type: 'circle', x: cx, y: cy - 8, radius: 10 }); // seed cap
-
-  // Growth rings radiating outward - tree ring patterns (4 concentric circles)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 35 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 55 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 75 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 95 });
-
-  // Roots reaching down - symmetric (4 lines)
-  elements.push({ type: 'line', x1: cx, y1: cy + 15, x2: cx - 25, y2: cy + 60 });
-  elements.push({ type: 'line', x1: cx, y1: cy + 15, x2: cx + 25, y2: cy + 60 });
-  elements.push({ type: 'line', x1: cx - 25, y1: cy + 60, x2: cx - 40, y2: cy + 95 });
-  elements.push({ type: 'line', x1: cx + 25, y1: cy + 60, x2: cx + 40, y2: cy + 95 });
-
-  // Branches reaching up - symmetric (4 lines)
-  elements.push({ type: 'line', x1: cx, y1: cy - 15, x2: cx - 25, y2: cy - 60 });
-  elements.push({ type: 'line', x1: cx, y1: cy - 15, x2: cx + 25, y2: cy - 60 });
-  elements.push({ type: 'line', x1: cx - 25, y1: cy - 60, x2: cx - 45, y2: cy - 95 });
-  elements.push({ type: 'line', x1: cx + 25, y1: cy - 60, x2: cx + 45, y2: cy - 95 });
-
-  // Leaves at branch tips - symmetric (4 petals)
-  elements.push({ type: 'petal', cx: cx - 45, cy: cy - 95, angle: -Math.PI * 0.65, innerRadius: 0, outerRadius: 18, width: 0.4 });
-  elements.push({ type: 'petal', cx: cx + 45, cy: cy - 95, angle: -Math.PI * 0.35, innerRadius: 0, outerRadius: 18, width: 0.4 });
-  elements.push({ type: 'petal', cx: cx - 55, cy: cy - 75, angle: -Math.PI * 0.75, innerRadius: 0, outerRadius: 15, width: 0.4 });
-  elements.push({ type: 'petal', cx: cx + 55, cy: cy - 75, angle: -Math.PI * 0.25, innerRadius: 0, outerRadius: 15, width: 0.4 });
-
-  // Root tips - symmetric (4 dots)
-  elements.push({ type: 'dot', x: cx - 40, y: cy + 95, radius: 4 });
-  elements.push({ type: 'dot', x: cx + 40, y: cy + 95, radius: 4 });
-  elements.push({ type: 'dot', x: cx - 55, y: cy + 80, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 55, y: cy + 80, radius: 3 });
-
-  // The heart of trust - the seed that becomes everything
-  elements.push({ type: 'dot', x: cx, y: cy, radius: 7, isCenter: true });
-  return elements;
-};
-
 // Mantra-Visual Pairs
 const mantraVisualPairs = [
   { text: 'I am grateful for this moment', words: ['I', 'am', 'grateful', 'for', 'this', 'moment'], generate: generateFlowerOfLife },
   { text: 'Abundance flows to me', words: ['Abundance', 'flows', 'to', 'me'], generate: generateSpiralGalaxy },
   { text: 'I am worthy of love', words: ['I', 'am', 'worthy', 'of', 'love'], generate: generateLotusBlossom },
-  { text: 'Love flows through me', words: ['Love', 'flows', 'through', 'me'], generate: generateOceanWaves },
-  { text: 'I am here now', words: ['I', 'am', 'here', 'now'], generate: generateTreeOfLife },
   { text: 'This moment is enough', words: ['This', 'moment', 'is', 'enough'], generate: generateCosmicEye },
   { text: 'Peace begins within', words: ['Peace', 'begins', 'within'], generate: generateMandalaStar },
   { text: 'I am calm and centered', words: ['I', 'am', 'calm', 'and', 'centered'], generate: generateSacredSpiral },
   { text: 'I am loving awareness', words: ['I', 'am', 'loving', 'awareness'], generate: generateInfinityLoop },
-  { text: 'I am enough', words: ['I', 'am', 'enough'], generate: generateNestedCircles },
   { text: 'I let go with grace', words: ['I', 'let', 'go', 'with', 'grace'], generate: generateFallingLeaves },
-  { text: 'All is well', words: ['All', 'is', 'well'], generate: generateRipplingWater },
   { text: 'I forgive and release', words: ['I', 'forgive', 'and', 'release'], generate: generateForgivenessRelease },
   { text: 'I accept myself completely', words: ['I', 'accept', 'myself', 'completely'], generate: generateSelfAcceptance },
   { text: 'I am open to receive', words: ['I', 'am', 'open', 'to', 'receive'], generate: generateOpenToReceive },
   { text: 'I release what no longer serves', words: ['I', 'release', 'what', 'no', 'longer', 'serves'], generate: generateRelease },
-  { text: 'I am connected to all', words: ['I', 'am', 'connected', 'to', 'all'], generate: generateConnectedToAll },
   { text: 'We are all one', words: ['We', 'are', 'all', 'one'], generate: generateWeAreOne },
-  { text: 'I am safe right now', words: ['I', 'am', 'safe', 'right', 'now'], generate: generateSafeRightNow },
-  { text: 'I trust the process', words: ['I', 'trust', 'the', 'process'], generate: generateTrustProcess },
 ];
 
 // ============================================================================
