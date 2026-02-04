@@ -5487,7 +5487,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       duration: 50,
       guidance: [
         "Imagine a garden growing in your heart.",
-        "Not flowers, but food — fruits and vegetables.",
+        "An abundance of fruits and vegetables.",
         "Tomatoes ripening in the sun. Leafy greens. Squash on the vine.",
         "This garden is nourished by your attention and care.",
         "Tend it gently. Watch it grow."
