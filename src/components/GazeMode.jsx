@@ -5668,26 +5668,31 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   }, [currentMode, gardenPaused, gardenStage, gardenTotalDuration, meditationStages]);
 
   // Guidance text cycling - 10 seconds per line
+  const gardenGuidanceIndexRef = React.useRef(0);
+  React.useEffect(() => {
+    gardenGuidanceIndexRef.current = gardenGuidanceIndex;
+  }, [gardenGuidanceIndex]);
+
   React.useEffect(() => {
     if (currentMode !== 'heartGarden' || gardenPaused) return;
-    if (gardenTotalElapsed >= gardenTotalDuration) return;
 
     const stage = meditationStages[gardenStage];
     if (!stage) return;
     const guidanceCount = stage.guidance.length;
 
     gardenGuidanceTimerRef.current = setInterval(() => {
-      if (gardenGuidanceIndex >= guidanceCount - 1) return;
+      const currentIdx = gardenGuidanceIndexRef.current;
+      if (currentIdx >= guidanceCount - 1) return;
 
       setGardenGuidanceOpacity(0);
       setTimeout(() => {
-        setGardenGuidanceIndex(prev => Math.min(prev + 1, guidanceCount - 1));
+        setGardenGuidanceIndex(currentIdx + 1);
         setGardenGuidanceOpacity(1);
       }, 800);
     }, 10000);
 
     return () => clearInterval(gardenGuidanceTimerRef.current);
-  }, [currentMode, gardenPaused, gardenStage, gardenGuidanceIndex, gardenTotalElapsed, gardenTotalDuration, meditationStages]);
+  }, [currentMode, gardenPaused, gardenStage, meditationStages]);
 
   // Garden canvas animation
   React.useEffect(() => {
@@ -6290,14 +6295,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           {/* Stage title */}
           <div
             style={{
-              color: `hsla(${hue}, 52%, 68%, 0.6)`,
-              fontSize: '0.75rem',
+              color: `hsla(${hue}, 52%, 68%, 0.5)`,
+              fontSize: '0.8rem',
               fontFamily: '"Jost", sans-serif',
               letterSpacing: '0.25em',
               textTransform: 'uppercase',
-              marginBottom: '1.5rem',
-              transition: 'opacity 0.8s ease',
-              opacity: gardenGuidanceOpacity * 0.8,
+              marginBottom: '2rem',
             }}
           >
             {meditationStages[gardenStage]?.title || ''}
@@ -6306,14 +6309,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           {/* Guidance text */}
           <div
             style={{
-              color: `hsla(${hue}, 52%, 78%, ${gardenGuidanceOpacity * 0.95})`,
-              fontSize: '1.1rem',
+              color: `hsla(${hue}, 52%, 78%, 0.95)`,
+              fontSize: '1.5rem',
               fontFamily: '"Jost", sans-serif',
               fontWeight: 300,
-              lineHeight: 1.7,
+              lineHeight: 1.8,
               textAlign: 'center',
-              maxWidth: '85%',
+              maxWidth: '90%',
               padding: '0 1.5rem',
+              opacity: gardenGuidanceOpacity,
               transition: 'opacity 0.8s ease',
               textShadow: '0 2px 20px rgba(0,0,0,0.7)',
             }}
