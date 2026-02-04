@@ -6263,7 +6263,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'nebula' || currentMode === 'aurora' || currentMode === 'constellation' || currentMode === 'quantumFoam' || currentMode === 'neural' || currentMode === 'liquidMetal' || currentMode === 'orbitalRings' || currentMode === 'floatingIslands' || currentMode === 'mountains' || currentMode === 'cave' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'mountains' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -6384,7 +6384,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'nebula' && currentMode !== 'aurora' && currentMode !== 'constellation' && currentMode !== 'quantumFoam' && currentMode !== 'neural' && currentMode !== 'liquidMetal' && currentMode !== 'orbitalRings' && currentMode !== 'floatingIslands' && currentMode !== 'mountains' && currentMode !== 'cave' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'mountains' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
