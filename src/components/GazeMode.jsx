@@ -6369,42 +6369,37 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       };
 
       // Target opacities based on meditation progress
+      // Garden grows from roots upward - bottom to top
       const targets = {
-        seed: ease(progress, 0, 0.08),           // Intro: seed appears first
-        seedOrbits: ease(progress, 0.04, 0.15),  // Intro/Garden: orbits form
-        plant: ease(progress, 0.10, 0.35),       // Garden/Self/Beloved: plant grows
-        pyramid: ease(progress, 0.25, 0.45),     // Beloved/Parents: vessel forms
-        base: ease(progress, 0.35, 0.55),        // Parents/Friends: base materializes
-        rootCoil: ease(progress, 0.45, 0.60),    // Friends/Neutral: roots coil
-        roots: ease(progress, 0.55, 0.72),       // Neutral/Difficult: roots extend
-        ferns: ease(progress, 0.62, 0.80),       // Difficult: ferns unfold
-        torus: ease(progress, 0.70, 0.88),       // All: energy sphere blooms
-        vortex: ease(progress, 0.75, 0.90),      // All: vortex funnels appear
-        flowers: ease(progress, 0.82, 0.95),     // All/Return: flower diagrams
-        particles: ease(progress, 0.88, 1.0)     // Return: particles float up
+        roots: ease(progress, 0, 0.12),          // First: deep roots extend underground
+        rootCoil: ease(progress, 0.04, 0.18),    // Root coils form in base
+        base: ease(progress, 0.08, 0.24),        // Ground level materializes
+        seed: ease(progress, 0.12, 0.30),        // Seed planted in earth
+        seedOrbits: ease(progress, 0.16, 0.35),  // Seed energy orbits
+        plant: ease(progress, 0.20, 0.45),       // Plant grows upward
+        pyramid: ease(progress, 0.30, 0.55),     // Structure forms around plant
+        ferns: ease(progress, 0.40, 0.65),       // Side vegetation unfolds
+        torus: ease(progress, 0.50, 0.78),       // Energy sphere blooms at top
+        vortex: ease(progress, 0.60, 0.85),      // Vortex funnels at very top
+        flowers: ease(progress, 0.70, 0.92),     // Flower diagrams appear
+        particles: ease(progress, 0.80, 1.0)     // Final: particles float up
       };
 
       // Smooth lerp towards targets
-      const lerpSpeed = 0.03;
+      const lerpSpeed = 0.05;
       for (const key in groupOpacities) {
         groupOpacities[key] += (targets[key] - groupOpacities[key]) * lerpSpeed;
       }
 
-      // Apply opacities to groups
-      // Seed core (center of seedGroup) - always start with something visible
-      setGroupOpacity(seedGroup, Math.max(0.15, groupOpacities.seed)); // Faint glow at start
+      // Apply opacities to groups - roots and base visible from start
+      setGroupOpacity(lowerGroup, Math.max(0.6, groupOpacities.roots));
+      setGroupOpacity(rootCoilGroup, Math.max(0.5, groupOpacities.rootCoil));
+      setGroupOpacity(baseGroup, Math.max(0.4, groupOpacities.base));
+      setGroupOpacity(seedGroup, Math.max(0.3, groupOpacities.seed, groupOpacities.seedOrbits));
 
-      // Seed orbits are part of seedGroup but we control via seedOrbits
-      // For simplicity, seed and seedOrbits share the seedGroup
-      // The seed appears first, then gets brighter as orbits form
-      const seedFullOpacity = Math.max(groupOpacities.seed, groupOpacities.seedOrbits);
-      setGroupOpacity(seedGroup, seedFullOpacity);
-
+      // These elements grow upward as meditation progresses
       setGroupOpacity(plantGroup, groupOpacities.plant);
       setGroupOpacity(pyramidGroup, groupOpacities.pyramid);
-      setGroupOpacity(baseGroup, groupOpacities.base);
-      setGroupOpacity(rootCoilGroup, groupOpacities.rootCoil);
-      setGroupOpacity(lowerGroup, groupOpacities.roots);
       setGroupOpacity(fernGroup, groupOpacities.ferns);
       setGroupOpacity(torusGroup, groupOpacities.torus);
       setGroupOpacity(vortexGroup, groupOpacities.vortex);
