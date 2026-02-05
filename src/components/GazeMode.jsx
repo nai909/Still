@@ -5718,6 +5718,33 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       return new THREE.Line(geo, mat);
     };
 
+    // === PROGRESSIVE BUILD SYSTEM ===
+    // Helper to set opacity on all materials in a group
+    const setGroupOpacity = (group, opacity) => {
+      group.traverse((child) => {
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(m => {
+              if (m.userData.baseOpacity === undefined) m.userData.baseOpacity = m.opacity;
+              m.opacity = m.userData.baseOpacity * opacity;
+            });
+          } else {
+            if (child.material.userData.baseOpacity === undefined) {
+              child.material.userData.baseOpacity = child.material.opacity;
+            }
+            child.material.opacity = child.material.userData.baseOpacity * opacity;
+          }
+        }
+      });
+    };
+
+    // Current opacity values for smooth lerping
+    const groupOpacities = {
+      seed: 0, seedOrbits: 0, plant: 0, pyramid: 0, base: 0,
+      rootCoil: 0, roots: 0, ferns: 0, torus: 0, vortex: 0,
+      flowers: 0, particles: 0
+    };
+
     // === 1. TORUS ENERGY SPHERE (top) ===
     const torusGroup = new THREE.Group();
     torusGroup.position.y = 220;
@@ -5792,6 +5819,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     }
 
     // === 2. VORTEX FUNNELS ===
+    const vortexGroup = new THREE.Group();
+    mainGroup.add(vortexGroup);
+
     const createVortexFunnel = (x, y) => {
       const group = new THREE.Group();
       group.position.set(x, y, 0);
@@ -5819,24 +5849,24 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       return group;
     };
 
-    mainGroup.add(createVortexFunnel(-160, 320));
-    mainGroup.add(createVortexFunnel(160, 320));
+    vortexGroup.add(createVortexFunnel(-160, 320));
+    vortexGroup.add(createVortexFunnel(160, 320));
 
     // Connection lines
-    mainGroup.add(createCurve([
+    vortexGroup.add(createCurve([
       new THREE.Vector3(-160, 355, 0), new THREE.Vector3(-130, 280, 20),
       new THREE.Vector3(-90, 240, 10), new THREE.Vector3(-60, 220, 0)
     ], inkMat));
-    mainGroup.add(createCurve([
+    vortexGroup.add(createCurve([
       new THREE.Vector3(160, 355, 0), new THREE.Vector3(130, 280, -20),
       new THREE.Vector3(90, 240, -10), new THREE.Vector3(60, 220, 0)
     ], inkMat));
 
     // Junction cubes
-    mainGroup.add(createSmallCube(-160, 355, 0, 4));
-    mainGroup.add(createSmallCube(160, 355, 0, 4));
-    mainGroup.add(createSmallCube(-60, 220, 0, 4));
-    mainGroup.add(createSmallCube(60, 220, 0, 4));
+    vortexGroup.add(createSmallCube(-160, 355, 0, 4));
+    vortexGroup.add(createSmallCube(160, 355, 0, 4));
+    vortexGroup.add(createSmallCube(-60, 220, 0, 4));
+    vortexGroup.add(createSmallCube(60, 220, 0, 4));
 
     // === 3. PYRAMID VESSEL ===
     const pyramidGroup = new THREE.Group();
@@ -6190,12 +6220,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       return group;
     };
 
-    mainGroup.add(createFern3D(-180, 60, 40, -0.3, 1.0));
-    mainGroup.add(createFern3D(-200, 30, -30, -0.8, 0.85));
-    mainGroup.add(createFern3D(-160, 0, 60, 0.2, 0.7));
-    mainGroup.add(createFern3D(180, 60, -40, Math.PI + 0.3, 1.0));
-    mainGroup.add(createFern3D(200, 30, 30, Math.PI + 0.8, 0.85));
-    mainGroup.add(createFern3D(160, 0, -60, Math.PI - 0.2, 0.7));
+    const fernGroup = new THREE.Group();
+    mainGroup.add(fernGroup);
+    fernGroup.add(createFern3D(-180, 60, 40, -0.3, 1.0));
+    fernGroup.add(createFern3D(-200, 30, -30, -0.8, 0.85));
+    fernGroup.add(createFern3D(-160, 0, 60, 0.2, 0.7));
+    fernGroup.add(createFern3D(180, 60, -40, Math.PI + 0.3, 1.0));
+    fernGroup.add(createFern3D(200, 30, 30, Math.PI + 0.8, 0.85));
+    fernGroup.add(createFern3D(160, 0, -60, Math.PI - 0.2, 0.7));
 
     // === 10. FLOWER DIAGRAMS ===
     const createFlowerDiagram3D = (x, y, z, scale = 1) => {
@@ -6223,8 +6255,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       return group;
     };
 
-    mainGroup.add(createFlowerDiagram3D(-250, 300, -60, 1.2));
-    mainGroup.add(createFlowerDiagram3D(250, 300, 60, 1.2));
+    const flowerDiagramGroup = new THREE.Group();
+    mainGroup.add(flowerDiagramGroup);
+    flowerDiagramGroup.add(createFlowerDiagram3D(-250, 300, -60, 1.2));
+    flowerDiagramGroup.add(createFlowerDiagram3D(250, 300, 60, 1.2));
 
     // === 11. AMBIENT FLOATING PARTICLES ===
     const particleCount3D = 80;
@@ -6319,6 +6353,65 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         }
       }
       particles3D.geometry.attributes.position.needsUpdate = true;
+
+      // === PROGRESSIVE BUILD - Update opacities based on meditation progress ===
+      const totalLines = 50; // Total lines in meditation
+      const linesRead = gardenLinesReadRef.current;
+      const progress = Math.min(linesRead / totalLines, 1);
+
+      // Define when each element should appear (progress thresholds)
+      // Smooth easing function for natural fade-in
+      const ease = (p, start, end) => {
+        if (p < start) return 0;
+        if (p > end) return 1;
+        const t = (p - start) / (end - start);
+        return t * t * (3 - 2 * t); // smoothstep
+      };
+
+      // Target opacities based on meditation progress
+      const targets = {
+        seed: ease(progress, 0, 0.08),           // Intro: seed appears first
+        seedOrbits: ease(progress, 0.04, 0.15),  // Intro/Garden: orbits form
+        plant: ease(progress, 0.10, 0.35),       // Garden/Self/Beloved: plant grows
+        pyramid: ease(progress, 0.25, 0.45),     // Beloved/Parents: vessel forms
+        base: ease(progress, 0.35, 0.55),        // Parents/Friends: base materializes
+        rootCoil: ease(progress, 0.45, 0.60),    // Friends/Neutral: roots coil
+        roots: ease(progress, 0.55, 0.72),       // Neutral/Difficult: roots extend
+        ferns: ease(progress, 0.62, 0.80),       // Difficult: ferns unfold
+        torus: ease(progress, 0.70, 0.88),       // All: energy sphere blooms
+        vortex: ease(progress, 0.75, 0.90),      // All: vortex funnels appear
+        flowers: ease(progress, 0.82, 0.95),     // All/Return: flower diagrams
+        particles: ease(progress, 0.88, 1.0)     // Return: particles float up
+      };
+
+      // Smooth lerp towards targets
+      const lerpSpeed = 0.03;
+      for (const key in groupOpacities) {
+        groupOpacities[key] += (targets[key] - groupOpacities[key]) * lerpSpeed;
+      }
+
+      // Apply opacities to groups
+      // Seed core (center of seedGroup) - always start with something visible
+      setGroupOpacity(seedGroup, Math.max(0.15, groupOpacities.seed)); // Faint glow at start
+
+      // Seed orbits are part of seedGroup but we control via seedOrbits
+      // For simplicity, seed and seedOrbits share the seedGroup
+      // The seed appears first, then gets brighter as orbits form
+      const seedFullOpacity = Math.max(groupOpacities.seed, groupOpacities.seedOrbits);
+      setGroupOpacity(seedGroup, seedFullOpacity);
+
+      setGroupOpacity(plantGroup, groupOpacities.plant);
+      setGroupOpacity(pyramidGroup, groupOpacities.pyramid);
+      setGroupOpacity(baseGroup, groupOpacities.base);
+      setGroupOpacity(rootCoilGroup, groupOpacities.rootCoil);
+      setGroupOpacity(lowerGroup, groupOpacities.roots);
+      setGroupOpacity(fernGroup, groupOpacities.ferns);
+      setGroupOpacity(torusGroup, groupOpacities.torus);
+      setGroupOpacity(vortexGroup, groupOpacities.vortex);
+      setGroupOpacity(flowerDiagramGroup, groupOpacities.flowers);
+
+      // Particles opacity via material
+      particleMat3D.opacity = 0.4 * groupOpacities.particles;
 
       renderer.render(scene, camera);
     };
