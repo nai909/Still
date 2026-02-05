@@ -44,7 +44,6 @@ export const gazeModes = [
   { key: 'geometry', name: 'Torus' },
   { key: 'tree', name: 'Fractal Tree' },
   { key: 'fern', name: 'Fern' },
-  { key: 'succulent', name: 'Succulent' },
   { key: 'dandelion', name: 'Dandelion' },
   { key: 'lungs', name: 'Lungs' },
   { key: 'ripples', name: 'Ripples' },

@@ -7684,32 +7684,34 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
             </div>
           )}
 
-          {/* Progress dots */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              gap: '0.5rem',
-            }}
-          >
-            {meditationStages.map((stage, i) => (
-              <div
-                key={stage.id}
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: i <= gardenStage
-                    ? `hsla(${hue}, 52%, 68%, ${i === gardenStage ? 0.9 : 0.5})`
-                    : `hsla(${hue}, 52%, 68%, 0.2)`,
-                  transition: 'background-color 0.5s ease',
-                }}
-              />
-            ))}
-          </div>
+          {/* Progress dots - only show on native apps, not web browsers */}
+          {typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.() && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: '0.5rem',
+              }}
+            >
+              {meditationStages.map((stage, i) => (
+                <div
+                  key={stage.id}
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: i <= gardenStage
+                      ? `hsla(${hue}, 52%, 68%, ${i === gardenStage ? 0.9 : 0.5})`
+                      : `hsla(${hue}, 52%, 68%, 0.2)`,
+                    transition: 'background-color 0.5s ease',
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
