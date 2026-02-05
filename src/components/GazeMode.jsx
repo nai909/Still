@@ -5183,12 +5183,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       window.removeEventListener('resize', handleResize);
       isMounted = false;
       cancelAnimationFrame(animationId);
-      particleGeom.dispose(); particleMat.dispose();
-      jellyfish.forEach(jf => {
-        jf.bellGeom.dispose(); jf.bellMat.dispose();
-        jf.tendrils.forEach(t => { t.geometry.dispose(); t.material.dispose(); });
+      scene.traverse((obj) => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+          else obj.material.dispose();
+        }
       });
-      floorGeom.dispose(); floorMat.dispose();
       if (containerRef.current?.contains(renderer.domElement)) containerRef.current.removeChild(renderer.domElement);
       renderer.dispose();
     };
@@ -6422,6 +6423,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       isMounted = false;
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationId);
+      scene.traverse((obj) => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+          else obj.material.dispose();
+        }
+      });
       if (containerRef.current && containerRef.current.contains(renderer.domElement)) {
         containerRef.current.removeChild(renderer.domElement);
       }
@@ -6433,11 +6441,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   React.useEffect(() => {
     if (currentMode !== 'corpusStellae' || !containerRef.current || typeof THREE === 'undefined') return;
 
+    touchPointsRef.current = [];
+
     const container = containerRef.current;
     const W = container.clientWidth || window.innerWidth;
     const H = container.clientHeight || window.innerHeight;
 
     const scene = new THREE.Scene();
+    sceneRef.current = scene;
     scene.background = null;
     scene.fog = new THREE.FogExp2(0x000000, 0.00035);
 
@@ -6448,7 +6459,17 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(W, H);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
     container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
 
     const primaryColor = hslToHex(hue, 70, 60);
     const primaryDark = hslToHex(hue, 60, 40);
@@ -6499,18 +6520,16 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     crownGroup.position.y = 280;
     mainGroup.add(crownGroup);
 
-    for (let arm = 0; arm < 4; arm++) {
-      const armOffset = (arm / 4) * Math.PI * 2;
+    for (let arm = 0; arm < 3; arm++) {
+      const armOffset = (arm / 3) * Math.PI * 2;
       const pts = [];
-      for (let i = 0; i <= 120; i++) {
-        const t = i / 120;
+      for (let i = 0; i <= 60; i++) {
+        const t = i / 60;
         const r = 5 + t * 90;
         const a = armOffset + t * Math.PI * 3;
-        const wobble = Math.sin(t * 20) * 2;
-        pts.push(new THREE.Vector3(Math.cos(a) * r, wobble * t, Math.sin(a) * r));
+        pts.push(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r));
       }
-      crownGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
-        arm % 2 === 0 ? tealMat : tealDarkMat));
+      crownGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), tealMat));
     }
 
     for (let i = 1; i <= 6; i++) {
@@ -6530,11 +6549,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     crownGroup.add(dodeca);
     crownGroup.add(createDot(0, 0, 0, 3, coreDotMat));
 
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 15; i++) {
       const a = Math.random() * Math.PI * 2;
       const r = 20 + Math.random() * 70;
-      const h = (Math.random() - 0.5) * 15;
-      crownGroup.add(createDot(Math.cos(a) * r, h, Math.sin(a) * r, 0.8 + Math.random(), accentDotMat));
+      crownGroup.add(createDot(Math.cos(a) * r, 0, Math.sin(a) * r, 1, accentDotMat));
     }
 
     // === SPINE — CENTRAL COLUMN ===
@@ -6603,8 +6621,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     // === ENERGY CHANNELS ===
     const idaPts = [];
-    for (let i = 0; i <= 200; i++) {
-      const t = i / 200;
+    for (let i = 0; i <= 80; i++) {
+      const t = i / 80;
       const y = 260 - t * 230;
       const a = t * Math.PI * 3.5;
       const r = 25 + Math.sin(t * Math.PI) * 10;
@@ -6613,15 +6631,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     mainGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(idaPts), tealDarkMat));
 
     const pingPts = [];
-    for (let i = 0; i <= 200; i++) {
-      const t = i / 200;
+    for (let i = 0; i <= 80; i++) {
+      const t = i / 80;
       const y = 260 - t * 230;
       const a = t * Math.PI * 3.5 + Math.PI;
       const r = 25 + Math.sin(t * Math.PI) * 10;
       pingPts.push(new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r));
     }
-    mainGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pingPts),
-      new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.4 })));
+    mainGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pingPts), tealDarkMat));
 
     // === RIBCAGE ===
     const ribGroup = new THREE.Group();
@@ -6719,14 +6736,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     // === CONSTELLATION SPHERE ===
     const celestialSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(250, 20, 20),
+      new THREE.SphereGeometry(250, 10, 10),
       new THREE.MeshBasicMaterial({ color: primaryDim, wireframe: true, transparent: true, opacity: 0.06 })
     );
     celestialSphere.position.y = 130;
     mainGroup.add(celestialSphere);
 
     // === PARTICLES ===
-    const particleCount = 100;
+    const particleCount = 50;
     const particleGeo = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
     const particleVelocities = [];
@@ -6814,11 +6831,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   React.useEffect(() => {
     if (currentMode !== 'machinaTemporis' || !containerRef.current || typeof THREE === 'undefined') return;
 
+    touchPointsRef.current = [];
+
     const container = containerRef.current;
     const W = container.clientWidth || window.innerWidth;
     const H = container.clientHeight || window.innerHeight;
 
     const scene = new THREE.Scene();
+    sceneRef.current = scene;
     scene.background = null;
     scene.fog = new THREE.FogExp2(0x000000, 0.0004);
 
@@ -6829,7 +6849,17 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(W, H);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
     container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
 
     const primaryColor = hslToHex(hue, 70, 60);
     const primaryDark = hslToHex(hue, 60, 40);
@@ -7179,11 +7209,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   React.useEffect(() => {
     if (currentMode !== 'oceanusProfundus' || !containerRef.current || typeof THREE === 'undefined') return;
 
+    touchPointsRef.current = [];
+
     const container = containerRef.current;
     const W = container.clientWidth || window.innerWidth;
     const H = container.clientHeight || window.innerHeight;
 
     const scene = new THREE.Scene();
+    sceneRef.current = scene;
     scene.background = null;
     scene.fog = new THREE.FogExp2(0x000205, 0.0003);
 
@@ -7194,7 +7227,17 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(W, H);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
     container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
 
     const primaryColor = hslToHex(hue, 70, 60);
     const primaryDark = hslToHex(hue, 60, 40);
@@ -7531,6 +7574,1419 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue]);
 
+  // ========== AQUA VITAE (Water of Life) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'aquaVitae' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    touchPointsRef.current = [];
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000000, 0.00025);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 150, 450);
+    camera.lookAt(0, 30, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const primaryColor = hslToHex(hue, 70, 60);
+    const primaryDark = hslToHex(hue, 60, 40);
+    const primaryLight = hslToHex(hue, 52, 78);
+    const primaryDim = hslToHex(hue, 40, 25);
+    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+
+    const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.6 });
+    const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.4 });
+    const tealDimMat = new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.25 });
+    const tealBrightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
+    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
+    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
+
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    let seed = 444;
+    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+    function createRing(radius, y, segments = 64, mat = tealDarkMat) {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) {
+        const a = (i / segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius));
+      }
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+    }
+
+    function createDot(x, y, z, r = 1.5, mat = accentDotMat) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    // Water surface grid
+    const surfaceGroup = new THREE.Group();
+    mainGroup.add(surfaceGroup);
+    const gridSize = 300, gridDiv = 30;
+    for (let i = 0; i <= gridDiv; i++) {
+      const t = (i / gridDiv - 0.5) * gridSize;
+      surfaceGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-gridSize / 2, 0, t), new THREE.Vector3(gridSize / 2, 0, t)]), tealDimMat));
+      surfaceGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(t, 0, -gridSize / 2), new THREE.Vector3(t, 0, gridSize / 2)]), tealDimMat));
+    }
+
+    // Ripples
+    const ripples = [];
+    const rippleSources = [{ x: 0, z: 0 }, { x: -80, z: 60 }, { x: 70, z: -50 }, { x: -40, z: -80 }, { x: 90, z: 70 }];
+    rippleSources.forEach((src, srcIdx) => {
+      for (let r = 1; r <= 6; r++) {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(r * 20, 0.5, 4, 48), new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.3 / r }));
+        ring.position.set(src.x, 1, src.z);
+        ring.rotation.x = Math.PI / 2;
+        surfaceGroup.add(ring);
+        ripples.push({ mesh: ring, baseRadius: r * 20, source: src, phase: srcIdx * 0.5 + r * 0.3, speed: 0.8 + rand() * 0.4 });
+      }
+    });
+
+    // H2O molecules
+    const moleculeGroup = new THREE.Group();
+    moleculeGroup.position.y = 120;
+    mainGroup.add(moleculeGroup);
+
+    function createH2O(x, y, z, scale = 1) {
+      const mol = new THREE.Group();
+      mol.position.set(x, y, z);
+      mol.scale.setScalar(scale);
+      const oxygen = new THREE.Mesh(new THREE.SphereGeometry(8, 12, 12), new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.35 }));
+      mol.add(oxygen);
+      mol.add(createDot(0, 0, 0, 3, coreDotMat));
+      const angle = 104.5 * Math.PI / 180, bondLength = 20;
+      const h1Pos = new THREE.Vector3(Math.sin(angle / 2) * bondLength, Math.cos(angle / 2) * bondLength, 0);
+      const h2Pos = new THREE.Vector3(-Math.sin(angle / 2) * bondLength, Math.cos(angle / 2) * bondLength, 0);
+      mol.add(new THREE.Mesh(new THREE.SphereGeometry(5, 10, 10), new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.3 }))).position.copy(h1Pos);
+      mol.add(createDot(h1Pos.x, h1Pos.y, h1Pos.z, 2, accentDotMat));
+      mol.add(new THREE.Mesh(new THREE.SphereGeometry(5, 10, 10), new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.3 }))).position.copy(h2Pos);
+      mol.add(createDot(h2Pos.x, h2Pos.y, h2Pos.z, 2, accentDotMat));
+      mol.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), h1Pos]), tealMat));
+      mol.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), h2Pos]), tealMat));
+      return mol;
+    }
+
+    const centralMol = createH2O(0, 0, 0, 1.5);
+    moleculeGroup.add(centralMol);
+
+    // Vortex
+    const vortexGroup = new THREE.Group();
+    vortexGroup.position.set(-100, 0, -80);
+    mainGroup.add(vortexGroup);
+    for (let layer = 0; layer < 4; layer++) {
+      const pts = [];
+      const startY = 80 - layer * 30, turns = 3;
+      for (let i = 0; i <= 80; i++) {
+        const t = i / 80, a = t * turns * Math.PI * 2, r = 40 * (1 - t * 0.7), y = startY - t * 80;
+        pts.push(new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r));
+      }
+      vortexGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: layer === 0 ? primaryColor : primaryDim, transparent: true, opacity: 0.4 - layer * 0.08 })));
+    }
+    vortexGroup.add(createDot(0, 0, 0, 3, coreDotMat));
+
+    // Snowflakes
+    const snowflakeGroup = new THREE.Group();
+    snowflakeGroup.position.y = 200;
+    mainGroup.add(snowflakeGroup);
+
+    function createSnowflake(x, y, z, size = 30) {
+      const flake = new THREE.Group();
+      flake.position.set(x, y, z);
+      for (let arm = 0; arm < 6; arm++) {
+        const a = (arm / 6) * Math.PI * 2;
+        flake.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(Math.cos(a) * size, 0, Math.sin(a) * size)]), tealMat));
+        flake.add(createDot(Math.cos(a) * size, 0, Math.sin(a) * size, 1.5, accentDotMat));
+      }
+      flake.add(createDot(0, 0, 0, 2, coreDotMat));
+      return flake;
+    }
+
+    const snowflakes = [];
+    [{ x: 0, y: 0, z: 0, s: 40 }, { x: -100, y: 30, z: 50, s: 25 }, { x: 80, y: -20, z: -40, s: 30 }].forEach(fp => {
+      const flake = createSnowflake(fp.x, fp.y, fp.z, fp.s);
+      snowflakeGroup.add(flake);
+      snowflakes.push({ mesh: flake, rotSpeed: 0.002 + rand() * 0.003 });
+    });
+
+    // Rain particles
+    const rainCount = 100;
+    const rainGeo = new THREE.BufferGeometry();
+    const rainPositions = new Float32Array(rainCount * 3);
+    const rainVelocities = [];
+    for (let i = 0; i < rainCount; i++) {
+      rainPositions[i * 3] = (rand() - 0.5) * 400;
+      rainPositions[i * 3 + 1] = rand() * 300 + 50;
+      rainPositions[i * 3 + 2] = (rand() - 0.5) * 400;
+      rainVelocities.push({ speed: 1 + rand() * 2 });
+    }
+    rainGeo.setAttribute("position", new THREE.BufferAttribute(rainPositions, 3));
+    const rainParticles = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: primaryLight, size: 1.5, transparent: true, opacity: 0.5 }));
+    mainGroup.add(rainParticles);
+
+    let time = 0, animId;
+    let rotCurrent = { x: 0.25, y: 0 };
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.005;
+      rotCurrent.y += 0.0004;
+      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 450;
+      camera.position.y = Math.sin(rotCurrent.x) * 450 * 0.5 + 150;
+      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 450;
+      camera.lookAt(0, 30, 0);
+
+      ripples.forEach(r => {
+        const scale = 1 + Math.sin(time * r.speed + r.phase) * 0.3;
+        r.mesh.scale.setScalar(scale);
+      });
+      centralMol.rotation.y = time * 0.2;
+      moleculeGroup.rotation.y = time * 0.05;
+      vortexGroup.rotation.y = time * 0.3;
+      snowflakes.forEach(s => s.mesh.rotation.y += s.rotSpeed);
+
+      const rainPos = rainParticles.geometry.attributes.position.array;
+      for (let i = 0; i < rainCount; i++) {
+        rainPos[i * 3 + 1] -= rainVelocities[i].speed;
+        if (rainPos[i * 3 + 1] < 0) { rainPos[i * 3 + 1] = 300; rainPos[i * 3] = (rand() - 0.5) * 400; rainPos[i * 3 + 2] = (rand() - 0.5) * 400; }
+      }
+      rainParticles.geometry.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => { camera.aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight); camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight); };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
+      scene.traverse((obj) => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } });
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
+
+  // ========== ARBOR MUNDI (World Tree) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'arborMundi' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    touchPointsRef.current = [];
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000000, 0.00035);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 100, 550);
+    camera.lookAt(0, 80, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const primaryColor = hslToHex(hue, 70, 60);
+    const primaryDark = hslToHex(hue, 60, 40);
+    const primaryLight = hslToHex(hue, 52, 78);
+    const primaryDim = hslToHex(hue, 40, 25);
+    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+
+    const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
+    const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.5 });
+    const tealDimMat = new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.3 });
+    const tealBrightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
+    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
+    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
+
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    let seed = 123;
+    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+    function createRing(radius, y, segments = 64, mat = tealDarkMat) {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) { const a = (i / segments) * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius)); }
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+    }
+
+    function createDot(x, y, z, r = 1.5, mat = accentDotMat) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    function createCurve(points, mat = tealMat, segments = 50) {
+      const curve = new THREE.CatmullRomCurve3(points);
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(segments)), mat);
+    }
+
+    // Realm markers
+    mainGroup.add(createRing(200, -100, 64, tealDimMat));
+    mainGroup.add(createRing(220, 0, 64, tealDarkMat));
+    mainGroup.add(createRing(180, 280, 64, tealDimMat));
+
+    // Trunk
+    const trunkGroup = new THREE.Group();
+    mainGroup.add(trunkGroup);
+    const trunkCurve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, -80, 0), new THREE.Vector3(3, -40, 2), new THREE.Vector3(-2, 0, -3), new THREE.Vector3(4, 50, 2), new THREE.Vector3(-3, 100, -2), new THREE.Vector3(2, 150, 3), new THREE.Vector3(0, 200, 0)]);
+    for (let layer = 0; layer < 3; layer++) {
+      const r = 25 - layer * 5;
+      trunkGroup.add(new THREE.Mesh(new THREE.TubeGeometry(trunkCurve, 40, r, 12, false), new THREE.MeshBasicMaterial({ color: layer === 0 ? primaryColor : (layer === 1 ? primaryDark : primaryDim), wireframe: true, transparent: true, opacity: 0.12 - layer * 0.03 })));
+    }
+    trunkGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(trunkCurve.getPoints(60)), tealBrightMat));
+    for (let i = 1; i <= 8; i++) trunkGroup.add(createRing(i * 3, -80, 24, i % 2 === 0 ? tealDarkMat : tealDimMat));
+    trunkGroup.add(createDot(0, -80, 0, 3, coreDotMat));
+
+    // Branches
+    const branchGroup = new THREE.Group();
+    branchGroup.position.y = 180;
+    mainGroup.add(branchGroup);
+
+    function createBranch(startX, startY, startZ, length, angleH, angleV, depth = 0, maxD = 4) {
+      if (depth > maxD) return;
+      const endX = startX + Math.cos(angleH) * Math.cos(angleV) * length;
+      const endY = startY + Math.sin(angleV) * length;
+      const endZ = startZ + Math.sin(angleH) * Math.cos(angleV) * length;
+      const midX = (startX + endX) / 2 + (rand() - 0.5) * length * 0.2;
+      const midY = (startY + endY) / 2 + rand() * length * 0.1;
+      const midZ = (startZ + endZ) / 2 + (rand() - 0.5) * length * 0.2;
+      const opacity = 0.5 - depth * 0.1;
+      const mat = new THREE.LineBasicMaterial({ color: depth < 2 ? primaryColor : primaryDark, transparent: true, opacity: Math.max(0.1, opacity) });
+      branchGroup.add(createCurve([new THREE.Vector3(startX, startY, startZ), new THREE.Vector3(midX, midY, midZ), new THREE.Vector3(endX, endY, endZ)], mat, 12));
+      if (depth < maxD) branchGroup.add(createDot(endX, endY, endZ, 1.5 - depth * 0.2, accentDotMat));
+      const branches = depth < 2 ? 3 : 2;
+      for (let b = 0; b < branches; b++) createBranch(endX, endY, endZ, length * 0.65, angleH + (rand() - 0.5) * 1.2, angleV * 0.7 + (rand() - 0.3) * 0.4, depth + 1, maxD);
+    }
+
+    for (let i = 0; i < 8; i++) createBranch(0, 20, 0, 50, (i / 8) * Math.PI * 2, 0.5 + rand() * 0.3, 0, 4);
+
+    // Celestial crown
+    const celestialGroup = new THREE.Group();
+    celestialGroup.position.y = 350;
+    mainGroup.add(celestialGroup);
+    const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(20, 16, 16), new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.25 }));
+    celestialGroup.add(sunMesh);
+    celestialGroup.add(createDot(0, 0, 0, 4, coreDotMat));
+
+    // Leaf particles
+    const leafCount = 100;
+    const leafGeo = new THREE.BufferGeometry();
+    const leafPositions = new Float32Array(leafCount * 3);
+    const leafVelocities = [];
+    for (let i = 0; i < leafCount; i++) {
+      const a = rand() * Math.PI * 2, r = 30 + rand() * 120;
+      leafPositions[i * 3] = Math.cos(a) * r;
+      leafPositions[i * 3 + 1] = 200 + rand() * 150;
+      leafPositions[i * 3 + 2] = Math.sin(a) * r;
+      leafVelocities.push({ x: (rand() - 0.5) * 0.15, y: -(0.05 + rand() * 0.1), z: (rand() - 0.5) * 0.15, phase: rand() * Math.PI * 2 });
+    }
+    leafGeo.setAttribute("position", new THREE.BufferAttribute(leafPositions, 3));
+    const leafParticles = new THREE.Points(leafGeo, new THREE.PointsMaterial({ color: primaryLight, size: 2, transparent: true, opacity: 0.5 }));
+    mainGroup.add(leafParticles);
+
+    let time = 0, animId;
+    let rotCurrent = { x: 0.08, y: 0 };
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.005;
+      rotCurrent.y += 0.0006;
+      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 550;
+      camera.position.y = Math.sin(rotCurrent.x) * 550 * 0.5 + 100;
+      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 550;
+      camera.lookAt(0, 80, 0);
+
+      sunMesh.scale.setScalar(1 + Math.sin(time * 2) * 0.08);
+
+      const lPos = leafParticles.geometry.attributes.position.array;
+      for (let i = 0; i < leafCount; i++) {
+        lPos[i * 3] += leafVelocities[i].x + Math.sin(time * 2 + leafVelocities[i].phase) * 0.1;
+        lPos[i * 3 + 1] += leafVelocities[i].y;
+        lPos[i * 3 + 2] += leafVelocities[i].z;
+        if (lPos[i * 3 + 1] < -100) { lPos[i * 3 + 1] = 350; const a = rand() * Math.PI * 2, r = 30 + rand() * 100; lPos[i * 3] = Math.cos(a) * r; lPos[i * 3 + 2] = Math.sin(a) * r; }
+      }
+      leafParticles.geometry.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => { camera.aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight); camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight); };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
+      scene.traverse((obj) => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } });
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
+
+  // ========== CRYSTALLUM INFINITUM (Infinite Crystal) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'crystallumInfinitum' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    touchPointsRef.current = [];
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000000, 0.0003);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 60, 500);
+    camera.lookAt(0, 30, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const primaryColor = hslToHex(hue, 70, 60);
+    const primaryDark = hslToHex(hue, 60, 40);
+    const primaryLight = hslToHex(hue, 52, 78);
+    const primaryDim = hslToHex(hue, 40, 25);
+    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+
+    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
+    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
+
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    function createDot(x, y, z, r = 1.5, mat = accentDotMat) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    // Nested Platonic solids
+    const coreGroup = new THREE.Group();
+    coreGroup.position.y = 100;
+    mainGroup.add(coreGroup);
+
+    const dodeca = new THREE.Mesh(new THREE.DodecahedronGeometry(80, 0), new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.12 }));
+    coreGroup.add(dodeca);
+    const icosa = new THREE.Mesh(new THREE.IcosahedronGeometry(60, 0), new THREE.MeshBasicMaterial({ color: primaryDark, wireframe: true, transparent: true, opacity: 0.15 }));
+    coreGroup.add(icosa);
+    const octa = new THREE.Mesh(new THREE.OctahedronGeometry(45, 0), new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.18 }));
+    coreGroup.add(octa);
+    const cube = new THREE.Mesh(new THREE.BoxGeometry(50, 50, 50), new THREE.MeshBasicMaterial({ color: primaryDark, wireframe: true, transparent: true, opacity: 0.2 }));
+    coreGroup.add(cube);
+    const tetra = new THREE.Mesh(new THREE.TetrahedronGeometry(30, 0), new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.25 }));
+    coreGroup.add(tetra);
+    const innerSphere = new THREE.Mesh(new THREE.SphereGeometry(15, 16, 16), new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.3 }));
+    coreGroup.add(innerSphere);
+    coreGroup.add(createDot(0, 0, 0, 4, coreDotMat));
+
+    // Geode below
+    const geodeGroup = new THREE.Group();
+    geodeGroup.position.y = -80;
+    mainGroup.add(geodeGroup);
+    const geodeShell = new THREE.Mesh(new THREE.SphereGeometry(100, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.5), new THREE.MeshBasicMaterial({ color: primaryDark, wireframe: true, transparent: true, opacity: 0.1 }));
+    geodeShell.rotation.x = Math.PI;
+    geodeGroup.add(geodeShell);
+    const centralCrystal = new THREE.Mesh(new THREE.OctahedronGeometry(20, 0), new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.35 }));
+    centralCrystal.position.y = -50;
+    geodeGroup.add(centralCrystal);
+    geodeGroup.add(createDot(0, -50, 0, 3, coreDotMat));
+
+    // Particles
+    const particleCount = 80;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleVelocities = [];
+    let seed = 777;
+    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+    for (let i = 0; i < particleCount; i++) {
+      particlePositions[i * 3] = (rand() - 0.5) * 400;
+      particlePositions[i * 3 + 1] = (rand() - 0.5) * 400 + 50;
+      particlePositions[i * 3 + 2] = (rand() - 0.5) * 400;
+      particleVelocities.push({ x: (rand() - 0.5) * 0.06, y: (rand() - 0.5) * 0.08, z: (rand() - 0.5) * 0.06 });
+    }
+    particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+    const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: primaryLight, size: 1.2, transparent: true, opacity: 0.3 }));
+    mainGroup.add(particles);
+
+    let time = 0, animId;
+    let rotCurrent = { x: 0.1, y: 0 };
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.005;
+      rotCurrent.y += 0.0006;
+      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.position.y = Math.sin(rotCurrent.x) * 500 * 0.5 + 60;
+      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.lookAt(0, 30, 0);
+
+      dodeca.rotation.y = time * 0.1; dodeca.rotation.x = time * 0.05;
+      icosa.rotation.y = -time * 0.15; icosa.rotation.z = time * 0.08;
+      octa.rotation.y = time * 0.2; octa.rotation.x = -time * 0.12;
+      cube.rotation.y = -time * 0.08; cube.rotation.z = time * 0.06;
+      tetra.rotation.y = time * 0.25; tetra.rotation.x = time * 0.18;
+      innerSphere.rotation.y = time * 0.3;
+      innerSphere.scale.setScalar(1 + Math.sin(time * 2) * 0.1);
+      centralCrystal.rotation.y = time * 0.2;
+
+      const pos = particles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        pos[i * 3] += particleVelocities[i].x;
+        pos[i * 3 + 1] += particleVelocities[i].y;
+        pos[i * 3 + 2] += particleVelocities[i].z;
+        if (Math.abs(pos[i * 3 + 1]) > 250) particleVelocities[i].y *= -1;
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => { camera.aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight); camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight); };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
+      scene.traverse((obj) => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } });
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
+
+  // ========== NERVUS COSMICUS (Cosmic Nerve) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'nervusCosmicus' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    touchPointsRef.current = [];
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000000, 0.00025);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 80, 500);
+    camera.lookAt(0, 50, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const primaryColor = hslToHex(hue, 70, 60);
+    const primaryDark = hslToHex(hue, 60, 40);
+    const primaryLight = hslToHex(hue, 52, 78);
+    const primaryDim = hslToHex(hue, 40, 25);
+    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+
+    const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.6 });
+    const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.4 });
+    const tealBrightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
+    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
+    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
+
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    let seed = 999;
+    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+    function createDot(x, y, z, r = 1.5, mat = accentDotMat) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    function createCurve(points, mat = tealMat, segments = 30) {
+      const curve = new THREE.CatmullRomCurve3(points);
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(segments)), mat);
+    }
+
+    // Neurons
+    const neurons = [];
+    const neuronGroup = new THREE.Group();
+    mainGroup.add(neuronGroup);
+
+    for (let i = 0; i < 60; i++) {
+      const theta = rand() * Math.PI * 2, phi = Math.acos(2 * rand() - 1), r = 80 + rand() * 120;
+      const yMod = Math.cos(phi) * 0.6 + 0.4, xzMod = Math.sin(phi);
+      const x = Math.sin(phi) * Math.cos(theta) * r * xzMod;
+      const y = Math.cos(phi) * r * yMod + 80;
+      const z = Math.sin(phi) * Math.sin(theta) * r * xzMod;
+      const size = 3 + rand() * 5, isMain = rand() > 0.7;
+      const neuronMesh = new THREE.Mesh(new THREE.SphereGeometry(size, isMain ? 12 : 8, isMain ? 12 : 8), new THREE.MeshBasicMaterial({ color: isMain ? primaryLight : primaryColor, wireframe: true, transparent: true, opacity: isMain ? 0.4 : 0.25 }));
+      neuronMesh.position.set(x, y, z);
+      neuronGroup.add(neuronMesh);
+      if (isMain) neuronGroup.add(createDot(x, y, z, size * 0.4, coreDotMat));
+      neurons.push({ mesh: neuronMesh, pos: new THREE.Vector3(x, y, z), size, isMain, pulsePhase: rand() * Math.PI * 2, pulseSpeed: 0.5 + rand() * 1.5 });
+    }
+
+    // Synaptic connections
+    const synapseGroup = new THREE.Group();
+    mainGroup.add(synapseGroup);
+    const connections = [];
+    neurons.forEach((n1, i) => {
+      const distances = neurons.map((n2, j) => ({ index: j, dist: n1.pos.distanceTo(n2.pos) })).filter(d => d.index !== i).sort((a, b) => a.dist - b.dist);
+      const connectCount = 2 + Math.floor(rand() * 3);
+      for (let c = 0; c < Math.min(connectCount, distances.length); c++) {
+        if (distances[c].dist > 150) continue;
+        const n2 = neurons[distances[c].index];
+        const mid = new THREE.Vector3().addVectors(n1.pos, n2.pos).multiplyScalar(0.5);
+        mid.x += (rand() - 0.5) * 30; mid.y += (rand() - 0.5) * 30; mid.z += (rand() - 0.5) * 30;
+        const pts = [n1.pos.clone(), mid, n2.pos.clone()];
+        synapseGroup.add(createCurve(pts, n1.isMain ? tealDarkMat : new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.25 }), 20));
+        connections.push({ from: i, to: distances[c].index, curve: new THREE.CatmullRomCurve3(pts) });
+      }
+    });
+
+    // Brainstem
+    const brainstemGroup = new THREE.Group();
+    mainGroup.add(brainstemGroup);
+    const stemCurve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 200, 0), new THREE.Vector3(3, 150, 2), new THREE.Vector3(-2, 100, -1), new THREE.Vector3(2, 50, 2), new THREE.Vector3(-1, 0, -1), new THREE.Vector3(0, -50, 0)]);
+    brainstemGroup.add(new THREE.Mesh(new THREE.TubeGeometry(stemCurve, 40, 8, 8, false), new THREE.MeshBasicMaterial({ color: primaryDark, wireframe: true, transparent: true, opacity: 0.15 })));
+    brainstemGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(stemCurve.getPoints(50)), tealBrightMat));
+    for (let i = 0; i < 8; i++) { const t = i / 7; const p = stemCurve.getPoint(t); brainstemGroup.add(createDot(p.x, p.y, p.z, 3, i % 2 === 0 ? coreDotMat : accentDotMat)); }
+
+    // Neurotransmitter particles
+    const ntCount = 150;
+    const ntGeo = new THREE.BufferGeometry();
+    const ntPositions = new Float32Array(ntCount * 3);
+    const ntData = [];
+    for (let i = 0; i < ntCount; i++) {
+      const conn = connections[Math.floor(rand() * connections.length)];
+      const t = rand();
+      const pos = conn.curve.getPoint(t);
+      ntPositions[i * 3] = pos.x; ntPositions[i * 3 + 1] = pos.y; ntPositions[i * 3 + 2] = pos.z;
+      ntData.push({ connection: conn, t, speed: 0.002 + rand() * 0.008, direction: rand() > 0.5 ? 1 : -1 });
+    }
+    ntGeo.setAttribute("position", new THREE.BufferAttribute(ntPositions, 3));
+    const ntParticles = new THREE.Points(ntGeo, new THREE.PointsMaterial({ color: primaryLight, size: 2, transparent: true, opacity: 0.7 }));
+    mainGroup.add(ntParticles);
+
+    let time = 0, animId;
+    let rotCurrent = { x: 0.1, y: 0 };
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.005;
+      rotCurrent.y += 0.0004;
+      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.position.y = Math.sin(rotCurrent.x) * 500 * 0.5 + 80;
+      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.lookAt(0, 50, 0);
+
+      neurons.forEach(n => { const pulse = 1 + Math.sin(time * n.pulseSpeed + n.pulsePhase) * 0.15; n.mesh.scale.setScalar(pulse); });
+
+      const ntPos = ntParticles.geometry.attributes.position.array;
+      ntData.forEach((nt, i) => {
+        nt.t += nt.speed * nt.direction;
+        if (nt.t > 1) { nt.t = 0; nt.direction = 1; }
+        if (nt.t < 0) { nt.t = 1; nt.direction = -1; }
+        const pos = nt.connection.curve.getPoint(nt.t);
+        ntPos[i * 3] = pos.x; ntPos[i * 3 + 1] = pos.y; ntPos[i * 3 + 2] = pos.z;
+      });
+      ntParticles.geometry.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => { camera.aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight); camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight); };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
+      scene.traverse((obj) => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } });
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
+
+  // ========== PORTA DIMENSIONUM (Dimensional Portal) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'portaDimensionum' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    touchPointsRef.current = [];
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000000, 0.0002);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 100, 500);
+    camera.lookAt(0, 50, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const primaryColor = hslToHex(hue, 70, 60);
+    const primaryDark = hslToHex(hue, 60, 40);
+    const primaryLight = hslToHex(hue, 52, 78);
+    const primaryDim = hslToHex(hue, 40, 25);
+    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+
+    const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.6 });
+    const tealDimMat = new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.25 });
+    const tealBrightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
+    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
+    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
+
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    let seed = 666;
+    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+    function createRing(radius, y, segments = 64, mat = tealMat) {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) { const a = (i / segments) * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius)); }
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+    }
+
+    function createDot(x, y, z, r = 1.5, mat = accentDotMat) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    // Toroidal gateway
+    const gatewayGroup = new THREE.Group();
+    gatewayGroup.position.y = 80;
+    mainGroup.add(gatewayGroup);
+    const torusMesh = new THREE.Mesh(new THREE.TorusGeometry(80, 25, 16, 48), new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.2 }));
+    gatewayGroup.add(torusMesh);
+    const innerTorus = new THREE.Mesh(new THREE.TorusGeometry(80, 15, 12, 36), new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.15 }));
+    gatewayGroup.add(innerTorus);
+    for (let i = 1; i <= 5; i++) gatewayGroup.add(createRing(i * 10, 0, 32, i === 5 ? tealBrightMat : tealDimMat));
+    gatewayGroup.add(createDot(0, 0, 0, 5, coreDotMat));
+
+    // Tesseract
+    const tesseractGroup = new THREE.Group();
+    tesseractGroup.position.y = 80;
+    mainGroup.add(tesseractGroup);
+    const tesseractSize = 40;
+    const tesseractVertices = [];
+    for (let w = -1; w <= 1; w += 2) for (let x = -1; x <= 1; x += 2) for (let y = -1; y <= 1; y += 2) for (let z = -1; z <= 1; z += 2) {
+      const projFactor = 1 / (2 - w * 0.3);
+      tesseractVertices.push(new THREE.Vector3(x * tesseractSize * projFactor, y * tesseractSize * projFactor, z * tesseractSize * projFactor));
+    }
+    const drawnEdges = new Set();
+    tesseractVertices.forEach((v1, i) => {
+      tesseractVertices.forEach((v2, j) => {
+        if (i >= j) return;
+        const dist = v1.distanceTo(v2);
+        const edgeKey = `${Math.min(i, j)}-${Math.max(i, j)}`;
+        if (dist < tesseractSize * 1.5 && !drawnEdges.has(edgeKey)) {
+          drawnEdges.add(edgeKey);
+          tesseractGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([v1, v2]), dist < tesseractSize * 0.9 ? tealMat : tealDimMat));
+        }
+      });
+      tesseractGroup.add(createDot(v1.x, v1.y, v1.z, 1.5, accentDotMat));
+    });
+
+    // Wormhole tunnel
+    const wormholeGroup = new THREE.Group();
+    wormholeGroup.position.y = 80;
+    mainGroup.add(wormholeGroup);
+    const tunnelRings = [];
+    for (let i = 0; i < 20; i++) {
+      const z = -i * 15;
+      const radius = 50 + Math.abs(z) * 0.3;
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 1, 4, 32), new THREE.MeshBasicMaterial({ color: i < 5 ? primaryLight : (i < 12 ? primaryColor : primaryDim), wireframe: true, transparent: true, opacity: 0.3 - i * 0.012 }));
+      ring.position.z = z;
+      wormholeGroup.add(ring);
+      tunnelRings.push({ mesh: ring, baseZ: z, baseRadius: radius });
+    }
+
+    // Particles
+    const particleCount = 150;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleData = [];
+    for (let i = 0; i < particleCount; i++) {
+      const type = rand() > 0.5 ? 'orbit' : 'stream';
+      if (type === 'orbit') {
+        const a = rand() * Math.PI * 2, r = 60 + rand() * 60;
+        particlePositions[i * 3] = Math.cos(a) * r;
+        particlePositions[i * 3 + 1] = 80 + (rand() - 0.5) * 40;
+        particlePositions[i * 3 + 2] = Math.sin(a) * r;
+        particleData.push({ type, angle: a, radius: r, speed: 0.01 + rand() * 0.02 });
+      } else {
+        particlePositions[i * 3] = (rand() - 0.5) * 20;
+        particlePositions[i * 3 + 1] = 80 + (rand() - 0.5) * 100;
+        particlePositions[i * 3 + 2] = -rand() * 200;
+        particleData.push({ type, speed: 1 + rand() * 3 });
+      }
+    }
+    particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+    const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: primaryLight, size: 2, transparent: true, opacity: 0.6 }));
+    mainGroup.add(particles);
+
+    let time = 0, animId;
+    let rotCurrent = { x: 0.15, y: 0 };
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.006;
+      rotCurrent.y += 0.0004;
+      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.position.y = Math.sin(rotCurrent.x) * 500 * 0.5 + 100;
+      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.lookAt(0, 50, 0);
+
+      torusMesh.rotation.x = time * 0.2; torusMesh.rotation.y = time * 0.3;
+      innerTorus.rotation.x = -time * 0.3; innerTorus.rotation.y = -time * 0.2;
+      tesseractGroup.rotation.x = time * 0.15; tesseractGroup.rotation.y = time * 0.2; tesseractGroup.rotation.z = time * 0.1;
+      tunnelRings.forEach((r, i) => r.mesh.scale.setScalar(1 + Math.sin(time * 2 - i * 0.3) * 0.1));
+
+      const pos = particles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        const pd = particleData[i];
+        if (pd.type === 'orbit') { pd.angle += pd.speed; pos[i * 3] = Math.cos(pd.angle) * pd.radius; pos[i * 3 + 2] = Math.sin(pd.angle) * pd.radius; }
+        else { pos[i * 3 + 2] -= pd.speed; if (pos[i * 3 + 2] < -300) { pos[i * 3] = (rand() - 0.5) * 20; pos[i * 3 + 1] = 80 + (rand() - 0.5) * 100; pos[i * 3 + 2] = 0; } }
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => { camera.aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight); camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight); };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
+      scene.traverse((obj) => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } });
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
+
+  // ========== CAELUM MECHANICUM (Celestial Mechanism) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'caelumMechanicum' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    touchPointsRef.current = [];
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000000, 0.0003);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 150, 450);
+    camera.lookAt(0, 50, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const primaryColor = hslToHex(hue, 70, 60);
+    const primaryDark = hslToHex(hue, 60, 40);
+    const primaryLight = hslToHex(hue, 52, 78);
+    const primaryDim = hslToHex(hue, 40, 25);
+    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+
+    const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
+    const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.5 });
+    const tealDimMat = new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.3 });
+    const tealBrightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
+    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
+    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
+
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    let seed = 888;
+    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+    function createRing(radius, y, segments = 64, mat = tealDarkMat) {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) { const a = (i / segments) * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius)); }
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+    }
+
+    function createDot(x, y, z, r = 1.5, mat = accentDotMat) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    // Central sun
+    const sunGroup = new THREE.Group();
+    sunGroup.position.y = 80;
+    mainGroup.add(sunGroup);
+    const sunSphere = new THREE.Mesh(new THREE.SphereGeometry(25, 20, 20), new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.25 }));
+    sunGroup.add(sunSphere);
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const inner = 28, outer = i % 2 === 0 ? 50 : 38;
+      sunGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(Math.cos(a) * inner, 0, Math.sin(a) * inner), new THREE.Vector3(Math.cos(a) * outer, 0, Math.sin(a) * outer)]), i % 2 === 0 ? tealBrightMat : tealDimMat));
+    }
+    sunGroup.add(createDot(0, 0, 0, 5, coreDotMat));
+
+    // Planetary orbits
+    const orbitGroup = new THREE.Group();
+    orbitGroup.position.y = 80;
+    mainGroup.add(orbitGroup);
+    const planetData = [{ r: 60, speed: 2.0, size: 3 }, { r: 80, speed: 1.5, size: 4 }, { r: 105, speed: 1.0, size: 5 }, { r: 130, speed: 0.7, size: 4 }, { r: 165, speed: 0.4, size: 8 }, { r: 200, speed: 0.25, size: 7 }];
+    const planets = [];
+    planetData.forEach((pd, i) => {
+      orbitGroup.add(createRing(pd.r, 0, 64, i % 2 === 0 ? tealDimMat : tealDarkMat));
+      const planet = new THREE.Mesh(new THREE.SphereGeometry(pd.size, 10, 10), new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? primaryColor : primaryDark, wireframe: true, transparent: true, opacity: 0.4 }));
+      planet.position.x = pd.r;
+      orbitGroup.add(planet);
+      planets.push({ mesh: planet, ...pd, angle: rand() * Math.PI * 2 });
+    });
+
+    // Zodiac wheel
+    const zodiacGroup = new THREE.Group();
+    zodiacGroup.position.y = 80;
+    mainGroup.add(zodiacGroup);
+    const zodiacOuter = 230, zodiacInner = 215;
+    zodiacGroup.add(createRing(zodiacOuter, 0, 96, tealMat));
+    zodiacGroup.add(createRing(zodiacInner, 0, 96, tealDarkMat));
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2, nextA = ((i + 1) / 12) * Math.PI * 2;
+      zodiacGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(Math.cos(a) * zodiacInner, 0, Math.sin(a) * zodiacInner), new THREE.Vector3(Math.cos(a) * zodiacOuter, 0, Math.sin(a) * zodiacOuter)]), tealDarkMat));
+      const midA = (a + nextA) / 2, midR = (zodiacInner + zodiacOuter) / 2;
+      const smallCube = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 4), new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.5 }));
+      smallCube.position.set(Math.cos(midA) * midR, 0, Math.sin(midA) * midR);
+      zodiacGroup.add(smallCube);
+    }
+
+    // Ecliptic
+    const sphereGroup = new THREE.Group();
+    sphereGroup.position.y = 80;
+    mainGroup.add(sphereGroup);
+    const ecliptic = new THREE.Mesh(new THREE.TorusGeometry(180, 0.8, 4, 80), new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.2 }));
+    ecliptic.rotation.x = Math.PI / 2;
+    ecliptic.rotation.z = 0.41;
+    sphereGroup.add(ecliptic);
+    sphereGroup.add(createDot(0, 170, 0, 3, coreDotMat));
+    sphereGroup.add(createDot(0, -170, 0, 3, coreDotMat));
+
+    // Particles
+    const particleCount = 100;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleVelocities = [];
+    for (let i = 0; i < particleCount; i++) {
+      particlePositions[i * 3] = (rand() - 0.5) * 500;
+      particlePositions[i * 3 + 1] = (rand() - 0.5) * 500 + 50;
+      particlePositions[i * 3 + 2] = (rand() - 0.5) * 500;
+      particleVelocities.push({ x: (rand() - 0.5) * 0.05, y: (rand() - 0.5) * 0.06, z: (rand() - 0.5) * 0.05 });
+    }
+    particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+    const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: primaryLight, size: 1.2, transparent: true, opacity: 0.3 }));
+    mainGroup.add(particles);
+
+    let time = 0, animId;
+    let rotCurrent = { x: 0.2, y: 0 };
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.005;
+      rotCurrent.y += 0.0005;
+      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 450;
+      camera.position.y = Math.sin(rotCurrent.x) * 450 * 0.5 + 150;
+      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 450;
+      camera.lookAt(0, 50, 0);
+
+      sunSphere.scale.setScalar(1 + Math.sin(time * 2) * 0.08);
+      planets.forEach(p => { p.angle += p.speed * 0.002; p.mesh.position.x = Math.cos(p.angle) * p.r; p.mesh.position.z = Math.sin(p.angle) * p.r; });
+      zodiacGroup.rotation.y = time * 0.02;
+      ecliptic.rotation.y = time * 0.03;
+      sphereGroup.rotation.y = time * 0.01;
+
+      const pos = particles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        pos[i * 3] += particleVelocities[i].x;
+        pos[i * 3 + 1] += particleVelocities[i].y;
+        pos[i * 3 + 2] += particleVelocities[i].z;
+        if (Math.abs(pos[i * 3]) > 300 || Math.abs(pos[i * 3 + 1]) > 300 || Math.abs(pos[i * 3 + 2]) > 300) {
+          pos[i * 3] = (rand() - 0.5) * 400; pos[i * 3 + 1] = (rand() - 0.5) * 400 + 50; pos[i * 3 + 2] = (rand() - 0.5) * 400;
+        }
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => { camera.aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight); camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight); };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
+      scene.traverse((obj) => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } });
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
+
+  // ========== LABYRINTHUS SACRUM (Sacred Labyrinth) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'labyrinthisSacrum' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    touchPointsRef.current = [];
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000000, 0.0003);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 300, 400);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const primaryColor = hslToHex(hue, 70, 60);
+    const primaryDark = hslToHex(hue, 60, 40);
+    const primaryLight = hslToHex(hue, 52, 78);
+    const primaryDim = hslToHex(hue, 40, 25);
+    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+
+    const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
+    const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.5 });
+    const tealDimMat = new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.3 });
+    const tealBrightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
+    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
+    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
+
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    let seed = 333;
+    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+    function createRing(radius, y, segments = 64, mat = tealDarkMat) {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) { const a = (i / segments) * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius)); }
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+    }
+
+    function createDot(x, y, z, r = 1.5, mat = accentDotMat) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    // Labyrinth path
+    const labyrinthGroup = new THREE.Group();
+    mainGroup.add(labyrinthGroup);
+    const circuits = 11, maxRadius = 180, pathWidth = maxRadius / (circuits + 1);
+    for (let c = 1; c <= circuits; c++) {
+      const r = c * pathWidth;
+      const openings = [];
+      [0, Math.PI / 2, Math.PI, Math.PI * 1.5].forEach(o => { if (rand() > 0.3) openings.push(o + (rand() - 0.5) * 0.3); });
+      const segments = 64;
+      let drawing = true;
+      const pts = [];
+      for (let i = 0; i <= segments; i++) {
+        const a = (i / segments) * Math.PI * 2;
+        let nearOpening = false;
+        openings.forEach(o => { if (Math.abs(a - o) < 0.15 || Math.abs(a - o + Math.PI * 2) < 0.15) nearOpening = true; });
+        if (nearOpening && drawing && pts.length > 1) { labyrinthGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), c % 2 === 0 ? tealMat : tealDarkMat)); pts.length = 0; drawing = false; }
+        else if (!nearOpening && !drawing) drawing = true;
+        if (drawing) pts.push(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r));
+      }
+      if (pts.length > 1) labyrinthGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), c % 2 === 0 ? tealMat : tealDarkMat));
+    }
+
+    // Rose center
+    const roseGroup = new THREE.Group();
+    roseGroup.position.y = 1;
+    mainGroup.add(roseGroup);
+    const roseRadius = pathWidth * 1.5;
+    roseGroup.add(createRing(roseRadius, 0, 48, tealBrightMat));
+    for (let p = 0; p < 12; p++) {
+      const a = (p / 12) * Math.PI * 2, nextA = ((p + 1) / 12) * Math.PI * 2;
+      const pts = [];
+      for (let i = 0; i <= 10; i++) { const t = i / 10, petalA = a + t * (nextA - a), petalR = roseRadius * 0.3 + Math.sin(t * Math.PI) * roseRadius * 0.5; pts.push(new THREE.Vector3(Math.cos(petalA) * petalR, 0, Math.sin(petalA) * petalR)); }
+      roseGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), tealMat));
+    }
+    roseGroup.add(createDot(0, 0, 0, 4, coreDotMat));
+
+    // Pillars
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2, r = maxRadius + 20;
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(4, 5, 60, 6), new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.2 }));
+      pillar.position.set(Math.cos(a) * r, 30, Math.sin(a) * r);
+      mainGroup.add(pillar);
+      mainGroup.add(createDot(Math.cos(a) * r, 70, Math.sin(a) * r, 2, coreDotMat));
+    }
+
+    // Mandala ceiling
+    const ceilingGroup = new THREE.Group();
+    ceilingGroup.position.y = 200;
+    mainGroup.add(ceilingGroup);
+    for (let i = 1; i <= 8; i++) ceilingGroup.add(createRing(i * 25, 0, 48, i % 2 === 0 ? tealMat : tealDimMat));
+    const oculusMesh = new THREE.Mesh(new THREE.TorusGeometry(15, 2, 6, 24), new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.3 }));
+    oculusMesh.rotation.x = Math.PI / 2;
+    ceilingGroup.add(oculusMesh);
+    ceilingGroup.add(createDot(0, 0, 0, 3, coreDotMat));
+
+    // Particles
+    const particleCount = 80;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleVelocities = [];
+    for (let i = 0; i < particleCount; i++) {
+      const a = rand() * Math.PI * 2, r = rand() * maxRadius;
+      particlePositions[i * 3] = Math.cos(a) * r;
+      particlePositions[i * 3 + 1] = rand() * 200;
+      particlePositions[i * 3 + 2] = Math.sin(a) * r;
+      particleVelocities.push({ y: 0.1 + rand() * 0.2 });
+    }
+    particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+    const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: primaryLight, size: 1.5, transparent: true, opacity: 0.4 }));
+    mainGroup.add(particles);
+
+    let time = 0, animId;
+    let rotCurrent = { x: 0.5, y: 0 };
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.005;
+      rotCurrent.y += 0.0005;
+      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.position.y = Math.sin(rotCurrent.x) * 500;
+      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.lookAt(0, 50, 0);
+
+      roseGroup.scale.setScalar(1 + Math.sin(time * 2) * 0.05);
+      ceilingGroup.rotation.y = time * 0.02;
+      oculusMesh.rotation.z = time * 0.5;
+
+      const pos = particles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        pos[i * 3 + 1] += particleVelocities[i].y;
+        if (pos[i * 3 + 1] > 200) { pos[i * 3 + 1] = 0; const a = rand() * Math.PI * 2, r = rand() * maxRadius; pos[i * 3] = Math.cos(a) * r; pos[i * 3 + 2] = Math.sin(a) * r; }
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => { camera.aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight); camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight); };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
+      scene.traverse((obj) => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } });
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
+
+  // ========== TEMPLUM SONORUM (Temple of Sound) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'templumSonorum' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    touchPointsRef.current = [];
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000000, 0.00025);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 180, 450);
+    camera.lookAt(0, 50, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const primaryColor = hslToHex(hue, 70, 60);
+    const primaryDark = hslToHex(hue, 60, 40);
+    const primaryLight = hslToHex(hue, 52, 78);
+    const primaryDim = hslToHex(hue, 40, 25);
+    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+
+    const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.6 });
+    const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.4 });
+    const tealDimMat = new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.25 });
+    const tealBrightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
+    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
+    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
+
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    let seed = 555;
+    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+    function createRing(radius, y, segments = 64, mat = tealDarkMat) {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) { const a = (i / segments) * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius)); }
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+    }
+
+    function createDot(x, y, z, r = 1.5, mat = accentDotMat) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    // Singing bowl
+    const bowlGroup = new THREE.Group();
+    mainGroup.add(bowlGroup);
+    const bowlMesh = new THREE.Mesh(new THREE.SphereGeometry(50, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.6), new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.2 }));
+    bowlMesh.rotation.x = Math.PI;
+    bowlMesh.position.y = 30;
+    bowlGroup.add(bowlMesh);
+    bowlGroup.add(createRing(50, 30, 48, tealBrightMat));
+    const bowlRings = [];
+    for (let i = 1; i <= 5; i++) {
+      const ring = createRing(50 - i * 8, 30, 32, i === 1 ? tealMat : tealDimMat);
+      bowlGroup.add(ring);
+      bowlRings.push({ mesh: ring, baseY: 30, phase: i * 0.5 });
+    }
+    bowlGroup.add(createDot(0, 5, 0, 4, coreDotMat));
+
+    // Circle of fifths
+    const circleOfFifthsGroup = new THREE.Group();
+    circleOfFifthsGroup.position.set(0, 150, 0);
+    mainGroup.add(circleOfFifthsGroup);
+    const fifthsRadius = 80;
+    circleOfFifthsGroup.add(createRing(fifthsRadius, 0, 48, tealMat));
+    circleOfFifthsGroup.add(createRing(fifthsRadius * 0.7, 0, 36, tealDarkMat));
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      const x = Math.cos(a) * fifthsRadius, z = Math.sin(a) * fifthsRadius;
+      circleOfFifthsGroup.add(createDot(x, 0, z, 3, i % 3 === 0 ? coreDotMat : accentDotMat));
+      circleOfFifthsGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(x, 0, z)]), tealDimMat));
+    }
+    circleOfFifthsGroup.add(createDot(0, 0, 0, 3, coreDotMat));
+
+    // Standing waves
+    const standingWaveGroup = new THREE.Group();
+    standingWaveGroup.position.set(0, 80, 100);
+    mainGroup.add(standingWaveGroup);
+    const waveLength = 150;
+    const waves = [];
+    for (let mode = 1; mode <= 4; mode++) {
+      const y = mode * 25 - 50;
+      const wavePts = [];
+      for (let i = 0; i <= 60; i++) { const t = i / 60, x = (t - 0.5) * waveLength; wavePts.push(new THREE.Vector3(x, y, 0)); }
+      const waveLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(wavePts), new THREE.LineBasicMaterial({ color: mode === 1 ? primaryLight : primaryColor, transparent: true, opacity: 0.5 }));
+      standingWaveGroup.add(waveLine);
+      waves.push({ line: waveLine, mode, pts: wavePts, baseY: y });
+      standingWaveGroup.add(createDot(-waveLength / 2, y, 0, 2, accentDotMat));
+      standingWaveGroup.add(createDot(waveLength / 2, y, 0, 2, accentDotMat));
+    }
+
+    // Resonance rings
+    const resonanceRings = [];
+    const resonanceGroup = new THREE.Group();
+    resonanceGroup.position.y = 30;
+    mainGroup.add(resonanceGroup);
+    for (let i = 1; i <= 6; i++) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(50 + i * 25, 0.8, 4, 48), new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? primaryColor : primaryDark, wireframe: true, transparent: true, opacity: 0.15 }));
+      ring.rotation.x = Math.PI / 2;
+      resonanceGroup.add(ring);
+      resonanceRings.push({ mesh: ring, baseRadius: 50 + i * 25, phase: i * 0.4 });
+    }
+
+    // Particles
+    const particleCount = 100;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleVelocities = [];
+    for (let i = 0; i < particleCount; i++) {
+      const a = rand() * Math.PI * 2, r = 50 + rand() * 150;
+      particlePositions[i * 3] = Math.cos(a) * r;
+      particlePositions[i * 3 + 1] = rand() * 200;
+      particlePositions[i * 3 + 2] = Math.sin(a) * r;
+      particleVelocities.push({ angle: a, radius: r, speed: 0.01 + rand() * 0.02, ySpeed: (rand() - 0.5) * 0.3 });
+    }
+    particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+    const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: primaryLight, size: 1.5, transparent: true, opacity: 0.4 }));
+    mainGroup.add(particles);
+
+    let time = 0, animId;
+    let rotCurrent = { x: 0.25, y: 0 };
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.008;
+      rotCurrent.y += 0.0004;
+      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 450;
+      camera.position.y = Math.sin(rotCurrent.x) * 450 * 0.5 + 180;
+      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 450;
+      camera.lookAt(0, 50, 0);
+
+      bowlRings.forEach(r => { r.mesh.position.y = r.baseY + Math.sin(time * 3 + r.phase) * 2; });
+      circleOfFifthsGroup.rotation.y = time * 0.05;
+
+      waves.forEach(w => {
+        const positions = w.line.geometry.attributes.position.array;
+        for (let i = 0; i <= 60; i++) { const t = i / 60; positions[i * 3 + 1] = w.baseY + Math.sin(t * Math.PI * w.mode) * 15 * Math.sin(time * 2); }
+        w.line.geometry.attributes.position.needsUpdate = true;
+      });
+
+      resonanceRings.forEach(r => { r.mesh.scale.setScalar(1 + Math.sin(time * 2 + r.phase) * 0.05); });
+
+      const pos = particles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        particleVelocities[i].angle += particleVelocities[i].speed;
+        pos[i * 3] = Math.cos(particleVelocities[i].angle) * particleVelocities[i].radius;
+        pos[i * 3 + 1] += particleVelocities[i].ySpeed;
+        pos[i * 3 + 2] = Math.sin(particleVelocities[i].angle) * particleVelocities[i].radius;
+        if (pos[i * 3 + 1] > 220 || pos[i * 3 + 1] < -20) particleVelocities[i].ySpeed *= -1;
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => { camera.aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight); camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight); };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
+      scene.traverse((obj) => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } });
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
+
   // Floating particles animation (stars in space effect)
   React.useEffect(() => {
     const canvas = particleCanvasRef.current;
@@ -7631,7 +9087,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'mountains' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden' || currentMode === 'corpusStellae' || currentMode === 'machinaTemporis' || currentMode === 'oceanusProfundus') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'mountains' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden' || currentMode === 'corpusStellae' || currentMode === 'machinaTemporis' || currentMode === 'oceanusProfundus' || currentMode === 'aquaVitae' || currentMode === 'arborMundi' || currentMode === 'crystallumInfinitum' || currentMode === 'nervusCosmicus' || currentMode === 'portaDimensionum' || currentMode === 'templumSonorum' || currentMode === 'caelumMechanicum' || currentMode === 'labyrinthisSacrum') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -7750,7 +9206,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'mountains' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && currentMode !== 'corpusStellae' && currentMode !== 'machinaTemporis' && currentMode !== 'oceanusProfundus' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'mountains' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && currentMode !== 'corpusStellae' && currentMode !== 'machinaTemporis' && currentMode !== 'oceanusProfundus' && currentMode !== 'aquaVitae' && currentMode !== 'arborMundi' && currentMode !== 'crystallumInfinitum' && currentMode !== 'nervusCosmicus' && currentMode !== 'portaDimensionum' && currentMode !== 'templumSonorum' && currentMode !== 'caelumMechanicum' && currentMode !== 'labyrinthisSacrum' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
