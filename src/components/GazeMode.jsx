@@ -5671,15 +5671,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const primaryFaint = hslToHex(hue, 40, 35);
     const accentColor = hslToHex((hue + 40) % 360, 60, 55); // Complementary accent
 
-    // Materials
-    const inkMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
-    const inkMedMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.45 });
-    const inkLightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.3 });
-    const inkDashMat = new THREE.LineDashedMaterial({ color: primaryLight, transparent: true, opacity: 0.25, dashSize: 3, gapSize: 2 });
-    const greenMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
-    const greenLightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.5 });
-    const greenFaintMat = new THREE.LineBasicMaterial({ color: primaryFaint, transparent: true, opacity: 0.35 });
-    const goldMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.6 });
+    // Materials - increased opacity for better visibility
+    const inkMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 1.0 });
+    const inkMedMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.8 });
+    const inkLightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
+    const inkDashMat = new THREE.LineDashedMaterial({ color: primaryLight, transparent: true, opacity: 0.5, dashSize: 3, gapSize: 2 });
+    const greenMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 1.0 });
+    const greenLightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.85 });
+    const greenFaintMat = new THREE.LineBasicMaterial({ color: primaryFaint, transparent: true, opacity: 0.6 });
+    const goldMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
 
     const mainGroup = new THREE.Group();
     scene.add(mainGroup);
@@ -5752,13 +5752,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     const torusGeo = new THREE.TorusGeometry(80, 35, 16, 40);
     const torusMesh = new THREE.Mesh(torusGeo, new THREE.MeshBasicMaterial({
-      color: primaryDark, wireframe: true, transparent: true, opacity: 0.18
+      color: primaryDark, wireframe: true, transparent: true, opacity: 0.4
     }));
     torusGroup.add(torusMesh);
 
     const torus2Geo = new THREE.TorusGeometry(80, 35, 12, 32);
     const torus2Mesh = new THREE.Mesh(torus2Geo, new THREE.MeshBasicMaterial({
-      color: primaryLight, wireframe: true, transparent: true, opacity: 0.08
+      color: primaryLight, wireframe: true, transparent: true, opacity: 0.25
     }));
     torus2Mesh.rotation.y = Math.PI / 4;
     torusGroup.add(torus2Mesh);
@@ -5766,7 +5766,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // Third torus for more density
     const torus3Geo = new THREE.TorusGeometry(80, 35, 10, 28);
     const torus3Mesh = new THREE.Mesh(torus3Geo, new THREE.MeshBasicMaterial({
-      color: primaryColor, wireframe: true, transparent: true, opacity: 0.06
+      color: primaryColor, wireframe: true, transparent: true, opacity: 0.2
     }));
     torus3Mesh.rotation.y = Math.PI / 2;
     torus3Mesh.rotation.x = 0.3;
@@ -5780,14 +5780,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // Core sphere
     const coreSphereGeo = new THREE.SphereGeometry(10, 16, 16);
     const coreSphereMesh = new THREE.Mesh(coreSphereGeo, new THREE.MeshBasicMaterial({
-      color: accentColor, wireframe: true, transparent: true, opacity: 0.35
+      color: accentColor, wireframe: true, transparent: true, opacity: 0.65
     }));
     torusGroup.add(coreSphereMesh);
 
     // Inner icosahedron
     const icoGeo = new THREE.IcosahedronGeometry(6, 0);
     const icoMesh = new THREE.Mesh(icoGeo, new THREE.MeshBasicMaterial({
-      color: accentColor, wireframe: true, transparent: true, opacity: 0.5
+      color: accentColor, wireframe: true, transparent: true, opacity: 0.85
     }));
     torusGroup.add(icoMesh);
 
@@ -5876,7 +5876,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     const pyGeo = new THREE.ConeGeometry(pyW, pyH, 4, 1, true);
     const pyMesh = new THREE.Mesh(pyGeo, new THREE.MeshBasicMaterial({
-      color: primaryColor, wireframe: true, transparent: true, opacity: 0.35
+      color: primaryColor, wireframe: true, transparent: true, opacity: 0.6
     }));
     pyMesh.position.y = pyTop - pyH / 2;
     pyMesh.rotation.y = Math.PI / 4;
@@ -5926,13 +5926,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     const seedGeo = new THREE.SphereGeometry(18, 16, 16);
     const seedMesh = new THREE.Mesh(seedGeo, new THREE.MeshBasicMaterial({
-      color: primaryDark, wireframe: true, transparent: true, opacity: 0.3
+      color: primaryDark, wireframe: true, transparent: true, opacity: 0.6
     }));
     seedGroup.add(seedMesh);
 
     const embryoGeo = new THREE.SphereGeometry(10, 12, 12);
     const embryoMesh = new THREE.Mesh(embryoGeo, new THREE.MeshBasicMaterial({
-      color: primaryColor, wireframe: true, transparent: true, opacity: 0.25
+      color: primaryColor, wireframe: true, transparent: true, opacity: 0.5
     }));
     seedGroup.add(embryoMesh);
     seedGroup.add(createDot(0, 0, 0, 3, accentColor));
@@ -5941,7 +5941,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     for (let i = 0; i < 3; i++) {
       const orbitGeo = new THREE.TorusGeometry(28 + i * 6, 0.3, 4, 48);
       const orbitMesh = new THREE.Mesh(orbitGeo, new THREE.MeshBasicMaterial({
-        color: primaryLight, wireframe: true, transparent: true, opacity: 0.2
+        color: primaryLight, wireframe: true, transparent: true, opacity: 0.45
       }));
       orbitMesh.rotation.x = Math.PI / 2 + (i - 1) * 0.4;
       orbitMesh.rotation.z = i * 0.5;
@@ -5971,7 +5971,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     ]);
     const stemTubeGeo = new THREE.TubeGeometry(stemCurve, 40, 1.2, 6, false);
     const stemTube = new THREE.Mesh(stemTubeGeo, new THREE.MeshBasicMaterial({
-      color: primaryColor, wireframe: true, transparent: true, opacity: 0.4
+      color: primaryColor, wireframe: true, transparent: true, opacity: 0.65
     }));
     plantGroup.add(stemTube);
 
@@ -5994,7 +5994,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       const leafGeo = new THREE.ShapeGeometry(shape, 8);
       const leafMesh = new THREE.Mesh(leafGeo, new THREE.MeshBasicMaterial({
-        color: primaryLight, wireframe: true, transparent: true, opacity: 0.3, side: THREE.DoubleSide
+        color: primaryLight, wireframe: true, transparent: true, opacity: 0.55, side: THREE.DoubleSide
       }));
       group.add(leafMesh);
 
@@ -6031,7 +6031,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // Bud
     const budGeo = new THREE.SphereGeometry(5, 8, 8);
     const budMesh = new THREE.Mesh(budGeo, new THREE.MeshBasicMaterial({
-      color: primaryColor, wireframe: true, transparent: true, opacity: 0.35
+      color: primaryColor, wireframe: true, transparent: true, opacity: 0.6
     }));
     budMesh.position.set(0, stemTopY + 2, 0);
     budMesh.scale.set(1, 1.4, 1);
@@ -6047,7 +6047,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     const baseGeo = new THREE.BoxGeometry(baseW * 2, baseH, baseD * 2);
     const baseMesh = new THREE.Mesh(baseGeo, new THREE.MeshBasicMaterial({
-      color: primaryColor, wireframe: true, transparent: true, opacity: 0.25
+      color: primaryColor, wireframe: true, transparent: true, opacity: 0.5
     }));
     baseMesh.position.y = baseCY;
     baseGroup.add(baseMesh);
@@ -6105,7 +6105,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     const bulbGeo = new THREE.SphereGeometry(10, 10, 10);
     const bulbMesh = new THREE.Mesh(bulbGeo, new THREE.MeshBasicMaterial({
-      color: primaryDark, wireframe: true, transparent: true, opacity: 0.35
+      color: primaryDark, wireframe: true, transparent: true, opacity: 0.6
     }));
     bulbMesh.position.set(-coilLen / 2 - 20, 0, 0);
     bulbMesh.scale.set(1.3, 1, 1);
@@ -6131,8 +6131,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         new THREE.Vector3((startX + endX) / 2 + (Math.random() - 0.5) * 10, (startY + endY) / 2, (startZ + endZ) / 2 + (Math.random() - 0.5) * 10),
         new THREE.Vector3(endX, endY, endZ)
       ];
-      const opacity = 0.5 - depth * 0.1;
-      const mat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: Math.max(0.1, opacity) });
+      const opacity = 0.8 - depth * 0.12;
+      const mat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: Math.max(0.25, opacity) });
       lowerGroup.add(createCurve(pts, mat, 15));
 
       const branches = depth < 2 ? 3 : 2;
@@ -6166,7 +6166,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
       const geo = new THREE.BufferGeometry().setFromPoints(pts);
       const mat = new THREE.LineDashedMaterial({
-        color: primaryLight, transparent: true, opacity: 0.2 - i * 0.05, dashSize: 5, gapSize: 4
+        color: primaryLight, transparent: true, opacity: 0.4 - i * 0.08, dashSize: 5, gapSize: 4
       });
       const line = new THREE.Line(geo, mat);
       line.computeLineDistances();
@@ -6277,7 +6277,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       });
     }
     particleGeo3D.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-    const particleMat3D = new THREE.PointsMaterial({ color: accentColor, size: 1.5, transparent: true, opacity: 0.4 });
+    const particleMat3D = new THREE.PointsMaterial({ color: accentColor, size: 1.5, transparent: true, opacity: 0.7 });
     const particles3D = new THREE.Points(particleGeo3D, particleMat3D);
     mainGroup.add(particles3D);
 
@@ -6369,35 +6369,34 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       };
 
       // Target opacities based on meditation progress
-      // Garden grows from roots upward - bottom to top
+      // Each tap reveals a new element - seed first, then grows outward
+      // 50 lines total, spread elements evenly
       const targets = {
-        roots: ease(progress, 0, 0.12),          // First: deep roots extend underground
-        rootCoil: ease(progress, 0.04, 0.18),    // Root coils form in base
-        base: ease(progress, 0.08, 0.24),        // Ground level materializes
-        seed: ease(progress, 0.12, 0.30),        // Seed planted in earth
-        seedOrbits: ease(progress, 0.16, 0.35),  // Seed energy orbits
-        plant: ease(progress, 0.20, 0.45),       // Plant grows upward
-        pyramid: ease(progress, 0.30, 0.55),     // Structure forms around plant
-        ferns: ease(progress, 0.40, 0.65),       // Side vegetation unfolds
-        torus: ease(progress, 0.50, 0.78),       // Energy sphere blooms at top
-        vortex: ease(progress, 0.60, 0.85),      // Vortex funnels at very top
-        flowers: ease(progress, 0.70, 0.92),     // Flower diagrams appear
-        particles: ease(progress, 0.80, 1.0)     // Final: particles float up
+        seed: 1,                                  // Seed visible from line 1
+        seedOrbits: ease(progress, 0, 0.10),     // Lines 1-5: Seed orbits form
+        roots: ease(progress, 0.06, 0.16),       // Lines 3-8: Roots extend down
+        rootCoil: ease(progress, 0.12, 0.22),    // Lines 6-11: Root coils form
+        base: ease(progress, 0.18, 0.30),        // Lines 9-15: Base materializes
+        plant: ease(progress, 0.26, 0.40),       // Lines 13-20: Plant grows up
+        pyramid: ease(progress, 0.36, 0.50),     // Lines 18-25: Pyramid forms
+        ferns: ease(progress, 0.46, 0.60),       // Lines 23-30: Ferns unfold
+        torus: ease(progress, 0.56, 0.72),       // Lines 28-36: Torus blooms
+        vortex: ease(progress, 0.68, 0.82),      // Lines 34-41: Vortex appears
+        flowers: ease(progress, 0.78, 0.90),     // Lines 39-45: Flowers appear
+        particles: ease(progress, 0.86, 1.0)     // Lines 43-50: Particles float
       };
 
       // Smooth lerp towards targets
-      const lerpSpeed = 0.05;
+      const lerpSpeed = 0.06;
       for (const key in groupOpacities) {
         groupOpacities[key] += (targets[key] - groupOpacities[key]) * lerpSpeed;
       }
 
-      // Apply opacities to groups - roots and base visible from start
-      setGroupOpacity(lowerGroup, Math.max(0.6, groupOpacities.roots));
-      setGroupOpacity(rootCoilGroup, Math.max(0.5, groupOpacities.rootCoil));
-      setGroupOpacity(baseGroup, Math.max(0.4, groupOpacities.base));
-      setGroupOpacity(seedGroup, Math.max(0.3, groupOpacities.seed, groupOpacities.seedOrbits));
-
-      // These elements grow upward as meditation progresses
+      // Apply opacities - seed visible from start, everything else fades in
+      setGroupOpacity(seedGroup, Math.max(0.7, groupOpacities.seed, groupOpacities.seedOrbits));
+      setGroupOpacity(lowerGroup, groupOpacities.roots);
+      setGroupOpacity(rootCoilGroup, groupOpacities.rootCoil);
+      setGroupOpacity(baseGroup, groupOpacities.base);
       setGroupOpacity(plantGroup, groupOpacities.plant);
       setGroupOpacity(pyramidGroup, groupOpacities.pyramid);
       setGroupOpacity(fernGroup, groupOpacities.ferns);
@@ -6406,7 +6405,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       setGroupOpacity(flowerDiagramGroup, groupOpacities.flowers);
 
       // Particles opacity via material
-      particleMat3D.opacity = 0.4 * groupOpacities.particles;
+      particleMat3D.opacity = 0.7 * groupOpacities.particles;
 
       renderer.render(scene, camera);
     };
@@ -6429,6 +6428,1087 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       renderer.dispose();
     };
   }, [currentMode, hue, getBreathPhase]);
+
+  // ========== CORPUS STELLAE (Star Body / Vitruvian) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'corpusStellae' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000000, 0.00035);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 80, 500);
+    camera.lookAt(0, 80, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const primaryColor = hslToHex(hue, 70, 60);
+    const primaryDark = hslToHex(hue, 60, 40);
+    const primaryLight = hslToHex(hue, 52, 78);
+    const primaryDim = hslToHex(hue, 40, 25);
+    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+
+    const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
+    const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.5 });
+    const tealDimMat = new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.3 });
+    const tealBrightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
+    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
+    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
+
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    function createRing(radius, y, segments = 64, mat = tealDarkMat) {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) {
+        const a = (i / segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius));
+      }
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+    }
+
+    function createDot(x, y, z, radius = 1.5, mat = accentDotMat) {
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 8, 8), mat);
+      mesh.position.set(x, y, z);
+      return mesh;
+    }
+
+    function createSmallCube(x, y, z, size = 3, color = primaryColor) {
+      const mat = new THREE.MeshBasicMaterial({ color, wireframe: true, transparent: true, opacity: 0.5 });
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat);
+      mesh.position.set(x, y, z);
+      return mesh;
+    }
+
+    function createCurve(points, mat = tealMat, segments = 50) {
+      const curve = new THREE.CatmullRomCurve3(points);
+      const pts = curve.getPoints(segments);
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+    }
+
+    // === CROWN — SPIRAL GALAXY ===
+    const crownGroup = new THREE.Group();
+    crownGroup.position.y = 280;
+    mainGroup.add(crownGroup);
+
+    for (let arm = 0; arm < 4; arm++) {
+      const armOffset = (arm / 4) * Math.PI * 2;
+      const pts = [];
+      for (let i = 0; i <= 120; i++) {
+        const t = i / 120;
+        const r = 5 + t * 90;
+        const a = armOffset + t * Math.PI * 3;
+        const wobble = Math.sin(t * 20) * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * r, wobble * t, Math.sin(a) * r));
+      }
+      crownGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+        arm % 2 === 0 ? tealMat : tealDarkMat));
+    }
+
+    for (let i = 1; i <= 6; i++) {
+      crownGroup.add(createRing(i * 15, 0, 48, tealDimMat));
+    }
+
+    const nebulaSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(12, 16, 16),
+      new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.3 })
+    );
+    crownGroup.add(nebulaSphere);
+
+    const dodeca = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(7, 0),
+      new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.5 })
+    );
+    crownGroup.add(dodeca);
+    crownGroup.add(createDot(0, 0, 0, 3, coreDotMat));
+
+    for (let i = 0; i < 40; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const r = 20 + Math.random() * 70;
+      const h = (Math.random() - 0.5) * 15;
+      crownGroup.add(createDot(Math.cos(a) * r, h, Math.sin(a) * r, 0.8 + Math.random(), accentDotMat));
+    }
+
+    // === SPINE — CENTRAL COLUMN ===
+    const spineGroup = new THREE.Group();
+    mainGroup.add(spineGroup);
+
+    const spineCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0, 260, 0), new THREE.Vector3(1, 220, 1),
+      new THREE.Vector3(-1, 180, -1), new THREE.Vector3(0, 140, 0),
+      new THREE.Vector3(1, 100, 1), new THREE.Vector3(-1, 60, -1),
+      new THREE.Vector3(0, 20, 0), new THREE.Vector3(0, -20, 0),
+    ]);
+    const spineTube = new THREE.Mesh(
+      new THREE.TubeGeometry(spineCurve, 60, 2, 6, false),
+      new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.2 })
+    );
+    spineGroup.add(spineTube);
+    spineGroup.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(spineCurve.getPoints(80)), tealBrightMat));
+
+    for (let i = 0; i < 24; i++) {
+      const t = i / 23;
+      const y = 260 - t * 280;
+      const r = 6 + Math.sin(t * Math.PI) * 4;
+      spineGroup.add(createRing(r, y, 12, tealDimMat));
+    }
+
+    // === CHAKRA POINTS ===
+    const chakraData = [
+      { y: 260, r: 14 }, { y: 225, r: 12 }, { y: 195, r: 11 },
+      { y: 155, r: 16 }, { y: 115, r: 13 }, { y: 75, r: 11 }, { y: 35, r: 12 },
+    ];
+    const chakraMeshes = [];
+    chakraData.forEach((ch, ci) => {
+      const group = new THREE.Group();
+      group.position.y = ch.y;
+      mainGroup.add(group);
+
+      const outerSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(ch.r, 12, 12),
+        new THREE.MeshBasicMaterial({ color: primaryDark, wireframe: true, transparent: true, opacity: 0.15 })
+      );
+      group.add(outerSphere);
+
+      const octa = new THREE.Mesh(
+        new THREE.OctahedronGeometry(ch.r * 0.45, 0),
+        new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.4 })
+      );
+      group.add(octa);
+
+      const pCount = 4 + ci;
+      for (let p = 0; p < pCount; p++) {
+        const a = (p / pCount) * Math.PI * 2;
+        const r = ch.r * 1.2;
+        group.add(createCurve([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(Math.cos(a) * r * 0.6, 3, Math.sin(a) * r * 0.6),
+          new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r),
+        ], tealDimMat, 12));
+        group.add(createDot(Math.cos(a) * r, 0, Math.sin(a) * r, 1, accentDotMat));
+      }
+      group.add(createRing(ch.r * 1.4, 0, 32, tealDimMat));
+      group.add(createDot(0, 0, 0, 2, coreDotMat));
+      chakraMeshes.push({ group, outerSphere, octa });
+    });
+
+    // === ENERGY CHANNELS ===
+    const idaPts = [];
+    for (let i = 0; i <= 200; i++) {
+      const t = i / 200;
+      const y = 260 - t * 230;
+      const a = t * Math.PI * 3.5;
+      const r = 25 + Math.sin(t * Math.PI) * 10;
+      idaPts.push(new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r));
+    }
+    mainGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(idaPts), tealDarkMat));
+
+    const pingPts = [];
+    for (let i = 0; i <= 200; i++) {
+      const t = i / 200;
+      const y = 260 - t * 230;
+      const a = t * Math.PI * 3.5 + Math.PI;
+      const r = 25 + Math.sin(t * Math.PI) * 10;
+      pingPts.push(new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r));
+    }
+    mainGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pingPts),
+      new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.4 })));
+
+    // === RIBCAGE ===
+    const ribGroup = new THREE.Group();
+    ribGroup.position.y = 155;
+    mainGroup.add(ribGroup);
+
+    for (let i = 0; i < 12; i++) {
+      const t = (i - 5.5) / 6;
+      const ry = t * 50;
+      const ribWidth = (1 - Math.abs(t) * 0.6) * 70;
+      const ribDepth = (1 - Math.abs(t) * 0.5) * 40;
+      const ribPts = [];
+      for (let j = 0; j <= 32; j++) {
+        const a = (j / 32) * Math.PI;
+        ribPts.push(new THREE.Vector3(Math.sin(a) * ribWidth, ry, -Math.cos(a) * ribDepth + ribDepth * 0.3));
+      }
+      ribGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ribPts), i % 3 === 0 ? tealMat : tealDimMat));
+    }
+
+    // === VITRUVIAN ARMS ===
+    const armGroup = new THREE.Group();
+    armGroup.position.y = 180;
+    mainGroup.add(armGroup);
+
+    function createArm(side) {
+      const s = side;
+      const armCurve = [
+        new THREE.Vector3(s * 15, 0, 0), new THREE.Vector3(s * 50, -10, 10),
+        new THREE.Vector3(s * 90, -30, 5), new THREE.Vector3(s * 120, -15, 0),
+      ];
+      armGroup.add(createCurve(armCurve, tealMat, 30));
+      const curve = new THREE.CatmullRomCurve3(armCurve);
+      armGroup.add(new THREE.Mesh(
+        new THREE.TubeGeometry(curve, 20, 1.5, 5, false),
+        new THREE.MeshBasicMaterial({ color: primaryDark, wireframe: true, transparent: true, opacity: 0.12 })
+      ));
+      armCurve.forEach(p => armGroup.add(createDot(p.x, p.y, p.z, 2, accentDotMat)));
+
+      for (let f = 0; f < 5; f++) {
+        const spread = (f - 2) * 0.25;
+        const fLen = 15 + (f === 2 ? 5 : 0);
+        const base = armCurve[3];
+        const fingerEnd = new THREE.Vector3(
+          base.x + s * Math.cos(spread) * fLen,
+          base.y + Math.sin(spread) * fLen * 0.5 - 5,
+          base.z + Math.sin(spread + s) * 5
+        );
+        armGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([base, fingerEnd]), tealDimMat));
+        armGroup.add(createDot(fingerEnd.x, fingerEnd.y, fingerEnd.z, 0.8, accentDotMat));
+      }
+    }
+    createArm(1);
+    createArm(-1);
+
+    // === LEGS ===
+    const legGroup = new THREE.Group();
+    legGroup.position.y = 20;
+    mainGroup.add(legGroup);
+
+    function createLeg(side) {
+      const s = side;
+      const legCurve = [
+        new THREE.Vector3(s * 12, 0, 0), new THREE.Vector3(s * 18, -60, 5),
+        new THREE.Vector3(s * 15, -120, 3), new THREE.Vector3(s * 15, -170, 0),
+        new THREE.Vector3(s * 20, -180, 8),
+      ];
+      legGroup.add(createCurve(legCurve, tealMat, 30));
+      const curve = new THREE.CatmullRomCurve3(legCurve);
+      legGroup.add(new THREE.Mesh(
+        new THREE.TubeGeometry(curve, 25, 2, 5, false),
+        new THREE.MeshBasicMaterial({ color: primaryDark, wireframe: true, transparent: true, opacity: 0.12 })
+      ));
+      [0, 2, 3].forEach(idx => legGroup.add(createDot(legCurve[idx].x, legCurve[idx].y, legCurve[idx].z, 2.5, accentDotMat)));
+      legGroup.add(createRing(6, -120, 12, tealDimMat).translateX(s * 15).translateZ(3));
+    }
+    createLeg(1);
+    createLeg(-1);
+
+    // === VITRUVIAN CIRCLE ===
+    const vitruvianGroup = new THREE.Group();
+    vitruvianGroup.position.y = 130;
+    mainGroup.add(vitruvianGroup);
+
+    const greatCircle = new THREE.Mesh(
+      new THREE.TorusGeometry(200, 0.8, 4, 80),
+      new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.18 })
+    );
+    greatCircle.rotation.x = Math.PI / 2;
+    vitruvianGroup.add(greatCircle);
+
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      vitruvianGroup.add(createSmallCube(Math.cos(a) * 200, 0, Math.sin(a) * 200, 4, primaryColor));
+    }
+
+    // === CONSTELLATION SPHERE ===
+    const celestialSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(250, 20, 20),
+      new THREE.MeshBasicMaterial({ color: primaryDim, wireframe: true, transparent: true, opacity: 0.06 })
+    );
+    celestialSphere.position.y = 130;
+    mainGroup.add(celestialSphere);
+
+    // === PARTICLES ===
+    const particleCount = 100;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleVelocities = [];
+    for (let i = 0; i < particleCount; i++) {
+      particlePositions[i * 3] = (Math.random() - 0.5) * 500;
+      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 600 + 100;
+      particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 500;
+      particleVelocities.push({ x: (Math.random() - 0.5) * 0.08, y: (Math.random() - 0.5) * 0.12 + 0.06, z: (Math.random() - 0.5) * 0.08 });
+    }
+    particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+    const particles = new THREE.Points(particleGeo,
+      new THREE.PointsMaterial({ color: primaryLight, size: 1.5, transparent: true, opacity: 0.35 }));
+    mainGroup.add(particles);
+
+    // === ANIMATION ===
+    let time = 0;
+    let animId;
+    let rotCurrent = { x: 0.1, y: 0 };
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.005;
+      rotCurrent.y += 0.0008;
+
+      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.position.y = Math.sin(rotCurrent.x) * 500 * 0.5 + 80;
+      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.lookAt(0, 80, 0);
+
+      nebulaSphere.rotation.y = time * 0.3;
+      dodeca.rotation.x = time * 0.5;
+      dodeca.rotation.y = time * 0.7;
+
+      const breath = Math.sin(time * 2);
+      chakraMeshes.forEach((ch, i) => {
+        ch.octa.rotation.x = time * (0.3 + i * 0.08);
+        ch.octa.rotation.y = time * (0.2 + i * 0.1);
+        ch.outerSphere.scale.setScalar(1 + breath * 0.08);
+      });
+
+      celestialSphere.rotation.y = time * 0.05;
+
+      const pos = particles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        pos[i * 3] += particleVelocities[i].x;
+        pos[i * 3 + 1] += particleVelocities[i].y;
+        pos[i * 3 + 2] += particleVelocities[i].z;
+        if (pos[i * 3 + 1] > 450) {
+          pos[i * 3 + 1] = -150;
+          pos[i * 3] = (Math.random() - 0.5) * 500;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * 500;
+        }
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => {
+      const w = container.clientWidth || window.innerWidth;
+      const h = container.clientHeight || window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
+
+  // ========== MACHINA TEMPORIS (Clockwork) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'machinaTemporis' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000000, 0.0004);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 60, 500);
+    camera.lookAt(0, 40, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const primaryColor = hslToHex(hue, 70, 60);
+    const primaryDark = hslToHex(hue, 60, 40);
+    const primaryLight = hslToHex(hue, 52, 78);
+    const primaryDim = hslToHex(hue, 40, 25);
+    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+
+    const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
+    const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.5 });
+    const tealDimMat = new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.3 });
+    const tealBrightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
+    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
+    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
+
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    function createRing(radius, y, segments = 64, mat = tealDarkMat) {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) {
+        const a = (i / segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius));
+      }
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+    }
+
+    function createDot(x, y, z, r = 1.5, mat = accentDotMat) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    function createSmallCube(x, y, z, s = 3, color = primaryColor) {
+      const mat = new THREE.MeshBasicMaterial({ color, wireframe: true, transparent: true, opacity: 0.5 });
+      const m = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    function createCurve(points, mat = tealMat, segments = 50) {
+      const curve = new THREE.CatmullRomCurve3(points);
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(segments)), mat);
+    }
+
+    // === ARMILLARY SPHERE ===
+    const armillaryGroup = new THREE.Group();
+    armillaryGroup.position.y = 120;
+    mainGroup.add(armillaryGroup);
+
+    const ringData = [
+      { r: 100, tiltX: 0, tiltZ: 0 }, { r: 100, tiltX: Math.PI / 6, tiltZ: 0.3 },
+      { r: 100, tiltX: -Math.PI / 4, tiltZ: -0.2 }, { r: 95, tiltX: Math.PI / 3, tiltZ: 0.5 },
+      { r: 90, tiltX: -Math.PI / 6, tiltZ: 0.8 }, { r: 85, tiltX: Math.PI / 2.5, tiltZ: -0.4 },
+    ];
+    const armillaryRings = [];
+    ringData.forEach((rd, i) => {
+      const torus = new THREE.Mesh(
+        new THREE.TorusGeometry(rd.r, i === 0 ? 1.2 : 0.8, 6, 64),
+        new THREE.MeshBasicMaterial({ color: primaryDim, wireframe: true, transparent: true, opacity: 0.2 })
+      );
+      torus.rotation.x = rd.tiltX;
+      torus.rotation.z = rd.tiltZ;
+      armillaryGroup.add(torus);
+      armillaryRings.push(torus);
+    });
+
+    const zodiacRing = new THREE.Mesh(
+      new THREE.TorusGeometry(105, 3, 4, 64),
+      new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.15 })
+    );
+    zodiacRing.rotation.x = 0.1;
+    armillaryGroup.add(zodiacRing);
+
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      armillaryGroup.add(createSmallCube(Math.cos(a) * 108, 0, Math.sin(a) * 108, 4, i % 3 === 0 ? primaryLight : primaryColor));
+    }
+
+    const poleGeo = new THREE.CylinderGeometry(1, 1, 220, 6);
+    armillaryGroup.add(new THREE.Mesh(poleGeo,
+      new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.2 })));
+
+    const centerSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(15, 14, 14),
+      new THREE.MeshBasicMaterial({ color: primaryDark, wireframe: true, transparent: true, opacity: 0.2 })
+    );
+    armillaryGroup.add(centerSphere);
+
+    const innerIco = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(8, 0),
+      new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.45 })
+    );
+    armillaryGroup.add(innerIco);
+    armillaryGroup.add(createDot(0, 0, 0, 3, coreDotMat));
+
+    const orbitalBodies = [];
+    const orbitData = [{ r: 35, speed: 1.2, size: 3 }, { r: 55, speed: 0.7, size: 4 }, { r: 75, speed: 0.4, size: 3.5 }];
+    orbitData.forEach((od) => {
+      armillaryGroup.add(createRing(od.r, 0, 48, tealDimMat));
+      const body = createDot(od.r, 0, 0, od.size, accentDotMat);
+      armillaryGroup.add(body);
+      orbitalBodies.push({ mesh: body, r: od.r, speed: od.speed, angle: Math.random() * Math.PI * 2 });
+    });
+
+    // === GEARS ===
+    function createGear(x, y, z, radius, teeth, mat = tealMat) {
+      const group = new THREE.Group();
+      group.position.set(x, y, z);
+      group.add(createRing(radius, 0, 48, mat));
+      group.add(createRing(radius * 0.4, 0, 24, tealDimMat));
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        const pts = [
+          new THREE.Vector3(Math.cos(a) * radius * 0.4, 0, Math.sin(a) * radius * 0.4),
+          new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius)
+        ];
+        group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), tealDimMat));
+      }
+      for (let i = 0; i < teeth; i++) {
+        const a = (i / teeth) * Math.PI * 2;
+        const inner = radius;
+        const outer = radius + 4;
+        const pts = [
+          new THREE.Vector3(Math.cos(a - 0.04) * inner, 0, Math.sin(a - 0.04) * inner),
+          new THREE.Vector3(Math.cos(a - 0.02) * outer, 0, Math.sin(a - 0.02) * outer),
+          new THREE.Vector3(Math.cos(a + 0.02) * outer, 0, Math.sin(a + 0.02) * outer),
+          new THREE.Vector3(Math.cos(a + 0.04) * inner, 0, Math.sin(a + 0.04) * inner),
+        ];
+        group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat));
+      }
+      group.add(createDot(0, 0, 0, 2, accentDotMat));
+      return group;
+    }
+
+    const gearGroup = new THREE.Group();
+    gearGroup.position.set(-180, 120, 0);
+    mainGroup.add(gearGroup);
+    const gear1 = createGear(0, 0, 0, 40, 20, tealMat);
+    const gear2 = createGear(0, -70, 0, 28, 14, tealDarkMat);
+    const gear3 = createGear(0, -120, 0, 18, 10, tealDimMat);
+    gearGroup.add(gear1, gear2, gear3);
+
+    const gearGroupR = new THREE.Group();
+    gearGroupR.position.set(180, 120, 0);
+    mainGroup.add(gearGroupR);
+    const gearR1 = createGear(0, 0, 0, 35, 18, tealMat);
+    const gearR2 = createGear(0, -60, 0, 25, 12, tealDarkMat);
+    const gearR3 = createGear(0, -105, 0, 20, 10, tealDimMat);
+    const gearR4 = createGear(0, -140, 0, 14, 8, tealDimMat);
+    gearGroupR.add(gearR1, gearR2, gearR3, gearR4);
+
+    // === HOURGLASS ===
+    const hourglassGroup = new THREE.Group();
+    hourglassGroup.position.y = -80;
+    mainGroup.add(hourglassGroup);
+
+    const glassH = 80, glassR = 40, neckR = 5;
+    function createHourglassHalf(flip) {
+      const pts = [];
+      for (let i = 0; i <= 30; i++) {
+        const t = i / 30;
+        const r = neckR + (glassR - neckR) * Math.pow(t, 0.7);
+        pts.push(new THREE.Vector2(r, t * glassH * flip));
+      }
+      return new THREE.Mesh(new THREE.LatheGeometry(pts, 16),
+        new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.15 }));
+    }
+    hourglassGroup.add(createHourglassHalf(1));
+    hourglassGroup.add(createHourglassHalf(-1));
+    hourglassGroup.add(createRing(neckR, 0, 16, tealBrightMat));
+    hourglassGroup.add(createDot(0, 0, 0, 2, coreDotMat));
+
+    // Sand particles
+    const sandCount = 60;
+    const sandGeo = new THREE.BufferGeometry();
+    const sandPositions = new Float32Array(sandCount * 3);
+    const sandVelocities = [];
+    for (let i = 0; i < sandCount; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const r = Math.random() * 3;
+      sandPositions[i * 3] = Math.cos(a) * r;
+      sandPositions[i * 3 + 1] = Math.random() * glassH * 0.8;
+      sandPositions[i * 3 + 2] = Math.sin(a) * r;
+      sandVelocities.push({ speed: 0.3 + Math.random() * 0.5 });
+    }
+    sandGeo.setAttribute("position", new THREE.BufferAttribute(sandPositions, 3));
+    const sandParticles = new THREE.Points(sandGeo,
+      new THREE.PointsMaterial({ color: primaryLight, size: 1.2, transparent: true, opacity: 0.6 }));
+    hourglassGroup.add(sandParticles);
+
+    // === PENDULUM ===
+    const pendulumGroup = new THREE.Group();
+    pendulumGroup.position.y = -180;
+    mainGroup.add(pendulumGroup);
+    pendulumGroup.add(createDot(0, 50, 0, 3, accentDotMat));
+    pendulumGroup.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 50, 0), new THREE.Vector3(0, -50, 0)]), tealMat));
+    const bob = new THREE.Mesh(
+      new THREE.CylinderGeometry(15, 15, 3, 16),
+      new THREE.MeshBasicMaterial({ color: primaryDark, wireframe: true, transparent: true, opacity: 0.25 })
+    );
+    bob.position.y = -50;
+    pendulumGroup.add(bob);
+    pendulumGroup.add(createDot(0, -50, 0, 2.5, coreDotMat));
+
+    // === DIALS ===
+    function createDial(x, y, z, radius, divisions) {
+      const group = new THREE.Group();
+      group.position.set(x, y, z);
+      group.add(createRing(radius, 0, 64, tealMat));
+      group.add(createRing(radius * 0.85, 0, 48, tealDarkMat));
+      for (let i = 0; i < divisions; i++) {
+        const a = (i / divisions) * Math.PI * 2;
+        const inner = i % (divisions / 4) === 0 ? radius * 0.7 : radius * 0.82;
+        const pts = [
+          new THREE.Vector3(Math.cos(a) * inner, 0, Math.sin(a) * inner),
+          new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius)
+        ];
+        group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+          i % (divisions / 4) === 0 ? tealBrightMat : tealDimMat));
+      }
+      const handMesh = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, radius * 0.75)]),
+        tealBrightMat);
+      group.add(handMesh);
+      group.userData.hand = handMesh;
+      group.add(createDot(0, 0, 0, 2.5, coreDotMat));
+      return group;
+    }
+    const dialL = createDial(-200, 280, 0, 45, 24);
+    const dialR = createDial(200, 280, 0, 35, 60);
+    const dialBot = createDial(0, -300, 0, 50, 12);
+    mainGroup.add(dialL, dialR, dialBot);
+
+    // === PARTICLES ===
+    const particleCount = 80;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleVelocities = [];
+    for (let i = 0; i < particleCount; i++) {
+      particlePositions[i * 3] = (Math.random() - 0.5) * 400;
+      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 700 + 50;
+      particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 400;
+      particleVelocities.push({ x: (Math.random() - 0.5) * 0.08, y: (Math.random() - 0.5) * 0.1 + 0.04, z: (Math.random() - 0.5) * 0.08 });
+    }
+    particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+    const particles = new THREE.Points(particleGeo,
+      new THREE.PointsMaterial({ color: primaryLight, size: 1.5, transparent: true, opacity: 0.35 }));
+    mainGroup.add(particles);
+
+    // === ANIMATION ===
+    let time = 0;
+    let animId;
+    let rotCurrent = { x: 0.1, y: 0 };
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.005;
+      rotCurrent.y += 0.0008;
+
+      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.position.y = Math.sin(rotCurrent.x) * 500 * 0.5 + 60;
+      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.lookAt(0, 40, 0);
+
+      armillaryRings.forEach((ring, i) => ring.rotation.y += 0.001 * (1 + i * 0.3) * (i % 2 === 0 ? 1 : -1));
+      zodiacRing.rotation.y += 0.0005;
+      innerIco.rotation.x = time * 0.5;
+      innerIco.rotation.y = time * 0.7;
+      centerSphere.scale.setScalar(1 + Math.sin(time * 2) * 0.08);
+
+      orbitalBodies.forEach((ob) => {
+        ob.angle += ob.speed * 0.003;
+        ob.mesh.position.x = Math.cos(ob.angle) * ob.r;
+        ob.mesh.position.z = Math.sin(ob.angle) * ob.r;
+      });
+
+      gear1.rotation.y = time * 0.4;
+      gear2.rotation.y = -time * 0.57;
+      gear3.rotation.y = time * 0.8;
+      gearR1.rotation.y = -time * 0.35;
+      gearR2.rotation.y = time * 0.5;
+      gearR3.rotation.y = -time * 0.7;
+      gearR4.rotation.y = time * 1.0;
+
+      dialL.userData.hand.rotation.y = time * 0.1;
+      dialR.userData.hand.rotation.y = time * 1.2;
+      dialBot.userData.hand.rotation.y = time * 0.008;
+
+      pendulumGroup.rotation.z = Math.sin(time * 1.5) * 0.25;
+
+      const sPos = sandParticles.geometry.attributes.position.array;
+      for (let i = 0; i < sandCount; i++) {
+        sPos[i * 3 + 1] -= sandVelocities[i].speed * 0.3;
+        if (sPos[i * 3 + 1] < -glassH * 0.7) {
+          sPos[i * 3 + 1] = glassH * 0.6;
+          const a = Math.random() * Math.PI * 2;
+          const r = Math.random() * 3;
+          sPos[i * 3] = Math.cos(a) * r;
+          sPos[i * 3 + 2] = Math.sin(a) * r;
+        }
+      }
+      sandParticles.geometry.attributes.position.needsUpdate = true;
+
+      const pos = particles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        pos[i * 3] += particleVelocities[i].x;
+        pos[i * 3 + 1] += particleVelocities[i].y;
+        pos[i * 3 + 2] += particleVelocities[i].z;
+        if (pos[i * 3 + 1] > 400) {
+          pos[i * 3 + 1] = -250;
+          pos[i * 3] = (Math.random() - 0.5) * 400;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * 400;
+        }
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => {
+      const w = container.clientWidth || window.innerWidth;
+      const h = container.clientHeight || window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
+
+  // ========== OCEANUS PROFUNDUS (Deep Ocean) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'oceanusProfundus' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000205, 0.0003);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 60, 500);
+    camera.lookAt(0, 20, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const primaryColor = hslToHex(hue, 70, 60);
+    const primaryDark = hslToHex(hue, 60, 40);
+    const primaryLight = hslToHex(hue, 52, 78);
+    const primaryDim = hslToHex(hue, 40, 25);
+    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+
+    const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
+    const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.5 });
+    const tealDimMat = new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.3 });
+    const tealBrightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
+    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
+    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
+
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    function createRing(radius, y, segments = 64, mat = tealDarkMat) {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) {
+        const a = (i / segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius));
+      }
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+    }
+
+    function createDot(x, y, z, r = 1.5, mat = accentDotMat) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    function createCurve(points, mat = tealMat, segments = 50) {
+      const curve = new THREE.CatmullRomCurve3(points);
+      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(segments)), mat);
+    }
+
+    let tseed = 42;
+    function tRand() { tseed = (tseed * 16807) % 2147483647; return (tseed - 1) / 2147483646; }
+
+    // === JELLYFISH CATHEDRAL ===
+    const jellyGroup = new THREE.Group();
+    jellyGroup.position.y = 180;
+    mainGroup.add(jellyGroup);
+
+    for (let layer = 0; layer < 4; layer++) {
+      const r = 70 - layer * 8;
+      const bellMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(r, 16 - layer * 2, 12, 0, Math.PI * 2, 0, Math.PI * 0.6),
+        new THREE.MeshBasicMaterial({ color: layer === 0 ? primaryColor : (layer === 1 ? primaryDark : primaryDim), wireframe: true, transparent: true, opacity: 0.15 - layer * 0.03 })
+      );
+      jellyGroup.add(bellMesh);
+    }
+
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const pts = [];
+      for (let j = 0; j <= 20; j++) {
+        const t = j / 20;
+        const phi = t * Math.PI * 0.6;
+        const r = 70;
+        pts.push(new THREE.Vector3(Math.sin(phi) * Math.cos(a) * r, Math.cos(phi) * r, Math.sin(phi) * Math.sin(a) * r));
+      }
+      jellyGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), tealDarkMat));
+    }
+
+    for (let i = 1; i <= 5; i++) {
+      const phi = (i / 8) * Math.PI * 0.6;
+      const ringR = Math.sin(phi) * 70;
+      const ringY = Math.cos(phi) * 70;
+      jellyGroup.add(createRing(ringR, ringY, 32, tealDimMat));
+    }
+
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const r = 40;
+      jellyGroup.add(createCurve([
+        new THREE.Vector3(0, 50, 0),
+        new THREE.Vector3(Math.cos(a) * r * 0.4, 30, Math.sin(a) * r * 0.4),
+        new THREE.Vector3(Math.cos(a) * r, 5, Math.sin(a) * r),
+      ], tealDimMat, 15));
+      jellyGroup.add(createDot(Math.cos(a) * r, 5, Math.sin(a) * r, 2, accentDotMat));
+    }
+
+    const jellyCore = new THREE.Mesh(
+      new THREE.SphereGeometry(10, 12, 12),
+      new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.3 })
+    );
+    jellyCore.position.y = 40;
+    jellyGroup.add(jellyCore);
+    jellyGroup.add(createDot(0, 40, 0, 3, coreDotMat));
+
+    // Tentacles
+    for (let t = 0; t < 16; t++) {
+      const baseA = (t / 16) * Math.PI * 2;
+      const baseR = 55 + tRand() * 15;
+      const length = 120 + tRand() * 80;
+      const pts = [];
+      for (let s = 0; s <= 8; s++) {
+        const st = s / 8;
+        pts.push(new THREE.Vector3(
+          Math.cos(baseA) * baseR * (1 - st * 0.3) + tRand() * 15 * st,
+          -st * length,
+          Math.sin(baseA) * baseR * (1 - st * 0.3) + tRand() * 15 * st
+        ));
+      }
+      jellyGroup.add(createCurve(pts, t % 3 === 0 ? tealMat : tealDarkMat, 20));
+    }
+
+    for (let oa = 0; oa < 4; oa++) {
+      const a = (oa / 4) * Math.PI * 2 + Math.PI / 8;
+      const pts = [];
+      for (let s = 0; s <= 12; s++) {
+        const st = s / 12;
+        const ruffle = Math.sin(st * Math.PI * 4) * 15 * st;
+        pts.push(new THREE.Vector3(
+          Math.cos(a) * (30 + ruffle) * (1 - st * 0.2),
+          -st * 150,
+          Math.sin(a) * (30 + ruffle) * (1 - st * 0.2)
+        ));
+      }
+      jellyGroup.add(createCurve(pts, tealBrightMat, 30));
+    }
+
+    // === NAUTILUS SHELL ===
+    const nautilusGroup = new THREE.Group();
+    nautilusGroup.position.set(-200, 60, 0);
+    mainGroup.add(nautilusGroup);
+
+    const spiralPts = [];
+    for (let i = 0; i <= 300; i++) {
+      const t = i / 300;
+      const a = t * Math.PI * 5;
+      const r = Math.pow(1.618, t * 3) * 3;
+      spiralPts.push(new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, 0));
+    }
+    nautilusGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(spiralPts), tealMat));
+    nautilusGroup.add(createDot(0, 0, 0, 2.5, coreDotMat));
+
+    // === CORAL REEF ===
+    const coralGroup = new THREE.Group();
+    coralGroup.position.y = -120;
+    mainGroup.add(coralGroup);
+
+    const gridSize = 300, gridDiv = 15;
+    for (let i = -gridDiv / 2; i <= gridDiv / 2; i++) {
+      const x = (i / (gridDiv / 2)) * gridSize;
+      coralGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x, 0, -gridSize), new THREE.Vector3(x, 0, gridSize)]),
+        new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.1 })
+      ));
+      coralGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-gridSize, 0, x), new THREE.Vector3(gridSize, 0, x)]),
+        new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.1 })
+      ));
+    }
+
+    function createCoral(x, z, height, depth = 0, maxD = 3) {
+      if (depth > maxD) return;
+      const sway = (tRand() - 0.5) * 10;
+      coralGroup.add(createCurve([
+        new THREE.Vector3(x, 0, z),
+        new THREE.Vector3(x + sway * 0.5, height * 0.5, z + sway * 0.3),
+        new THREE.Vector3(x + sway, height, z + sway * 0.5),
+      ], depth === 0 ? tealMat : tealDarkMat, 10));
+      coralGroup.add(createDot(x + sway, height, z + sway * 0.5, 1.5 - depth * 0.3, accentDotMat));
+      const branches = depth < 1 ? 3 : 2;
+      for (let b = 0; b < branches; b++) {
+        const ba = tRand() * Math.PI * 2;
+        createCoral(x + sway + Math.cos(ba) * 8, z + sway * 0.5 + Math.sin(ba) * 8, height * 0.6, depth + 1, maxD);
+      }
+    }
+    createCoral(-100, -40, 50, 0, 3);
+    createCoral(-60, 30, 40, 0, 2);
+    createCoral(80, -30, 55, 0, 3);
+    createCoral(120, 20, 35, 0, 2);
+
+    // === FISH SCHOOLS ===
+    const fishGroup = new THREE.Group();
+    fishGroup.position.y = 100;
+    mainGroup.add(fishGroup);
+
+    const fishData = [];
+    for (let school = 0; school < 3; school++) {
+      const centerA = (school / 3) * Math.PI * 2;
+      const centerR = 140 + school * 20;
+      const centerY = 20 - school * 30;
+      for (let f = 0; f < 8; f++) {
+        const offset = { x: (tRand() - 0.5) * 30, y: (tRand() - 0.5) * 15, z: (tRand() - 0.5) * 30 };
+        const fishMesh = new THREE.Mesh(
+          new THREE.OctahedronGeometry(3 + tRand() * 2, 0),
+          new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.35 })
+        );
+        fishMesh.scale.set(2, 0.8, 0.6);
+        fishGroup.add(fishMesh);
+        fishData.push({ mesh: fishMesh, baseAngle: centerA, radius: centerR, baseY: centerY, offset, speed: 0.2 + tRand() * 0.15, phase: tRand() * Math.PI * 2 });
+      }
+    }
+
+    // === THERMAL VENTS ===
+    const ventGroup = new THREE.Group();
+    ventGroup.position.y = -120;
+    mainGroup.add(ventGroup);
+
+    const ventPositions = [{ x: -180, z: -60 }, { x: 170, z: 70 }, { x: -20, z: -100 }];
+    const ventParticleData = [];
+    ventPositions.forEach((vp) => {
+      const chimneyPts = [
+        new THREE.Vector2(8, 0), new THREE.Vector2(6, 15),
+        new THREE.Vector2(5, 30), new THREE.Vector2(4, 45), new THREE.Vector2(3.5, 55),
+      ];
+      const chimney = new THREE.Mesh(new THREE.LatheGeometry(chimneyPts, 8),
+        new THREE.MeshBasicMaterial({ color: primaryDark, wireframe: true, transparent: true, opacity: 0.2 }));
+      chimney.position.set(vp.x, 0, vp.z);
+      ventGroup.add(chimney);
+      ventGroup.add(createDot(vp.x, 55, vp.z, 2, coreDotMat));
+      for (let i = 0; i < 20; i++) {
+        ventParticleData.push({ x: vp.x, z: vp.z, y: Math.random() * 100 + 55, speed: 0.3 + Math.random() * 0.5, drift: (Math.random() - 0.5) * 0.2, driftZ: (Math.random() - 0.5) * 0.2 });
+      }
+    });
+
+    const ventParticleGeo = new THREE.BufferGeometry();
+    const vpPositions = new Float32Array(ventParticleData.length * 3);
+    ventParticleData.forEach((vp, i) => {
+      vpPositions[i * 3] = vp.x + (Math.random() - 0.5) * 5;
+      vpPositions[i * 3 + 1] = vp.y;
+      vpPositions[i * 3 + 2] = vp.z + (Math.random() - 0.5) * 5;
+    });
+    ventParticleGeo.setAttribute("position", new THREE.BufferAttribute(vpPositions, 3));
+    const ventParticles = new THREE.Points(ventParticleGeo,
+      new THREE.PointsMaterial({ color: primaryLight, size: 2, transparent: true, opacity: 0.5 }));
+    ventGroup.add(ventParticles);
+
+    // === PARTICLES (marine snow) ===
+    const particleCount = 120;
+    const particleGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleVelocities = [];
+    for (let i = 0; i < particleCount; i++) {
+      particlePositions[i * 3] = (Math.random() - 0.5) * 500;
+      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 600 + 50;
+      particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 500;
+      particleVelocities.push({ x: (Math.random() - 0.5) * 0.06, y: -(0.03 + Math.random() * 0.08), z: (Math.random() - 0.5) * 0.06 });
+    }
+    particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+    const particles = new THREE.Points(particleGeo,
+      new THREE.PointsMaterial({ color: primaryLight, size: 1.2, transparent: true, opacity: 0.3 }));
+    mainGroup.add(particles);
+
+    // === ANIMATION ===
+    let time = 0;
+    let animId;
+    let rotCurrent = { x: 0.05, y: 0 };
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.005;
+      rotCurrent.y += 0.0006;
+
+      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.position.y = Math.sin(rotCurrent.x) * 500 * 0.5 + 60;
+      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
+      camera.lookAt(0, 20, 0);
+
+      const pulse = 1 + Math.sin(time * 1.5) * 0.06;
+      jellyGroup.children.forEach((child) => {
+        if (child.geometry && child.geometry.type === "SphereGeometry" && child !== jellyCore) {
+          child.scale.set(pulse, 1, pulse);
+        }
+      });
+      jellyCore.rotation.y = time * 0.5;
+      jellyCore.scale.setScalar(1 + Math.sin(time * 2) * 0.1);
+
+      fishData.forEach((fd) => {
+        fd.baseAngle += fd.speed * 0.003;
+        const x = Math.cos(fd.baseAngle + fd.phase) * fd.radius + fd.offset.x;
+        const y = fd.baseY + Math.sin(time * 2 + fd.phase) * 5 + fd.offset.y;
+        const z = Math.sin(fd.baseAngle + fd.phase) * fd.radius * 0.6 + fd.offset.z;
+        fd.mesh.position.set(x, y, z);
+        fd.mesh.rotation.y = fd.baseAngle + fd.phase + Math.PI / 2;
+      });
+
+      const vpArr = ventParticles.geometry.attributes.position.array;
+      ventParticleData.forEach((vp, i) => {
+        vpArr[i * 3] += vp.drift;
+        vpArr[i * 3 + 1] += vp.speed;
+        vpArr[i * 3 + 2] += vp.driftZ;
+        if (vpArr[i * 3 + 1] > 200) {
+          vpArr[i * 3] = vp.x + (Math.random() - 0.5) * 5;
+          vpArr[i * 3 + 1] = 55;
+          vpArr[i * 3 + 2] = vp.z + (Math.random() - 0.5) * 5;
+        }
+      });
+      ventParticles.geometry.attributes.position.needsUpdate = true;
+
+      const pos = particles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        pos[i * 3] += particleVelocities[i].x + Math.sin(time + i) * 0.02;
+        pos[i * 3 + 1] += particleVelocities[i].y;
+        pos[i * 3 + 2] += particleVelocities[i].z;
+        if (pos[i * 3 + 1] < -300) {
+          pos[i * 3 + 1] = 350;
+          pos[i * 3] = (Math.random() - 0.5) * 500;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * 500;
+        }
+      }
+      particles.geometry.attributes.position.needsUpdate = true;
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => {
+      const w = container.clientWidth || window.innerWidth;
+      const h = container.clientHeight || window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
 
   // Floating particles animation (stars in space effect)
   React.useEffect(() => {
@@ -6530,7 +7610,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'mountains' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'mountains' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden' || currentMode === 'corpusStellae' || currentMode === 'machinaTemporis' || currentMode === 'oceanusProfundus') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -6647,7 +7727,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'mountains' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'mountains' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && currentMode !== 'corpusStellae' && currentMode !== 'machinaTemporis' && currentMode !== 'oceanusProfundus' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 
