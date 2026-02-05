@@ -4619,9 +4619,9 @@ function Still() {
                 { key: 'hum', icon: '∿', label: 'Hum' },
                 { key: 'breathwork', icon: '◎', label: 'Breathe' },
                 { key: 'gaze', icon: '◯', label: 'Gaze' },
-                { key: 'zenboard', icon: '∞', label: 'Impermanence' },
+                { key: 'heartGarden', icon: '❦', label: 'Heart Garden' },
                 { key: 'mantra', icon: '◇', label: 'Mantra' },
-                { key: 'heartGarden', icon: '❦', label: 'Metta' },
+                { key: 'zenboard', icon: '∞', label: 'Impermanence' },
               ];
               const currentMode = modes.find(m => m.key === view) || modes[0];
               return (

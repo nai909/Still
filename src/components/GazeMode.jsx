@@ -5464,6 +5464,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   const [gardenGuidanceOpacity, setGardenGuidanceOpacity] = React.useState(0);
   const [gardenLinesRead, setGardenLinesRead] = React.useState(0);
   const [gardenComplete, setGardenComplete] = React.useState(false);
+  const [gardenTransitioning, setGardenTransitioning] = React.useState(false);
   const gardenCanvasRef = React.useRef(null);
 
   // Meditation stages - adapted from Ayya Khema's teaching
@@ -5581,6 +5582,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       setGardenGuidanceIndex(0);
       setGardenLinesRead(0);
       setGardenComplete(false);
+      setGardenTransitioning(false);
       // Fade in first guidance after a brief delay
       setTimeout(() => setGardenGuidanceOpacity(1), 500);
     } else {
@@ -5590,14 +5592,18 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
   // Tap to advance guidance
   const advanceGardenGuidance = React.useCallback(() => {
-    if (gardenComplete) return;
+    if (gardenComplete || gardenTransitioning) return;
 
     const stage = meditationStages[gardenStage];
     if (!stage) return;
 
-    // Fade out current text
+    // Lock to prevent rapid taps
+    setGardenTransitioning(true);
+
+    // Fade out current text gracefully
     setGardenGuidanceOpacity(0);
 
+    // Wait for fade out to complete before changing text
     setTimeout(() => {
       if (gardenGuidanceIndex < stage.guidance.length - 1) {
         // More lines in current stage
@@ -5611,15 +5617,730 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         setGardenComplete(true);
       }
       setGardenLinesRead(prev => prev + 1);
-      setGardenGuidanceOpacity(1);
-    }, 400);
-  }, [gardenStage, gardenGuidanceIndex, gardenComplete, meditationStages]);
+
+      // Small delay before fading in new text for smoother feel
+      setTimeout(() => {
+        setGardenGuidanceOpacity(1);
+        // Unlock after fade in completes
+        setTimeout(() => setGardenTransitioning(false), 800);
+      }, 100);
+    }, 800);
+  }, [gardenStage, gardenGuidanceIndex, gardenComplete, gardenTransitioning, meditationStages]);
 
   // Ref to track progress for animation without causing restarts
   const gardenLinesReadRef = React.useRef(0);
   React.useEffect(() => {
     gardenLinesReadRef.current = gardenLinesRead;
   }, [gardenLinesRead]);
+
+  // ========== HEART GARDEN MODE (Sacred Botanical Schematic) ==========
+  React.useEffect(() => {
+    if (currentMode !== 'heartGarden' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    touchPointsRef.current = [];
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.fog = new THREE.FogExp2(0x000000, 0.0004);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 200, 800);
+    camera.lookAt(0, -100, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    containerRef.current.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+    clockRef.current = new THREE.Clock();
+
+    // HSL to Hex helper
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    // Dynamic colors based on hue
+    const primaryColor = hslToHex(hue, 52, 68);
+    const primaryDark = hslToHex(hue, 52, 45);
+    const primaryLight = hslToHex(hue, 52, 78);
+    const primaryFaint = hslToHex(hue, 40, 35);
+    const accentColor = hslToHex((hue + 40) % 360, 60, 55); // Complementary accent
+
+    // Materials
+    const inkMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
+    const inkMedMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.45 });
+    const inkLightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.3 });
+    const inkDashMat = new THREE.LineDashedMaterial({ color: primaryLight, transparent: true, opacity: 0.25, dashSize: 3, gapSize: 2 });
+    const greenMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
+    const greenLightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.5 });
+    const greenFaintMat = new THREE.LineBasicMaterial({ color: primaryFaint, transparent: true, opacity: 0.35 });
+    const goldMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.6 });
+
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    // Helper functions
+    const createRing = (radius, y, segments = 64, mat = inkMedMat) => {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) {
+        const a = (i / segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      return new THREE.Line(geo, mat);
+    };
+
+    const createDot = (x, y, z, radius = 1.5, color = primaryColor) => {
+      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7 });
+      const geo = new THREE.SphereGeometry(radius, 8, 8);
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, y, z);
+      return mesh;
+    };
+
+    const createSmallCube = (x, y, z, size = 3, color = primaryColor) => {
+      const mat = new THREE.MeshBasicMaterial({ color, wireframe: true, transparent: true, opacity: 0.6 });
+      const geo = new THREE.BoxGeometry(size, size, size);
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, y, z);
+      return mesh;
+    };
+
+    const createCurve = (points, mat = greenMat, segments = 50) => {
+      const curve = new THREE.CatmullRomCurve3(points);
+      const pts = curve.getPoints(segments);
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      return new THREE.Line(geo, mat);
+    };
+
+    // === 1. TORUS ENERGY SPHERE (top) ===
+    const torusGroup = new THREE.Group();
+    torusGroup.position.y = 220;
+    mainGroup.add(torusGroup);
+
+    const torusGeo = new THREE.TorusGeometry(80, 35, 16, 40);
+    const torusMesh = new THREE.Mesh(torusGeo, new THREE.MeshBasicMaterial({
+      color: primaryDark, wireframe: true, transparent: true, opacity: 0.18
+    }));
+    torusGroup.add(torusMesh);
+
+    const torus2Geo = new THREE.TorusGeometry(80, 35, 12, 32);
+    const torus2Mesh = new THREE.Mesh(torus2Geo, new THREE.MeshBasicMaterial({
+      color: primaryLight, wireframe: true, transparent: true, opacity: 0.08
+    }));
+    torus2Mesh.rotation.y = Math.PI / 4;
+    torusGroup.add(torus2Mesh);
+
+    // Third torus for more density
+    const torus3Geo = new THREE.TorusGeometry(80, 35, 10, 28);
+    const torus3Mesh = new THREE.Mesh(torus3Geo, new THREE.MeshBasicMaterial({
+      color: primaryColor, wireframe: true, transparent: true, opacity: 0.06
+    }));
+    torus3Mesh.rotation.y = Math.PI / 2;
+    torus3Mesh.rotation.x = 0.3;
+    torusGroup.add(torus3Mesh);
+
+    // Inner concentric rings
+    for (let i = 1; i <= 5; i++) {
+      torusGroup.add(createRing(i * 10, 0, 48, inkLightMat));
+    }
+
+    // Core sphere
+    const coreSphereGeo = new THREE.SphereGeometry(10, 16, 16);
+    const coreSphereMesh = new THREE.Mesh(coreSphereGeo, new THREE.MeshBasicMaterial({
+      color: accentColor, wireframe: true, transparent: true, opacity: 0.35
+    }));
+    torusGroup.add(coreSphereMesh);
+
+    // Inner icosahedron
+    const icoGeo = new THREE.IcosahedronGeometry(6, 0);
+    const icoMesh = new THREE.Mesh(icoGeo, new THREE.MeshBasicMaterial({
+      color: accentColor, wireframe: true, transparent: true, opacity: 0.5
+    }));
+    torusGroup.add(icoMesh);
+
+    // Central dot
+    torusGroup.add(createDot(0, 0, 0, 2.5, accentColor));
+
+    // Flower/radial pattern inside torus
+    const petalCount = 8;
+    for (let i = 0; i < petalCount; i++) {
+      const a = (i / petalCount) * Math.PI * 2;
+      const r = 50;
+      const pts = [
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(Math.cos(a) * r * 0.5, Math.sin(a + 0.3) * 8, Math.sin(a) * r * 0.5),
+        new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r)
+      ];
+      torusGroup.add(createCurve(pts, greenFaintMat, 20));
+      torusGroup.add(createDot(Math.cos(a) * r, 0, Math.sin(a) * r, 1.5, primaryColor));
+    }
+
+    // Stamen lines between petals
+    for (let i = 0; i < petalCount; i++) {
+      const a = (i / petalCount) * Math.PI * 2 + Math.PI / petalCount;
+      const r = 30;
+      const stamenPts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(Math.cos(a) * r, 4, Math.sin(a) * r)];
+      const stamenGeo = new THREE.BufferGeometry().setFromPoints(stamenPts);
+      torusGroup.add(new THREE.Line(stamenGeo, inkLightMat));
+      torusGroup.add(createDot(Math.cos(a) * r, 4, Math.sin(a) * r, 1, primaryLight));
+    }
+
+    // === 2. VORTEX FUNNELS ===
+    const createVortexFunnel = (x, y) => {
+      const group = new THREE.Group();
+      group.position.set(x, y, 0);
+      const rings = 10, topR = 4, bottomR = 40, height = 70;
+
+      for (let i = 0; i <= rings; i++) {
+        const t = i / rings;
+        const r = topR + (bottomR - topR) * t;
+        const ry = -height / 2 + height * t;
+        group.add(createRing(r, ry, 24, inkMedMat));
+      }
+
+      for (let j = 0; j < 12; j++) {
+        const a = (j / 12) * Math.PI * 2;
+        const pts = [];
+        for (let i = 0; i <= rings; i++) {
+          const t = i / rings;
+          const r = topR + (bottomR - topR) * t;
+          const ry = -height / 2 + height * t;
+          pts.push(new THREE.Vector3(Math.cos(a) * r, ry, Math.sin(a) * r));
+        }
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        group.add(new THREE.Line(geo, inkLightMat));
+      }
+      return group;
+    };
+
+    mainGroup.add(createVortexFunnel(-160, 320));
+    mainGroup.add(createVortexFunnel(160, 320));
+
+    // Connection lines
+    mainGroup.add(createCurve([
+      new THREE.Vector3(-160, 355, 0), new THREE.Vector3(-130, 280, 20),
+      new THREE.Vector3(-90, 240, 10), new THREE.Vector3(-60, 220, 0)
+    ], inkMat));
+    mainGroup.add(createCurve([
+      new THREE.Vector3(160, 355, 0), new THREE.Vector3(130, 280, -20),
+      new THREE.Vector3(90, 240, -10), new THREE.Vector3(60, 220, 0)
+    ], inkMat));
+
+    // Junction cubes
+    mainGroup.add(createSmallCube(-160, 355, 0, 4));
+    mainGroup.add(createSmallCube(160, 355, 0, 4));
+    mainGroup.add(createSmallCube(-60, 220, 0, 4));
+    mainGroup.add(createSmallCube(60, 220, 0, 4));
+
+    // === 3. PYRAMID VESSEL ===
+    const pyramidGroup = new THREE.Group();
+    mainGroup.add(pyramidGroup);
+
+    const pyH = 180, pyW = 100, pyTop = 150, pyBot = pyTop - pyH;
+
+    const pyGeo = new THREE.ConeGeometry(pyW, pyH, 4, 1, true);
+    const pyMesh = new THREE.Mesh(pyGeo, new THREE.MeshBasicMaterial({
+      color: primaryColor, wireframe: true, transparent: true, opacity: 0.35
+    }));
+    pyMesh.position.y = pyTop - pyH / 2;
+    pyMesh.rotation.y = Math.PI / 4;
+    pyramidGroup.add(pyMesh);
+
+    // Pyramid edges
+    const apexY = pyTop;
+    const baseCorners = [];
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      baseCorners.push(new THREE.Vector3(Math.cos(a) * pyW, pyBot, Math.sin(a) * pyW));
+    }
+    for (const corner of baseCorners) {
+      const pts = [new THREE.Vector3(0, apexY, 0), corner];
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      pyramidGroup.add(new THREE.Line(geo, inkMat));
+    }
+    for (let i = 0; i < 4; i++) {
+      const pts = [baseCorners[i], baseCorners[(i + 1) % 4]];
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      pyramidGroup.add(new THREE.Line(geo, inkMat));
+    }
+
+    // Junction cubes
+    pyramidGroup.add(createSmallCube(0, apexY, 0, 5));
+    for (const c of baseCorners) pyramidGroup.add(createSmallCube(c.x, c.y, c.z, 5));
+
+    // Central axis
+    const axisPts = [new THREE.Vector3(0, apexY + 30, 0), new THREE.Vector3(0, pyBot - 30, 0)];
+    const axisGeo = new THREE.BufferGeometry().setFromPoints(axisPts);
+    const axisLine = new THREE.Line(axisGeo, inkDashMat);
+    axisLine.computeLineDistances();
+    pyramidGroup.add(axisLine);
+
+    // Ring guides
+    for (let i = 1; i <= 4; i++) {
+      const t = i / 5;
+      const y = pyTop - t * pyH;
+      const r = pyW * t;
+      pyramidGroup.add(createRing(r, y, 32, inkLightMat));
+    }
+
+    // === 4. SEED (center) ===
+    const seedGroup = new THREE.Group();
+    seedGroup.position.y = pyTop - pyH * 0.55;
+    pyramidGroup.add(seedGroup);
+
+    const seedGeo = new THREE.SphereGeometry(18, 16, 16);
+    const seedMesh = new THREE.Mesh(seedGeo, new THREE.MeshBasicMaterial({
+      color: primaryDark, wireframe: true, transparent: true, opacity: 0.3
+    }));
+    seedGroup.add(seedMesh);
+
+    const embryoGeo = new THREE.SphereGeometry(10, 12, 12);
+    const embryoMesh = new THREE.Mesh(embryoGeo, new THREE.MeshBasicMaterial({
+      color: primaryColor, wireframe: true, transparent: true, opacity: 0.25
+    }));
+    seedGroup.add(embryoMesh);
+    seedGroup.add(createDot(0, 0, 0, 3, accentColor));
+
+    // Energy orbits
+    for (let i = 0; i < 3; i++) {
+      const orbitGeo = new THREE.TorusGeometry(28 + i * 6, 0.3, 4, 48);
+      const orbitMesh = new THREE.Mesh(orbitGeo, new THREE.MeshBasicMaterial({
+        color: primaryLight, wireframe: true, transparent: true, opacity: 0.2
+      }));
+      orbitMesh.rotation.x = Math.PI / 2 + (i - 1) * 0.4;
+      orbitMesh.rotation.z = i * 0.5;
+      seedGroup.add(orbitMesh);
+    }
+
+    // Orbital dots
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      seedGroup.add(createDot(Math.cos(a) * 30, Math.sin(a) * 12, Math.sin(a) * 30, 1.5, primaryDark));
+    }
+
+    // === 5. PLANT GROWING FROM SEED ===
+    const plantGroup = new THREE.Group();
+    pyramidGroup.add(plantGroup);
+
+    const stemBaseY = seedGroup.position.y;
+    const stemTopY = apexY + 15;
+
+    const stemCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0, stemBaseY - 10, 0),
+      new THREE.Vector3(2, stemBaseY + 20, 1),
+      new THREE.Vector3(-1, stemBaseY + 50, -1),
+      new THREE.Vector3(1, stemBaseY + 80, 2),
+      new THREE.Vector3(-1, stemBaseY + 110, -1),
+      new THREE.Vector3(0, stemTopY, 0)
+    ]);
+    const stemTubeGeo = new THREE.TubeGeometry(stemCurve, 40, 1.2, 6, false);
+    const stemTube = new THREE.Mesh(stemTubeGeo, new THREE.MeshBasicMaterial({
+      color: primaryColor, wireframe: true, transparent: true, opacity: 0.4
+    }));
+    plantGroup.add(stemTube);
+
+    const stemPts = stemCurve.getPoints(50);
+    const stemLineGeo = new THREE.BufferGeometry().setFromPoints(stemPts);
+    plantGroup.add(new THREE.Line(stemLineGeo, greenMat));
+
+    // Leaves
+    const createLeaf3D = (x, y, z, rotY, rotZ, scale = 1) => {
+      const group = new THREE.Group();
+      group.position.set(x, y, z);
+      group.rotation.y = rotY;
+      group.rotation.z = rotZ;
+      group.scale.setScalar(scale);
+
+      const shape = new THREE.Shape();
+      shape.moveTo(0, 0);
+      shape.bezierCurveTo(8, 5, 20, 4, 30, 0);
+      shape.bezierCurveTo(20, -4, 8, -5, 0, 0);
+
+      const leafGeo = new THREE.ShapeGeometry(shape, 8);
+      const leafMesh = new THREE.Mesh(leafGeo, new THREE.MeshBasicMaterial({
+        color: primaryLight, wireframe: true, transparent: true, opacity: 0.3, side: THREE.DoubleSide
+      }));
+      group.add(leafMesh);
+
+      const veinPts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(28, 0, 0)];
+      const veinGeo = new THREE.BufferGeometry().setFromPoints(veinPts);
+      group.add(new THREE.Line(veinGeo, greenMat));
+
+      for (let i = 0.2; i < 0.9; i += 0.2) {
+        const vx = 30 * i;
+        const vw = Math.sin(i * Math.PI) * 4;
+        group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(vx, 0, 0), new THREE.Vector3(vx + 3, vw, 0)
+        ]), greenFaintMat));
+        group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(vx, 0, 0), new THREE.Vector3(vx + 3, -vw, 0)
+        ]), greenFaintMat));
+      }
+      return group;
+    };
+
+    const leafPositions = [
+      { y: stemBaseY + 25, rz: -0.8, rz2: 0.8 },
+      { y: stemBaseY + 50, rz: -1.0, rz2: 0.6 },
+      { y: stemBaseY + 75, rz: -0.7, rz2: 0.9 },
+      { y: stemBaseY + 100, rz: -1.1, rz2: 0.5 },
+    ];
+    for (let i = 0; i < leafPositions.length; i++) {
+      const lp = leafPositions[i];
+      const sc = 1.2 - i * 0.15;
+      plantGroup.add(createLeaf3D(2, lp.y, 2, i * 1.2, lp.rz, sc));
+      plantGroup.add(createLeaf3D(-2, lp.y, -2, i * 1.2 + Math.PI, lp.rz2, sc * 0.9));
+    }
+
+    // Bud
+    const budGeo = new THREE.SphereGeometry(5, 8, 8);
+    const budMesh = new THREE.Mesh(budGeo, new THREE.MeshBasicMaterial({
+      color: primaryColor, wireframe: true, transparent: true, opacity: 0.35
+    }));
+    budMesh.position.set(0, stemTopY + 2, 0);
+    budMesh.scale.set(1, 1.4, 1);
+    plantGroup.add(budMesh);
+    plantGroup.add(createDot(0, stemTopY + 8, 0, 2, accentColor));
+
+    // === 6. BASE BOX ===
+    const baseGroup = new THREE.Group();
+    mainGroup.add(baseGroup);
+
+    const baseW = 130, baseH = 50, baseD = 80;
+    const baseCY = pyBot - baseH / 2;
+
+    const baseGeo = new THREE.BoxGeometry(baseW * 2, baseH, baseD * 2);
+    const baseMesh = new THREE.Mesh(baseGeo, new THREE.MeshBasicMaterial({
+      color: primaryColor, wireframe: true, transparent: true, opacity: 0.25
+    }));
+    baseMesh.position.y = baseCY;
+    baseGroup.add(baseMesh);
+
+    // Corner cubes
+    const bx = baseW, by = baseH / 2, bz = baseD;
+    const boxCorners = [
+      [-bx, baseCY + by, -bz], [bx, baseCY + by, -bz],
+      [-bx, baseCY + by, bz], [bx, baseCY + by, bz],
+      [-bx, baseCY - by, -bz], [bx, baseCY - by, -bz],
+      [-bx, baseCY - by, bz], [bx, baseCY - by, bz],
+    ];
+    for (const c of boxCorners) baseGroup.add(createSmallCube(c[0], c[1], c[2], 4));
+
+    baseGroup.add(createDot(-bx, baseCY, 0, 2.5));
+    baseGroup.add(createDot(bx, baseCY, 0, 2.5));
+    baseGroup.add(createDot(0, baseCY, -bz, 2.5));
+    baseGroup.add(createDot(0, baseCY, bz, 2.5));
+
+    // === 7. ROOT COIL ===
+    const rootCoilGroup = new THREE.Group();
+    rootCoilGroup.position.y = baseCY;
+    baseGroup.add(rootCoilGroup);
+
+    const coilPts = [];
+    const coilTurns = 6, coilLen = 200, coilR = 18;
+    for (let i = 0; i <= 300; i++) {
+      const t = i / 300;
+      const x = -coilLen / 2 + coilLen * t;
+      const a = t * coilTurns * Math.PI * 2;
+      const y = Math.sin(a) * coilR;
+      const z = Math.cos(a) * coilR;
+      coilPts.push(new THREE.Vector3(x, y, z));
+    }
+    rootCoilGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(coilPts), inkMedMat));
+
+    const coilPts2 = [];
+    for (let i = 0; i <= 300; i++) {
+      const t = i / 300;
+      const x = -coilLen / 2 + coilLen * t;
+      const a = t * coilTurns * Math.PI * 2 + Math.PI;
+      const y = Math.sin(a) * coilR * 0.7;
+      const z = Math.cos(a) * coilR * 0.7;
+      coilPts2.push(new THREE.Vector3(x, y, z));
+    }
+    rootCoilGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(coilPts2), inkLightMat));
+
+    rootCoilGroup.add(createCurve([
+      new THREE.Vector3(-coilLen / 2 - 20, 0, 0),
+      new THREE.Vector3(-coilLen / 4, 3, 5),
+      new THREE.Vector3(0, -2, -3),
+      new THREE.Vector3(coilLen / 4, 4, 4),
+      new THREE.Vector3(coilLen / 2 + 20, 0, 0)
+    ], greenMat, 40));
+
+    const bulbGeo = new THREE.SphereGeometry(10, 10, 10);
+    const bulbMesh = new THREE.Mesh(bulbGeo, new THREE.MeshBasicMaterial({
+      color: primaryDark, wireframe: true, transparent: true, opacity: 0.35
+    }));
+    bulbMesh.position.set(-coilLen / 2 - 20, 0, 0);
+    bulbMesh.scale.set(1.3, 1, 1);
+    rootCoilGroup.add(bulbMesh);
+
+    rootCoilGroup.add(createLeaf3D(-40, 5, 8, 0, -0.5, 0.5));
+    rootCoilGroup.add(createLeaf3D(30, -3, -6, Math.PI, 0.4, 0.4));
+
+    // === 8. LOWER ROOT NETWORK ===
+    const lowerGroup = new THREE.Group();
+    lowerGroup.position.y = baseCY - baseH / 2;
+    mainGroup.add(lowerGroup);
+
+    // Recursive roots
+    const create3DRoot = (startX, startY, startZ, length, angleXZ, depth = 0, maxD = 4) => {
+      if (depth > maxD) return;
+      const endX = startX + Math.cos(angleXZ) * length;
+      const endY = startY - length * 0.8;
+      const endZ = startZ + Math.sin(angleXZ) * length * 0.3;
+
+      const pts = [
+        new THREE.Vector3(startX, startY, startZ),
+        new THREE.Vector3((startX + endX) / 2 + (Math.random() - 0.5) * 10, (startY + endY) / 2, (startZ + endZ) / 2 + (Math.random() - 0.5) * 10),
+        new THREE.Vector3(endX, endY, endZ)
+      ];
+      const opacity = 0.5 - depth * 0.1;
+      const mat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: Math.max(0.1, opacity) });
+      lowerGroup.add(createCurve(pts, mat, 15));
+
+      const branches = depth < 2 ? 3 : 2;
+      for (let i = 0; i < branches; i++) {
+        const newAngle = angleXZ + (Math.random() - 0.5) * 1.5;
+        create3DRoot(endX, endY, endZ, length * 0.6, newAngle, depth + 1, maxD);
+      }
+    };
+
+    // Taproot
+    lowerGroup.add(createCurve([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(-2, -40, 3),
+      new THREE.Vector3(1, -80, -2),
+      new THREE.Vector3(0, -120, 0)
+    ], inkMat, 30));
+
+    create3DRoot(-20, -15, -15, 40, -0.8, 0, 3);
+    create3DRoot(20, -15, 15, 40, 0.8, 0, 3);
+    create3DRoot(-10, -50, 10, 30, -1.2, 0, 2);
+    create3DRoot(10, -50, -10, 30, 1.2, 0, 2);
+    create3DRoot(0, -90, 0, 25, 0, 0, 2);
+
+    // Orbital ellipses
+    for (let i = 0; i < 3; i++) {
+      const r = 120 + i * 50;
+      const pts = [];
+      for (let j = 0; j <= 64; j++) {
+        const a = (j / 64) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * r, -60 - i * 15, Math.sin(a) * r * 0.4));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat = new THREE.LineDashedMaterial({
+        color: primaryLight, transparent: true, opacity: 0.2 - i * 0.05, dashSize: 5, gapSize: 4
+      });
+      const line = new THREE.Line(geo, mat);
+      line.computeLineDistances();
+      lowerGroup.add(line);
+    }
+
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      lowerGroup.add(createDot(Math.cos(a) * 170, -75, Math.sin(a) * 68, 2, primaryLight));
+    }
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + 0.3;
+      lowerGroup.add(createSmallCube(Math.cos(a) * 120, -60, Math.sin(a) * 48, 3.5, primaryLight));
+    }
+    lowerGroup.add(createDot(0, -140, 0, 3, primaryDark));
+
+    // === 9. FERNS ===
+    const createFern3D = (x, y, z, rotY, scale = 1) => {
+      const group = new THREE.Group();
+      group.position.set(x, y, z);
+      group.rotation.y = rotY;
+      group.scale.setScalar(scale);
+
+      const length = 80;
+      const mainPts = [
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(length * 0.3, length * 0.15, 0),
+        new THREE.Vector3(length * 0.7, length * 0.35, 0),
+        new THREE.Vector3(length, length * 0.3, 0)
+      ];
+      group.add(createCurve(mainPts, greenMat, 30));
+
+      for (let i = 0.1; i < 0.95; i += 0.08) {
+        const t = i;
+        const sx = length * t;
+        const sy = length * 0.35 * Math.sin(t * Math.PI * 0.8);
+        const leafLen = length * 0.25 * Math.sin(t * Math.PI);
+
+        group.add(createCurve([
+          new THREE.Vector3(sx, sy, 0),
+          new THREE.Vector3(sx + leafLen * 0.5, sy + leafLen * 0.6, leafLen * 0.2),
+          new THREE.Vector3(sx + leafLen, sy + leafLen * 0.2, 0)
+        ], greenLightMat, 8));
+
+        group.add(createCurve([
+          new THREE.Vector3(sx, sy, 0),
+          new THREE.Vector3(sx + leafLen * 0.5, sy - leafLen * 0.4, -leafLen * 0.2),
+          new THREE.Vector3(sx + leafLen, sy - leafLen * 0.1, 0)
+        ], greenFaintMat, 8));
+      }
+      return group;
+    };
+
+    mainGroup.add(createFern3D(-180, 60, 40, -0.3, 1.0));
+    mainGroup.add(createFern3D(-200, 30, -30, -0.8, 0.85));
+    mainGroup.add(createFern3D(-160, 0, 60, 0.2, 0.7));
+    mainGroup.add(createFern3D(180, 60, -40, Math.PI + 0.3, 1.0));
+    mainGroup.add(createFern3D(200, 30, 30, Math.PI + 0.8, 0.85));
+    mainGroup.add(createFern3D(160, 0, -60, Math.PI - 0.2, 0.7));
+
+    // === 10. FLOWER DIAGRAMS ===
+    const createFlowerDiagram3D = (x, y, z, scale = 1) => {
+      const group = new THREE.Group();
+      group.position.set(x, y, z);
+      group.scale.setScalar(scale);
+
+      const petals = 6, r = 20;
+      for (let i = 0; i < petals; i++) {
+        const a = (i / petals) * Math.PI * 2;
+        const px = Math.cos(a) * r;
+        const pz = Math.sin(a) * r;
+        group.add(createCurve([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(px * 0.5, 5, pz * 0.5),
+          new THREE.Vector3(px, 0, pz)
+        ], greenFaintMat, 10));
+        group.add(createDot(px, 0, pz, 1.5, primaryColor));
+      }
+
+      group.add(createRing(r, 0, 24, greenFaintMat));
+      group.add(createRing(r * 0.5, 0, 16, greenLightMat));
+      group.add(createDot(0, 0, 0, 2.5, accentColor));
+
+      return group;
+    };
+
+    mainGroup.add(createFlowerDiagram3D(-250, 300, -60, 1.2));
+    mainGroup.add(createFlowerDiagram3D(250, 300, 60, 1.2));
+
+    // === 11. AMBIENT FLOATING PARTICLES ===
+    const particleCount3D = 80;
+    const particleGeo3D = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount3D * 3);
+    const particleVelocities3D = [];
+
+    for (let i = 0; i < particleCount3D; i++) {
+      particlePositions[i * 3] = (Math.random() - 0.5) * 400;
+      particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 600 + 50;
+      particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 400;
+      particleVelocities3D.push({
+        x: (Math.random() - 0.5) * 0.1,
+        y: (Math.random() - 0.5) * 0.15 + 0.05,
+        z: (Math.random() - 0.5) * 0.1
+      });
+    }
+    particleGeo3D.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particleMat3D = new THREE.PointsMaterial({ color: accentColor, size: 1.5, transparent: true, opacity: 0.4 });
+    const particles3D = new THREE.Points(particleGeo3D, particleMat3D);
+    mainGroup.add(particles3D);
+
+    // === AUTO-ROTATION ===
+    let rotationY = 0;
+    const zoomDistance = 1100;
+
+    // Spring physics
+    let currentScale = 1.0;
+    let scaleVelocity = 0;
+    const springStiffness = 0.04;
+    const springDamping = 0.88;
+
+    let animationId;
+    let isMounted = true;
+    let time = 0;
+
+    const animate = () => {
+      if (!isMounted) return;
+      animationId = requestAnimationFrame(animate);
+      time += 0.005;
+
+      const elapsed = clockRef.current.getElapsedTime();
+      const breath = getBreathPhase(elapsed);
+
+      // Auto-rotate
+      rotationY += 0.001;
+
+      // Camera orbit
+      camera.position.x = Math.sin(rotationY) * zoomDistance;
+      camera.position.y = 200;
+      camera.position.z = Math.cos(rotationY) * zoomDistance;
+      camera.lookAt(0, -100, 0);
+
+      // Breath-synced scale
+      const targetScale = 0.95 + breath * 0.1;
+      const scaleForce = (targetScale - currentScale) * springStiffness;
+      scaleVelocity = (scaleVelocity + scaleForce) * springDamping;
+      currentScale += scaleVelocity;
+      mainGroup.scale.setScalar(currentScale);
+
+      // Animate torus rotation
+      torusMesh.rotation.y = time * 0.3;
+      torus2Mesh.rotation.y = -time * 0.2 + Math.PI / 4;
+      torus3Mesh.rotation.y = time * 0.15 + Math.PI / 2;
+      torus3Mesh.rotation.x = 0.3 + Math.sin(time) * 0.1;
+
+      // Inner icosahedron rotation
+      icoMesh.rotation.x = time * 0.5;
+      icoMesh.rotation.y = time * 0.7;
+
+      // Seed orbit animation
+      seedGroup.children.forEach((child, i) => {
+        if (child.geometry && child.geometry.type === 'TorusGeometry') {
+          child.rotation.z = time * (0.3 + i * 0.12);
+        }
+      });
+
+      // Core sphere pulse with breath
+      const pulse = 1 + breath * 0.1;
+      coreSphereMesh.scale.setScalar(pulse);
+
+      // Animate 3D particles
+      const pos = particles3D.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount3D; i++) {
+        pos[i * 3] += particleVelocities3D[i].x;
+        pos[i * 3 + 1] += particleVelocities3D[i].y;
+        pos[i * 3 + 2] += particleVelocities3D[i].z;
+        if (pos[i * 3 + 1] > 400) {
+          pos[i * 3 + 1] = -200;
+          pos[i * 3] = (Math.random() - 0.5) * 400;
+          pos[i * 3 + 2] = (Math.random() - 0.5) * 400;
+        }
+      }
+      particles3D.geometry.attributes.position.needsUpdate = true;
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationId);
+      if (containerRef.current && containerRef.current.contains(renderer.domElement)) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+    };
+  }, [currentMode, hue, getBreathPhase]);
 
   // Floating particles animation (stars in space effect)
   React.useEffect(() => {
@@ -5721,7 +6442,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'mountains' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'mountains' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -5753,9 +6474,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'flex-start',
+            justifyContent: 'flex-end',
             pointerEvents: 'none',
-            paddingTop: 'calc(3rem + env(safe-area-inset-top, 0px))',
+            paddingBottom: 'calc(12rem + env(safe-area-inset-bottom, 0px))',
           }}
         >
           {/* Guidance text */}
@@ -5770,7 +6491,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
               maxWidth: '90%',
               padding: '0 1.5rem',
               opacity: gardenGuidanceOpacity,
-              transition: 'opacity 0.4s ease',
+              transition: 'opacity 0.8s ease-in-out',
               textShadow: '0 2px 20px rgba(0,0,0,0.7)',
             }}
           >

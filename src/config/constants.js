@@ -56,7 +56,6 @@ export const gazeModes = [
   { key: 'mountains', name: 'Mountains' },
   { key: 'maloka', name: 'Maloka' },
   { key: 'underwater', name: 'Abyss' },
-  { key: 'lotus', name: 'Lotus' },
 ];
 
 export const gazeShapes = [
