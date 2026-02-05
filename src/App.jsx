@@ -566,7 +566,7 @@ const generateRelease = (cx, cy) => {
   return elements;
 };
 
-// We Are All One - 28 elements (4 words × 7 cycles)
+// We Are All Connected - 28 elements (4 words × 7 cycles)
 // FISH SCHOOL - swimming in unity, moving as one
 const generateWeAreOne = (cx, cy) => {
   const elements = [];
@@ -624,7 +624,7 @@ const mantraVisualPairs = [
   { text: 'I accept myself completely', words: ['I', 'accept', 'myself', 'completely'], generate: generateSelfAcceptance },
   { text: 'I am open to receive', words: ['I', 'am', 'open', 'to', 'receive'], generate: generateOpenToReceive },
   { text: 'I release what no longer serves', words: ['I', 'release', 'what', 'no', 'longer', 'serves'], generate: generateRelease },
-  { text: 'We are all one', words: ['We', 'are', 'all', 'one'], generate: generateWeAreOne },
+  { text: 'We are all connected', words: ['We', 'are', 'all', 'connected'], generate: generateWeAreOne },
 ];
 
 // ============================================================================
