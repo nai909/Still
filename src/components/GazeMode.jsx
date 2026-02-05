@@ -5460,21 +5460,16 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   // A loving-kindness meditation with a growing garden
   // Adapted from Ven. Ayya Khema's "Garden in Your Heart"
   const [gardenStage, setGardenStage] = React.useState(0);
-  const [gardenElapsed, setGardenElapsed] = React.useState(0);
-  const [gardenTotalElapsed, setGardenTotalElapsed] = React.useState(0);
   const [gardenGuidanceIndex, setGardenGuidanceIndex] = React.useState(0);
   const [gardenGuidanceOpacity, setGardenGuidanceOpacity] = React.useState(0);
-  const [gardenPaused, setGardenPaused] = React.useState(false);
-  const gardenTimerRef = React.useRef(null);
-  const gardenGuidanceTimerRef = React.useRef(null);
+  const [gardenLinesRead, setGardenLinesRead] = React.useState(0);
+  const [gardenComplete, setGardenComplete] = React.useState(false);
   const gardenCanvasRef = React.useRef(null);
 
   // Meditation stages - adapted from Ayya Khema's teaching
   const meditationStages = React.useMemo(() => [
     {
       id: 'intro',
-      title: 'Settling',
-      duration: 30,
       guidance: [
         "Put your attention on the breath for a few moments.",
         "Let each inhale be so gentle it barely stirs the hairs in your nose.",
@@ -5483,8 +5478,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     },
     {
       id: 'garden',
-      title: 'The Garden',
-      duration: 50,
       guidance: [
         "Imagine a garden growing in your heart.",
         "An abundance of fruits and vegetables.",
@@ -5495,8 +5488,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     },
     {
       id: 'self',
-      title: 'Yourself',
-      duration: 40,
       guidance: [
         "Walk through your garden and harvest something for yourself.",
         "Choose whatever calls to you.",
@@ -5506,8 +5497,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     },
     {
       id: 'beloved',
-      title: 'Someone You Love',
-      duration: 50,
       guidance: [
         "Think of someone you love deeply.",
         "Walk through your garden and harvest a gift for them.",
@@ -5518,8 +5507,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     },
     {
       id: 'parents',
-      title: 'Parents or Elders',
-      duration: 50,
       guidance: [
         "Think of your parents, or those who raised you.",
         "Whether still alive or passed, they exist in your heart.",
@@ -5530,8 +5517,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     },
     {
       id: 'friends',
-      title: 'Friends and Family',
-      duration: 50,
       guidance: [
         "Think of your good friends, your relatives.",
         "For each one, harvest a gift from the garden in your heart.",
@@ -5542,8 +5527,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     },
     {
       id: 'neutral',
-      title: 'Acquaintances',
-      duration: 50,
       guidance: [
         "Think of people you see in daily life.",
         "The mail carrier. The grocery clerk. A neighbor.",
@@ -5554,8 +5537,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     },
     {
       id: 'difficult',
-      title: 'A Difficult Person',
-      duration: 60,
       guidance: [
         "Now think of someone difficult in your life.",
         "Or someone you feel indifferent toward.",
@@ -5567,8 +5548,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     },
     {
       id: 'all',
-      title: 'All Beings',
-      duration: 70,
       guidance: [
         "Now let the garden expand beyond all boundaries.",
         "Open the gates and let everyone enter.",
@@ -5581,8 +5560,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     },
     {
       id: 'return',
-      title: 'Returning',
-      duration: 50,
       guidance: [
         "Bring your attention back to yourself.",
         "Notice that the garden in your heart is undiminished.",
@@ -5593,8 +5570,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     }
   ], []);
 
-  const gardenTotalDuration = React.useMemo(() =>
-    meditationStages.reduce((acc, stage) => acc + stage.duration, 0), [meditationStages]);
+  const gardenTotalLines = React.useMemo(() =>
+    meditationStages.reduce((acc, stage) => acc + stage.guidance.length, 0), [meditationStages]);
 
   // Garden plant definitions
   const gardenPlants = React.useMemo(() => [
@@ -5633,10 +5610,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
   React.useEffect(() => {
     if (currentMode === 'heartGarden') {
       setGardenStage(0);
-      setGardenElapsed(0);
-      setGardenTotalElapsed(0);
       setGardenGuidanceIndex(0);
-      setGardenPaused(false);
+      setGardenLinesRead(0);
+      setGardenComplete(false);
       // Fade in first guidance after a brief delay
       setTimeout(() => setGardenGuidanceOpacity(1), 500);
     } else {
@@ -5644,64 +5620,38 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     }
   }, [currentMode]);
 
-  // Garden timer
-  React.useEffect(() => {
-    if (currentMode !== 'heartGarden' || gardenPaused) return;
-    if (gardenTotalElapsed >= gardenTotalDuration) return;
-
-    gardenTimerRef.current = setInterval(() => {
-      setGardenElapsed(prev => {
-        const newElapsed = prev + 1;
-        const currentStageDuration = meditationStages[gardenStage]?.duration || 50;
-
-        if (newElapsed >= currentStageDuration) {
-          if (gardenStage < meditationStages.length - 1) {
-            setGardenStage(s => s + 1);
-            setGardenGuidanceIndex(0);
-            setGardenGuidanceOpacity(1);
-            return 0;
-          }
-        }
-        return newElapsed;
-      });
-      setGardenTotalElapsed(prev => Math.min(prev + 1, gardenTotalDuration));
-    }, 1000);
-
-    return () => clearInterval(gardenTimerRef.current);
-  }, [currentMode, gardenPaused, gardenStage, gardenTotalDuration, meditationStages]);
-
-  // Guidance text cycling - 10 seconds per line
-  const gardenGuidanceIndexRef = React.useRef(0);
-  React.useEffect(() => {
-    gardenGuidanceIndexRef.current = gardenGuidanceIndex;
-  }, [gardenGuidanceIndex]);
-
-  React.useEffect(() => {
-    if (currentMode !== 'heartGarden' || gardenPaused) return;
+  // Tap to advance guidance
+  const advanceGardenGuidance = React.useCallback(() => {
+    if (gardenComplete) return;
 
     const stage = meditationStages[gardenStage];
     if (!stage) return;
-    const guidanceCount = stage.guidance.length;
 
-    gardenGuidanceTimerRef.current = setInterval(() => {
-      const currentIdx = gardenGuidanceIndexRef.current;
-      if (currentIdx >= guidanceCount - 1) return;
+    // Fade out current text
+    setGardenGuidanceOpacity(0);
 
-      setGardenGuidanceOpacity(0);
-      setTimeout(() => {
-        setGardenGuidanceIndex(currentIdx + 1);
-        setGardenGuidanceOpacity(1);
-      }, 800);
-    }, 10000);
+    setTimeout(() => {
+      if (gardenGuidanceIndex < stage.guidance.length - 1) {
+        // More lines in current stage
+        setGardenGuidanceIndex(prev => prev + 1);
+      } else if (gardenStage < meditationStages.length - 1) {
+        // Move to next stage
+        setGardenStage(prev => prev + 1);
+        setGardenGuidanceIndex(0);
+      } else {
+        // Meditation complete
+        setGardenComplete(true);
+      }
+      setGardenLinesRead(prev => prev + 1);
+      setGardenGuidanceOpacity(1);
+    }, 400);
+  }, [gardenStage, gardenGuidanceIndex, gardenComplete, meditationStages]);
 
-    return () => clearInterval(gardenGuidanceTimerRef.current);
-  }, [currentMode, gardenPaused, gardenStage, meditationStages]);
-
-  // Ref to track elapsed time without causing animation restarts
-  const gardenTotalElapsedRef = React.useRef(0);
+  // Ref to track progress for animation without causing restarts
+  const gardenLinesReadRef = React.useRef(0);
   React.useEffect(() => {
-    gardenTotalElapsedRef.current = gardenTotalElapsed;
-  }, [gardenTotalElapsed]);
+    gardenLinesReadRef.current = gardenLinesRead;
+  }, [gardenLinesRead]);
 
   // Garden canvas animation
   React.useEffect(() => {
@@ -6100,7 +6050,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       ctx.clearRect(0, 0, W, H);
 
       const breath = easeInOutSine((Math.sin(time * 0.5) + 1) / 2);
-      const progress = Math.min(1, gardenTotalElapsedRef.current / gardenTotalDuration);
+      const progress = Math.min(1, gardenLinesReadRef.current / gardenTotalLines);
 
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -6161,7 +6111,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', resize);
     };
-  }, [currentMode, hue, gardenTotalDuration, gardenPlants]);
+  }, [currentMode, hue, gardenTotalLines, gardenPlants]);
 
   // Floating particles animation (stars in space effect)
   React.useEffect(() => {
@@ -6276,7 +6226,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       {currentMode === 'heartGarden' && (
         <canvas
           ref={gardenCanvasRef}
-          onClick={() => setGardenPaused(!gardenPaused)}
+          onClick={advanceGardenGuidance}
           style={{
             position: 'absolute',
             inset: 0,
@@ -6314,30 +6264,28 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
               maxWidth: '90%',
               padding: '0 1.5rem',
               opacity: gardenGuidanceOpacity,
-              transition: 'opacity 0.8s ease',
+              transition: 'opacity 0.4s ease',
               textShadow: '0 2px 20px rgba(0,0,0,0.7)',
             }}
           >
-            {meditationStages[gardenStage]?.guidance[gardenGuidanceIndex] || ''}
+            {gardenComplete
+              ? "The garden lives within you always."
+              : (meditationStages[gardenStage]?.guidance[gardenGuidanceIndex] || '')}
           </div>
 
-          {/* Paused indicator */}
-          {gardenPaused && (
+          {/* Tap hint - shown briefly at start */}
+          {!gardenComplete && gardenLinesRead === 0 && (
             <div
               style={{
                 position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                color: `hsla(${hue}, 52%, 68%, 0.7)`,
-                fontSize: '0.85rem',
+                bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))',
+                color: `hsla(${hue}, 52%, 68%, 0.5)`,
+                fontSize: '0.75rem',
                 fontFamily: '"Jost", sans-serif',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                animation: 'fadeIn 0.3s ease',
+                letterSpacing: '0.15em',
               }}
             >
-              Paused
+              tap to continue
             </div>
           )}
 
