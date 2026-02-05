@@ -6798,6 +6798,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", handleResize);
+      scene.traverse((obj) => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+          else obj.material.dispose();
+        }
+      });
       renderer.dispose();
       if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
     };
@@ -7156,6 +7163,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", handleResize);
+      scene.traverse((obj) => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+          else obj.material.dispose();
+        }
+      });
       renderer.dispose();
       if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
     };
@@ -7505,6 +7519,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", handleResize);
+      scene.traverse((obj) => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+          else obj.material.dispose();
+        }
+      });
       renderer.dispose();
       if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
     };
