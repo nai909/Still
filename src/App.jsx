@@ -614,6 +614,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
   const [showLabel, setShowLabel] = useState(false);
   const [displayedPhase, setDisplayedPhase] = useState('');
   const [phaseOpacity, setPhaseOpacity] = useState(1);
+  const [showPhaseText, setShowPhaseText] = useState(true);
   const swipeStartRef = useRef(null);
   const wheelAccumRef = useRef(0);
   const wheelTimeoutRef = useRef(null);
@@ -768,7 +769,7 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       />
 
       {/* Phase text with smooth fade transitions */}
-      {breathSession.isActive && displayedPhase && (
+      {breathSession.isActive && displayedPhase && showPhaseText && (
         <div style={{
           position: 'absolute',
           bottom: '20%',
@@ -779,14 +780,14 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         }}>
           <div style={{
             color: 'rgba(255, 255, 255, 1)',
-            fontSize: '1.3rem',
+            fontSize: '2rem',
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
-            letterSpacing: '0.25em',
+            letterSpacing: '0.3em',
             textTransform: 'lowercase',
             textAlign: 'center',
             maxWidth: '80vw',
-            textShadow: '0 2px 8px rgba(0, 0, 0, 0.8)',
+            textShadow: '0 2px 12px rgba(0, 0, 0, 0.9)',
             opacity: phaseOpacity,
             transform: `scale(${0.95 + phaseOpacity * 0.05})`,
             transition: 'opacity 0.3s ease-out, transform 0.3s ease-out',
@@ -887,6 +888,52 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
                   <div style={{ fontSize: '0.7rem', opacity: 0.6, marginTop: '0.25rem' }}>{tech.description || ''}</div>
                 </button>
               ))}
+
+              {/* Text toggle */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '1rem 1.5rem',
+                marginTop: '0.5rem',
+                borderTop: '1px solid rgba(255,255,255,0.06)',
+              }}>
+                <span style={{
+                  color: 'rgba(255,255,255,0.6)',
+                  fontSize: '0.85rem',
+                  fontFamily: '"Jost", sans-serif',
+                }}>Show Phase Text</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    haptic.tap();
+                    setShowPhaseText(!showPhaseText);
+                  }}
+                  style={{
+                    width: '48px',
+                    height: '28px',
+                    borderRadius: '14px',
+                    border: 'none',
+                    background: showPhaseText ? `hsla(${primaryHue}, 52%, 68%, 0.8)` : 'rgba(255,255,255,0.2)',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    transition: 'background 0.3s ease',
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    top: '3px',
+                    left: showPhaseText ? '23px' : '3px',
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '50%',
+                    background: '#fff',
+                    transition: 'left 0.3s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                  }} />
+                </button>
+              </div>
+
               {/* Bottom spacer for scroll */}
               <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom, 0px))', flexShrink: 0 }} />
             </div>
