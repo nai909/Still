@@ -3911,8 +3911,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     let animationId;
     let isMounted = true;
 
-    // Smoothed breath value for fluid transitions
-    let smoothedBreath = 0.5;
+    // Spring physics for ultra-smooth breath transitions
+    let currentBreath = 0.5;
+    let breathVelocity = 0;
+    const springStiffness = 0.003; // Very gentle spring
+    const springDamping = 0.92;    // High damping for smooth motion
 
     const animate = () => {
       if (!isMounted) return;
@@ -3920,12 +3923,14 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clockRef.current.getElapsedTime();
       const targetBreath = getBreathPhase(elapsed);
 
-      // Very smooth constant lerp - no acceleration, just steady flow
-      // 0.008 is slow enough to eliminate any visible jumps
-      smoothedBreath += (targetBreath - smoothedBreath) * 0.008;
+      // Spring physics: naturally smooths any discontinuities
+      const breathForce = (targetBreath - currentBreath) * springStiffness;
+      breathVelocity = (breathVelocity + breathForce) * springDamping;
+      currentBreath += breathVelocity;
 
-      // Use smoothed value directly - no additional easing needed
-      const easedBreath = smoothedBreath;
+      // Clamp to valid range
+      currentBreath = Math.max(0, Math.min(1, currentBreath));
+      const easedBreath = currentBreath;
 
       // Breath-synced scale using eased value (exaggerated range: 0.75 to 1.25)
       const targetScale = 0.75 + easedBreath * 0.5;
