@@ -6179,40 +6179,46 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const progress = Math.min(linesRead / totalLines, 1);
 
       // Define when each element should appear (progress thresholds)
-      // Sharp step function - elements appear instantly at threshold
-      const step = (p, threshold) => p >= threshold ? 1 : 0;
+      // Smooth fade-in over ~3 lines (6% progress)
+      const fade = (p, start) => {
+        const end = start + 0.06;
+        if (p < start) return 0;
+        if (p > end) return 1;
+        const t = (p - start) / (end - start);
+        return t * t * (3 - 2 * t); // smoothstep for gentle fade
+      };
 
       // Target opacities based on meditation progress
       // 22 sub-elements spread across 50 lines = new element every ~2.3 lines
       // Natural growth: seed → roots → plant → bloom
       const targets = {
         seed: 1,                              // Always visible
-        rootsTaproot: step(progress, 0.02),   // Line 1: Taproot appears
-        rootsBranches: step(progress, 0.06),  // Line 3: Branches spread
-        rootsOrbits: step(progress, 0.10),    // Line 5: Root orbits
-        rootCoilMain: step(progress, 0.14),   // Line 7: Main coils
-        rootCoilDetails: step(progress, 0.18),// Line 9: Coil details
-        baseBox: step(progress, 0.22),        // Line 11: Base box
-        baseDetails: step(progress, 0.26),    // Line 13: Base corners
-        seedOrbits: step(progress, 0.30),     // Line 15: Seed energy orbits
-        plantStem: step(progress, 0.34),      // Line 17: Plant stem grows
-        plantLeaves: step(progress, 0.38),    // Line 19: Leaves unfold
-        plantBud: step(progress, 0.42),       // Line 21: Bud forms
-        pyramidMain: step(progress, 0.46),    // Line 23: Pyramid structure
-        pyramidRings: step(progress, 0.50),   // Line 25: Pyramid rings
-        fernsLeft: step(progress, 0.54),      // Line 27: Left ferns
-        fernsRight: step(progress, 0.58),     // Line 29: Right ferns
-        torusMain: step(progress, 0.62),      // Line 31: Torus meshes
-        torusFlower: step(progress, 0.66),    // Line 33: Torus flower pattern
-        torusCore: step(progress, 0.70),      // Line 35: Torus core
-        vortexFunnels: step(progress, 0.74),  // Line 37: Vortex funnels
-        vortexLines: step(progress, 0.78),    // Line 39: Vortex connections
-        flowers: step(progress, 0.84),        // Line 42: Flower diagrams
-        particles: step(progress, 0.92)       // Line 46: Floating particles
+        rootsTaproot: fade(progress, 0.02),   // Line 1: Taproot appears
+        rootsBranches: fade(progress, 0.06),  // Line 3: Branches spread
+        rootsOrbits: fade(progress, 0.10),    // Line 5: Root orbits
+        rootCoilMain: fade(progress, 0.14),   // Line 7: Main coils
+        rootCoilDetails: fade(progress, 0.18),// Line 9: Coil details
+        baseBox: fade(progress, 0.22),        // Line 11: Base box
+        baseDetails: fade(progress, 0.26),    // Line 13: Base corners
+        seedOrbits: fade(progress, 0.30),     // Line 15: Seed energy orbits
+        plantStem: fade(progress, 0.34),      // Line 17: Plant stem grows
+        plantLeaves: fade(progress, 0.38),    // Line 19: Leaves unfold
+        plantBud: fade(progress, 0.42),       // Line 21: Bud forms
+        pyramidMain: fade(progress, 0.46),    // Line 23: Pyramid structure
+        pyramidRings: fade(progress, 0.50),   // Line 25: Pyramid rings
+        fernsLeft: fade(progress, 0.54),      // Line 27: Left ferns
+        fernsRight: fade(progress, 0.58),     // Line 29: Right ferns
+        torusMain: fade(progress, 0.62),      // Line 31: Torus meshes
+        torusFlower: fade(progress, 0.66),    // Line 33: Torus flower pattern
+        torusCore: fade(progress, 0.70),      // Line 35: Torus core
+        vortexFunnels: fade(progress, 0.74),  // Line 37: Vortex funnels
+        vortexLines: fade(progress, 0.78),    // Line 39: Vortex connections
+        flowers: fade(progress, 0.84),        // Line 42: Flower diagrams
+        particles: fade(progress, 0.92)       // Line 46: Floating particles
       };
 
-      // Faster lerp for snappier response
-      const lerpSpeed = 0.15;
+      // Smooth lerp for gentle transitions
+      const lerpSpeed = 0.08;
       for (const key in groupOpacities) {
         groupOpacities[key] += (targets[key] - groupOpacities[key]) * lerpSpeed;
       }
