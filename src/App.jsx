@@ -307,13 +307,11 @@ const generateForgivenessRelease = (cx, cy) => {
   elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 40, y2: cy - 40 }); // ring
   elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 30, y2: cy - 30 }); // pinky
 
-  // Light ascending - 6 dots
+  // Light ascending - 4 dots (16 total: 6 left hand + 6 right hand + 4 light dots)
   elements.push({ type: 'dot', x: cx, y: cy - 60, radius: 5 });
-  elements.push({ type: 'dot', x: cx - 12, y: cy - 80, radius: 4 });
-  elements.push({ type: 'dot', x: cx + 12, y: cy - 85, radius: 4 });
-  elements.push({ type: 'dot', x: cx, y: cy - 105, radius: 3.5 });
-  elements.push({ type: 'dot', x: cx - 8, y: cy - 125, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 8, y: cy - 130, radius: 3 });
+  elements.push({ type: 'dot', x: cx - 10, y: cy - 85, radius: 4 });
+  elements.push({ type: 'dot', x: cx + 10, y: cy - 90, radius: 4 });
+  elements.push({ type: 'dot', x: cx, y: cy - 115, radius: 3.5 });
 
   // The forgiving heart
   elements.push({ type: 'dot', x: cx, y: cy + 10, radius: 6, isCenter: true });
@@ -4202,7 +4200,7 @@ function Still() {
   const [showColorOverlay, setShowColorOverlay] = useState(false);
   const [hasOpenedSettings, setHasOpenedSettings] = useState(false);
   const [showSettingsHint, setShowSettingsHint] = useState(false);
-  const [gazeVisual, setGazeVisual] = useState('underwater');
+  const [gazeVisual, setGazeVisual] = useState('geometry');
 
   // Settings hint timer - shows hint every 20 seconds until settings opened
   useEffect(() => {
