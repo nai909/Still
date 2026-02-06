@@ -1948,7 +1948,7 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
                 inset: 0,
                 background: 'rgba(0,0,0,0.5)',
                 zIndex: 20,
-                animation: 'fadeInMantra 0.3s ease-out',
+                animation: 'fadeInMantra 0.5s ease-out',
               }}
             />
             {/* Bottom drawer */}
@@ -1967,7 +1967,7 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
                 border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.12)`,
                 borderBottom: 'none',
                 zIndex: 25,
-                animation: 'slideUpMantra 0.3s ease-out',
+                animation: 'slideUpMantra 0.5s ease-out',
                 display: 'flex',
                 flexDirection: 'column',
                 touchAction: 'auto',
@@ -2092,7 +2092,7 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
               inset: 0,
               background: 'rgba(0,0,0,0.5)',
               zIndex: 5,
-              animation: 'fadeInMantra 0.3s ease-out',
+              animation: 'fadeInMantra 0.5s ease-out',
             }}
           />
           {/* Bottom drawer */}
@@ -2111,7 +2111,7 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
               border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.12)`,
               borderBottom: 'none',
               zIndex: 10,
-              animation: 'slideUpMantra 0.3s ease-out',
+              animation: 'slideUpMantra 0.5s ease-out',
               display: 'flex',
               flexDirection: 'column',
               touchAction: 'auto',
@@ -3737,7 +3737,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
               inset: 0,
               background: 'rgba(0, 0, 0, 0.6)',
               zIndex: 10,
-              animation: 'fadeInScale 0.3s ease',
+              animation: 'fadeInScale 0.5s ease-out',
             }}
           />
           {/* Drawer */}
@@ -3755,7 +3755,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
               borderTop: `1px solid hsla(${primaryHue}, 52%, 68%, 0.2)`,
               borderRadius: '1.5rem 1.5rem 0 0',
               zIndex: 11,
-              animation: 'slideUpScale 0.3s ease',
+              animation: 'slideUpScale 0.5s ease-out',
               maxHeight: '80vh',
               display: 'flex',
               flexDirection: 'column',
