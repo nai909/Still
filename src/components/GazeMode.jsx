@@ -226,6 +226,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           clearTimeout(pendingHapticRef.current);
           pendingHapticRef.current = null;
         }
+        // Clear touch points before switching to prevent jarring movement on new visual
+        touchPointsRef.current = [];
         cycleVisual(deltaX > 0 ? -1 : 1); // Swipe left = next, swipe right = previous
         swipeStartRef.current = null;
         return; // Don't process further
@@ -277,6 +279,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Horizontal swipe = change visual
       if (Math.abs(wheelAccumXRef.current) > threshold) {
         e.preventDefault();
+        // Clear touch points before switching to prevent jarring movement on new visual
+        touchPointsRef.current = [];
         cycleVisual(wheelAccumXRef.current > 0 ? 1 : -1); // Swipe right = next, left = previous
         wheelAccumXRef.current = 0;
         wheelAccumRef.current = 0;
@@ -353,6 +357,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
         // Detect horizontal swipe: change visual
         if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY) * 1.5 && deltaTime < maxSwipeTime) {
+          // Clear touch points before switching to prevent jarring movement on new visual
+          touchPointsRef.current = [];
           cycleVisual(deltaX > 0 ? -1 : 1);
           swipeStartRef.current = null;
           return;
@@ -4127,7 +4133,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         color: hslToHex(hue, saturation, lightness),
         wireframe: true,
         transparent: true,
-        opacity: 0.4 - layer * 0.08
+        opacity: 0.6 - layer * 0.1
       });
 
       const mountain = new THREE.Mesh(geometry, material);
@@ -4159,7 +4165,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       color: hslToHex(hue, 20, 60),
       size: 0.15,
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.35,
       blending: THREE.AdditiveBlending
     });
     const mist = new THREE.Points(mistGeom, mistMat);
@@ -4564,6 +4570,135 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const sparks = new THREE.Points(sparkGeo, sparkMat);
     scene.add(sparks);
 
+    // === FLOATING SHIPIBO KENÉ PATTERNS ===
+    // These fade in and out slowly, drifting through the maloka
+    const floatingKene = [];
+    const keneCount = 8;
+    const TEAL_BRIGHT = hslToHex(hue, 70, 60);
+    const MAGENTA = 0xff00ff;
+
+    for (let k = 0; k < keneCount; k++) {
+      const keneGroup = new THREE.Group();
+
+      // Random position in the maloka space
+      const angle = (k / keneCount) * Math.PI * 2 + Math.random() * 0.5;
+      const dist = 2 + Math.random() * 4;
+      const height = 1.5 + Math.random() * 3;
+
+      keneGroup.position.set(
+        Math.cos(angle) * dist,
+        height,
+        Math.sin(angle) * dist
+      );
+
+      const keneSize = 0.15 + Math.random() * 0.15;
+      const keneType = k % 4;
+
+      if (keneType === 0) {
+        // Diamond/rhombus pattern
+        const diamondPts = [
+          new THREE.Vector3(0, keneSize, 0),
+          new THREE.Vector3(keneSize, 0, 0),
+          new THREE.Vector3(0, -keneSize, 0),
+          new THREE.Vector3(-keneSize, 0, 0),
+          new THREE.Vector3(0, keneSize, 0),
+        ];
+        const diamondGeo = new THREE.BufferGeometry().setFromPoints(diamondPts);
+        allGeometries.push(diamondGeo);
+        const diamondMat = new THREE.LineBasicMaterial({
+          color: k % 2 === 0 ? MAGENTA : TEAL_BRIGHT,
+          transparent: true,
+          opacity: 0
+        });
+        allMaterials.push(diamondMat);
+        keneGroup.add(new THREE.Line(diamondGeo, diamondMat));
+
+        // Inner cross
+        const crossH = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-keneSize * 0.5, 0, 0),
+          new THREE.Vector3(keneSize * 0.5, 0, 0),
+        ]);
+        const crossV = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, -keneSize * 0.5, 0),
+          new THREE.Vector3(0, keneSize * 0.5, 0),
+        ]);
+        allGeometries.push(crossH, crossV);
+        const crossMat = new THREE.LineBasicMaterial({ color: TEAL_BRIGHT, transparent: true, opacity: 0 });
+        allMaterials.push(crossMat);
+        keneGroup.add(new THREE.Line(crossH, crossMat));
+        keneGroup.add(new THREE.Line(crossV, crossMat));
+      } else if (keneType === 1) {
+        // Meander/labyrinth fragment
+        const meanderPts = [];
+        let mx = -keneSize;
+        let my = -keneSize;
+        meanderPts.push(new THREE.Vector3(mx, my, 0));
+        for (let step = 0; step < 6; step++) {
+          if (step % 2 === 0) mx += keneSize * 0.4;
+          else my += keneSize * 0.4;
+          meanderPts.push(new THREE.Vector3(mx, my, 0));
+        }
+        const meanderGeo = new THREE.BufferGeometry().setFromPoints(meanderPts);
+        allGeometries.push(meanderGeo);
+        const meanderMat = new THREE.LineBasicMaterial({ color: TEAL_BRIGHT, transparent: true, opacity: 0 });
+        allMaterials.push(meanderMat);
+        keneGroup.add(new THREE.Line(meanderGeo, meanderMat));
+      } else if (keneType === 2) {
+        // Eye motif (common in Shipibo art)
+        const eyePts = [];
+        for (let e = 0; e <= 20; e++) {
+          const et = e / 20;
+          const ex = (et - 0.5) * keneSize * 2;
+          const ey = Math.sin(et * Math.PI) * keneSize * 0.5;
+          eyePts.push(new THREE.Vector3(ex, ey, 0));
+        }
+        for (let e = 20; e >= 0; e--) {
+          const et = e / 20;
+          const ex = (et - 0.5) * keneSize * 2;
+          const ey = -Math.sin(et * Math.PI) * keneSize * 0.5;
+          eyePts.push(new THREE.Vector3(ex, ey, 0));
+        }
+        const eyeGeo = new THREE.BufferGeometry().setFromPoints(eyePts);
+        allGeometries.push(eyeGeo);
+        const eyeMat = new THREE.LineBasicMaterial({ color: MAGENTA, transparent: true, opacity: 0 });
+        allMaterials.push(eyeMat);
+        keneGroup.add(new THREE.Line(eyeGeo, eyeMat));
+
+        // Center dot
+        const dotGeo = new THREE.SphereGeometry(keneSize * 0.15, 8, 8);
+        allGeometries.push(dotGeo);
+        const dotMat = new THREE.MeshBasicMaterial({ color: TEAL_BRIGHT, transparent: true, opacity: 0 });
+        allMaterials.push(dotMat);
+        keneGroup.add(new THREE.Mesh(dotGeo, dotMat));
+      } else {
+        // Four-pointed cross/star
+        for (let arm = 0; arm < 4; arm++) {
+          const armAngle = (arm / 4) * Math.PI * 2;
+          const armPts = [
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(Math.cos(armAngle) * keneSize, Math.sin(armAngle) * keneSize, 0),
+          ];
+          const armGeo = new THREE.BufferGeometry().setFromPoints(armPts);
+          allGeometries.push(armGeo);
+          const armMat = new THREE.LineBasicMaterial({ color: TEAL_BRIGHT, transparent: true, opacity: 0 });
+          allMaterials.push(armMat);
+          keneGroup.add(new THREE.Line(armGeo, armMat));
+        }
+      }
+
+      scene.add(keneGroup);
+      floatingKene.push({
+        group: keneGroup,
+        baseY: height,
+        baseAngle: angle,
+        dist: dist,
+        phase: Math.random() * Math.PI * 2,
+        fadePhase: Math.random() * Math.PI * 2,
+        driftSpeed: 0.0003 + Math.random() * 0.0003,
+        bobSpeed: 0.3 + Math.random() * 0.3,
+      });
+    }
+
     const clock = new THREE.Clock();
 
     // Camera look controls
@@ -4688,6 +4823,32 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         const scale = 0.5 + r.progress * 6;
         r.mesh.scale.setScalar(scale);
         r.material.opacity = (1 - r.progress) * 0.3 * (0.5 + breath * 0.5);
+      });
+
+      // Animate floating Shipibo kené patterns
+      floatingKene.forEach((kene) => {
+        // Slow drift around the maloka
+        kene.baseAngle += kene.driftSpeed;
+
+        // Update position with gentle bobbing
+        kene.group.position.x = Math.cos(kene.baseAngle) * kene.dist;
+        kene.group.position.z = Math.sin(kene.baseAngle) * kene.dist;
+        kene.group.position.y = kene.baseY + Math.sin(elapsed * kene.bobSpeed + kene.phase) * 0.3;
+
+        // Slow rotation
+        kene.group.rotation.y = elapsed * 0.1 + kene.phase;
+        kene.group.rotation.z = Math.sin(elapsed * 0.2 + kene.phase) * 0.1;
+
+        // Fade in and out slowly (15-20 second cycle)
+        const fadeValue = (Math.sin(elapsed * 0.15 + kene.fadePhase) + 1) * 0.5;
+        const targetOpacity = fadeValue * 0.5 * (0.6 + breath * 0.4);
+
+        // Apply opacity to all children
+        kene.group.children.forEach(child => {
+          if (child.material) {
+            child.material.opacity = targetOpacity;
+          }
+        });
       });
 
       renderer.render(scene, camera);
@@ -6642,13 +6803,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     let time = 0;
     let animId;
     let rotCurrent = { x: 0.1, y: 0 };
+    let frameCount = 0; // Skip touch rotation for first frames to avoid swipe interference
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
+      frameCount++;
 
-      // Touch-responsive rotation (hold to rotate)
-      if (touchPointsRef.current.length > 0) {
+      // Touch-responsive rotation (hold to rotate) - skip first 30 frames to avoid swipe interference
+      if (frameCount > 30 && touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
@@ -6656,7 +6819,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           mainGroup.rotation.y += normalizedX * 0.02;
           mainGroup.rotation.x += normalizedY * 0.01;
         }
-      } else {
+      } else if (frameCount > 30) {
         mainGroup.rotation.y += 0.001;
       }
 
@@ -7000,13 +7163,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // === ANIMATION ===
     let time = 0;
     let animId;
+    let frameCount = 0;
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
+      frameCount++;
 
-      // Touch-responsive rotation (hold to rotate)
-      if (touchPointsRef.current.length > 0) {
+      // Touch-responsive rotation (hold to rotate) - skip first 30 frames to avoid swipe interference
+      if (frameCount > 30 && touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
@@ -7014,7 +7179,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           mainGroup.rotation.y += normalizedX * 0.02;
           mainGroup.rotation.x += normalizedY * 0.01;
         }
-      } else {
+      } else if (frameCount > 30) {
         mainGroup.rotation.y += 0.001;
       }
 
@@ -7383,13 +7548,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // === ANIMATION ===
     let time = 0;
     let animId;
+    let frameCount = 0;
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
+      frameCount++;
 
-      // Touch-responsive rotation (hold to rotate)
-      if (touchPointsRef.current.length > 0) {
+      // Touch-responsive rotation (hold to rotate) - skip first 30 frames to avoid swipe interference
+      if (frameCount > 30 && touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
@@ -7397,7 +7564,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           mainGroup.rotation.y += normalizedX * 0.02;
           mainGroup.rotation.x += normalizedY * 0.01;
         }
-      } else {
+      } else if (frameCount > 30) {
         mainGroup.rotation.y += 0.001;
       }
 
@@ -7645,14 +7812,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const rainParticles = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: primaryLight, size: 1.5, transparent: true, opacity: 0.5 }));
     mainGroup.add(rainParticles);
 
-    let time = 0, animId;
+    let time = 0, animId, frameCount = 0;
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
+      frameCount++;
 
-      // Touch-responsive rotation (hold to rotate)
-      if (touchPointsRef.current.length > 0) {
+      // Touch-responsive rotation (hold to rotate) - skip first 30 frames to avoid swipe interference
+      if (frameCount > 30 && touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
@@ -7660,7 +7828,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           mainGroup.rotation.y += normalizedX * 0.02;
           mainGroup.rotation.x += normalizedY * 0.01;
         }
-      } else {
+      } else if (frameCount > 30) {
         mainGroup.rotation.y += 0.001;
       }
 
@@ -7829,14 +7997,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const leafParticles = new THREE.Points(leafGeo, new THREE.PointsMaterial({ color: primaryLight, size: 2, transparent: true, opacity: 0.5 }));
     mainGroup.add(leafParticles);
 
-    let time = 0, animId;
+    let time = 0, animId, frameCount = 0;
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
+      frameCount++;
 
-      // Touch-responsive rotation (hold to rotate)
-      if (touchPointsRef.current.length > 0) {
+      // Touch-responsive rotation (hold to rotate) - skip first 30 frames to avoid swipe interference
+      if (frameCount > 30 && touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
@@ -7844,7 +8013,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           mainGroup.rotation.y += normalizedX * 0.02;
           mainGroup.rotation.x += normalizedY * 0.01;
         }
-      } else {
+      } else if (frameCount > 30) {
         mainGroup.rotation.y += 0.001;
       }
 
@@ -7974,14 +8143,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: primaryLight, size: 1.2, transparent: true, opacity: 0.3 }));
     mainGroup.add(particles);
 
-    let time = 0, animId;
+    let time = 0, animId, frameCount = 0;
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
+      frameCount++;
 
-      // Touch-responsive rotation (hold to rotate)
-      if (touchPointsRef.current.length > 0) {
+      // Touch-responsive rotation (hold to rotate) - skip first 30 frames to avoid swipe interference
+      if (frameCount > 30 && touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
@@ -7989,7 +8159,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           mainGroup.rotation.y += normalizedX * 0.02;
           mainGroup.rotation.x += normalizedY * 0.01;
         }
-      } else {
+      } else if (frameCount > 30) {
         mainGroup.rotation.y += 0.001;
       }
 
@@ -8150,14 +8320,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const ntParticles = new THREE.Points(ntGeo, new THREE.PointsMaterial({ color: primaryLight, size: 2, transparent: true, opacity: 0.7 }));
     mainGroup.add(ntParticles);
 
-    let time = 0, animId;
+    let time = 0, animId, frameCount = 0;
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
+      frameCount++;
 
-      // Touch-responsive rotation (hold to rotate)
-      if (touchPointsRef.current.length > 0) {
+      // Touch-responsive rotation (hold to rotate) - skip first 30 frames to avoid swipe interference
+      if (frameCount > 30 && touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
@@ -8165,7 +8336,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           mainGroup.rotation.y += normalizedX * 0.02;
           mainGroup.rotation.x += normalizedY * 0.01;
         }
-      } else {
+      } else if (frameCount > 30) {
         mainGroup.rotation.y += 0.001;
       }
 
@@ -8333,14 +8504,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: primaryLight, size: 2, transparent: true, opacity: 0.6 }));
     mainGroup.add(particles);
 
-    let time = 0, animId;
+    let time = 0, animId, frameCount = 0;
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.006;
+      frameCount++;
 
-      // Touch-responsive rotation (hold to rotate)
-      if (touchPointsRef.current.length > 0) {
+      // Touch-responsive rotation (hold to rotate) - skip first 30 frames to avoid swipe interference
+      if (frameCount > 30 && touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
@@ -8348,7 +8520,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           mainGroup.rotation.y += normalizedX * 0.02;
           mainGroup.rotation.x += normalizedY * 0.01;
         }
-      } else {
+      } else if (frameCount > 30) {
         mainGroup.rotation.y += 0.001;
       }
 
@@ -8515,14 +8687,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: primaryLight, size: 1.5, transparent: true, opacity: 0.4 }));
     mainGroup.add(particles);
 
-    let time = 0, animId;
+    let time = 0, animId, frameCount = 0;
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
+      frameCount++;
 
-      // Touch-responsive rotation (hold to rotate)
-      if (touchPointsRef.current.length > 0) {
+      // Touch-responsive rotation (hold to rotate) - skip first 30 frames to avoid swipe interference
+      if (frameCount > 30 && touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
@@ -8530,7 +8703,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           mainGroup.rotation.y += normalizedX * 0.02;
           mainGroup.rotation.x += normalizedY * 0.01;
         }
-      } else {
+      } else if (frameCount > 30) {
         mainGroup.rotation.y += 0.001;
       }
 
@@ -8701,14 +8874,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: primaryLight, size: 1.5, transparent: true, opacity: 0.4 }));
     mainGroup.add(particles);
 
-    let time = 0, animId;
+    let time = 0, animId, frameCount = 0;
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.008;
+      frameCount++;
 
-      // Touch-responsive rotation (hold to rotate)
-      if (touchPointsRef.current.length > 0) {
+      // Touch-responsive rotation (hold to rotate) - skip first 30 frames to avoid swipe interference
+      if (frameCount > 30 && touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
@@ -8716,7 +8890,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           mainGroup.rotation.y += normalizedX * 0.02;
           mainGroup.rotation.x += normalizedY * 0.01;
         }
-      } else {
+      } else if (frameCount > 30) {
         mainGroup.rotation.y += 0.001;
       }
 
@@ -9132,10 +9306,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     let animId;
     let time = 0;
+    let frameCount = 0;
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
+      frameCount++;
 
       const breathPhase = Math.sin(time * BREATH_SPEED * 5);
 
@@ -9176,8 +9352,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Cap gentle pulse
       capGroup.scale.setScalar(1 + Math.sin(time) * 0.02);
 
-      // Touch-responsive rotation
-      if (touchPointsRef.current.length > 0) {
+      // Touch-responsive rotation - skip first 30 frames to avoid swipe interference
+      if (frameCount > 30 && touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
@@ -9185,7 +9361,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           mainGroup.rotation.y += normalizedX * 0.015;
           mainGroup.rotation.x = Math.max(-0.5, Math.min(0.5, mainGroup.rotation.x + normalizedY * 0.008));
         }
-      } else {
+      } else if (frameCount > 30) {
         mainGroup.rotation.y += 0.0008;
       }
 
@@ -9562,10 +9738,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     let animId;
     let time = 0;
+    let frameCount = 0;
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
+      frameCount++;
 
       const breathPhase = Math.sin(time * BREATH_SPEED * 5);
 
@@ -9592,8 +9770,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
       tuftGroup.rotation.z = Math.sin(time) * 0.05;
 
-      // Touch-responsive rotation
-      if (touchPointsRef.current.length > 0) {
+      // Touch-responsive rotation - skip first 30 frames to avoid swipe interference
+      if (frameCount > 30 && touchPointsRef.current.length > 0) {
         const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
         if (activeTouch) {
           const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
@@ -9601,7 +9779,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
           mainGroup.rotation.y += normalizedX * 0.015;
           mainGroup.rotation.x = Math.max(-0.5, Math.min(0.5, mainGroup.rotation.x + normalizedY * 0.008));
         }
-      } else {
+      } else if (frameCount > 30) {
         mainGroup.rotation.y += 0.001;
       }
 

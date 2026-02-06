@@ -42,7 +42,7 @@ export const MOBILE_PIXEL_RATIO = isMobile ? Math.min(window.devicePixelRatio, 1
 // ============================================================================
 export const gazeModes = [
   { key: 'geometry', name: 'Torus' },
-  { key: 'fungusDimensio', name: 'Fungus Dimensio' },
+  { key: 'fungusDimensio', name: 'Mycelium' },
   { key: 'peyoteVisio', name: 'Cacti' },
   { key: 'tree', name: 'Fractal Tree' },
   { key: 'fern', name: 'Fern' },
@@ -53,7 +53,7 @@ export const gazeModes = [
   { key: 'mountains', name: 'Mountains' },
   { key: 'maloka', name: 'Maloka' },
   { key: 'underwater', name: 'Abyss' },
-  { key: 'corpusStellae', name: 'Star Body' },
+  { key: 'corpusStellae', name: 'Astral Body' },
   { key: 'machinaTemporis', name: 'Clockwork' },
   { key: 'oceanusProfundus', name: 'Deep Ocean' },
   { key: 'aquaVitae', name: 'Water of Life' },
