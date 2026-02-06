@@ -286,31 +286,34 @@ const generateFallingLeaves = (cx, cy) => {
   return elements;
 };
 
-// I Forgive and Release - 16 elements (4 words × 4 cycles)
+// I Forgive and Release - 20 elements (5 words × 4 cycles)
 // OPENING HANDS RELEASING LIGHT - forgiveness as letting go
 const generateForgivenessRelease = (cx, cy) => {
   const elements = [];
 
-  // Left hand - 4 lines
-  elements.push({ type: 'line', x1: cx - 70, y1: cy + 40, x2: cx - 55, y2: cy });
-  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 70, y2: cy - 30 });
-  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 50, y2: cy - 50 });
-  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 35, y2: cy - 40 });
+  // Left hand - palm base + 5 fingers
+  elements.push({ type: 'line', x1: cx - 70, y1: cy + 40, x2: cx - 55, y2: cy }); // wrist to palm
+  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 80, y2: cy - 15 }); // thumb
+  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 70, y2: cy - 35 }); // index
+  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 55, y2: cy - 45 }); // middle
+  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 40, y2: cy - 40 }); // ring
+  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 30, y2: cy - 30 }); // pinky
 
-  // Right hand - 4 lines
-  elements.push({ type: 'line', x1: cx + 70, y1: cy + 40, x2: cx + 55, y2: cy });
-  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 70, y2: cy - 30 });
-  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 50, y2: cy - 50 });
-  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 35, y2: cy - 40 });
+  // Right hand - palm base + 5 fingers
+  elements.push({ type: 'line', x1: cx + 70, y1: cy + 40, x2: cx + 55, y2: cy }); // wrist to palm
+  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 80, y2: cy - 15 }); // thumb
+  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 70, y2: cy - 35 }); // index
+  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 55, y2: cy - 45 }); // middle
+  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 40, y2: cy - 40 }); // ring
+  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 30, y2: cy - 30 }); // pinky
 
-  // Light ascending - 7 dots
-  elements.push({ type: 'dot', x: cx, y: cy - 25, radius: 5 });
-  elements.push({ type: 'dot', x: cx - 15, y: cy - 45, radius: 4 });
-  elements.push({ type: 'dot', x: cx + 15, y: cy - 50, radius: 4 });
-  elements.push({ type: 'dot', x: cx, y: cy - 70, radius: 3.5 });
-  elements.push({ type: 'dot', x: cx - 20, y: cy - 85, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 20, y: cy - 90, radius: 3 });
-  elements.push({ type: 'dot', x: cx, y: cy - 110, radius: 2.5 });
+  // Light ascending - 6 dots
+  elements.push({ type: 'dot', x: cx, y: cy - 60, radius: 5 });
+  elements.push({ type: 'dot', x: cx - 12, y: cy - 80, radius: 4 });
+  elements.push({ type: 'dot', x: cx + 12, y: cy - 85, radius: 4 });
+  elements.push({ type: 'dot', x: cx, y: cy - 105, radius: 3.5 });
+  elements.push({ type: 'dot', x: cx - 8, y: cy - 125, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 8, y: cy - 130, radius: 3 });
 
   // The forgiving heart
   elements.push({ type: 'dot', x: cx, y: cy + 10, radius: 6, isCenter: true });
