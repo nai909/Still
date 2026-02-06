@@ -6129,20 +6129,20 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         groupOpacities[key] += (targets[key] - groupOpacities[key]) * lerpSpeed;
       }
 
-      // Apply opacities - seed visible from start, then roots grow, then everything else
-      setGroupOpacity(seedGroup, groupOpacities.seed * 0.95);
-      setGroupOpacity(lowerGroup, groupOpacities.roots * 0.9);
-      setGroupOpacity(rootCoilGroup, groupOpacities.rootCoil * 0.85);
-      setGroupOpacity(baseGroup, groupOpacities.base * 0.75);
-      setGroupOpacity(plantGroup, groupOpacities.plant * 0.9);
-      setGroupOpacity(pyramidGroup, groupOpacities.pyramid * 0.8);
-      setGroupOpacity(fernGroup, groupOpacities.ferns * 0.85);
-      setGroupOpacity(torusGroup, groupOpacities.torus * 0.75);
-      setGroupOpacity(vortexGroup, groupOpacities.vortex * 0.8);
-      setGroupOpacity(flowerDiagramGroup, groupOpacities.flowers * 0.85);
+      // Apply opacities - full visibility when elements appear
+      setGroupOpacity(seedGroup, groupOpacities.seed);
+      setGroupOpacity(lowerGroup, groupOpacities.roots);
+      setGroupOpacity(rootCoilGroup, groupOpacities.rootCoil);
+      setGroupOpacity(baseGroup, groupOpacities.base);
+      setGroupOpacity(plantGroup, groupOpacities.plant);
+      setGroupOpacity(pyramidGroup, groupOpacities.pyramid);
+      setGroupOpacity(fernGroup, groupOpacities.ferns);
+      setGroupOpacity(torusGroup, groupOpacities.torus);
+      setGroupOpacity(vortexGroup, groupOpacities.vortex);
+      setGroupOpacity(flowerDiagramGroup, groupOpacities.flowers);
 
       // Particles opacity via material
-      particleMat3D.opacity = 0.85 * groupOpacities.particles;
+      particleMat3D.opacity = groupOpacities.particles;
 
       renderer.render(scene, camera);
     };
