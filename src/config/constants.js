@@ -43,7 +43,7 @@ export const MOBILE_PIXEL_RATIO = isMobile ? Math.min(window.devicePixelRatio, 1
 export const gazeModes = [
   { key: 'geometry', name: 'Torus' },
   { key: 'fungusDimensio', name: 'Fungus Dimensio' },
-  { key: 'peyoteVisio', name: 'Peyote Visio' },
+  { key: 'peyoteVisio', name: 'Cacti' },
   { key: 'tree', name: 'Fractal Tree' },
   { key: 'fern', name: 'Fern' },
   { key: 'dandelion', name: 'Dandelion' },
