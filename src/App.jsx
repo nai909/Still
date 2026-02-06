@@ -2267,27 +2267,6 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
         )}
       </div>
 
-      {/* Bottom handle for opening drawer on desktop */}
-      {!showCategorySelector && (
-        <div
-          onClick={(e) => { e.stopPropagation(); setShowCategorySelector(true); }}
-          style={{
-            position: 'absolute',
-            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            padding: '0.5rem 2rem',
-            cursor: 'pointer',
-          }}
-        >
-          <div style={{
-            width: '36px',
-            height: '4px',
-            background: `hsla(${primaryHue}, 52%, 68%, 0.3)`,
-            borderRadius: '2px',
-          }} />
-        </div>
-      )}
     </div>
   );
 }
@@ -4151,6 +4130,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
           to { opacity: 0; }
         }
       `}</style>
+
     </main>
   );
 });
