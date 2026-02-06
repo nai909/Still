@@ -42,14 +42,15 @@ export const MOBILE_PIXEL_RATIO = isMobile ? Math.min(window.devicePixelRatio, 1
 // ============================================================================
 export const gazeModes = [
   { key: 'geometry', name: 'Torus' },
+  { key: 'fungusDimensio', name: 'Fungus Dimensio' },
+  { key: 'peyoteVisio', name: 'Peyote Visio' },
   { key: 'tree', name: 'Fractal Tree' },
   { key: 'fern', name: 'Fern' },
   { key: 'dandelion', name: 'Dandelion' },
   { key: 'lungs', name: 'Lungs' },
   { key: 'ripples', name: 'Ripples' },
   { key: 'jellyfish2d', name: 'Deep Sea' },
-  { key: 'mushrooms', name: 'Mushrooms' },
-  { key: 'koiPond', name: 'Koi Pond' },
+    { key: 'koiPond', name: 'Koi Pond' },
   { key: 'flowerOfLife', name: 'Flower of Life' },
   { key: 'lavaTouch', name: 'Lava Lamp' },
   { key: 'mountains', name: 'Mountains' },
@@ -64,8 +65,7 @@ export const gazeModes = [
   { key: 'nervusCosmicus', name: 'Neural' },
   { key: 'portaDimensionum', name: 'Portal' },
   { key: 'templumSonorum', name: 'Sound Temple' },
-  { key: 'caelumMechanicum', name: 'Orrery' },
-  { key: 'labyrinthisSacrum', name: 'Labyrinth' },
+    { key: 'labyrinthisSacrum', name: 'Labyrinth' },
 ];
 
 export const gazeShapes = [

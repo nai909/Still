@@ -2466,10 +2466,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     // Use main PALETTE colors - teal as primary (matches other visuals)
     const JELLY_COLORS = {
-      primary: { h: hue, s: 52, l: 68 },    // Main teal #7FDBCA
-      deep: { h: hue, s: 50, l: 50 },       // Deeper teal
-      accent: { h: hue + 15, s: 60, l: 75 },// Lighter accent
-      sand: { h: hue + 20, s: 50, l: 65 }    // Accent for spots
+      primary: { h: hue, s: 52, l: 68 },    // Main color
+      deep: { h: hue, s: 50, l: 50 },       // Deeper shade
+      accent: { h: hue, s: 60, l: 75 },     // Lighter accent
+      sand: { h: hue, s: 50, l: 65 }        // Accent for spots
     };
 
     // Thin trailing tentacle class with verlet physics
@@ -3181,270 +3181,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       cancelAnimationFrame(animationId);
     };
   }, [currentMode, getInteractionInfluence, drawRipples]);
-
-  // ========== MUSHROOMS MODE (3D with Torus-style touch mechanics) ==========
-  React.useEffect(() => {
-    if (currentMode !== 'mushrooms' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    // Clear any residual touch data from navigation
-    touchPointsRef.current = [];
-
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 1.5, 9);
-    camera.lookAt(0, 0.5, 0);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
-    containerRef.current.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'none';
-    rendererRef.current = renderer;
-    clockRef.current = new THREE.Clock();
-
-    // HSL to hex for THREE.js
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    // Create mushroom group
-    const mushroomGroup = new THREE.Group();
-    scene.add(mushroomGroup);
-
-    // Create central large mushroom
-    const createMushroom = (x, z, scale) => {
-      const mushroom = new THREE.Group();
-
-      // Stem - tapered cylinder using lathe geometry
-      const stemPoints = [];
-      for (let i = 0; i <= 10; i++) {
-        const t = i / 10;
-        const radius = 0.12 + Math.sin(t * Math.PI) * 0.03;
-        stemPoints.push(new THREE.Vector2(radius * scale, t * 1.2 * scale));
-      }
-      const stemGeom = new THREE.LatheGeometry(stemPoints, 16);
-      const stemMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue, 20, 40),
-        transparent: true,
-        opacity: 0.6,
-        wireframe: true
-      });
-      const stem = new THREE.Mesh(stemGeom, stemMat);
-      mushroom.add(stem);
-
-      // Cap - half sphere with spots
-      const capGeom = new THREE.SphereGeometry(0.5 * scale, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.6);
-      const capMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue, 60, 50),
-        transparent: true,
-        opacity: 0.7,
-        wireframe: true
-      });
-      const cap = new THREE.Mesh(capGeom, capMat);
-      cap.position.y = 1.2 * scale;
-      cap.rotation.x = Math.PI;
-      mushroom.add(cap);
-
-      // Bioluminescent spots on cap
-      const spotCount = 8;
-      for (let i = 0; i < spotCount; i++) {
-        const theta = (i / spotCount) * Math.PI * 2;
-        const phi = 0.3 + Math.random() * 0.4;
-        const spotGeom = new THREE.SphereGeometry(0.05 * scale, 8, 8);
-        const spotMat = new THREE.MeshBasicMaterial({
-          color: hslToHex(hue, 80, 70),
-          transparent: true,
-          opacity: 0.8
-        });
-        const spot = new THREE.Mesh(spotGeom, spotMat);
-        spot.position.set(
-          Math.sin(phi) * Math.cos(theta) * 0.4 * scale,
-          1.2 * scale - Math.cos(phi) * 0.35 * scale,
-          Math.sin(phi) * Math.sin(theta) * 0.4 * scale
-        );
-        spot.userData = { phase: Math.random() * Math.PI * 2 };
-        mushroom.add(spot);
-      }
-
-      // Gills under cap
-      const gillsGeom = new THREE.ConeGeometry(0.45 * scale, 0.2 * scale, 24, 1, true);
-      const gillsMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue, 40, 35),
-        transparent: true,
-        opacity: 0.5,
-        side: THREE.DoubleSide,
-        wireframe: true
-      });
-      const gills = new THREE.Mesh(gillsGeom, gillsMat);
-      gills.position.y = 1.1 * scale;
-      gills.rotation.x = Math.PI;
-      mushroom.add(gills);
-
-      mushroom.position.set(x, 0, z);
-      mushroom.userData = {
-        baseY: 0,
-        phase: Math.random() * Math.PI * 2,
-        rotationSpeed: 0.001 + Math.random() * 0.002
-      };
-
-      return mushroom;
-    };
-
-    // Create multiple mushrooms in a cluster
-    const mushrooms = [];
-    mushrooms.push(createMushroom(0, 0, 1.2)); // Central large one
-    mushrooms.push(createMushroom(-1.5, 0.5, 0.7));
-    mushrooms.push(createMushroom(1.3, 0.3, 0.8));
-    mushrooms.push(createMushroom(-0.8, -1.2, 0.6));
-    mushrooms.push(createMushroom(1.0, -0.8, 0.65));
-    mushrooms.push(createMushroom(0.3, 1.5, 0.5));
-
-    mushrooms.forEach(m => mushroomGroup.add(m));
-
-    // Spores particle system
-    const sporeCount = 200;
-    const sporeGeom = new THREE.BufferGeometry();
-    const sporePositions = new Float32Array(sporeCount * 3);
-    const sporeSizes = new Float32Array(sporeCount);
-    const sporePhases = new Float32Array(sporeCount);
-
-    for (let i = 0; i < sporeCount; i++) {
-      sporePositions[i * 3] = (Math.random() - 0.5) * 6;
-      sporePositions[i * 3 + 1] = Math.random() * 4;
-      sporePositions[i * 3 + 2] = (Math.random() - 0.5) * 6;
-      sporeSizes[i] = 0.02 + Math.random() * 0.03;
-      sporePhases[i] = Math.random() * Math.PI * 2;
-    }
-    sporeGeom.setAttribute('position', new THREE.BufferAttribute(sporePositions, 3));
-
-    const sporeMat = new THREE.PointsMaterial({
-      color: hslToHex(hue, 60, 60),
-      size: 0.05,
-      transparent: true,
-      opacity: 0.6,
-      blending: THREE.AdditiveBlending
-    });
-    const spores = new THREE.Points(sporeGeom, sporeMat);
-    scene.add(spores);
-
-    let animationId;
-    let isMounted = true;
-
-    const animate = () => {
-      if (!isMounted) return;
-      animationId = requestAnimationFrame(animate);
-      const elapsed = clockRef.current.getElapsedTime();
-
-      // Touch-responsive rotation - slow and meditative
-      if (touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          mushroomGroup.rotation.y += normalizedX * 0.015;
-          mushroomGroup.rotation.x += normalizedY * 0.008;
-        }
-      } else {
-        // Very gentle auto-rotation when not touching
-        mushroomGroup.rotation.y += 0.0002;
-      }
-
-      // Breath-synced scale
-      const breath = getBreathPhase(elapsed);
-      const targetScale = 0.9 + breath * 0.2;
-      mushroomGroup.scale.setScalar(targetScale);
-
-      // Animate individual mushrooms with breath
-      mushrooms.forEach((mushroom) => {
-        mushroom.scale.setScalar(0.9 + breath * 0.15);
-
-        // Bob with breath
-        mushroom.position.y = mushroom.userData.baseY + Math.sin(elapsed * 0.15 + mushroom.userData.phase) * 0.03 + breath * 0.02;
-
-        // Rotate cap very slowly
-        const cap = mushroom.children[1];
-        if (cap) {
-          cap.rotation.y = elapsed * mushroom.userData.rotationSpeed * 3;
-        }
-
-        // Pulse spots with breath
-        mushroom.children.forEach(child => {
-          if (child.userData && child.userData.phase !== undefined) {
-            const pulse = 0.3 + breath * 0.4 + Math.sin(elapsed * 0.5 + child.userData.phase) * 0.3;
-            child.material.opacity = 0.5 + pulse * 0.4;
-          }
-        });
-      });
-
-      // Animate spores floating upward very slowly
-      const positions = sporeGeom.attributes.position.array;
-      for (let i = 0; i < sporeCount; i++) {
-        const idx = i * 3;
-        positions[idx + 1] += 0.0015 + Math.sin(elapsed * 0.3 + sporePhases[i]) * 0.0006;
-        positions[idx] += Math.sin(elapsed * 0.15 + sporePhases[i]) * 0.0006;
-        positions[idx + 2] += Math.cos(elapsed * 0.15 + sporePhases[i]) * 0.0006;
-
-        // Touch influence on spores
-        touchPointsRef.current.forEach(point => {
-          if (point.active) {
-            const screenX = (point.x / window.innerWidth - 0.5) * 8;
-            const dx = positions[idx] - screenX;
-            const dz = positions[idx + 2];
-            const dist = Math.sqrt(dx * dx + dz * dz);
-            if (dist < 2) {
-              positions[idx] += dx * 0.02;
-              positions[idx + 1] += 0.02;
-              positions[idx + 2] += dz * 0.02;
-            }
-          }
-        });
-
-        // Reset spores that float too high
-        if (positions[idx + 1] > 5) {
-          positions[idx + 1] = -0.5;
-          positions[idx] = (Math.random() - 0.5) * 6;
-          positions[idx + 2] = (Math.random() - 0.5) * 6;
-        }
-      }
-      sporeGeom.attributes.position.needsUpdate = true;
-      sporeMat.opacity = 0.6;
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      isMounted = false;
-      window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animationId);
-      if (containerRef.current && containerRef.current.contains(renderer.domElement)) {
-        containerRef.current.removeChild(renderer.domElement);
-      }
-      // Dispose geometries and materials
-      mushrooms.forEach(m => {
-        m.children.forEach(child => {
-          if (child.geometry) child.geometry.dispose();
-          if (child.material) child.material.dispose();
-        });
-      });
-      sporeGeom.dispose();
-      sporeMat.dispose();
-      renderer.dispose();
-    };
-  }, [currentMode, hue]);
-
   // ========== FLOWER OF LIFE MODE (3D) ==========
   React.useEffect(() => {
     if (currentMode !== 'flowerOfLife' || !containerRef.current || typeof THREE === 'undefined') return;
@@ -4019,9 +3755,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const originalPositions = geometry.attributes.position.array.slice();
       geometry.userData = { originalPositions };
 
-      const blobHue = (hue + Math.random() * 30 - 15 + 360) % 360;
       const material = new THREE.MeshBasicMaterial({
-        color: hslToHex(blobHue, 52, 68),
+        color: hslToHex(hue, 52, 68),
         wireframe: true,
         transparent: true,
         opacity: 0.75,
@@ -4043,7 +3778,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         floatSpeed: 0.05 + Math.random() * 0.04, // Much slower floating
         wobbleSpeed: 0.1 + Math.random() * 0.06, // Much slower wobble
         wobbleIntensity: 0.12 + Math.random() * 0.08,
-        hue: blobHue,
+        hue: hue,
       };
 
       blobs.push(blob);
@@ -5026,7 +4761,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       // Bell
       const bellGeom = new THREE.SphereGeometry(0.4, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2);
       const bellMat = new THREE.MeshBasicMaterial({
-        color: hslToHex(hue + Math.random() * 40, 50, 55),
+        color: hslToHex(hue, 50, 55),
         wireframe: true,
         transparent: true,
         opacity: 0.4
@@ -5241,7 +4976,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     rimLight.position.set(-5, 2, -5);
     scene.add(rimLight);
 
-    const bottomLight = new THREE.PointLight(hslToHex(hue + 30, 50, 50), 0.4, 30);
+    const bottomLight = new THREE.PointLight(hslToHex(hue, 50, 50), 0.4, 30);
     bottomLight.position.set(0, -5, 0);
     scene.add(bottomLight);
 
@@ -5330,8 +5065,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const stamenGeometry = new THREE.CylinderGeometry(0.015, 0.01, 0.3, 8);
       allGeometries.push(stamenGeometry);
       const stamenMaterial = new THREE.MeshStandardMaterial({
-        color: hslToHex(hue + 40, 70, 60),
-        emissive: hslToHex(hue + 40, 60, 40),
+        color: hslToHex(hue, 70, 60),
+        emissive: hslToHex(hue, 60, 40),
         emissiveIntensity: 0.3,
         roughness: 0.4,
       });
@@ -5353,8 +5088,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const tipGeometry = new THREE.SphereGeometry(0.025, 8, 8);
       allGeometries.push(tipGeometry);
       const tipMaterial = new THREE.MeshStandardMaterial({
-        color: hslToHex(hue + 40, 65, 65),
-        emissive: hslToHex(hue + 40, 55, 50),
+        color: hslToHex(hue, 65, 65),
+        emissive: hslToHex(hue, 55, 50),
         emissiveIntensity: 0.5,
       });
       allMaterials.push(tipMaterial);
@@ -5670,7 +5405,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const primaryDark = hslToHex(hue, 52, 45);
     const primaryLight = hslToHex(hue, 52, 78);
     const primaryFaint = hslToHex(hue, 40, 35);
-    const accentColor = hslToHex((hue + 40) % 360, 60, 55); // Complementary accent
+    const accentColor = hslToHex(hue, 60, 55); // Consistent with main hue
 
     // Materials - increased opacity for better visibility
     const inkMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 1.0 });
@@ -5741,8 +5476,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     // Current opacity values for smooth lerping
     const groupOpacities = {
-      seed: 0, seedOrbits: 0, plant: 0, pyramid: 0, base: 0,
-      rootCoil: 0, roots: 0, ferns: 0, torus: 0, vortex: 0,
+      seed: 1, seedOrbits: 1, plant: 0, pyramid: 0, base: 1,
+      rootCoil: 1, roots: 1, ferns: 0, torus: 0, vortex: 0,
       flowers: 0, particles: 0
     };
 
@@ -6370,21 +6105,21 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       };
 
       // Target opacities based on meditation progress
-      // Each tap reveals a new element - seed first, then grows outward
-      // 50 lines total, spread elements evenly
+      // Garden plot visible from start, then grows as meditation progresses
+      // 50 lines total, spread remaining elements evenly
       const targets = {
-        seed: 1,                                  // Seed visible from line 1
-        seedOrbits: ease(progress, 0, 0.10),     // Lines 1-5: Seed orbits form
-        roots: ease(progress, 0.06, 0.16),       // Lines 3-8: Roots extend down
-        rootCoil: ease(progress, 0.12, 0.22),    // Lines 6-11: Root coils form
-        base: ease(progress, 0.18, 0.30),        // Lines 9-15: Base materializes
-        plant: ease(progress, 0.26, 0.40),       // Lines 13-20: Plant grows up
-        pyramid: ease(progress, 0.36, 0.50),     // Lines 18-25: Pyramid forms
-        ferns: ease(progress, 0.46, 0.60),       // Lines 23-30: Ferns unfold
-        torus: ease(progress, 0.56, 0.72),       // Lines 28-36: Torus blooms
-        vortex: ease(progress, 0.68, 0.82),      // Lines 34-41: Vortex appears
-        flowers: ease(progress, 0.78, 0.90),     // Lines 39-45: Flowers appear
-        particles: ease(progress, 0.86, 1.0)     // Lines 43-50: Particles float
+        seed: 1,                                  // Seed always visible
+        seedOrbits: 1,                           // Seed orbits always visible
+        roots: 1,                                // Roots always visible (garden plot)
+        rootCoil: 1,                             // Root coils always visible
+        base: 1,                                 // Base always visible (garden plot)
+        plant: ease(progress, 0.10, 0.30),       // Lines 5-15: Plant grows up
+        pyramid: ease(progress, 0.25, 0.45),     // Lines 12-22: Pyramid forms
+        ferns: ease(progress, 0.40, 0.58),       // Lines 20-29: Ferns unfold
+        torus: ease(progress, 0.53, 0.70),       // Lines 26-35: Torus blooms
+        vortex: ease(progress, 0.65, 0.80),      // Lines 32-40: Vortex appears
+        flowers: ease(progress, 0.75, 0.90),     // Lines 37-45: Flowers appear
+        particles: ease(progress, 0.85, 1.0)     // Lines 42-50: Particles float
       };
 
       // Smooth lerp towards targets
@@ -6475,7 +6210,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const primaryDark = hslToHex(hue, 60, 40);
     const primaryLight = hslToHex(hue, 52, 78);
     const primaryDim = hslToHex(hue, 40, 25);
-    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+    const accentColor = hslToHex(hue, 60, 55);
 
     const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
     const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.5 });
@@ -6563,7 +6298,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       new THREE.Vector3(0, 260, 0), new THREE.Vector3(1, 220, 1),
       new THREE.Vector3(-1, 180, -1), new THREE.Vector3(0, 140, 0),
       new THREE.Vector3(1, 100, 1), new THREE.Vector3(-1, 60, -1),
-      new THREE.Vector3(0, 20, 0), new THREE.Vector3(0, -20, 0),
+      new THREE.Vector3(0, 35, 0),
     ]);
     const spineTube = new THREE.Mesh(
       new THREE.TubeGeometry(spineCurve, 60, 2, 6, false),
@@ -6766,12 +6501,19 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
-      rotCurrent.y += 0.0008;
 
-      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.position.y = Math.sin(rotCurrent.x) * 500 * 0.5 + 80;
-      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.lookAt(0, 80, 0);
+      // Touch-responsive rotation (hold to rotate)
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          mainGroup.rotation.y += normalizedX * 0.02;
+          mainGroup.rotation.x += normalizedY * 0.01;
+        }
+      } else {
+        mainGroup.rotation.y += 0.001;
+      }
 
       nebulaSphere.rotation.y = time * 0.3;
       dodeca.rotation.x = time * 0.5;
@@ -6865,7 +6607,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const primaryDark = hslToHex(hue, 60, 40);
     const primaryLight = hslToHex(hue, 52, 78);
     const primaryDim = hslToHex(hue, 40, 25);
-    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+    const accentColor = hslToHex(hue, 60, 55);
 
     const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
     const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.5 });
@@ -7113,17 +6855,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // === ANIMATION ===
     let time = 0;
     let animId;
-    let rotCurrent = { x: 0.1, y: 0 };
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
-      rotCurrent.y += 0.0008;
 
-      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.position.y = Math.sin(rotCurrent.x) * 500 * 0.5 + 60;
-      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.lookAt(0, 40, 0);
+      // Touch-responsive rotation (hold to rotate)
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          mainGroup.rotation.y += normalizedX * 0.02;
+          mainGroup.rotation.x += normalizedY * 0.01;
+        }
+      } else {
+        mainGroup.rotation.y += 0.001;
+      }
 
       armillaryRings.forEach((ring, i) => ring.rotation.y += 0.001 * (1 + i * 0.3) * (i % 2 === 0 ? 1 : -1));
       zodiacRing.rotation.y += 0.0005;
@@ -7243,7 +6991,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const primaryDark = hslToHex(hue, 60, 40);
     const primaryLight = hslToHex(hue, 52, 78);
     const primaryDim = hslToHex(hue, 40, 25);
-    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+    const accentColor = hslToHex(hue, 60, 55);
 
     const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
     const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.5 });
@@ -7490,17 +7238,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // === ANIMATION ===
     let time = 0;
     let animId;
-    let rotCurrent = { x: 0.05, y: 0 };
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
-      rotCurrent.y += 0.0006;
 
-      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.position.y = Math.sin(rotCurrent.x) * 500 * 0.5 + 60;
-      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.lookAt(0, 20, 0);
+      // Touch-responsive rotation (hold to rotate)
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          mainGroup.rotation.y += normalizedX * 0.02;
+          mainGroup.rotation.x += normalizedY * 0.01;
+        }
+      } else {
+        mainGroup.rotation.y += 0.001;
+      }
 
       const pulse = 1 + Math.sin(time * 1.5) * 0.06;
       jellyGroup.children.forEach((child) => {
@@ -7612,7 +7366,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const primaryDark = hslToHex(hue, 60, 40);
     const primaryLight = hslToHex(hue, 52, 78);
     const primaryDim = hslToHex(hue, 40, 25);
-    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+    const accentColor = hslToHex(hue, 60, 55);
 
     const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.6 });
     const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.4 });
@@ -7747,16 +7501,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     mainGroup.add(rainParticles);
 
     let time = 0, animId;
-    let rotCurrent = { x: 0.25, y: 0 };
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
-      rotCurrent.y += 0.0004;
-      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 450;
-      camera.position.y = Math.sin(rotCurrent.x) * 450 * 0.5 + 150;
-      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 450;
-      camera.lookAt(0, 30, 0);
+
+      // Touch-responsive rotation (hold to rotate)
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          mainGroup.rotation.y += normalizedX * 0.02;
+          mainGroup.rotation.x += normalizedY * 0.01;
+        }
+      } else {
+        mainGroup.rotation.y += 0.001;
+      }
 
       ripples.forEach(r => {
         const scale = 1 + Math.sin(time * r.speed + r.phase) * 0.3;
@@ -7827,7 +7588,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const primaryDark = hslToHex(hue, 60, 40);
     const primaryLight = hslToHex(hue, 52, 78);
     const primaryDim = hslToHex(hue, 40, 25);
-    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+    const accentColor = hslToHex(hue, 60, 55);
 
     const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
     const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.5 });
@@ -7924,16 +7685,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     mainGroup.add(leafParticles);
 
     let time = 0, animId;
-    let rotCurrent = { x: 0.08, y: 0 };
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
-      rotCurrent.y += 0.0006;
-      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 550;
-      camera.position.y = Math.sin(rotCurrent.x) * 550 * 0.5 + 100;
-      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 550;
-      camera.lookAt(0, 80, 0);
+
+      // Touch-responsive rotation (hold to rotate)
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          mainGroup.rotation.y += normalizedX * 0.02;
+          mainGroup.rotation.x += normalizedY * 0.01;
+        }
+      } else {
+        mainGroup.rotation.y += 0.001;
+      }
 
       sunMesh.scale.setScalar(1 + Math.sin(time * 2) * 0.08);
 
@@ -7999,7 +7767,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const primaryDark = hslToHex(hue, 60, 40);
     const primaryLight = hslToHex(hue, 52, 78);
     const primaryDim = hslToHex(hue, 40, 25);
-    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+    const accentColor = hslToHex(hue, 60, 55);
 
     const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
     const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
@@ -8062,16 +7830,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     mainGroup.add(particles);
 
     let time = 0, animId;
-    let rotCurrent = { x: 0.1, y: 0 };
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
-      rotCurrent.y += 0.0006;
-      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.position.y = Math.sin(rotCurrent.x) * 500 * 0.5 + 60;
-      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.lookAt(0, 30, 0);
+
+      // Touch-responsive rotation (hold to rotate)
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          mainGroup.rotation.y += normalizedX * 0.02;
+          mainGroup.rotation.x += normalizedY * 0.01;
+        }
+      } else {
+        mainGroup.rotation.y += 0.001;
+      }
 
       dodeca.rotation.y = time * 0.1; dodeca.rotation.x = time * 0.05;
       icosa.rotation.y = -time * 0.15; icosa.rotation.z = time * 0.08;
@@ -8144,7 +7919,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const primaryDark = hslToHex(hue, 60, 40);
     const primaryLight = hslToHex(hue, 52, 78);
     const primaryDim = hslToHex(hue, 40, 25);
-    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+    const accentColor = hslToHex(hue, 60, 55);
 
     const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.6 });
     const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.4 });
@@ -8231,16 +8006,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     mainGroup.add(ntParticles);
 
     let time = 0, animId;
-    let rotCurrent = { x: 0.1, y: 0 };
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
-      rotCurrent.y += 0.0004;
-      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.position.y = Math.sin(rotCurrent.x) * 500 * 0.5 + 80;
-      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.lookAt(0, 50, 0);
+
+      // Touch-responsive rotation (hold to rotate)
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          mainGroup.rotation.y += normalizedX * 0.02;
+          mainGroup.rotation.x += normalizedY * 0.01;
+        }
+      } else {
+        mainGroup.rotation.y += 0.001;
+      }
 
       neurons.forEach(n => { const pulse = 1 + Math.sin(time * n.pulseSpeed + n.pulsePhase) * 0.15; n.mesh.scale.setScalar(pulse); });
 
@@ -8307,7 +8089,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const primaryDark = hslToHex(hue, 60, 40);
     const primaryLight = hslToHex(hue, 52, 78);
     const primaryDim = hslToHex(hue, 40, 25);
-    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+    const accentColor = hslToHex(hue, 60, 55);
 
     const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.6 });
     const tealDimMat = new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.25 });
@@ -8407,16 +8189,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     mainGroup.add(particles);
 
     let time = 0, animId;
-    let rotCurrent = { x: 0.15, y: 0 };
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.006;
-      rotCurrent.y += 0.0004;
-      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.position.y = Math.sin(rotCurrent.x) * 500 * 0.5 + 100;
-      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.lookAt(0, 50, 0);
+
+      // Touch-responsive rotation (hold to rotate)
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          mainGroup.rotation.y += normalizedX * 0.02;
+          mainGroup.rotation.x += normalizedY * 0.01;
+        }
+      } else {
+        mainGroup.rotation.y += 0.001;
+      }
 
       torusMesh.rotation.x = time * 0.2; torusMesh.rotation.y = time * 0.3;
       innerTorus.rotation.x = -time * 0.3; innerTorus.rotation.y = -time * 0.2;
@@ -8445,185 +8234,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
     };
   }, [currentMode, hue]);
-
-  // ========== CAELUM MECHANICUM (Celestial Mechanism) ==========
-  React.useEffect(() => {
-    if (currentMode !== 'caelumMechanicum' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    touchPointsRef.current = [];
-
-    const container = containerRef.current;
-    const W = container.clientWidth || window.innerWidth;
-    const H = container.clientHeight || window.innerHeight;
-
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    scene.background = null;
-    scene.fog = new THREE.FogExp2(0x000000, 0.0003);
-
-    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
-    camera.position.set(0, 150, 450);
-    camera.lookAt(0, 50, 0);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
-    container.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'none';
-    rendererRef.current = renderer;
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    const primaryColor = hslToHex(hue, 70, 60);
-    const primaryDark = hslToHex(hue, 60, 40);
-    const primaryLight = hslToHex(hue, 52, 78);
-    const primaryDim = hslToHex(hue, 40, 25);
-    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
-
-    const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
-    const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.5 });
-    const tealDimMat = new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.3 });
-    const tealBrightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
-    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
-    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
-
-    const mainGroup = new THREE.Group();
-    scene.add(mainGroup);
-
-    let seed = 888;
-    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
-
-    function createRing(radius, y, segments = 64, mat = tealDarkMat) {
-      const pts = [];
-      for (let i = 0; i <= segments; i++) { const a = (i / segments) * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius)); }
-      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
-    }
-
-    function createDot(x, y, z, r = 1.5, mat = accentDotMat) {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), mat);
-      m.position.set(x, y, z);
-      return m;
-    }
-
-    // Central sun
-    const sunGroup = new THREE.Group();
-    sunGroup.position.y = 80;
-    mainGroup.add(sunGroup);
-    const sunSphere = new THREE.Mesh(new THREE.SphereGeometry(25, 20, 20), new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.25 }));
-    sunGroup.add(sunSphere);
-    for (let i = 0; i < 16; i++) {
-      const a = (i / 16) * Math.PI * 2;
-      const inner = 28, outer = i % 2 === 0 ? 50 : 38;
-      sunGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(Math.cos(a) * inner, 0, Math.sin(a) * inner), new THREE.Vector3(Math.cos(a) * outer, 0, Math.sin(a) * outer)]), i % 2 === 0 ? tealBrightMat : tealDimMat));
-    }
-    sunGroup.add(createDot(0, 0, 0, 5, coreDotMat));
-
-    // Planetary orbits
-    const orbitGroup = new THREE.Group();
-    orbitGroup.position.y = 80;
-    mainGroup.add(orbitGroup);
-    const planetData = [{ r: 60, speed: 2.0, size: 3 }, { r: 80, speed: 1.5, size: 4 }, { r: 105, speed: 1.0, size: 5 }, { r: 130, speed: 0.7, size: 4 }, { r: 165, speed: 0.4, size: 8 }, { r: 200, speed: 0.25, size: 7 }];
-    const planets = [];
-    planetData.forEach((pd, i) => {
-      orbitGroup.add(createRing(pd.r, 0, 64, i % 2 === 0 ? tealDimMat : tealDarkMat));
-      const planet = new THREE.Mesh(new THREE.SphereGeometry(pd.size, 10, 10), new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? primaryColor : primaryDark, wireframe: true, transparent: true, opacity: 0.4 }));
-      planet.position.x = pd.r;
-      orbitGroup.add(planet);
-      planets.push({ mesh: planet, ...pd, angle: rand() * Math.PI * 2 });
-    });
-
-    // Zodiac wheel
-    const zodiacGroup = new THREE.Group();
-    zodiacGroup.position.y = 80;
-    mainGroup.add(zodiacGroup);
-    const zodiacOuter = 230, zodiacInner = 215;
-    zodiacGroup.add(createRing(zodiacOuter, 0, 96, tealMat));
-    zodiacGroup.add(createRing(zodiacInner, 0, 96, tealDarkMat));
-    for (let i = 0; i < 12; i++) {
-      const a = (i / 12) * Math.PI * 2, nextA = ((i + 1) / 12) * Math.PI * 2;
-      zodiacGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(Math.cos(a) * zodiacInner, 0, Math.sin(a) * zodiacInner), new THREE.Vector3(Math.cos(a) * zodiacOuter, 0, Math.sin(a) * zodiacOuter)]), tealDarkMat));
-      const midA = (a + nextA) / 2, midR = (zodiacInner + zodiacOuter) / 2;
-      const smallCube = new THREE.Mesh(new THREE.BoxGeometry(4, 4, 4), new THREE.MeshBasicMaterial({ color: primaryLight, wireframe: true, transparent: true, opacity: 0.5 }));
-      smallCube.position.set(Math.cos(midA) * midR, 0, Math.sin(midA) * midR);
-      zodiacGroup.add(smallCube);
-    }
-
-    // Ecliptic
-    const sphereGroup = new THREE.Group();
-    sphereGroup.position.y = 80;
-    mainGroup.add(sphereGroup);
-    const ecliptic = new THREE.Mesh(new THREE.TorusGeometry(180, 0.8, 4, 80), new THREE.MeshBasicMaterial({ color: primaryColor, wireframe: true, transparent: true, opacity: 0.2 }));
-    ecliptic.rotation.x = Math.PI / 2;
-    ecliptic.rotation.z = 0.41;
-    sphereGroup.add(ecliptic);
-    sphereGroup.add(createDot(0, 170, 0, 3, coreDotMat));
-    sphereGroup.add(createDot(0, -170, 0, 3, coreDotMat));
-
-    // Particles
-    const particleCount = 100;
-    const particleGeo = new THREE.BufferGeometry();
-    const particlePositions = new Float32Array(particleCount * 3);
-    const particleVelocities = [];
-    for (let i = 0; i < particleCount; i++) {
-      particlePositions[i * 3] = (rand() - 0.5) * 500;
-      particlePositions[i * 3 + 1] = (rand() - 0.5) * 500 + 50;
-      particlePositions[i * 3 + 2] = (rand() - 0.5) * 500;
-      particleVelocities.push({ x: (rand() - 0.5) * 0.05, y: (rand() - 0.5) * 0.06, z: (rand() - 0.5) * 0.05 });
-    }
-    particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
-    const particles = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: primaryLight, size: 1.2, transparent: true, opacity: 0.3 }));
-    mainGroup.add(particles);
-
-    let time = 0, animId;
-    let rotCurrent = { x: 0.2, y: 0 };
-
-    function animate() {
-      animId = requestAnimationFrame(animate);
-      time += 0.005;
-      rotCurrent.y += 0.0005;
-      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 450;
-      camera.position.y = Math.sin(rotCurrent.x) * 450 * 0.5 + 150;
-      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 450;
-      camera.lookAt(0, 50, 0);
-
-      sunSphere.scale.setScalar(1 + Math.sin(time * 2) * 0.08);
-      planets.forEach(p => { p.angle += p.speed * 0.002; p.mesh.position.x = Math.cos(p.angle) * p.r; p.mesh.position.z = Math.sin(p.angle) * p.r; });
-      zodiacGroup.rotation.y = time * 0.02;
-      ecliptic.rotation.y = time * 0.03;
-      sphereGroup.rotation.y = time * 0.01;
-
-      const pos = particles.geometry.attributes.position.array;
-      for (let i = 0; i < particleCount; i++) {
-        pos[i * 3] += particleVelocities[i].x;
-        pos[i * 3 + 1] += particleVelocities[i].y;
-        pos[i * 3 + 2] += particleVelocities[i].z;
-        if (Math.abs(pos[i * 3]) > 300 || Math.abs(pos[i * 3 + 1]) > 300 || Math.abs(pos[i * 3 + 2]) > 300) {
-          pos[i * 3] = (rand() - 0.5) * 400; pos[i * 3 + 1] = (rand() - 0.5) * 400 + 50; pos[i * 3 + 2] = (rand() - 0.5) * 400;
-        }
-      }
-      particles.geometry.attributes.position.needsUpdate = true;
-      renderer.render(scene, camera);
-    }
-    animate();
-
-    const handleResize = () => { camera.aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight); camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight); };
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", handleResize);
-      scene.traverse((obj) => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } });
-      renderer.dispose();
-      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
-    };
-  }, [currentMode, hue]);
-
   // ========== LABYRINTHUS SACRUM (Sacred Labyrinth) ==========
   React.useEffect(() => {
     if (currentMode !== 'labyrinthisSacrum' || !containerRef.current || typeof THREE === 'undefined') return;
@@ -8662,7 +8272,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const primaryDark = hslToHex(hue, 60, 40);
     const primaryLight = hslToHex(hue, 52, 78);
     const primaryDim = hslToHex(hue, 40, 25);
-    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+    const accentColor = hslToHex(hue, 60, 55);
 
     const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.7 });
     const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.5 });
@@ -8761,16 +8371,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     mainGroup.add(particles);
 
     let time = 0, animId;
-    let rotCurrent = { x: 0.5, y: 0 };
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.005;
-      rotCurrent.y += 0.0005;
-      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.position.y = Math.sin(rotCurrent.x) * 500;
-      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 500;
-      camera.lookAt(0, 50, 0);
+
+      // Touch-responsive rotation (hold to rotate)
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          mainGroup.rotation.y += normalizedX * 0.02;
+          mainGroup.rotation.x += normalizedY * 0.01;
+        }
+      } else {
+        mainGroup.rotation.y += 0.001;
+      }
 
       roseGroup.scale.setScalar(1 + Math.sin(time * 2) * 0.05);
       ceilingGroup.rotation.y = time * 0.02;
@@ -8836,7 +8453,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const primaryDark = hslToHex(hue, 60, 40);
     const primaryLight = hslToHex(hue, 52, 78);
     const primaryDim = hslToHex(hue, 40, 25);
-    const accentColor = hslToHex((hue + 40) % 360, 60, 55);
+    const accentColor = hslToHex(hue, 60, 55);
 
     const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.6 });
     const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.4 });
@@ -8940,16 +8557,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     mainGroup.add(particles);
 
     let time = 0, animId;
-    let rotCurrent = { x: 0.25, y: 0 };
 
     function animate() {
       animId = requestAnimationFrame(animate);
       time += 0.008;
-      rotCurrent.y += 0.0004;
-      camera.position.x = Math.sin(rotCurrent.y) * Math.cos(rotCurrent.x) * 450;
-      camera.position.y = Math.sin(rotCurrent.x) * 450 * 0.5 + 180;
-      camera.position.z = Math.cos(rotCurrent.y) * Math.cos(rotCurrent.x) * 450;
-      camera.lookAt(0, 50, 0);
+
+      // Touch-responsive rotation (hold to rotate)
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          mainGroup.rotation.y += normalizedX * 0.02;
+          mainGroup.rotation.x += normalizedY * 0.01;
+        }
+      } else {
+        mainGroup.rotation.y += 0.001;
+      }
 
       bowlRings.forEach(r => { r.mesh.position.y = r.baseY + Math.sin(time * 3 + r.phase) * 2; });
       circleOfFifthsGroup.rotation.y = time * 0.05;
@@ -8982,6 +8606,875 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", handleResize);
       scene.traverse((obj) => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } });
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
+
+  // ========== FUNGUS DIMENSIO ==========
+  React.useEffect(() => {
+    if (currentMode !== 'fungusDimensio' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    touchPointsRef.current = [];
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000000, 0.0008);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 100, 350);
+    camera.lookAt(0, 80, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const disposables = [];
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    // Dynamic colors based on hue - consistent with app color scheme
+    const PRIMARY = hslToHex(hue, 52, 68);
+    const PRIMARY_DARK = hslToHex(hue, 52, 45);
+    const PRIMARY_BRIGHT = hslToHex(hue, 52, 78);
+    const PRIMARY_DIM = hslToHex(hue, 40, 35);
+    const PRIMARY_FAINT = hslToHex(hue, 35, 25);
+    const PRIMARY_GLOW = hslToHex(hue, 60, 85);
+
+    const primaryMat = new THREE.LineBasicMaterial({ color: PRIMARY, transparent: true, opacity: 0.6 });
+    const primaryDarkMat = new THREE.LineBasicMaterial({ color: PRIMARY_DARK, transparent: true, opacity: 0.5 });
+    const primaryDimMat = new THREE.LineBasicMaterial({ color: PRIMARY_DIM, transparent: true, opacity: 0.3 });
+    const primaryBrightMat = new THREE.LineBasicMaterial({ color: PRIMARY_BRIGHT, transparent: true, opacity: 0.7 });
+    disposables.push(primaryMat, primaryDarkMat, primaryDimMat, primaryBrightMat);
+
+    let seed = 5555;
+    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+    function createDot(x, y, z, r = 1.5, color = PRIMARY_BRIGHT) {
+      const geo = new THREE.SphereGeometry(r, 8, 8);
+      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8 });
+      disposables.push(geo, mat);
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    function createRing(radius, y, segments = 32, mat = primaryDarkMat) {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) {
+        const a = (i / segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      disposables.push(geo);
+      return new THREE.Line(geo, mat);
+    }
+
+    // === MAIN MUSHROOM ===
+    const mushroomGroup = new THREE.Group();
+    mainGroup.add(mushroomGroup);
+
+    const stemCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(3, 30, 2),
+      new THREE.Vector3(-2, 60, -1),
+      new THREE.Vector3(1, 90, 2),
+      new THREE.Vector3(0, 120, 0),
+    ]);
+
+    const stemGeo = new THREE.TubeGeometry(stemCurve, 30, 12, 12, false);
+    const stemMat = new THREE.MeshBasicMaterial({ color: PRIMARY, wireframe: true, transparent: true, opacity: 0.15 });
+    disposables.push(stemGeo, stemMat);
+    mushroomGroup.add(new THREE.Mesh(stemGeo, stemMat));
+
+    const stemLineGeo = new THREE.BufferGeometry().setFromPoints(stemCurve.getPoints(40));
+    disposables.push(stemLineGeo);
+    mushroomGroup.add(new THREE.Line(stemLineGeo, primaryBrightMat));
+
+    for (let i = 0; i < 8; i++) {
+      const t = i / 8;
+      const p = stemCurve.getPoint(t);
+      mushroomGroup.add(createRing(12 - t * 3, p.y, 16, i % 2 === 0 ? primaryMat : primaryDimMat));
+    }
+
+    // === CAP ===
+    const capGroup = new THREE.Group();
+    capGroup.position.y = 120;
+    mushroomGroup.add(capGroup);
+
+    const capRadius = 50;
+    const capGeo = new THREE.SphereGeometry(capRadius, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
+    const capMat = new THREE.MeshBasicMaterial({ color: PRIMARY_DARK, wireframe: true, transparent: true, opacity: 0.15 });
+    disposables.push(capGeo, capMat);
+    capGroup.add(new THREE.Mesh(capGeo, capMat));
+
+    for (let i = 0; i < 6; i++) {
+      const t = i / 6;
+      const y = Math.cos(t * Math.PI * 0.5) * capRadius * 0.3;
+      const r = Math.sin(t * Math.PI * 0.5) * capRadius + capRadius * 0.3;
+      capGroup.add(createRing(r, y, 32, i % 2 === 0 ? primaryMat : primaryDimMat));
+    }
+
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const pts = [];
+      for (let j = 0; j <= 15; j++) {
+        const t = j / 15;
+        const phi = t * Math.PI * 0.5;
+        pts.push(new THREE.Vector3(
+          Math.cos(angle) * Math.sin(phi) * capRadius,
+          Math.cos(phi) * capRadius * 0.3,
+          Math.sin(angle) * Math.sin(phi) * capRadius
+        ));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      disposables.push(geo);
+      capGroup.add(new THREE.Line(geo, primaryDimMat));
+    }
+
+    // === GILLS ===
+    const gillGroup = new THREE.Group();
+    gillGroup.position.y = 115;
+    mushroomGroup.add(gillGroup);
+
+    for (let g = 0; g < 48; g++) {
+      const angle = (g / 48) * Math.PI * 2;
+      const pts = [];
+      for (let i = 0; i <= 10; i++) {
+        const t = i / 10;
+        const r = 15 + t * 35;
+        const y = -t * 15 - Math.sin(t * Math.PI) * 5;
+        pts.push(new THREE.Vector3(Math.cos(angle) * r, y, Math.sin(angle) * r));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      disposables.push(geo);
+      gillGroup.add(new THREE.Line(geo, g % 4 === 0 ? primaryMat : primaryDimMat));
+    }
+    gillGroup.add(createRing(50, -15, 48, primaryDarkMat));
+
+    // === SURROUNDING MUSHROOMS ===
+    const shroomPositions = [
+      { x: -100, z: 60, h: 80, s: 0.7 },
+      { x: 80, z: -50, h: 60, s: 0.5 },
+      { x: -60, z: -80, h: 70, s: 0.6 },
+      { x: 120, z: 40, h: 50, s: 0.45 },
+      { x: -130, z: -30, h: 40, s: 0.35 },
+      { x: 50, z: 90, h: 55, s: 0.5 },
+    ];
+
+    shroomPositions.forEach(sp => {
+      const shroom = new THREE.Group();
+      shroom.position.set(sp.x, 0, sp.z);
+      shroom.scale.setScalar(sp.s);
+
+      const stemPts = [];
+      for (let i = 0; i <= 20; i++) {
+        const t = i / 20;
+        stemPts.push(new THREE.Vector3(Math.sin(t * 3) * 3, t * sp.h, Math.cos(t * 2) * 2));
+      }
+      const stemGeo = new THREE.BufferGeometry().setFromPoints(stemPts);
+      disposables.push(stemGeo);
+      shroom.add(new THREE.Line(stemGeo, primaryMat));
+
+      const capGeo = new THREE.SphereGeometry(25, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.5);
+      const capMat = new THREE.MeshBasicMaterial({ color: PRIMARY_DARK, wireframe: true, transparent: true, opacity: 0.15 });
+      disposables.push(capGeo, capMat);
+      const cap = new THREE.Mesh(capGeo, capMat);
+      cap.position.y = sp.h;
+      shroom.add(cap);
+      shroom.add(createDot(0, sp.h + 10, 0, 3, PRIMARY_BRIGHT));
+      mainGroup.add(shroom);
+    });
+
+    // === MOLECULE ===
+    const moleculeGroup = new THREE.Group();
+    moleculeGroup.position.set(0, 250, 0);
+    mainGroup.add(moleculeGroup);
+
+    const ring6Pts = [];
+    for (let i = 0; i <= 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      ring6Pts.push(new THREE.Vector3(Math.cos(a) * 20, 0, Math.sin(a) * 20));
+    }
+    const ring6Geo = new THREE.BufferGeometry().setFromPoints(ring6Pts);
+    disposables.push(ring6Geo);
+    moleculeGroup.add(new THREE.Line(ring6Geo, primaryBrightMat));
+
+    const ring5Pts = [];
+    const fusion = ring6Pts[1].clone();
+    for (let i = 0; i <= 5; i++) {
+      const a = (i / 5) * Math.PI * 2 + Math.PI / 3;
+      ring5Pts.push(new THREE.Vector3(fusion.x + Math.cos(a) * 16, 0, fusion.z + Math.sin(a) * 16));
+    }
+    const ring5Geo = new THREE.BufferGeometry().setFromPoints(ring5Pts);
+    const ring5Mat = new THREE.LineBasicMaterial({ color: PRIMARY_DARK, transparent: true, opacity: 0.5 });
+    disposables.push(ring5Geo, ring5Mat);
+    moleculeGroup.add(new THREE.Line(ring5Geo, ring5Mat));
+
+    ring6Pts.slice(0, 6).forEach((p, i) => {
+      moleculeGroup.add(createDot(p.x, p.y, p.z, 3, i === 0 ? PRIMARY_GLOW : PRIMARY_BRIGHT));
+    });
+
+    const nPos = ring5Pts[2];
+    const methyl1 = new THREE.Vector3(nPos.x + 20, 10, nPos.z + 10);
+    const methyl2 = new THREE.Vector3(nPos.x + 20, -10, nPos.z - 10);
+    const methylMat = new THREE.LineBasicMaterial({ color: PRIMARY, transparent: true, opacity: 0.5 });
+    disposables.push(methylMat);
+
+    const m1Geo = new THREE.BufferGeometry().setFromPoints([nPos, methyl1]);
+    const m2Geo = new THREE.BufferGeometry().setFromPoints([nPos, methyl2]);
+    disposables.push(m1Geo, m2Geo);
+    moleculeGroup.add(new THREE.Line(m1Geo, methylMat));
+    moleculeGroup.add(new THREE.Line(m2Geo, methylMat));
+    moleculeGroup.add(createDot(methyl1.x, methyl1.y, methyl1.z, 2.5, PRIMARY));
+    moleculeGroup.add(createDot(methyl2.x, methyl2.y, methyl2.z, 2.5, PRIMARY));
+    moleculeGroup.add(createDot(nPos.x, nPos.y, nPos.z, 4, PRIMARY_GLOW));
+
+    // === PORTAL ===
+    const portalGroup = new THREE.Group();
+    portalGroup.position.y = 350;
+    mainGroup.add(portalGroup);
+
+    const portalColors = [PRIMARY_DARK, PRIMARY, PRIMARY_BRIGHT, PRIMARY_GLOW];
+    for (let i = 0; i < 8; i++) {
+      const mat = new THREE.LineBasicMaterial({ color: portalColors[i % 4], transparent: true, opacity: 0.4 - i * 0.03 });
+      disposables.push(mat);
+      portalGroup.add(createRing(30 + i * 20, 0, 48, mat));
+    }
+
+    const portalSpiral = [];
+    for (let i = 0; i <= 200; i++) {
+      const t = i / 200;
+      portalSpiral.push(new THREE.Vector3(Math.cos(t * Math.PI * 8) * t * 150, t * 30, Math.sin(t * Math.PI * 8) * t * 150));
+    }
+    const spiralGeo = new THREE.BufferGeometry().setFromPoints(portalSpiral);
+    const spiralMat = new THREE.LineBasicMaterial({ color: PRIMARY_BRIGHT, transparent: true, opacity: 0.3 });
+    disposables.push(spiralGeo, spiralMat);
+    portalGroup.add(new THREE.Line(spiralGeo, spiralMat));
+    portalGroup.add(createDot(0, 0, 0, 6, PRIMARY_BRIGHT));
+
+    // === GEOMETRIC ENTITIES ===
+    const entityGroup = new THREE.Group();
+    mainGroup.add(entityGroup);
+
+    const entityPositions = [
+      { x: -150, y: 200, z: 100, type: 'tetra' },
+      { x: 150, y: 180, z: -80, type: 'octa' },
+      { x: -80, y: 280, z: -120, type: 'icosa' },
+      { x: 100, y: 320, z: 60, type: 'dodeca' },
+    ];
+
+    entityPositions.forEach(ep => {
+      let geo;
+      switch (ep.type) {
+        case 'tetra': geo = new THREE.TetrahedronGeometry(15); break;
+        case 'octa': geo = new THREE.OctahedronGeometry(15); break;
+        case 'icosa': geo = new THREE.IcosahedronGeometry(15); break;
+        case 'dodeca': geo = new THREE.DodecahedronGeometry(15); break;
+      }
+      const mat = new THREE.MeshBasicMaterial({
+        color: portalColors[Math.floor(rand() * 4)],
+        wireframe: true, transparent: true, opacity: 0.3
+      });
+      disposables.push(geo, mat);
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(ep.x, ep.y, ep.z);
+      mesh.userData = { rotSpeed: 0.01 + rand() * 0.02, floatPhase: rand() * Math.PI * 2, baseY: ep.y };
+      entityGroup.add(mesh);
+    });
+
+    // === MYCELIUM NETWORK ===
+    const myceliumGroup = new THREE.Group();
+    myceliumGroup.position.y = -20;
+    mainGroup.add(myceliumGroup);
+
+    const nodes = [];
+    for (let i = 0; i < 30; i++) {
+      const a = rand() * Math.PI * 2;
+      const r = 30 + rand() * 150;
+      nodes.push({ x: Math.cos(a) * r, y: -rand() * 40, z: Math.sin(a) * r });
+    }
+
+    nodes.forEach((node, i) => {
+      myceliumGroup.add(createDot(node.x, node.y, node.z, 1.5, PRIMARY));
+      const dists = nodes.map((n, j) => ({ j, d: Math.sqrt((node.x - n.x) ** 2 + (node.z - n.z) ** 2) }))
+        .filter(d => d.j !== i).sort((a, b) => a.d - b.d);
+      for (let c = 0; c < 2 && c < dists.length; c++) {
+        if (dists[c].d < 80) {
+          const target = nodes[dists[c].j];
+          const pts = [];
+          for (let s = 0; s <= 10; s++) {
+            const t = s / 10;
+            pts.push(new THREE.Vector3(
+              node.x + (target.x - node.x) * t,
+              node.y + (target.y - node.y) * t + Math.sin(t * Math.PI) * 5,
+              node.z + (target.z - node.z) * t
+            ));
+          }
+          const geo = new THREE.BufferGeometry().setFromPoints(pts);
+          disposables.push(geo);
+          myceliumGroup.add(new THREE.Line(geo, primaryDimMat));
+        }
+      }
+    });
+
+    // === SPORE PARTICLES ===
+    const sporeCount = isMobile ? 100 : 200;
+    const sporePositions = new Float32Array(sporeCount * 3);
+    const sporeColors = new Float32Array(sporeCount * 3);
+    const sporeVelocities = [];
+    const sporeColorOpts = [PRIMARY_BRIGHT, PRIMARY_GLOW, PRIMARY, PRIMARY_DARK];
+
+    for (let i = 0; i < sporeCount; i++) {
+      const a = rand() * Math.PI * 2;
+      const r = rand() * 200;
+      sporePositions[i * 3] = Math.cos(a) * r;
+      sporePositions[i * 3 + 1] = 100 + rand() * 250;
+      sporePositions[i * 3 + 2] = Math.sin(a) * r;
+      const col = new THREE.Color(sporeColorOpts[Math.floor(rand() * sporeColorOpts.length)]);
+      sporeColors[i * 3] = col.r;
+      sporeColors[i * 3 + 1] = col.g;
+      sporeColors[i * 3 + 2] = col.b;
+      sporeVelocities.push({ x: (rand() - 0.5) * 0.3, y: 0.1 + rand() * 0.3, z: (rand() - 0.5) * 0.3, phase: rand() * Math.PI * 2 });
+    }
+
+    const sporeGeo = new THREE.BufferGeometry();
+    sporeGeo.setAttribute('position', new THREE.BufferAttribute(sporePositions, 3));
+    sporeGeo.setAttribute('color', new THREE.BufferAttribute(sporeColors, 3));
+    const sporeMat = new THREE.PointsMaterial({ size: 2, transparent: true, opacity: 0.6, vertexColors: true });
+    disposables.push(sporeGeo, sporeMat);
+    const spores = new THREE.Points(sporeGeo, sporeMat);
+    mainGroup.add(spores);
+
+    // === FRACTAL BRANCHES ===
+    const fractalGroup = new THREE.Group();
+    fractalGroup.position.y = 180;
+    mainGroup.add(fractalGroup);
+
+    function drawFractalBranch(x, y, z, length, angle, depth, maxDepth) {
+      if (depth > maxDepth) return;
+      const endX = x + Math.cos(angle) * length;
+      const endY = y + length * 0.7;
+      const endZ = z + Math.sin(angle) * length;
+      const mat = new THREE.LineBasicMaterial({ color: depth % 2 === 0 ? PRIMARY_DARK : PRIMARY_BRIGHT, transparent: true, opacity: 0.4 - depth * 0.05 });
+      const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x, y, z), new THREE.Vector3(endX, endY, endZ)]);
+      disposables.push(mat, geo);
+      fractalGroup.add(new THREE.Line(geo, mat));
+      drawFractalBranch(endX, endY, endZ, length * 0.65, angle + 0.5, depth + 1, maxDepth);
+      drawFractalBranch(endX, endY, endZ, length * 0.65, angle - 0.5, depth + 1, maxDepth);
+    }
+
+    for (let b = 0; b < 6; b++) {
+      const baseAngle = (b / 6) * Math.PI * 2;
+      drawFractalBranch(Math.cos(baseAngle) * 60, 0, Math.sin(baseAngle) * 60, 30, baseAngle, 0, 4);
+    }
+
+    let animId;
+    let time = 0;
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.005;
+
+      const breathPhase = Math.sin(time * BREATH_SPEED * 5);
+
+      // Molecule rotation
+      moleculeGroup.rotation.y = time * 0.4;
+      moleculeGroup.rotation.z = Math.sin(time * 0.3) * 0.2;
+
+      // Portal rotation and pulse
+      portalGroup.rotation.y = time * 0.2;
+      portalGroup.scale.setScalar(1 + breathPhase * 0.1);
+
+      // Entity rotation and float
+      entityGroup.children.forEach(entity => {
+        entity.rotation.x += entity.userData.rotSpeed;
+        entity.rotation.y += entity.userData.rotSpeed * 0.7;
+        entity.position.y = entity.userData.baseY + Math.sin(time * 2 + entity.userData.floatPhase) * 5;
+      });
+
+      // Fractal rotation
+      fractalGroup.rotation.y = time * 0.1;
+
+      // Spores rise
+      const sPos = spores.geometry.attributes.position.array;
+      sporeVelocities.forEach((v, i) => {
+        sPos[i * 3] += v.x + Math.sin(time + v.phase) * 0.1;
+        sPos[i * 3 + 1] += v.y;
+        sPos[i * 3 + 2] += v.z + Math.cos(time + v.phase) * 0.1;
+        if (sPos[i * 3 + 1] > 450) {
+          sPos[i * 3 + 1] = 100;
+          const a = rand() * Math.PI * 2;
+          const r = rand() * 100;
+          sPos[i * 3] = Math.cos(a) * r;
+          sPos[i * 3 + 2] = Math.sin(a) * r;
+        }
+      });
+      spores.geometry.attributes.position.needsUpdate = true;
+
+      // Cap gentle pulse
+      capGroup.scale.setScalar(1 + Math.sin(time) * 0.02);
+
+      // Touch-responsive rotation
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          mainGroup.rotation.y += normalizedX * 0.015;
+          mainGroup.rotation.x = Math.max(-0.5, Math.min(0.5, mainGroup.rotation.x + normalizedY * 0.008));
+        }
+      } else {
+        mainGroup.rotation.y += 0.0008;
+      }
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight);
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', handleResize);
+      disposables.forEach(d => d.dispose());
+      renderer.dispose();
+      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+    };
+  }, [currentMode, hue]);
+
+  // ========== PEYOTE VISIO ==========
+  React.useEffect(() => {
+    if (currentMode !== 'peyoteVisio' || !containerRef.current || typeof THREE === 'undefined') return;
+
+    touchPointsRef.current = [];
+
+    const container = containerRef.current;
+    const W = container.clientWidth || window.innerWidth;
+    const H = container.clientHeight || window.innerHeight;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x000000, 0.001);
+
+    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
+    camera.position.set(0, 80, 300);
+    camera.lookAt(0, 50, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    renderer.domElement.style.pointerEvents = 'none';
+    rendererRef.current = renderer;
+
+    const hslToHex = (h, s, l) => {
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
+      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
+    };
+
+    const disposables = [];
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    // Dynamic colors - consistent with app color scheme
+    const PRIMARY = hslToHex(hue, 52, 68);
+    const PRIMARY_DARK = hslToHex(hue, 52, 45);
+    const PRIMARY_BRIGHT = hslToHex(hue, 52, 78);
+    const PRIMARY_DIM = hslToHex(hue, 40, 35);
+    const PRIMARY_FAINT = hslToHex(hue, 35, 25);
+    const PRIMARY_GLOW = hslToHex(hue, 60, 85);
+
+    const primaryMat = new THREE.LineBasicMaterial({ color: PRIMARY, transparent: true, opacity: 0.6 });
+    const primaryDarkMat = new THREE.LineBasicMaterial({ color: PRIMARY_DARK, transparent: true, opacity: 0.5 });
+    const primaryDimMat = new THREE.LineBasicMaterial({ color: PRIMARY_DIM, transparent: true, opacity: 0.3 });
+    const primaryBrightMat = new THREE.LineBasicMaterial({ color: PRIMARY_BRIGHT, transparent: true, opacity: 0.7 });
+    disposables.push(primaryMat, primaryDarkMat, primaryDimMat, primaryBrightMat);
+
+    let seed = 420;
+    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+
+    function createDot(x, y, z, r = 1.5, color = PRIMARY_BRIGHT) {
+      const geo = new THREE.SphereGeometry(r, 8, 8);
+      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8 });
+      disposables.push(geo, mat);
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      return m;
+    }
+
+    function createRing(radius, y, segments = 32, mat = primaryDarkMat) {
+      const pts = [];
+      for (let i = 0; i <= segments; i++) {
+        const a = (i / segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(a) * radius, y, Math.sin(a) * radius));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      disposables.push(geo);
+      return new THREE.Line(geo, mat);
+    }
+
+    // === MAIN PEYOTE CACTUS ===
+    const cactusGroup = new THREE.Group();
+    mainGroup.add(cactusGroup);
+
+    const peyoteRadius = 40;
+    const peyoteSegments = 8;
+
+    // Ribs
+    for (let rib = 0; rib < peyoteSegments; rib++) {
+      const angle = (rib / peyoteSegments) * Math.PI * 2;
+      const pts = [];
+      for (let i = 0; i <= 20; i++) {
+        const t = i / 20;
+        const y = Math.sin(t * Math.PI * 0.5) * 25;
+        const r = peyoteRadius * Math.cos(t * Math.PI * 0.5) + 5;
+        const bulge = Math.sin(t * Math.PI) * 8;
+        pts.push(new THREE.Vector3(Math.cos(angle) * (r + bulge), y, Math.sin(angle) * (r + bulge)));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      disposables.push(geo);
+      cactusGroup.add(new THREE.Line(geo, rib % 2 === 0 ? primaryMat : primaryDarkMat));
+    }
+
+    // Horizontal rings
+    for (let ring = 0; ring < 6; ring++) {
+      const t = ring / 6;
+      const y = Math.sin(t * Math.PI * 0.5) * 25;
+      const r = peyoteRadius * Math.cos(t * Math.PI * 0.5) + 5;
+      const pts = [];
+      for (let i = 0; i <= 32; i++) {
+        const a = (i / 32) * Math.PI * 2;
+        const ribBulge = Math.sin(a * peyoteSegments) * 5;
+        pts.push(new THREE.Vector3(Math.cos(a) * (r + ribBulge), y, Math.sin(a) * (r + ribBulge)));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      disposables.push(geo);
+      cactusGroup.add(new THREE.Line(geo, primaryDimMat));
+    }
+
+    // Woolly center tuft
+    const tuftGroup = new THREE.Group();
+    tuftGroup.position.y = 25;
+    cactusGroup.add(tuftGroup);
+
+    for (let i = 0; i < 20; i++) {
+      const a = rand() * Math.PI * 2;
+      const r = rand() * 8;
+      const h = 3 + rand() * 5;
+      const tuftMat = new THREE.LineBasicMaterial({ color: PRIMARY_GLOW, transparent: true, opacity: 0.4 });
+      const tuftGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r),
+        new THREE.Vector3(Math.cos(a) * r * 0.5, h, Math.sin(a) * r * 0.5),
+      ]);
+      disposables.push(tuftMat, tuftGeo);
+      tuftGroup.add(new THREE.Line(tuftGeo, tuftMat));
+    }
+    tuftGroup.add(createDot(0, 5, 0, 3, PRIMARY_GLOW));
+
+    // Areoles with spines
+    for (let rib = 0; rib < peyoteSegments; rib++) {
+      const angle = (rib / peyoteSegments) * Math.PI * 2;
+      for (let a = 0; a < 3; a++) {
+        const t = 0.2 + a * 0.25;
+        const y = Math.sin(t * Math.PI * 0.5) * 25;
+        const r = peyoteRadius * Math.cos(t * Math.PI * 0.5) + 8;
+        const ax = Math.cos(angle) * r;
+        const az = Math.sin(angle) * r;
+        cactusGroup.add(createDot(ax, y, az, 1.5, PRIMARY_BRIGHT));
+
+        for (let s = 0; s < 4; s++) {
+          const sa = angle + (s - 1.5) * 0.2;
+          const sl = 5 + rand() * 3;
+          const spineGeo = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(ax, y, az),
+            new THREE.Vector3(ax + Math.cos(sa) * sl, y + sl * 0.3, az + Math.sin(sa) * sl),
+          ]);
+          disposables.push(spineGeo);
+          cactusGroup.add(new THREE.Line(spineGeo, primaryDimMat));
+        }
+      }
+    }
+
+    // === SURROUNDING BUTTONS ===
+    const buttonPositions = [
+      { x: -80, z: 40, s: 0.5 },
+      { x: 70, z: -30, s: 0.6 },
+      { x: -50, z: -70, s: 0.4 },
+      { x: 90, z: 50, s: 0.45 },
+      { x: -100, z: -20, s: 0.35 },
+    ];
+
+    buttonPositions.forEach(bp => {
+      const button = new THREE.Group();
+      button.position.set(bp.x, 0, bp.z);
+      button.scale.setScalar(bp.s);
+
+      const buttonGeo = new THREE.SphereGeometry(30, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.5);
+      const buttonMat = new THREE.MeshBasicMaterial({ color: PRIMARY_DARK, wireframe: true, transparent: true, opacity: 0.2 });
+      disposables.push(buttonGeo, buttonMat);
+      button.add(new THREE.Mesh(buttonGeo, buttonMat));
+
+      for (let r = 0; r < 8; r++) {
+        const a = (r / 8) * Math.PI * 2;
+        const ribGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(Math.cos(a) * 30, 0, Math.sin(a) * 30),
+          new THREE.Vector3(0, 20, 0),
+        ]);
+        disposables.push(ribGeo);
+        button.add(new THREE.Line(ribGeo, primaryDimMat));
+      }
+      button.add(createDot(0, 20, 0, 2, PRIMARY_BRIGHT));
+      mainGroup.add(button);
+    });
+
+    // === MOLECULE ===
+    const moleculeGroup = new THREE.Group();
+    moleculeGroup.position.y = 120;
+    mainGroup.add(moleculeGroup);
+
+    const benzeneRadius = 20;
+    const benzenePts = [];
+    for (let i = 0; i <= 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      benzenePts.push(new THREE.Vector3(Math.cos(a) * benzeneRadius, 0, Math.sin(a) * benzeneRadius));
+    }
+    const benzeneGeo = new THREE.BufferGeometry().setFromPoints(benzenePts);
+    disposables.push(benzeneGeo);
+    moleculeGroup.add(new THREE.Line(benzeneGeo, primaryBrightMat));
+
+    const innerPts = [];
+    for (let i = 0; i <= 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      innerPts.push(new THREE.Vector3(Math.cos(a) * benzeneRadius * 0.7, 0, Math.sin(a) * benzeneRadius * 0.7));
+    }
+    const innerGeo = new THREE.BufferGeometry().setFromPoints(innerPts);
+    disposables.push(innerGeo);
+    moleculeGroup.add(new THREE.Line(innerGeo, primaryDimMat));
+
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2;
+      moleculeGroup.add(createDot(Math.cos(a) * benzeneRadius, 0, Math.sin(a) * benzeneRadius, 3, PRIMARY_BRIGHT));
+    }
+
+    // Methoxy groups
+    const visionMat = new THREE.LineBasicMaterial({ color: PRIMARY_DARK, transparent: true, opacity: 0.5 });
+    disposables.push(visionMat);
+    [0, 2, 4].forEach(i => {
+      const a = (i / 6) * Math.PI * 2;
+      const bx = Math.cos(a) * benzeneRadius, bz = Math.sin(a) * benzeneRadius;
+      const ox = Math.cos(a) * (benzeneRadius + 15), oz = Math.sin(a) * (benzeneRadius + 15);
+      const oGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(bx, 0, bz), new THREE.Vector3(ox, 0, oz)]);
+      disposables.push(oGeo);
+      moleculeGroup.add(new THREE.Line(oGeo, visionMat));
+      moleculeGroup.add(createDot(ox, 0, oz, 3, PRIMARY_DARK));
+
+      const cx = Math.cos(a) * (benzeneRadius + 28), cz = Math.sin(a) * (benzeneRadius + 28);
+      const cGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(ox, 0, oz), new THREE.Vector3(cx, 0, cz)]);
+      disposables.push(cGeo);
+      moleculeGroup.add(new THREE.Line(cGeo, primaryDimMat));
+      moleculeGroup.add(createDot(cx, 0, cz, 2, PRIMARY));
+    });
+
+    // Ethylamine chain
+    const chainStart = { x: Math.cos(Math.PI / 6) * benzeneRadius, z: Math.sin(Math.PI / 6) * benzeneRadius };
+    const chainPts = [
+      new THREE.Vector3(chainStart.x, 0, chainStart.z),
+      new THREE.Vector3(chainStart.x + 15, 10, chainStart.z + 10),
+      new THREE.Vector3(chainStart.x + 30, 5, chainStart.z + 20),
+    ];
+    const chainGeo = new THREE.BufferGeometry().setFromPoints(chainPts);
+    disposables.push(chainGeo);
+    moleculeGroup.add(new THREE.Line(chainGeo, primaryMat));
+    chainPts.forEach((p, i) => moleculeGroup.add(createDot(p.x, p.y, p.z, i === 2 ? 4 : 2.5, i === 2 ? PRIMARY_GLOW : PRIMARY_BRIGHT)));
+
+    // === VISION SPIRALS ===
+    const spiralGroup = new THREE.Group();
+    mainGroup.add(spiralGroup);
+
+    for (let sp = 0; sp < 4; sp++) {
+      const spiralPts = [];
+      const baseAngle = (sp / 4) * Math.PI * 2;
+      const spiralRadius = 100 + sp * 30;
+      for (let i = 0; i <= 100; i++) {
+        const t = i / 100;
+        const a = baseAngle + t * Math.PI * 4;
+        const r = spiralRadius * (1 - t * 0.3);
+        const y = 50 + t * 150 + Math.sin(t * Math.PI * 6) * 10;
+        spiralPts.push(new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r));
+      }
+      const spiralMat = new THREE.LineBasicMaterial({ color: sp % 2 === 0 ? PRIMARY_DARK : PRIMARY, transparent: true, opacity: 0.3 - sp * 0.05 });
+      const spiralGeo = new THREE.BufferGeometry().setFromPoints(spiralPts);
+      disposables.push(spiralMat, spiralGeo);
+      spiralGroup.add(new THREE.Line(spiralGeo, spiralMat));
+    }
+
+    // === SACRED GEOMETRY ===
+    const geometryGroup = new THREE.Group();
+    geometryGroup.position.y = 200;
+    mainGroup.add(geometryGroup);
+
+    const flowerRadius = 30;
+    for (let ring = 0; ring < 6; ring++) {
+      const a = (ring / 6) * Math.PI * 2;
+      const cx = Math.cos(a) * flowerRadius, cz = Math.sin(a) * flowerRadius;
+      const circlePts = [];
+      for (let i = 0; i <= 32; i++) {
+        const ca = (i / 32) * Math.PI * 2;
+        circlePts.push(new THREE.Vector3(cx + Math.cos(ca) * flowerRadius, 0, cz + Math.sin(ca) * flowerRadius));
+      }
+      const circleGeo = new THREE.BufferGeometry().setFromPoints(circlePts);
+      disposables.push(circleGeo);
+      geometryGroup.add(new THREE.Line(circleGeo, primaryDimMat));
+    }
+    geometryGroup.add(createRing(flowerRadius, 0, 32, primaryMat));
+    geometryGroup.add(createDot(0, 0, 0, 4, PRIMARY_GLOW));
+
+    // === DESERT FLOOR ===
+    const desertGroup = new THREE.Group();
+    desertGroup.position.y = -5;
+    mainGroup.add(desertGroup);
+
+    for (let i = -5; i <= 5; i++) {
+      const lineGeo1 = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-200, 0, i * 40), new THREE.Vector3(200, 0, i * 40)]);
+      const lineGeo2 = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(i * 40, 0, -200), new THREE.Vector3(i * 40, 0, 200)]);
+      disposables.push(lineGeo1, lineGeo2);
+      desertGroup.add(new THREE.Line(lineGeo1, primaryDimMat));
+      desertGroup.add(new THREE.Line(lineGeo2, primaryDimMat));
+    }
+
+    const mountainPts = [];
+    for (let i = 0; i <= 40; i++) {
+      const x = (i / 40) * 600 - 300;
+      mountainPts.push(new THREE.Vector3(x, Math.sin(i * 0.5) * 30 + Math.sin(i * 0.2) * 50 + 20, -250));
+    }
+    const mountainGeo = new THREE.BufferGeometry().setFromPoints(mountainPts);
+    disposables.push(mountainGeo);
+    desertGroup.add(new THREE.Line(mountainGeo, primaryDimMat));
+
+    // === VISION PARTICLES ===
+    const visionCount = isMobile ? 75 : 150;
+    const visionPositions = new Float32Array(visionCount * 3);
+    const visionColors = new Float32Array(visionCount * 3);
+    const visionVelocities = [];
+    const visionColorOpts = [PRIMARY_BRIGHT, PRIMARY_DARK, PRIMARY, PRIMARY_GLOW];
+
+    for (let i = 0; i < visionCount; i++) {
+      const a = rand() * Math.PI * 2;
+      const r = 50 + rand() * 150;
+      visionPositions[i * 3] = Math.cos(a) * r;
+      visionPositions[i * 3 + 1] = rand() * 250 + 30;
+      visionPositions[i * 3 + 2] = Math.sin(a) * r;
+      const col = new THREE.Color(visionColorOpts[Math.floor(rand() * visionColorOpts.length)]);
+      visionColors[i * 3] = col.r;
+      visionColors[i * 3 + 1] = col.g;
+      visionColors[i * 3 + 2] = col.b;
+      visionVelocities.push({ angle: a, speed: 0.002 + rand() * 0.005, ySpeed: (rand() - 0.5) * 0.2, radius: r });
+    }
+
+    const visionGeo = new THREE.BufferGeometry();
+    visionGeo.setAttribute('position', new THREE.BufferAttribute(visionPositions, 3));
+    visionGeo.setAttribute('color', new THREE.BufferAttribute(visionColors, 3));
+    const visionParticleMat = new THREE.PointsMaterial({ size: 2.5, transparent: true, opacity: 0.6, vertexColors: true });
+    disposables.push(visionGeo, visionParticleMat);
+    const visionParticles = new THREE.Points(visionGeo, visionParticleMat);
+    mainGroup.add(visionParticles);
+
+    // === ENERGY RINGS ===
+    const energyRings = [];
+    for (let i = 0; i < 5; i++) {
+      const ringMat = new THREE.LineBasicMaterial({ color: i % 2 === 0 ? PRIMARY_DARK : PRIMARY, transparent: true, opacity: 0.2 });
+      disposables.push(ringMat);
+      const ring = createRing(60 + i * 25, 50 + i * 30, 48, ringMat);
+      mainGroup.add(ring);
+      energyRings.push({ mesh: ring, baseY: 50 + i * 30, speed: 0.5 + i * 0.2 });
+    }
+
+    let animId;
+    let time = 0;
+
+    function animate() {
+      animId = requestAnimationFrame(animate);
+      time += 0.005;
+
+      const breathPhase = Math.sin(time * BREATH_SPEED * 5);
+
+      moleculeGroup.rotation.y = time * 0.3;
+      moleculeGroup.rotation.x = Math.sin(time * 0.5) * 0.1;
+
+      geometryGroup.rotation.y = -time * 0.2;
+      spiralGroup.rotation.y = time * 0.1;
+
+      energyRings.forEach((er, i) => {
+        er.mesh.position.y = er.baseY + Math.sin(time * er.speed + i) * 10;
+        er.mesh.scale.setScalar(1 + breathPhase * 0.08);
+      });
+
+      const vPos = visionParticles.geometry.attributes.position.array;
+      visionVelocities.forEach((v, i) => {
+        v.angle += v.speed;
+        vPos[i * 3] = Math.cos(v.angle) * v.radius;
+        vPos[i * 3 + 1] += v.ySpeed;
+        vPos[i * 3 + 2] = Math.sin(v.angle) * v.radius;
+        if (vPos[i * 3 + 1] > 280 || vPos[i * 3 + 1] < 30) v.ySpeed *= -1;
+      });
+      visionParticles.geometry.attributes.position.needsUpdate = true;
+
+      tuftGroup.rotation.z = Math.sin(time) * 0.05;
+
+      // Touch-responsive rotation
+      if (touchPointsRef.current.length > 0) {
+        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
+        if (activeTouch) {
+          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
+          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
+          mainGroup.rotation.y += normalizedX * 0.015;
+          mainGroup.rotation.x = Math.max(-0.5, Math.min(0.5, mainGroup.rotation.x + normalizedY * 0.008));
+        }
+      } else {
+        mainGroup.rotation.y += 0.001;
+      }
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight);
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', handleResize);
+      disposables.forEach(d => d.dispose());
       renderer.dispose();
       if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
     };
@@ -9087,7 +9580,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' || currentMode === 'mushrooms' || currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'mountains' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden' || currentMode === 'corpusStellae' || currentMode === 'machinaTemporis' || currentMode === 'oceanusProfundus' || currentMode === 'aquaVitae' || currentMode === 'arborMundi' || currentMode === 'crystallumInfinitum' || currentMode === 'nervusCosmicus' || currentMode === 'portaDimensionum' || currentMode === 'templumSonorum' || currentMode === 'caelumMechanicum' || currentMode === 'labyrinthisSacrum') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' ||  currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'mountains' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden' || currentMode === 'corpusStellae' || currentMode === 'machinaTemporis' || currentMode === 'oceanusProfundus' || currentMode === 'aquaVitae' || currentMode === 'arborMundi' || currentMode === 'crystallumInfinitum' || currentMode === 'nervusCosmicus' || currentMode === 'portaDimensionum' || currentMode === 'templumSonorum' || currentMode === 'labyrinthisSacrum' || currentMode === 'fungusDimensio' || currentMode === 'peyoteVisio') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
