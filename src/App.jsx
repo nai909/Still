@@ -1755,6 +1755,8 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
   const labelTimeoutRef = useRef(null);
   const fadeInTimeoutRef = useRef(null);
   const touchStartRef = useRef({ x: 0, y: 0 });
+  const wheelAccumRef = useRef(0);
+  const wheelTimeoutRef = useRef(null);
 
   // Swipe gesture handling
   const handleTouchStart = (e) => {
@@ -1775,6 +1777,30 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
       setShowCategorySelector(false);
     }
   };
+
+  // Wheel/trackpad support for desktop
+  const showCategorySelectorRef = useRef(showCategorySelector);
+  showCategorySelectorRef.current = showCategorySelector;
+
+  useEffect(() => {
+    const handleWheel = (e) => {
+      if (showCategorySelectorRef.current) return;
+
+      wheelAccumRef.current += e.deltaY;
+      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+      wheelTimeoutRef.current = setTimeout(() => { wheelAccumRef.current = 0; }, 200);
+
+      const threshold = 100;
+      if (wheelAccumRef.current > threshold) {
+        e.preventDefault();
+        setShowCategorySelector(true);
+        wheelAccumRef.current = 0;
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, []);
 
   // Filter mantras by category (metta is a special meditation mode, not a mantra category)
   const filteredMantras = selectedCategory === 'metta'
@@ -2178,6 +2204,28 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
           </span>
         )}
       </div>
+
+      {/* Bottom handle for opening drawer on desktop */}
+      {!showCategorySelector && (
+        <div
+          onClick={(e) => { e.stopPropagation(); setShowCategorySelector(true); }}
+          style={{
+            position: 'absolute',
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 1rem)',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            padding: '0.5rem 2rem',
+            cursor: 'pointer',
+          }}
+        >
+          <div style={{
+            width: '36px',
+            height: '4px',
+            background: `hsla(${primaryHue}, 52%, 68%, 0.3)`,
+            borderRadius: '2px',
+          }} />
+        </div>
+      )}
     </div>
   );
 }
