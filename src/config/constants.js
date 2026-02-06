@@ -47,7 +47,6 @@ export const gazeModes = [
   { key: 'tree', name: 'Fractal Tree' },
   { key: 'fern', name: 'Fern' },
   { key: 'dandelion', name: 'Dandelion' },
-  { key: 'lungs', name: 'Lungs' },
   { key: 'ripples', name: 'Ripples' },
   { key: 'jellyfish2d', name: 'Deep Sea' },
     { key: 'koiPond', name: 'Koi Pond' },

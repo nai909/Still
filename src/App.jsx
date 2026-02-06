@@ -720,15 +720,15 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         cursor: 'pointer',
       }}
     >
-      {/* Visual background - uses GazeMode component with fixed geometry visual */}
+      {/* Visual background - uses GazeMode component with fern visual */}
       <GazeMode
         primaryHue={primaryHue}
         backgroundMode={true}
-        currentVisual="lungs"
+        currentVisual="lavaTouch"
         breathSession={breathSession}
       />
 
-      {/* Phase text - positioned in the open space between lung lobes */}
+      {/* Phase text */}
       {breathSession.isActive && (
         <div style={{
           position: 'absolute',

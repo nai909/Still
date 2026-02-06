@@ -3911,14 +3911,21 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     let animationId;
     let isMounted = true;
 
+    // Smoothed breath value for fluid transitions
+    let smoothedBreath = 0.5;
+
     const animate = () => {
       if (!isMounted) return;
       animationId = requestAnimationFrame(animate);
       const elapsed = clockRef.current.getElapsedTime();
-      const breath = getBreathPhase(elapsed);
+      const targetBreath = getBreathPhase(elapsed);
 
-      // Breath-synced scale
-      const targetScale = 0.9 + breath * 0.2;
+      // Smooth lerp toward target breath - creates fluid water-like motion
+      // Lower value = slower/smoother transition (0.015 = very fluid)
+      smoothedBreath += (targetBreath - smoothedBreath) * 0.015;
+
+      // Breath-synced scale using smoothed value
+      const targetScale = 0.9 + smoothedBreath * 0.2;
       lavaGroup.scale.setScalar(targetScale);
 
       // Touch-responsive rotation - slow and meditative
@@ -3988,11 +3995,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         geometry.attributes.position.needsUpdate = true;
         geometry.computeVertexNormals();
 
-        // Breath-synced scale
-        blob.mesh.scale.setScalar(0.9 + breath * 0.15);
+        // Breath-synced scale (using smoothed value for fluid motion)
+        blob.mesh.scale.setScalar(0.9 + smoothedBreath * 0.15);
 
-        // Breath-synced opacity
-        blob.mesh.material.opacity = 0.55 + breath * 0.3;
+        // Breath-synced opacity (using smoothed value for fluid motion)
+        blob.mesh.material.opacity = 0.55 + smoothedBreath * 0.3;
       });
 
       // Animate glow particles - slow drift
@@ -4012,7 +4019,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         if (glowPositionsArr[i3 + 2] < -1.5) glowPositionsArr[i3 + 2] = 1.5;
       }
       glowGeom.attributes.position.needsUpdate = true;
-      glowMat.opacity = 0.25 + breath * 0.3;
+      glowMat.opacity = 0.25 + smoothedBreath * 0.3;
 
       renderer.render(scene, camera);
     };
