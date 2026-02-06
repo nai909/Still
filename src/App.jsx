@@ -24,23 +24,23 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
 
-// I Am Grateful For This Moment - 42 elements (6 words × 7 cycles)
+// I Am Grateful For This Moment - 24 elements (6 words × 4 cycles)
 // SUNRISE OVER MOUNTAINS - dawn breaking, birds rising, the gift of a new day
 const generateFlowerOfLife = (cx, cy) => {
   const elements = [];
 
-  // The rising sun - half circle at horizon (1 large arc suggested by dots)
+  // The rising sun - half circle at horizon
   elements.push({ type: 'circle', x: cx, y: cy + 20, radius: 45 }); // sun body
 
-  // Sun rays reaching upward and outward - 12 rays of morning light
-  for (let i = 0; i < 12; i++) {
-    const angle = -Math.PI + (i / 11) * Math.PI; // upper hemisphere only
+  // Sun rays reaching upward - 6 rays of morning light
+  for (let i = 0; i < 6; i++) {
+    const angle = -Math.PI + (i / 5) * Math.PI; // upper hemisphere only
     const inner = 50;
-    const outer = 85 + Math.sin(i * 0.7) * 20;
+    const outer = 90;
     elements.push({ type: 'line', x1: cx + Math.cos(angle) * inner, y1: cy + 20 + Math.sin(angle) * inner, x2: cx + Math.cos(angle) * outer, y2: cy + 20 + Math.sin(angle) * outer });
   }
 
-  // Mountain range silhouette - 6 peaks across the horizon
+  // Mountain range silhouette - 6 lines
   elements.push({ type: 'line', x1: cx - 130, y1: cy + 40, x2: cx - 80, y2: cy - 30 }); // left peak up
   elements.push({ type: 'line', x1: cx - 80, y1: cy - 30, x2: cx - 50, y2: cy + 20 }); // left peak down
   elements.push({ type: 'line', x1: cx - 50, y1: cy + 20, x2: cx - 10, y2: cy - 50 }); // center-left peak up
@@ -48,28 +48,18 @@ const generateFlowerOfLife = (cx, cy) => {
   elements.push({ type: 'line', x1: cx + 30, y1: cy + 10, x2: cx + 70, y2: cy - 25 }); // right peak up
   elements.push({ type: 'line', x1: cx + 70, y1: cy - 25, x2: cx + 130, y2: cy + 40 }); // right slope down
 
-  // Birds in flight - 6 V-shapes rising with the dawn (12 lines)
-  const birdPositions = [{x: -60, y: -70}, {x: -20, y: -90}, {x: 30, y: -75}, {x: 70, y: -95}, {x: -40, y: -110}, {x: 50, y: -115}];
+  // Birds in flight - 4 V-shapes (8 lines)
+  const birdPositions = [{x: -50, y: -80}, {x: 20, y: -95}, {x: 60, y: -75}, {x: -20, y: -110}];
   birdPositions.forEach(pos => {
     elements.push({ type: 'line', x1: cx + pos.x - 12, y1: cy + pos.y + 5, x2: cx + pos.x, y2: cy + pos.y });
     elements.push({ type: 'line', x1: cx + pos.x, y1: cy + pos.y, x2: cx + pos.x + 12, y2: cy + pos.y + 5 });
   });
 
-  // Stars fading in morning sky - 5 dots
-  elements.push({ type: 'dot', x: cx - 90, y: cy - 100, radius: 2 });
-  elements.push({ type: 'dot', x: cx + 100, y: cy - 85, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx - 30, y: cy - 130, radius: 2 });
-  elements.push({ type: 'dot', x: cx + 60, y: cy - 120, radius: 1.5 });
-  elements.push({ type: 'dot', x: cx - 110, y: cy - 60, radius: 2 });
-
   // Horizon line
   elements.push({ type: 'line', x1: cx - 130, y1: cy + 40, x2: cx + 130, y2: cy + 40 });
 
-  // Clouds touched by dawn light - 4 small clusters
-  elements.push({ type: 'dot', x: cx - 100, y: cy - 40, radius: 4 });
-  elements.push({ type: 'dot', x: cx - 85, y: cy - 35, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 90, y: cy - 50, radius: 5 });
-  elements.push({ type: 'dot', x: cx + 110, y: cy - 45, radius: 3 });
+  // Morning star
+  elements.push({ type: 'dot', x: cx + 80, y: cy - 100, radius: 3 });
 
   // The grateful heart - center of the sun
   elements.push({ type: 'dot', x: cx, y: cy + 20, radius: 8, isCenter: true });
@@ -93,7 +83,7 @@ const generateSpiralGalaxy = (cx, cy) => {
   elements.push({ type: 'branch', x1: cx, y1: cy - 15, angle: -Math.PI/2 - 0.15, length: 50, curve: -0.1, thickness: 1.5 });
   elements.push({ type: 'branch', x1: cx, y1: cy - 15, angle: -Math.PI/2 + 0.15, length: 50, curve: 0.1, thickness: 1.5 });
 
-  // Fruits hanging from branches - 16 abundant circles (4 more for 8-word mantra)
+  // Fruits hanging from branches - 16 abundant circles
   const fruitPos = [
     {x: -70, y: -40}, {x: -55, y: -65}, {x: -35, y: -50}, {x: -45, y: -85},
     {x: 70, y: -40}, {x: 55, y: -70}, {x: 35, y: -55}, {x: 50, y: -90},
@@ -115,25 +105,15 @@ const generateSpiralGalaxy = (cx, cy) => {
   // Ground line
   elements.push({ type: 'line', x1: cx - 50, y1: cy + 85, x2: cx + 50, y2: cy + 85 });
 
-  // Root extending down
-  elements.push({ type: 'dot', x: cx, y: cy + 95, radius: 4 });
-
   // The receiving self - root center
   elements.push({ type: 'dot', x: cx, y: cy + 80, radius: 7, isCenter: true });
   return elements;
 };
 
-// I Am Worthy Of Love - 35 elements (5 words × 7 cycles)
+// I Am Worthy Of Love - 20 elements (5 words × 4 cycles)
 // BLOOMING ROSE - spiral petals unfurling, the courage to open
 const generateLotusBlossom = (cx, cy) => {
   const elements = [];
-
-  // Rose center - tight spiral bud (golden spiral with 8 points)
-  for (let i = 0; i < 8; i++) {
-    const angle = i * 0.8 - Math.PI / 2;
-    const r = 5 + i * 3;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, radius: 2 + i * 0.3 });
-  }
 
   // Inner petals - 5 tight curves (one for each word)
   for (let i = 0; i < 5; i++) {
@@ -141,22 +121,15 @@ const generateLotusBlossom = (cx, cy) => {
     elements.push({ type: 'petal', cx, cy, angle, innerRadius: 15, outerRadius: 40, width: 0.5 });
   }
 
-  // Middle petals - 8 opening wider
+  // Outer petals - 8 fully opened
   for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2 + 0.2;
-    elements.push({ type: 'petal', cx, cy, angle, innerRadius: 35, outerRadius: 75, width: 0.4 });
+    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'petal', cx, cy, angle, innerRadius: 45, outerRadius: 95, width: 0.4 });
   }
 
-  // Outer petals - 7 fully opened
-  for (let i = 0; i < 7; i++) {
-    const angle = (i / 7) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'petal', cx, cy, angle, innerRadius: 65, outerRadius: 115, width: 0.35 });
-  }
-
-  // Stem below - connection to earth (3 lines)
+  // Stem below - connection to earth (2 lines)
   elements.push({ type: 'line', x1: cx, y1: cy + 50, x2: cx - 5, y2: cy + 100 });
   elements.push({ type: 'line', x1: cx - 5, y1: cy + 100, x2: cx - 8, y2: cy + 140 });
-  elements.push({ type: 'branch', x1: cx - 5, y1: cy + 90, angle: Math.PI * 0.7, length: 25, curve: 0.3, thickness: 1 });
 
   // Two leaves on stem
   elements.push({ type: 'petal', cx: cx - 25, cy: cy + 95, angle: Math.PI * 0.8, innerRadius: 0, outerRadius: 20, width: 0.5 });
@@ -171,460 +144,360 @@ const generateLotusBlossom = (cx, cy) => {
   return elements;
 };
 
-// Peace Begins Within - 21 elements (3 words × 7 cycles)
+// Peace Begins Within - 12 elements (3 words × 4 cycles)
 // LOTUS OF PEACE - flower floating on still water with perfect reflection
-// Bilateral symmetry above and below the water line, peace radiating outward
 const generateMandalaStar = (cx, cy) => {
   const elements = [];
 
-  // Water line - the mirror of stillness (perfectly centered)
+  // Water line - the mirror of stillness
   elements.push({ type: 'line', x1: cx - 100, y1: cy, x2: cx + 100, y2: cy });
 
-  // Lotus flower above water - symmetric petals (5 petals)
-  for (let i = 0; i < 5; i++) {
-    const angle = -Math.PI / 2 + (i - 2) * 0.35; // spread across top
-    elements.push({ type: 'petal', cx, cy: cy - 15, angle, innerRadius: 8, outerRadius: 45, width: 0.35 });
+  // Lotus flower above water - 3 petals
+  for (let i = 0; i < 3; i++) {
+    const angle = -Math.PI / 2 + (i - 1) * 0.4;
+    elements.push({ type: 'petal', cx, cy: cy - 15, angle, innerRadius: 8, outerRadius: 50, width: 0.4 });
   }
 
-  // Lotus center - the peace within
+  // Lotus center
   elements.push({ type: 'circle', x: cx, y: cy - 15, radius: 15 });
 
-  // Reflection below water - mirrored petals (5 petals, inverted)
-  for (let i = 0; i < 5; i++) {
-    const angle = Math.PI / 2 + (i - 2) * 0.35; // spread across bottom
-    elements.push({ type: 'petal', cx, cy: cy + 15, angle, innerRadius: 8, outerRadius: 40, width: 0.3 });
+  // Reflection below water - 3 mirrored petals
+  for (let i = 0; i < 3; i++) {
+    const angle = Math.PI / 2 + (i - 1) * 0.4;
+    elements.push({ type: 'petal', cx, cy: cy + 15, angle, innerRadius: 8, outerRadius: 45, width: 0.35 });
   }
 
-  // Reflection of center - slightly smaller/fainter
+  // Reflection center
   elements.push({ type: 'circle', x: cx, y: cy + 15, radius: 12 });
 
-  // Concentric ripples on water - perfect circles (3 circles)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 55 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 75 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 95 });
+  // Ripples on water - 2 circles
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 70 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 100 });
 
-  // Outermost ripple
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 115 });
-
-  // The peaceful heart - at the center where flower meets reflection
+  // The peaceful heart
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
   return elements;
 };
 
-// I Am Calm And Centered - 35 elements (5 words × 7 cycles)
+// I Am Calm And Centered - 20 elements (5 words × 4 cycles)
 // SACRED MOUNTAIN - immovable, eternal, touching the sky
-// The mountain does not strive - it simply IS, calm and centered
 const generateSacredSpiral = (cx, cy) => {
   const elements = [];
 
-  // Mountain peak silhouette - the great triangle (4 lines)
-  elements.push({ type: 'line', x1: cx - 120, y1: cy + 80, x2: cx - 30, y2: cy - 60 }); // left slope to sub-peak
-  elements.push({ type: 'line', x1: cx - 30, y1: cy - 60, x2: cx, y2: cy - 100 }); // to summit
-  elements.push({ type: 'line', x1: cx, y1: cy - 100, x2: cx + 25, y2: cy - 55 }); // summit to right ridge
-  elements.push({ type: 'line', x1: cx + 25, y1: cy - 55, x2: cx + 120, y2: cy + 80 }); // right slope down
+  // Mountain peak silhouette - 4 lines
+  elements.push({ type: 'line', x1: cx - 120, y1: cy + 80, x2: cx - 30, y2: cy - 60 });
+  elements.push({ type: 'line', x1: cx - 30, y1: cy - 60, x2: cx, y2: cy - 100 });
+  elements.push({ type: 'line', x1: cx, y1: cy - 100, x2: cx + 25, y2: cy - 55 });
+  elements.push({ type: 'line', x1: cx + 25, y1: cy - 55, x2: cx + 120, y2: cy + 80 });
 
-  // Snow cap on peak (3 lines suggesting snow line)
+  // Snow cap - 2 lines
   elements.push({ type: 'line', x1: cx - 40, y1: cy - 45, x2: cx - 15, y2: cy - 70 });
   elements.push({ type: 'line', x1: cx - 15, y1: cy - 70, x2: cx + 12, y2: cy - 42 });
-  elements.push({ type: 'line', x1: cx - 25, y1: cy - 55, x2: cx + 18, y2: cy - 48 });
 
-  // Distant mountain range behind (4 lines)
+  // Distant mountains - 2 lines
   elements.push({ type: 'line', x1: cx - 130, y1: cy + 80, x2: cx - 100, y2: cy + 30 });
-  elements.push({ type: 'line', x1: cx - 100, y1: cy + 30, x2: cx - 70, y2: cy + 50 });
-  elements.push({ type: 'line', x1: cx + 80, y1: cy + 40, x2: cx + 105, y2: cy + 25 });
-  elements.push({ type: 'line', x1: cx + 105, y1: cy + 25, x2: cx + 130, y2: cy + 80 });
+  elements.push({ type: 'line', x1: cx + 80, y1: cy + 40, x2: cx + 130, y2: cy + 80 });
 
-  // Ground/horizon line
+  // Horizon line
   elements.push({ type: 'line', x1: cx - 130, y1: cy + 80, x2: cx + 130, y2: cy + 80 });
 
-  // Clouds drifting past (4 small circles)
-  elements.push({ type: 'circle', x: cx - 80, y: cy - 30, radius: 12 });
-  elements.push({ type: 'circle', x: cx - 65, y: cy - 25, radius: 10 });
-  elements.push({ type: 'circle', x: cx + 75, y: cy - 20, radius: 11 });
-  elements.push({ type: 'circle', x: cx + 90, y: cy - 15, radius: 9 });
+  // Clouds - 2 circles
+  elements.push({ type: 'circle', x: cx - 75, y: cy - 25, radius: 12 });
+  elements.push({ type: 'circle', x: cx + 80, y: cy - 20, radius: 11 });
 
-  // Pine trees at base (6 small triangular suggestions using lines)
-  elements.push({ type: 'line', x1: cx - 90, y1: cy + 80, x2: cx - 85, y2: cy + 55 });
-  elements.push({ type: 'line', x1: cx - 85, y1: cy + 55, x2: cx - 80, y2: cy + 80 });
-  elements.push({ type: 'line', x1: cx - 65, y1: cy + 80, x2: cx - 60, y2: cy + 50 });
-  elements.push({ type: 'line', x1: cx - 60, y1: cy + 50, x2: cx - 55, y2: cy + 80 });
+  // Pine trees - 4 lines (2 trees)
+  elements.push({ type: 'line', x1: cx - 85, y1: cy + 80, x2: cx - 80, y2: cy + 55 });
+  elements.push({ type: 'line', x1: cx - 80, y1: cy + 55, x2: cx - 75, y2: cy + 80 });
   elements.push({ type: 'line', x1: cx + 70, y1: cy + 80, x2: cx + 75, y2: cy + 52 });
   elements.push({ type: 'line', x1: cx + 75, y1: cy + 52, x2: cx + 80, y2: cy + 80 });
 
-  // Stars appearing in clear sky (5 dots)
+  // Stars - 3 dots
   elements.push({ type: 'dot', x: cx - 100, y: cy - 80, radius: 2 });
   elements.push({ type: 'dot', x: cx + 95, y: cy - 85, radius: 2.5 });
   elements.push({ type: 'dot', x: cx - 50, y: cy - 110, radius: 2 });
-  elements.push({ type: 'dot', x: cx + 40, y: cy - 105, radius: 1.5 });
-  elements.push({ type: 'dot', x: cx + 110, y: cy - 50, radius: 2 });
 
-  // Meditation stones at foreground (4 circles)
-  elements.push({ type: 'circle', x: cx - 20, y: cy + 95, radius: 8 });
-  elements.push({ type: 'circle', x: cx + 5, y: cy + 100, radius: 6 });
-  elements.push({ type: 'circle', x: cx + 25, y: cy + 97, radius: 7 });
-  elements.push({ type: 'circle', x: cx - 45, y: cy + 100, radius: 5 });
-
-  // The mountain's heart - the centered self
+  // The mountain's heart
   elements.push({ type: 'dot', x: cx, y: cy - 100, radius: 7, isCenter: true });
   return elements;
 };
 
-// I Am Loving Awareness - 28 elements (4 words × 7 cycles)
+// I Am Loving Awareness - 16 elements (4 words × 4 cycles)
 // INFINITE HEART - love and awareness as one radiating field
-// Ram Dass's teaching: awareness that IS love, expanding infinitely
 const generateInfinityLoop = (cx, cy) => {
   const elements = [];
 
-  // Infinity symbol - love and awareness intertwined (8 line segments)
-  // Left loop
+  // Infinity symbol - 8 line segments
   elements.push({ type: 'line', x1: cx - 25, y1: cy, x2: cx - 50, y2: cy - 25 });
   elements.push({ type: 'line', x1: cx - 50, y1: cy - 25, x2: cx - 70, y2: cy });
   elements.push({ type: 'line', x1: cx - 70, y1: cy, x2: cx - 50, y2: cy + 25 });
   elements.push({ type: 'line', x1: cx - 50, y1: cy + 25, x2: cx - 25, y2: cy });
-  // Right loop
   elements.push({ type: 'line', x1: cx + 25, y1: cy, x2: cx + 50, y2: cy + 25 });
   elements.push({ type: 'line', x1: cx + 50, y1: cy + 25, x2: cx + 70, y2: cy });
   elements.push({ type: 'line', x1: cx + 70, y1: cy, x2: cx + 50, y2: cy - 25 });
   elements.push({ type: 'line', x1: cx + 50, y1: cy - 25, x2: cx + 25, y2: cy });
 
-  // Radiating circles of awareness - 4 expanding rings
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 35 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 55 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 75 });
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 95 });
+  // Radiating circles - 3 rings
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 40 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 65 });
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 90 });
 
-  // Light points along infinity - consciousness flowing (8 dots)
-  const infPoints = [
-    {x: -60, y: 0}, {x: -45, y: -20}, {x: -45, y: 20}, {x: -30, y: 0},
-    {x: 60, y: 0}, {x: 45, y: -20}, {x: 45, y: 20}, {x: 30, y: 0}
-  ];
-  infPoints.forEach(p => {
-    elements.push({ type: 'dot', x: cx + p.x, y: cy + p.y, radius: 3 });
-  });
+  // Outer radiance - 4 dots
+  elements.push({ type: 'dot', x: cx, y: cy - 80, radius: 4 });
+  elements.push({ type: 'dot', x: cx, y: cy + 80, radius: 4 });
+  elements.push({ type: 'dot', x: cx - 80, y: cy, radius: 4 });
+  elements.push({ type: 'dot', x: cx + 80, y: cy, radius: 4 });
 
-  // Outer radiance - love extending everywhere (4 dots)
-  elements.push({ type: 'dot', x: cx, y: cy - 85, radius: 4 });
-  elements.push({ type: 'dot', x: cx, y: cy + 85, radius: 4 });
-  elements.push({ type: 'dot', x: cx - 85, y: cy, radius: 4 });
-  elements.push({ type: 'dot', x: cx + 85, y: cy, radius: 4 });
-
-  // The center - where love and awareness are one
+  // The center
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
   return elements;
 };
 
-// I Trust The Process - 28 elements (4 words × 7 cycles)
-// COMPASS - trusting the inner guide to show the way
-// The needle always points true, trust in the direction
+// I Trust The Process - 16 elements (4 words × 4 cycles)
+// COMPASS - trusting the inner guide
 const generateFallingLeaves = (cx, cy) => {
   const elements = [];
 
-  // Outer compass ring (1 circle)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 90 });
+  // Compass ring
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 85 });
 
-  // Inner compass ring (1 circle)
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 75 });
+  // Cardinal direction lines - N, S, E, W
+  elements.push({ type: 'line', x1: cx, y1: cy - 85, x2: cx, y2: cy - 55 });
+  elements.push({ type: 'line', x1: cx, y1: cy + 85, x2: cx, y2: cy + 55 });
+  elements.push({ type: 'line', x1: cx - 85, y1: cy, x2: cx - 55, y2: cy });
+  elements.push({ type: 'line', x1: cx + 85, y1: cy, x2: cx + 55, y2: cy });
 
-  // Cardinal direction lines - N, S, E, W (4 lines)
-  elements.push({ type: 'line', x1: cx, y1: cy - 75, x2: cx, y2: cy - 55 }); // North
-  elements.push({ type: 'line', x1: cx, y1: cy + 75, x2: cx, y2: cy + 55 }); // South
-  elements.push({ type: 'line', x1: cx - 75, y1: cy, x2: cx - 55, y2: cy }); // West
-  elements.push({ type: 'line', x1: cx + 75, y1: cy, x2: cx + 55, y2: cy }); // East
-
-  // Intercardinal lines - NE, NW, SE, SW (4 shorter lines)
-  const diag = 53;
-  const diagInner = 40;
-  elements.push({ type: 'line', x1: cx - diag, y1: cy - diag, x2: cx - diagInner, y2: cy - diagInner });
-  elements.push({ type: 'line', x1: cx + diag, y1: cy - diag, x2: cx + diagInner, y2: cy - diagInner });
-  elements.push({ type: 'line', x1: cx - diag, y1: cy + diag, x2: cx - diagInner, y2: cy + diagInner });
-  elements.push({ type: 'line', x1: cx + diag, y1: cy + diag, x2: cx + diagInner, y2: cy + diagInner });
-
-  // Compass needle - pointing North (2 lines forming arrow)
-  elements.push({ type: 'line', x1: cx, y1: cy, x2: cx, y2: cy - 45 }); // needle shaft north
-  elements.push({ type: 'line', x1: cx, y1: cy, x2: cx, y2: cy + 30 }); // needle shaft south
-  // Needle point
+  // Compass needle - 4 lines
+  elements.push({ type: 'line', x1: cx, y1: cy, x2: cx, y2: cy - 45 });
+  elements.push({ type: 'line', x1: cx, y1: cy, x2: cx, y2: cy + 30 });
   elements.push({ type: 'line', x1: cx - 8, y1: cy - 35, x2: cx, y2: cy - 50 });
   elements.push({ type: 'line', x1: cx + 8, y1: cy - 35, x2: cx, y2: cy - 50 });
 
-  // Degree markers around the rim (8 dots)
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 82, y: cy + Math.sin(angle) * 82, radius: 2 });
-  }
+  // Direction markers - 4 dots
+  elements.push({ type: 'dot', x: cx, y: cy - 95, radius: 3 });
+  elements.push({ type: 'dot', x: cx, y: cy + 95, radius: 2 });
+  elements.push({ type: 'dot', x: cx - 95, y: cy, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 95, y: cy, radius: 2 });
 
-  // North star marker (1 larger dot)
-  elements.push({ type: 'dot', x: cx, y: cy - 100, radius: 4 });
-
-  // Inner decoration circle (1 circle)
+  // Inner circle
   elements.push({ type: 'circle', x: cx, y: cy, radius: 25 });
 
-  // The trusting heart - at the compass center
+  // The trusting heart
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
   return elements;
 };
 
-// I Forgive and Release - 28 elements (4 words × 7 cycles)
+// I Forgive and Release - 16 elements (4 words × 4 cycles)
 // OPENING HANDS RELEASING LIGHT - forgiveness as letting go
-// Two hands open upward, releasing sparks of light into the infinite
 const generateForgivenessRelease = (cx, cy) => {
   const elements = [];
 
-  // Left hand - palm opening upward (6 lines forming hand)
-  elements.push({ type: 'line', x1: cx - 70, y1: cy + 40, x2: cx - 55, y2: cy }); // wrist to palm
-  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 70, y2: cy - 30 }); // thumb
-  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 55, y2: cy - 45 }); // index
-  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 45, y2: cy - 50 }); // middle
-  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 35, y2: cy - 45 }); // ring
-  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 30, y2: cy - 35 }); // pinky
+  // Left hand - 4 lines
+  elements.push({ type: 'line', x1: cx - 70, y1: cy + 40, x2: cx - 55, y2: cy });
+  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 70, y2: cy - 30 });
+  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 50, y2: cy - 50 });
+  elements.push({ type: 'line', x1: cx - 55, y1: cy, x2: cx - 35, y2: cy - 40 });
 
-  // Right hand - mirrored (6 lines)
+  // Right hand - 4 lines
   elements.push({ type: 'line', x1: cx + 70, y1: cy + 40, x2: cx + 55, y2: cy });
   elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 70, y2: cy - 30 });
-  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 55, y2: cy - 45 });
-  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 45, y2: cy - 50 });
-  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 35, y2: cy - 45 });
-  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 30, y2: cy - 35 });
+  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 50, y2: cy - 50 });
+  elements.push({ type: 'line', x1: cx + 55, y1: cy, x2: cx + 35, y2: cy - 40 });
 
-  // Light being released - ascending particles (10 dots rising)
-  elements.push({ type: 'dot', x: cx, y: cy - 20, radius: 5 });
-  elements.push({ type: 'dot', x: cx - 15, y: cy - 40, radius: 4 });
-  elements.push({ type: 'dot', x: cx + 15, y: cy - 45, radius: 4 });
-  elements.push({ type: 'dot', x: cx, y: cy - 60, radius: 3.5 });
-  elements.push({ type: 'dot', x: cx - 25, y: cy - 70, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 25, y: cy - 75, radius: 3 });
-  elements.push({ type: 'dot', x: cx - 10, y: cy - 85, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx + 10, y: cy - 90, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx, y: cy - 100, radius: 2 });
-  elements.push({ type: 'dot', x: cx, y: cy - 115, radius: 1.5 });
+  // Light ascending - 7 dots
+  elements.push({ type: 'dot', x: cx, y: cy - 25, radius: 5 });
+  elements.push({ type: 'dot', x: cx - 15, y: cy - 45, radius: 4 });
+  elements.push({ type: 'dot', x: cx + 15, y: cy - 50, radius: 4 });
+  elements.push({ type: 'dot', x: cx, y: cy - 70, radius: 3.5 });
+  elements.push({ type: 'dot', x: cx - 20, y: cy - 85, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 20, y: cy - 90, radius: 3 });
+  elements.push({ type: 'dot', x: cx, y: cy - 110, radius: 2.5 });
 
-  // The forgiving heart - at the center between the hands
+  // The forgiving heart
   elements.push({ type: 'dot', x: cx, y: cy + 10, radius: 6, isCenter: true });
   return elements;
 };
 
-// I Accept Myself Completely - 28 elements (4 words × 7 cycles)
+// I Accept Myself Completely - 16 elements (4 words × 4 cycles)
 // EMBRACING SELF - two figures mirrored, hands meeting at center
-// Perfect bilateral symmetry: self and reflection as one unified whole
 const generateSelfAcceptance = (cx, cy) => {
   const elements = [];
 
-  // Central mirror/divide line - vertical axis of reflection
-  elements.push({ type: 'line', x1: cx, y1: cy - 100, x2: cx, y2: cy + 80 });
+  // Left figure - head + 3 lines
+  elements.push({ type: 'circle', x: cx - 35, y: cy - 50, radius: 15 });
+  elements.push({ type: 'line', x1: cx - 35, y1: cy - 35, x2: cx - 35, y2: cy + 20 });
+  elements.push({ type: 'line', x1: cx - 35, y1: cy + 20, x2: cx - 45, y2: cy + 60 });
+  elements.push({ type: 'line', x1: cx - 35, y1: cy - 20, x2: cx - 10, y2: cy - 30 });
 
-  // Left figure - the self
-  elements.push({ type: 'circle', x: cx - 35, y: cy - 50, radius: 15 }); // head
-  elements.push({ type: 'line', x1: cx - 35, y1: cy - 35, x2: cx - 35, y2: cy + 20 }); // body
-  elements.push({ type: 'line', x1: cx - 35, y1: cy + 20, x2: cx - 50, y2: cy + 60 }); // left leg
-  elements.push({ type: 'line', x1: cx - 35, y1: cy + 20, x2: cx - 20, y2: cy + 60 }); // right leg
-  elements.push({ type: 'line', x1: cx - 35, y1: cy - 20, x2: cx - 10, y2: cy - 30 }); // arm reaching to center
+  // Right figure - head + 3 lines
+  elements.push({ type: 'circle', x: cx + 35, y: cy - 50, radius: 15 });
+  elements.push({ type: 'line', x1: cx + 35, y1: cy - 35, x2: cx + 35, y2: cy + 20 });
+  elements.push({ type: 'line', x1: cx + 35, y1: cy + 20, x2: cx + 45, y2: cy + 60 });
+  elements.push({ type: 'line', x1: cx + 35, y1: cy - 20, x2: cx + 10, y2: cy - 30 });
 
-  // Right figure - the reflection (mirrored)
-  elements.push({ type: 'circle', x: cx + 35, y: cy - 50, radius: 15 }); // head
-  elements.push({ type: 'line', x1: cx + 35, y1: cy - 35, x2: cx + 35, y2: cy + 20 }); // body
-  elements.push({ type: 'line', x1: cx + 35, y1: cy + 20, x2: cx + 50, y2: cy + 60 }); // right leg
-  elements.push({ type: 'line', x1: cx + 35, y1: cy + 20, x2: cx + 20, y2: cy + 60 }); // left leg
-  elements.push({ type: 'line', x1: cx + 35, y1: cy - 20, x2: cx + 10, y2: cy - 30 }); // arm reaching to center
-
-  // Hands meeting at center - the moment of acceptance (2 dots)
+  // Hands meeting - 2 dots
   elements.push({ type: 'dot', x: cx - 8, y: cy - 32, radius: 5 });
   elements.push({ type: 'dot', x: cx + 8, y: cy - 32, radius: 5 });
 
-  // Heart at center - where self meets self (shared heart)
+  // Heart at center
   elements.push({ type: 'circle', x: cx, y: cy - 15, radius: 18 });
 
-  // Light radiating from the union - symmetric (8 small dots)
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2;
-    elements.push({ type: 'dot', x: cx + Math.cos(angle) * 35, y: cy - 15 + Math.sin(angle) * 35, radius: 2.5 });
-  }
+  // Radiating light - 4 dots
+  elements.push({ type: 'dot', x: cx, y: cy - 55, radius: 3 });
+  elements.push({ type: 'dot', x: cx, y: cy + 25, radius: 3 });
+  elements.push({ type: 'dot', x: cx - 35, y: cy - 15, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 35, y: cy - 15, radius: 3 });
 
-  // Ground line - symmetric
-  elements.push({ type: 'line', x1: cx - 80, y1: cy + 65, x2: cx + 80, y2: cy + 65 });
-
-  // Additional light particles
-  elements.push({ type: 'dot', x: cx - 55, y: cy - 40, radius: 2 });
-  elements.push({ type: 'dot', x: cx + 55, y: cy - 40, radius: 2 });
-  elements.push({ type: 'dot', x: cx, y: cy - 55, radius: 2.5 });
-
-  // The accepted heart - at the center of union
+  // The accepted heart
   elements.push({ type: 'dot', x: cx, y: cy - 15, radius: 6, isCenter: true });
   return elements;
 };
 
-// I Am Open To Receive - 35 elements (5 words × 7 cycles)
+// I Am Open To Receive - 20 elements (5 words × 4 cycles)
 // LOTUS OPENING TO SUNBEAM - receptivity as spiritual practice
-// The flower that opens only in the light, trusting it will come
 const generateOpenToReceive = (cx, cy) => {
   const elements = [];
 
-  // Sunbeam descending from above (5 lines radiating down)
-  elements.push({ type: 'line', x1: cx, y1: cy - 120, x2: cx, y2: cy - 60 });
-  elements.push({ type: 'line', x1: cx - 25, y1: cy - 115, x2: cx - 10, y2: cy - 55 });
-  elements.push({ type: 'line', x1: cx + 25, y1: cy - 115, x2: cx + 10, y2: cy - 55 });
-  elements.push({ type: 'line', x1: cx - 45, y1: cy - 105, x2: cx - 20, y2: cy - 50 });
-  elements.push({ type: 'line', x1: cx + 45, y1: cy - 105, x2: cx + 20, y2: cy - 50 });
+  // Sunbeam descending - 3 lines
+  elements.push({ type: 'line', x1: cx, y1: cy - 120, x2: cx, y2: cy - 55 });
+  elements.push({ type: 'line', x1: cx - 30, y1: cy - 115, x2: cx - 15, y2: cy - 50 });
+  elements.push({ type: 'line', x1: cx + 30, y1: cy - 115, x2: cx + 15, y2: cy - 50 });
 
-  // Light particles descending (5 dots)
-  elements.push({ type: 'dot', x: cx, y: cy - 90, radius: 4 });
-  elements.push({ type: 'dot', x: cx - 15, y: cy - 80, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 15, y: cy - 75, radius: 3 });
-  elements.push({ type: 'dot', x: cx - 8, y: cy - 65, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx + 10, y: cy - 62, radius: 2.5 });
+  // Light particles - 3 dots
+  elements.push({ type: 'dot', x: cx, y: cy - 85, radius: 4 });
+  elements.push({ type: 'dot', x: cx - 15, y: cy - 70, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 15, y: cy - 68, radius: 3 });
 
-  // Lotus petals opening upward (10 petals in layers)
-  // Inner petals - still partially closed
-  for (let i = 0; i < 4; i++) {
-    const angle = (i / 4) * Math.PI * 2 - Math.PI / 2 + 0.4;
-    elements.push({ type: 'petal', cx, cy: cy + 20, angle, innerRadius: 8, outerRadius: 30, width: 0.4 });
-  }
-  // Outer petals - fully open
-  for (let i = 0; i < 6; i++) {
-    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
-    elements.push({ type: 'petal', cx, cy: cy + 20, angle, innerRadius: 25, outerRadius: 60, width: 0.35 });
+  // Lotus petals - 8 petals
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
+    elements.push({ type: 'petal', cx, cy: cy + 20, angle, innerRadius: 12, outerRadius: 50, width: 0.38 });
   }
 
-  // Water surface the lotus floats on (3 lines)
-  elements.push({ type: 'line', x1: cx - 100, y1: cy + 70, x2: cx - 30, y2: cy + 70 });
-  elements.push({ type: 'line', x1: cx + 30, y1: cy + 70, x2: cx + 100, y2: cy + 70 });
-  elements.push({ type: 'line', x1: cx - 70, y1: cy + 85, x2: cx + 70, y2: cy + 85 });
+  // Water surface - 2 lines
+  elements.push({ type: 'line', x1: cx - 90, y1: cy + 70, x2: cx - 20, y2: cy + 70 });
+  elements.push({ type: 'line', x1: cx + 20, y1: cy + 70, x2: cx + 90, y2: cy + 70 });
 
-  // Lotus pad leaves (2 circles)
-  elements.push({ type: 'circle', x: cx - 65, y: cy + 60, radius: 25 });
-  elements.push({ type: 'circle', x: cx + 70, y: cy + 55, radius: 22 });
+  // Lotus pad leaves - 2 circles
+  elements.push({ type: 'circle', x: cx - 60, y: cy + 60, radius: 22 });
+  elements.push({ type: 'circle', x: cx + 65, y: cy + 55, radius: 20 });
 
-  // Water ripples (3 lines)
-  elements.push({ type: 'line', x1: cx - 40, y1: cy + 75, x2: cx + 40, y2: cy + 75 });
-  elements.push({ type: 'line', x1: cx - 25, y1: cy + 80, x2: cx + 25, y2: cy + 80 });
-  elements.push({ type: 'line', x1: cx - 55, y1: cy + 90, x2: cx + 55, y2: cy + 90 });
+  // Water ripple - 1 line
+  elements.push({ type: 'line', x1: cx - 50, y1: cy + 85, x2: cx + 50, y2: cy + 85 });
 
-  // The receptive heart of the lotus
+  // The receptive heart
   elements.push({ type: 'dot', x: cx, y: cy + 20, radius: 7, isCenter: true });
   return elements;
 };
 
-// I Release What No Longer Serves - 42 elements (6 words × 7 cycles)
-// BUTTERFLY IN FULL GLORY - perfect bilateral symmetry of transformation
-// Wings spread wide in perfect mirror, the beauty of becoming
+// I Release What No Longer Serves - 24 elements (6 words × 4 cycles)
+// BUTTERFLY IN FULL GLORY - bilateral symmetry of transformation
 const generateRelease = (cx, cy) => {
   const elements = [];
 
-  // THE BUTTERFLY - centered, perfectly symmetric
-  // Body (3 circles for head, thorax, abdomen - vertical line)
-  elements.push({ type: 'circle', x: cx, y: cy - 35, radius: 7 }); // head
-  elements.push({ type: 'circle', x: cx, y: cy - 15, radius: 10 }); // thorax
-  elements.push({ type: 'circle', x: cx, y: cy + 10, radius: 9 }); // abdomen
+  // Body - 3 circles
+  elements.push({ type: 'circle', x: cx, y: cy - 35, radius: 7 });
+  elements.push({ type: 'circle', x: cx, y: cy - 15, radius: 10 });
+  elements.push({ type: 'circle', x: cx, y: cy + 10, radius: 9 });
 
-  // Antennae - symmetric curves
+  // Antennae - 2 lines + 2 tips
   elements.push({ type: 'line', x1: cx - 5, y1: cy - 40, x2: cx - 20, y2: cy - 65 });
   elements.push({ type: 'line', x1: cx + 5, y1: cy - 40, x2: cx + 20, y2: cy - 65 });
-  // Antenna tips
   elements.push({ type: 'dot', x: cx - 20, y: cy - 65, radius: 3 });
   elements.push({ type: 'dot', x: cx + 20, y: cy - 65, radius: 3 });
 
-  // Upper wings - large, majestic (symmetric petals)
+  // Upper wings - 2 petals
   elements.push({ type: 'petal', cx, cy: cy - 20, angle: Math.PI * 0.72, innerRadius: 12, outerRadius: 65, width: 0.5 });
   elements.push({ type: 'petal', cx, cy: cy - 20, angle: Math.PI * 0.28, innerRadius: 12, outerRadius: 65, width: 0.5 });
 
-  // Lower wings - smaller, symmetric
+  // Lower wings - 2 petals
   elements.push({ type: 'petal', cx, cy: cy, angle: Math.PI * 0.82, innerRadius: 10, outerRadius: 45, width: 0.45 });
   elements.push({ type: 'petal', cx, cy: cy, angle: Math.PI * 0.18, innerRadius: 10, outerRadius: 45, width: 0.45 });
 
-  // Wing patterns - symmetric eye spots (8 dots)
-  elements.push({ type: 'dot', x: cx - 40, y: cy - 30, radius: 6 }); // left upper outer
-  elements.push({ type: 'dot', x: cx + 40, y: cy - 30, radius: 6 }); // right upper outer
-  elements.push({ type: 'dot', x: cx - 25, y: cy - 15, radius: 4 }); // left upper inner
-  elements.push({ type: 'dot', x: cx + 25, y: cy - 15, radius: 4 }); // right upper inner
-  elements.push({ type: 'dot', x: cx - 30, y: cy + 15, radius: 4 }); // left lower
-  elements.push({ type: 'dot', x: cx + 30, y: cy + 15, radius: 4 }); // right lower
-  elements.push({ type: 'dot', x: cx - 50, y: cy - 45, radius: 3 }); // left wing tip
-  elements.push({ type: 'dot', x: cx + 50, y: cy - 45, radius: 3 }); // right wing tip
+  // Eye spots - 8 dots
+  elements.push({ type: 'dot', x: cx - 40, y: cy - 30, radius: 6 });
+  elements.push({ type: 'dot', x: cx + 40, y: cy - 30, radius: 6 });
+  elements.push({ type: 'dot', x: cx - 25, y: cy - 15, radius: 4 });
+  elements.push({ type: 'dot', x: cx + 25, y: cy - 15, radius: 4 });
+  elements.push({ type: 'dot', x: cx - 30, y: cy + 15, radius: 4 });
+  elements.push({ type: 'dot', x: cx + 30, y: cy + 15, radius: 4 });
+  elements.push({ type: 'dot', x: cx - 50, y: cy - 45, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 50, y: cy - 45, radius: 3 });
 
-  // Wing edge details - symmetric dots along wings
-  elements.push({ type: 'dot', x: cx - 55, y: cy - 20, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx + 55, y: cy - 20, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx - 38, y: cy + 30, radius: 2 });
-  elements.push({ type: 'dot', x: cx + 38, y: cy + 30, radius: 2 });
+  // Light particles - 4 dots
+  elements.push({ type: 'dot', x: cx - 60, y: cy - 70, radius: 2 });
+  elements.push({ type: 'dot', x: cx + 60, y: cy - 70, radius: 2 });
+  elements.push({ type: 'dot', x: cx - 35, y: cy - 85, radius: 2.5 });
+  elements.push({ type: 'dot', x: cx + 35, y: cy - 85, radius: 2.5 });
 
-  // Chrysalis shells below - symmetric on both sides (old self released)
-  elements.push({ type: 'line', x1: cx - 60, y1: cy + 60, x2: cx - 55, y2: cy + 85 });
-  elements.push({ type: 'line', x1: cx - 50, y1: cy + 60, x2: cx - 55, y2: cy + 85 });
-  elements.push({ type: 'line', x1: cx + 60, y1: cy + 60, x2: cx + 55, y2: cy + 85 });
-  elements.push({ type: 'line', x1: cx + 50, y1: cy + 60, x2: cx + 55, y2: cy + 85 });
-
-  // Light particles above - symmetric (4)
-  elements.push({ type: 'dot', x: cx - 70, y: cy - 70, radius: 2 });
-  elements.push({ type: 'dot', x: cx + 70, y: cy - 70, radius: 2 });
-  elements.push({ type: 'dot', x: cx - 40, y: cy - 85, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx + 40, y: cy - 85, radius: 2.5 });
-
-  // Cocoon suggestion below (2 lines)
-  elements.push({ type: 'line', x1: cx - 55, y1: cy + 85, x2: cx - 40, y2: cy + 95 });
-  elements.push({ type: 'line', x1: cx + 55, y1: cy + 85, x2: cx + 40, y2: cy + 95 });
-
-  // The transformed heart - at the center of the butterfly
+  // The transformed heart
   elements.push({ type: 'dot', x: cx, y: cy - 15, radius: 5, isCenter: true });
   return elements;
 };
 
-// We Are All Connected - 28 elements (4 words × 7 cycles)
+// We Are All Connected - 16 elements (4 words × 4 cycles)
 // FISH SCHOOL - swimming in unity, moving as one
 const generateWeAreOne = (cx, cy) => {
   const elements = [];
 
-  // 8 fish arranged in a circle, all swimming the same direction (clockwise)
-  // Each fish = circle (body) + petal (tail), facing tangent to the circle
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-    const radius = 65;
+  // 6 fish arranged in a circle - each = body + tail = 12 elements
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+    const radius = 60;
     const fishX = cx + Math.cos(angle) * radius;
     const fishY = cy + Math.sin(angle) * radius;
-    const fishAngle = angle + Math.PI / 2; // tangent to circle (swimming direction)
+    const fishAngle = angle + Math.PI / 2;
 
-    // Fish body
-    elements.push({ type: 'circle', x: fishX, y: fishY, radius: 9 });
-    // Fish tail (pointing backward relative to swimming direction)
-    const tailX = fishX - Math.cos(fishAngle) * 12;
-    const tailY = fishY - Math.sin(fishAngle) * 12;
-    elements.push({ type: 'petal', cx: tailX, cy: tailY, angle: fishAngle + Math.PI, innerRadius: 0, outerRadius: 10, width: 0.5 });
+    elements.push({ type: 'circle', x: fishX, y: fishY, radius: 10 });
+    const tailX = fishX - Math.cos(fishAngle) * 13;
+    const tailY = fishY - Math.sin(fishAngle) * 13;
+    elements.push({ type: 'petal', cx: tailX, cy: tailY, angle: fishAngle + Math.PI, innerRadius: 0, outerRadius: 11, width: 0.5 });
   }
 
-  // Central circle - the unity they form
-  elements.push({ type: 'circle', x: cx, y: cy, radius: 30 });
+  // Central circle
+  elements.push({ type: 'circle', x: cx, y: cy, radius: 25 });
 
-  // Inner swirl suggesting circular movement (4 curved lines as dots)
-  elements.push({ type: 'dot', x: cx - 15, y: cy - 10, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 10, y: cy - 15, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 15, y: cy + 10, radius: 3 });
-  elements.push({ type: 'dot', x: cx - 10, y: cy + 15, radius: 3 });
+  // Swirl dots - 2
+  elements.push({ type: 'dot', x: cx - 12, y: cy - 8, radius: 3 });
+  elements.push({ type: 'dot', x: cx + 12, y: cy + 8, radius: 3 });
 
-  // Bubbles in symmetric pattern (7 dots for 28 total = 4 words × 7 cycles)
-  elements.push({ type: 'dot', x: cx, y: cy - 95, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 95, y: cy, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx, y: cy + 95, radius: 2.5 });
-  elements.push({ type: 'dot', x: cx - 95, y: cy, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 70, y: cy - 70, radius: 2 });
-  elements.push({ type: 'dot', x: cx - 70, y: cy - 70, radius: 2 });
-  elements.push({ type: 'dot', x: cx, y: cy + 105, radius: 2.5 });
-
-  // The unified center - the school as ONE
+  // The unified center
   elements.push({ type: 'dot', x: cx, y: cy, radius: 6, isCenter: true });
   return elements;
 };
 
+// Mantra Categories
+const mantraCategories = [
+  { key: 'gratitude', name: 'Gratitude' },
+  { key: 'self-love', name: 'Acceptance' },
+  { key: 'inner-peace', name: 'Inner Peace' },
+  { key: 'letting-go', name: 'Letting Go' },
+  { key: 'connection', name: 'Connection' },
+  { key: 'metta', name: 'Metta Meditation', isMeditation: true },
+];
+
 // Mantra-Visual Pairs
 const mantraVisualPairs = [
-  { text: 'I am grateful for this moment', words: ['I', 'am', 'grateful', 'for', 'this', 'moment'], generate: generateFlowerOfLife },
-  { text: 'Good fortune flows towards loved ones and I', words: ['Good', 'fortune', 'flows', 'towards', 'loved', 'ones', 'and', 'I'], generate: generateSpiralGalaxy },
-  { text: 'I am worthy of love', words: ['I', 'am', 'worthy', 'of', 'love'], generate: generateLotusBlossom },
-  { text: 'Peace begins within', words: ['Peace', 'begins', 'within'], generate: generateMandalaStar },
-  { text: 'I am calm and centered', words: ['I', 'am', 'calm', 'and', 'centered'], generate: generateSacredSpiral },
-  { text: 'I am loving awareness', words: ['I', 'am', 'loving', 'awareness'], generate: generateInfinityLoop },
-  { text: 'I trust the process', words: ['I', 'trust', 'the', 'process'], generate: generateFallingLeaves },
-  { text: 'I forgive and release', words: ['I', 'forgive', 'and', 'release'], generate: generateForgivenessRelease },
-  { text: 'I accept myself completely', words: ['I', 'accept', 'myself', 'completely'], generate: generateSelfAcceptance },
-  { text: 'I am open to receive', words: ['I', 'am', 'open', 'to', 'receive'], generate: generateOpenToReceive },
-  { text: 'I release what no longer serves', words: ['I', 'release', 'what', 'no', 'longer', 'serves'], generate: generateRelease },
-  { text: 'We are all connected', words: ['We', 'are', 'all', 'connected'], generate: generateWeAreOne },
+  // Gratitude
+  { text: 'I am grateful for this moment', category: 'gratitude', words: ['I', 'am', 'grateful', 'for', 'this', 'moment'], generate: generateFlowerOfLife },
+  { text: 'I am open to receive', category: 'gratitude', words: ['I', 'am', 'open', 'to', 'receive'], generate: generateOpenToReceive },
+
+  // Self-Love
+  { text: 'I am worthy of love', category: 'self-love', words: ['I', 'am', 'worthy', 'of', 'love'], generate: generateLotusBlossom },
+  { text: 'I am loving awareness', category: 'self-love', words: ['I', 'am', 'loving', 'awareness'], generate: generateInfinityLoop },
+  { text: 'I accept myself completely', category: 'self-love', words: ['I', 'accept', 'myself', 'completely'], generate: generateSelfAcceptance },
+
+  // Inner Peace
+  { text: 'Peace begins within', category: 'inner-peace', words: ['Peace', 'begins', 'within'], generate: generateMandalaStar },
+  { text: 'I am calm and centered', category: 'inner-peace', words: ['I', 'am', 'calm', 'and', 'centered'], generate: generateSacredSpiral },
+
+  // Letting Go
+  { text: 'I trust the process', category: 'letting-go', words: ['I', 'trust', 'the', 'process'], generate: generateFallingLeaves },
+  { text: 'I forgive and release', category: 'letting-go', words: ['I', 'forgive', 'and', 'release'], generate: generateForgivenessRelease },
+  { text: 'I release what no longer serves', category: 'letting-go', words: ['I', 'release', 'what', 'no', 'longer', 'serves'], generate: generateRelease },
+
+  // Connection
+  { text: 'Good fortune flows towards loved ones and I', category: 'connection', words: ['Good', 'fortune', 'flows', 'towards', 'loved', 'ones', 'and', 'I'], generate: generateSpiralGalaxy },
+  { text: 'We are all connected', category: 'connection', words: ['We', 'are', 'all', 'connected'], generate: generateWeAreOne },
 ];
 
 // ============================================================================
@@ -1845,7 +1718,17 @@ function MantraGeometryCanvas({ elements, revealedCount, isComplete, primaryHue 
 }
 
 function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
-  // Load saved mantra index from localStorage
+  // Load saved state from localStorage
+  const getSavedCategory = () => {
+    try {
+      const saved = localStorage.getItem('mantraCategory');
+      if (saved && mantraCategories.some(c => c.key === saved)) {
+        return saved;
+      }
+    } catch (e) {}
+    return 'gratitude';
+  };
+
   const getSavedMantraIndex = () => {
     try {
       const saved = localStorage.getItem('mantraIndex');
@@ -1867,26 +1750,83 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
   const [displayWord, setDisplayWord] = useState('');
   const [wordOpacity, setWordOpacity] = useState(0);
   const [showLabel, setShowLabel] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(getSavedCategory);
+  const [showCategorySelector, setShowCategorySelector] = useState(false);
   const labelTimeoutRef = useRef(null);
   const fadeInTimeoutRef = useRef(null);
+  const touchStartRef = useRef({ x: 0, y: 0 });
 
-  const currentPair = mantraVisualPairs[pairIndex];
+  // Swipe gesture handling
+  const handleTouchStart = (e) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const handleTouchEnd = (e) => {
+    const deltaX = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const deltaY = e.changedTouches[0].clientY - touchStartRef.current.y;
+    const isVertical = Math.abs(deltaY) > Math.abs(deltaX);
+
+    // Swipe up to open selector
+    if (isVertical && deltaY < -50 && !showCategorySelector) {
+      setShowCategorySelector(true);
+    }
+    // Swipe down to close selector
+    if (isVertical && deltaY > 50 && showCategorySelector) {
+      setShowCategorySelector(false);
+    }
+  };
+
+  // Filter mantras by category (metta is a special meditation mode, not a mantra category)
+  const filteredMantras = selectedCategory === 'metta'
+    ? mantraVisualPairs
+    : mantraVisualPairs.filter(m => m.category === selectedCategory);
+
+  // Get current pair from filtered list, ensuring valid index
+  const safeIndex = Math.max(0, Math.min(pairIndex, filteredMantras.length - 1));
+  const currentPair = filteredMantras[safeIndex] || mantraVisualPairs[0];
   // Don't count isCenter element - it reveals on completion, not on a word
   const totalElements = elements.filter(e => !e.isCenter).length;
 
-  // Save mantra index whenever it changes
+  // Save mantra index and category whenever they change
   useEffect(() => {
     try {
       localStorage.setItem('mantraIndex', pairIndex.toString());
     } catch (e) {}
   }, [pairIndex]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('mantraCategory', selectedCategory);
+    } catch (e) {}
+    // Skip mantra initialization for metta meditation mode
+    if (selectedCategory === 'metta') return;
+    // Reset to first mantra in new category
+    setPairIndex(0);
+    if (started) {
+      const mantras = mantraVisualPairs.filter(m => m.category === selectedCategory);
+      const pair = mantras[0];
+      if (pair) {
+        const newElements = pair.generate(175, 175);
+        setElements(newElements);
+        setTapCount(0);
+        setIsComplete(false);
+      }
+    }
+  }, [selectedCategory]);
+
   // Auto-start session and show mode label on mount (fade in then out)
   useEffect(() => {
-    // Initialize the mantra session immediately
-    const pair = mantraVisualPairs[pairIndex];
-    const newElements = pair.generate(175, 175);
-    setElements(newElements);
+    // Skip mantra initialization for metta meditation mode
+    if (selectedCategory !== 'metta') {
+      // Initialize the mantra session immediately with filtered mantras
+      const mantras = mantraVisualPairs.filter(m => m.category === selectedCategory);
+      const safeIdx = Math.max(0, Math.min(pairIndex, mantras.length - 1));
+      const pair = mantras[safeIdx] || mantras[0];
+      if (pair) {
+        const newElements = pair.generate(175, 175);
+        setElements(newElements);
+      }
+    }
     setStarted(true);
 
     // Fade in label after brief delay
@@ -1913,8 +1853,10 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
   }, [tapCount, currentPair]);
 
   const initializeSession = (advance = false) => {
-    const newPairIndex = advance ? (pairIndex + 1) % mantraVisualPairs.length : pairIndex;
-    const pair = mantraVisualPairs[newPairIndex];
+    const mantras = mantraVisualPairs.filter(m => m.category === selectedCategory);
+    const currentIndex = Math.min(pairIndex, mantras.length - 1);
+    const newPairIndex = advance ? (currentIndex + 1) % mantras.length : currentIndex;
+    const pair = mantras[newPairIndex];
     const newElements = pair.generate(175, 175);
     setElements(newElements);
     setPairIndex(newPairIndex);
@@ -1922,6 +1864,13 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
     setIsComplete(false);
     setStarted(true);
   };
+
+  // Cap at 4 mantra cycles, sync visual completion with mantra end
+  const maxCycles = 4;
+  const maxTaps = currentPair.words.length * maxCycles;
+
+  // 1 element revealed per tap - visual completes with 4th mantra cycle
+  const revealedElements = tapCount;
 
   const handleTap = () => {
     haptic.tap();
@@ -1931,19 +1880,142 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
     }
     const nextTapCount = tapCount + 1;
     setTapCount(nextTapCount);
-    // Complete when: all elements revealed AND at end of a mantra cycle
-    // This ensures the visual finishes on the last word, not mid-mantra
-    const wordsLength = currentPair.words.length;
-    const atEndOfMantraCycle = nextTapCount % wordsLength === 0;
-    if (nextTapCount >= totalElements && atEndOfMantraCycle) {
+    // Complete after exactly 4 cycles (visual and mantra end together)
+    if (nextTapCount >= maxTaps) {
       setIsComplete(true);
       haptic.success();
     }
   };
 
+  const currentCategoryName = mantraCategories.find(c => c.key === selectedCategory)?.name || 'All';
+
+  const handleCategoryTap = (e) => {
+    e.stopPropagation();
+    setShowCategorySelector(!showCategorySelector);
+  };
+
+  const selectCategory = (key) => {
+    haptic.tap();
+    setSelectedCategory(key);
+    setShowCategorySelector(false);
+  };
+
+  // Check if metta meditation is selected
+  const isMettaMode = selectedCategory === 'metta';
+
+  // Render Heart Garden (Metta Meditation) when metta category selected
+  if (isMettaMode) {
+    return (
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{ position: 'absolute', inset: 0 }}
+      >
+        {/* Category selector - bottom drawer */}
+        {showCategorySelector && (
+          <>
+            {/* Backdrop */}
+            <div
+              onClick={() => setShowCategorySelector(false)}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0,0,0,0.5)',
+                zIndex: 20,
+                animation: 'fadeInMantra 0.3s ease-out',
+              }}
+            />
+            {/* Bottom drawer */}
+            <div
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                maxHeight: '50vh',
+                background: 'rgba(10,10,15,0.95)',
+                borderRadius: '20px 20px 0 0',
+                border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.12)`,
+                borderBottom: 'none',
+                zIndex: 25,
+                animation: 'slideUpMantra 0.3s ease-out',
+                display: 'flex',
+                flexDirection: 'column',
+                touchAction: 'auto',
+              }}
+            >
+              {/* Handle */}
+              <div
+                onClick={(e) => { e.stopPropagation(); setShowCategorySelector(false); }}
+                style={{ display: 'flex', justifyContent: 'center', padding: '0.75rem', cursor: 'pointer' }}
+              >
+                <div style={{ width: '36px', height: '4px', background: `hsla(${primaryHue}, 52%, 68%, 0.3)`, borderRadius: '2px' }} />
+              </div>
+              {/* Title */}
+              <div style={{ textAlign: 'center', padding: '0 1rem 0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <span style={{ color: `hsla(${primaryHue}, 52%, 68%, 0.7)`, fontSize: '0.6rem', fontFamily: '"Jost", sans-serif', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                  Meditations
+                </span>
+              </div>
+              {/* Scrollable list */}
+              <div
+                onTouchMove={(e) => e.stopPropagation()}
+                style={{
+                  overflowY: 'auto',
+                  padding: '0.5rem 0',
+                  WebkitOverflowScrolling: 'touch',
+                  touchAction: 'pan-y',
+                  overscrollBehavior: 'contain',
+                }}
+              >
+                {mantraCategories.map((cat) => (
+                  <button
+                    key={cat.key}
+                    onClick={(e) => { e.stopPropagation(); selectCategory(cat.key); }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      background: selectedCategory === cat.key ? `hsla(${primaryHue}, 52%, 68%, 0.1)` : 'transparent',
+                      border: 'none',
+                      borderLeft: selectedCategory === cat.key ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
+                      color: selectedCategory === cat.key ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      padding: '0.85rem 1.5rem',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      fontFamily: '"Jost", sans-serif',
+                      textAlign: 'left',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+                <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom, 0px))', flexShrink: 0 }} />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Heart Garden meditation */}
+        <GazeMode
+          theme={{ bg: '#000', text: '#E8E4DC', textMuted: '#7a7570', accent: '#7FDBCA' }}
+          primaryHue={primaryHue}
+          onHueChange={() => {}}
+          currentVisual="heartGarden"
+          onVisualChange={() => {}}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       onClick={handleTap}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       style={{
         position: 'absolute',
         inset: 0,
@@ -1959,10 +2031,132 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
         zIndex: 2,
       }}
     >
+      {/* Category selector button */}
+      <div
+        onClick={handleCategoryTap}
+        style={{
+          position: 'absolute',
+          top: 'env(safe-area-inset-top, 0px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          padding: '0.75rem 1.25rem',
+          marginTop: '0.5rem',
+          opacity: showCategorySelector || tapCount === 0 ? 0.8 : 0.3,
+          transition: 'opacity 0.3s ease',
+        }}
+      >
+        <span style={{
+          fontSize: '0.75rem',
+          letterSpacing: '0.15em',
+          color: `hsla(${primaryHue}, 40%, 70%, 0.9)`,
+          textTransform: 'uppercase',
+        }}>
+          {currentCategoryName}
+        </span>
+      </div>
+
+      {/* Category selector - bottom drawer */}
+      {showCategorySelector && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setShowCategorySelector(false)}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              zIndex: 5,
+              animation: 'fadeInMantra 0.3s ease-out',
+            }}
+          />
+          {/* Bottom drawer */}
+          <div
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              maxHeight: '50vh',
+              background: 'rgba(10,10,15,0.95)',
+              borderRadius: '20px 20px 0 0',
+              border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.12)`,
+              borderBottom: 'none',
+              zIndex: 10,
+              animation: 'slideUpMantra 0.3s ease-out',
+              display: 'flex',
+              flexDirection: 'column',
+              touchAction: 'auto',
+            }}
+          >
+            {/* Handle */}
+            <div
+              onClick={(e) => { e.stopPropagation(); setShowCategorySelector(false); }}
+              style={{ display: 'flex', justifyContent: 'center', padding: '0.75rem', cursor: 'pointer' }}
+            >
+              <div style={{ width: '36px', height: '4px', background: `hsla(${primaryHue}, 52%, 68%, 0.3)`, borderRadius: '2px' }} />
+            </div>
+            {/* Title */}
+            <div style={{ textAlign: 'center', padding: '0 1rem 0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ color: `hsla(${primaryHue}, 52%, 68%, 0.7)`, fontSize: '0.6rem', fontFamily: '"Jost", sans-serif', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                Meditations
+              </span>
+            </div>
+            {/* Scrollable list */}
+            <div
+              onTouchMove={(e) => e.stopPropagation()}
+              style={{
+                overflowY: 'auto',
+                padding: '0.5rem 0',
+                WebkitOverflowScrolling: 'touch',
+                touchAction: 'pan-y',
+                overscrollBehavior: 'contain',
+              }}
+            >
+              {mantraCategories.map((cat) => (
+                <button
+                  key={cat.key}
+                  onClick={(e) => { e.stopPropagation(); selectCategory(cat.key); }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    background: selectedCategory === cat.key ? `hsla(${primaryHue}, 52%, 68%, 0.1)` : 'transparent',
+                    border: 'none',
+                    borderLeft: selectedCategory === cat.key ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
+                    color: selectedCategory === cat.key ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                    padding: '0.85rem 1.5rem',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontFamily: '"Jost", sans-serif',
+                    textAlign: 'left',
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  {cat.name}
+                </button>
+              ))}
+              <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom, 0px))', flexShrink: 0 }} />
+            </div>
+          </div>
+        </>
+      )}
+      <style>{`
+        @keyframes slideUpMantra {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        @keyframes fadeInMantra {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
+
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem' }}>
         <MantraGeometryCanvas
           elements={elements}
-          revealedCount={tapCount}
+          revealedCount={revealedElements}
           isComplete={isComplete}
           primaryHue={primaryHue}
         />
@@ -4619,8 +4813,7 @@ function Still() {
                 { key: 'hum', icon: '∿', label: 'Hum' },
                 { key: 'breathwork', icon: '◎', label: 'Breathe' },
                 { key: 'gaze', icon: '◯', label: 'Gaze' },
-                { key: 'heartGarden', icon: '❦', label: 'Heart Garden' },
-                { key: 'mantra', icon: '◇', label: 'Mantra' },
+                { key: 'mantra', icon: '◇', label: 'Meditate' },
                 { key: 'zenboard', icon: '∞', label: 'Impermanence' },
               ];
               const currentMode = modes.find(m => m.key === view) || modes[0];
@@ -5172,23 +5365,6 @@ function Still() {
             primaryHue={primaryHue}
             primaryColor={primaryColor}
           />
-        )}
-
-        {/* Heart Garden View - Loving-kindness meditation */}
-        {view === 'heartGarden' && (
-          <div style={{ position: 'absolute', inset: 0 }}>
-            <GazeMode
-              theme={currentTheme}
-              primaryHue={settings.primaryHue}
-              onHueChange={(hue) => {
-                const newSettings = { ...settings, primaryHue: hue };
-                setSettings(newSettings);
-                saveSettings(newSettings);
-              }}
-              currentVisual="heartGarden"
-              onVisualChange={() => {}}
-            />
-          </div>
         )}
 
         {/* Breathwork View is now always mounted below for WebGL warmup */}
