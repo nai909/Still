@@ -322,16 +322,18 @@ const generateForgivenessRelease = (cx, cy) => {
 const generateSelfAcceptance = (cx, cy) => {
   const elements = [];
 
-  // Left figure - head + 3 lines
+  // Left figure - head + body + 2 legs + arm = 5 elements
   elements.push({ type: 'circle', x: cx - 35, y: cy - 50, radius: 15 });
   elements.push({ type: 'line', x1: cx - 35, y1: cy - 35, x2: cx - 35, y2: cy + 20 });
-  elements.push({ type: 'line', x1: cx - 35, y1: cy + 20, x2: cx - 45, y2: cy + 60 });
+  elements.push({ type: 'line', x1: cx - 35, y1: cy + 20, x2: cx - 50, y2: cy + 60 });
+  elements.push({ type: 'line', x1: cx - 35, y1: cy + 20, x2: cx - 20, y2: cy + 60 });
   elements.push({ type: 'line', x1: cx - 35, y1: cy - 20, x2: cx - 10, y2: cy - 30 });
 
-  // Right figure - head + 3 lines
+  // Right figure - head + body + 2 legs + arm = 5 elements
   elements.push({ type: 'circle', x: cx + 35, y: cy - 50, radius: 15 });
   elements.push({ type: 'line', x1: cx + 35, y1: cy - 35, x2: cx + 35, y2: cy + 20 });
-  elements.push({ type: 'line', x1: cx + 35, y1: cy + 20, x2: cx + 45, y2: cy + 60 });
+  elements.push({ type: 'line', x1: cx + 35, y1: cy + 20, x2: cx + 50, y2: cy + 60 });
+  elements.push({ type: 'line', x1: cx + 35, y1: cy + 20, x2: cx + 20, y2: cy + 60 });
   elements.push({ type: 'line', x1: cx + 35, y1: cy - 20, x2: cx + 10, y2: cy - 30 });
 
   // Hands meeting - 2 dots
@@ -341,11 +343,9 @@ const generateSelfAcceptance = (cx, cy) => {
   // Heart at center
   elements.push({ type: 'circle', x: cx, y: cy - 15, radius: 18 });
 
-  // Radiating light - 4 dots
+  // Light above and below - 2 dots
   elements.push({ type: 'dot', x: cx, y: cy - 55, radius: 3 });
   elements.push({ type: 'dot', x: cx, y: cy + 25, radius: 3 });
-  elements.push({ type: 'dot', x: cx - 35, y: cy - 15, radius: 3 });
-  elements.push({ type: 'dot', x: cx + 35, y: cy - 15, radius: 3 });
 
   // The accepted heart
   elements.push({ type: 'dot', x: cx, y: cy - 15, radius: 6, isCenter: true });
