@@ -4133,7 +4133,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         color: hslToHex(hue, saturation, lightness),
         wireframe: true,
         transparent: true,
-        opacity: 0.6 - layer * 0.1
+        opacity: 0.8 - layer * 0.12
       });
 
       const mountain = new THREE.Mesh(geometry, material);
