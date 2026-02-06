@@ -847,6 +847,50 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
               }}>Breathing Techniques</span>
             </div>
 
+            {/* Text toggle - at top */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.75rem 1.5rem',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              <span style={{
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: '0.85rem',
+                fontFamily: '"Jost", sans-serif',
+              }}>Show Phase Text</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  haptic.tap();
+                  setShowPhaseText(!showPhaseText);
+                }}
+                style={{
+                  width: '48px',
+                  height: '28px',
+                  borderRadius: '14px',
+                  border: 'none',
+                  background: showPhaseText ? `hsla(${primaryHue}, 52%, 68%, 0.8)` : 'rgba(255,255,255,0.2)',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  transition: 'background 0.3s ease',
+                }}
+              >
+                <div style={{
+                  position: 'absolute',
+                  top: '3px',
+                  left: showPhaseText ? '23px' : '3px',
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '50%',
+                  background: '#fff',
+                  transition: 'left 0.3s ease',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                }} />
+              </button>
+            </div>
+
             {/* Scrollable list */}
             <div
               onTouchMove={(e) => e.stopPropagation()}
@@ -888,51 +932,6 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
                   <div style={{ fontSize: '0.7rem', opacity: 0.6, marginTop: '0.25rem' }}>{tech.description || ''}</div>
                 </button>
               ))}
-
-              {/* Text toggle */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '1rem 1.5rem',
-                marginTop: '0.5rem',
-                borderTop: '1px solid rgba(255,255,255,0.06)',
-              }}>
-                <span style={{
-                  color: 'rgba(255,255,255,0.6)',
-                  fontSize: '0.85rem',
-                  fontFamily: '"Jost", sans-serif',
-                }}>Show Phase Text</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    haptic.tap();
-                    setShowPhaseText(!showPhaseText);
-                  }}
-                  style={{
-                    width: '48px',
-                    height: '28px',
-                    borderRadius: '14px',
-                    border: 'none',
-                    background: showPhaseText ? `hsla(${primaryHue}, 52%, 68%, 0.8)` : 'rgba(255,255,255,0.2)',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    transition: 'background 0.3s ease',
-                  }}
-                >
-                  <div style={{
-                    position: 'absolute',
-                    top: '3px',
-                    left: showPhaseText ? '23px' : '3px',
-                    width: '22px',
-                    height: '22px',
-                    borderRadius: '50%',
-                    background: '#fff',
-                    transition: 'left 0.3s ease',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                  }} />
-                </button>
-              </div>
 
               {/* Bottom spacer for scroll */}
               <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom, 0px))', flexShrink: 0 }} />
