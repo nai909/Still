@@ -5469,7 +5469,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         "Now let the garden expand beyond all boundaries.",
         "Open the gates and let everyone enter.",
         "All beings everywhere — human, animal, seen and unseen.",
-        "Each one takes what they need.",
+        "Each one receives what they need.",
         "And the garden grows more abundant with every gift.",
         "There is no scarcity here. Only overflow.",
         "May all beings be nourished."
@@ -9960,6 +9960,24 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
               ? "The garden lives within you always."
               : (meditationStages[gardenStage]?.guidance[gardenGuidanceIndex] || '')}
           </div>
+
+          {/* Attribution - shown when meditation is complete */}
+          {gardenComplete && (
+            <div
+              style={{
+                color: `hsla(${hue}, 40%, 60%, 0.6)`,
+                fontSize: '0.7rem',
+                fontFamily: '"Jost", sans-serif',
+                fontStyle: 'italic',
+                marginTop: '1.5rem',
+                opacity: gardenGuidanceOpacity,
+                transition: 'opacity 0.8s ease-in-out',
+                textShadow: '0 2px 10px rgba(0,0,0,0.5)',
+              }}
+            >
+              Adapted from Ayya Khema's Flower Garden meditation
+            </div>
+          )}
 
           {/* Tap hint - shown briefly at start */}
           {!gardenComplete && gardenLinesRead === 0 && (
