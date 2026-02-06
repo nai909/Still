@@ -3920,13 +3920,23 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clockRef.current.getElapsedTime();
       const targetBreath = getBreathPhase(elapsed);
 
-      // Smooth lerp toward target breath - creates fluid water-like motion
-      // Lower value = slower/smoother transition (0.015 = very fluid)
-      smoothedBreath += (targetBreath - smoothedBreath) * 0.015;
+      // Smooth lerp with ease-in-out for organic feel
+      // Slightly higher factor (0.02) for responsiveness while staying fluid
+      const diff = targetBreath - smoothedBreath;
+      // Apply ease-in-out curve to the lerp factor based on distance from target
+      const easedFactor = 0.02 * (1 + Math.abs(diff) * 0.5); // Accelerate when far, decelerate when close
+      smoothedBreath += diff * easedFactor;
 
-      // Breath-synced scale using smoothed value
-      const targetScale = 0.9 + smoothedBreath * 0.2;
+      // Apply smoothstep easing to the breath value for even smoother visual output
+      const easedBreath = smoothedBreath * smoothedBreath * (3 - 2 * smoothedBreath);
+
+      // Breath-synced scale using eased value (exaggerated range: 0.75 to 1.25)
+      const targetScale = 0.75 + easedBreath * 0.5;
       lavaGroup.scale.setScalar(targetScale);
+
+      // Breath-synced camera z-position (closer on inhale, further on exhale)
+      // Exhale (breath=0): z=11 (far), Inhale (breath=1): z=7 (close)
+      camera.position.z = 11 - easedBreath * 4;
 
       // Touch-responsive rotation - slow and meditative
       if (touchPointsRef.current.length > 0) {
@@ -3995,11 +4005,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         geometry.attributes.position.needsUpdate = true;
         geometry.computeVertexNormals();
 
-        // Breath-synced scale (using smoothed value for fluid motion)
-        blob.mesh.scale.setScalar(0.9 + smoothedBreath * 0.15);
+        // Breath-synced scale (using eased value for organic motion)
+        blob.mesh.scale.setScalar(0.8 + easedBreath * 0.35);
 
-        // Breath-synced opacity (using smoothed value for fluid motion)
-        blob.mesh.material.opacity = 0.55 + smoothedBreath * 0.3;
+        // Breath-synced opacity (using eased value for organic motion)
+        blob.mesh.material.opacity = 0.55 + easedBreath * 0.3;
       });
 
       // Animate glow particles - slow drift
@@ -4019,7 +4029,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         if (glowPositionsArr[i3 + 2] < -1.5) glowPositionsArr[i3 + 2] = 1.5;
       }
       glowGeom.attributes.position.needsUpdate = true;
-      glowMat.opacity = 0.25 + smoothedBreath * 0.3;
+      glowMat.opacity = 0.25 + easedBreath * 0.3;
 
       renderer.render(scene, camera);
     };

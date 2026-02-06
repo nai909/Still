@@ -612,12 +612,15 @@ const saveSettings = (settings) => {
 function BreathworkView({ breathSession, breathTechniques, startBreathSession, stopBreathSession, primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', isActive = false }) {
   const [showUI, setShowUI] = useState(false);
   const [showLabel, setShowLabel] = useState(false);
+  const [displayedPhase, setDisplayedPhase] = useState('');
+  const [phaseOpacity, setPhaseOpacity] = useState(1);
   const swipeStartRef = useRef(null);
   const wheelAccumRef = useRef(0);
   const wheelTimeoutRef = useRef(null);
   const labelTimeoutRef = useRef(null);
   const fadeInTimeoutRef = useRef(null);
   const wasActiveRef = useRef(false);
+  const phaseTransitionRef = useRef(null);
 
   // Reset breath session and show label when view becomes active (fade in then out)
   useEffect(() => {
@@ -636,6 +639,42 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
       if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
     };
   }, [isActive, stopBreathSession]);
+
+  // Smooth phase text transitions with fade
+  const currentPhaseLabel = breathSession.isActive
+    ? breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label || 'breathe'
+    : '';
+
+  useEffect(() => {
+    if (!breathSession.isActive) {
+      setDisplayedPhase('');
+      setPhaseOpacity(1);
+      return;
+    }
+
+    if (currentPhaseLabel !== displayedPhase) {
+      // Clear any pending transition
+      if (phaseTransitionRef.current) clearTimeout(phaseTransitionRef.current);
+
+      if (displayedPhase === '') {
+        // First phase - just fade in
+        setDisplayedPhase(currentPhaseLabel);
+        setPhaseOpacity(0);
+        requestAnimationFrame(() => setPhaseOpacity(1));
+      } else {
+        // Transition between phases - fade out, then fade in new
+        setPhaseOpacity(0);
+        phaseTransitionRef.current = setTimeout(() => {
+          setDisplayedPhase(currentPhaseLabel);
+          requestAnimationFrame(() => setPhaseOpacity(1));
+        }, 300); // Wait for fade out
+      }
+    }
+
+    return () => {
+      if (phaseTransitionRef.current) clearTimeout(phaseTransitionRef.current);
+    };
+  }, [currentPhaseLabel, displayedPhase, breathSession.isActive]);
 
   // Handle swipe gestures (vertical only - for technique selector)
   const handleTouchStart = useCallback((e) => {
@@ -728,18 +767,18 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
         breathSession={breathSession}
       />
 
-      {/* Phase text */}
-      {breathSession.isActive && (
+      {/* Phase text with smooth fade transitions */}
+      {breathSession.isActive && displayedPhase && (
         <div style={{
           position: 'absolute',
-          bottom: '32%',
+          bottom: '20%',
           left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 1,
+          zIndex: 10,
           pointerEvents: 'none',
         }}>
           <div style={{
-            color: 'rgba(255, 255, 255, 0.5)',
+            color: 'rgba(255, 255, 255, 1)',
             fontSize: '1.3rem',
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
@@ -747,8 +786,12 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
             textTransform: 'lowercase',
             textAlign: 'center',
             maxWidth: '80vw',
+            textShadow: '0 2px 8px rgba(0, 0, 0, 0.8)',
+            opacity: phaseOpacity,
+            transform: `scale(${0.95 + phaseOpacity * 0.05})`,
+            transition: 'opacity 0.3s ease-out, transform 0.3s ease-out',
           }}>
-            {breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label || 'breathe'}
+            {displayedPhase}
           </div>
         </div>
       )}
@@ -4130,7 +4173,7 @@ function Still() {
   const [showColorOverlay, setShowColorOverlay] = useState(false);
   const [hasOpenedSettings, setHasOpenedSettings] = useState(false);
   const [showSettingsHint, setShowSettingsHint] = useState(false);
-  const [gazeVisual, setGazeVisual] = useState('lavaTouch');
+  const [gazeVisual, setGazeVisual] = useState('underwater');
 
   // Settings hint timer - shows hint every 20 seconds until settings opened
   useEffect(() => {

@@ -49,8 +49,6 @@ export const gazeModes = [
   { key: 'dandelion', name: 'Dandelion' },
   { key: 'ripples', name: 'Ripples' },
   { key: 'jellyfish2d', name: 'Deep Sea' },
-    { key: 'koiPond', name: 'Koi Pond' },
-  { key: 'flowerOfLife', name: 'Flower of Life' },
   { key: 'lavaTouch', name: 'Lava Lamp' },
   { key: 'mountains', name: 'Mountains' },
   { key: 'maloka', name: 'Maloka' },
