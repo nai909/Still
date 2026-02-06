@@ -5210,7 +5210,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       guidance: [
         "Put your attention on the breath for a few moments.",
         "Let each inhale be so gentle it barely stirs the hairs in your nose.",
-        "Don't force anything. Let the breath be smooth and natural."
+        "Let the breath be smooth and natural."
       ]
     },
     {
@@ -5477,8 +5477,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     // Current opacity values for smooth lerping
     // Start with seed visible, then roots grow down, then plant grows up
     const groupOpacities = {
-      seed: 1, seedOrbits: 0, plant: 0, pyramid: 0, base: 0,
-      rootCoil: 0, roots: 0, ferns: 0, torus: 0, vortex: 0,
+      seed: 1, seedOrbits: 0,
+      plantStem: 0, plantLeaves: 0, plantBud: 0,
+      pyramidMain: 0, pyramidRings: 0,
+      baseBox: 0, baseDetails: 0,
+      rootCoilMain: 0, rootCoilDetails: 0,
+      rootsTaproot: 0, rootsBranches: 0, rootsOrbits: 0,
+      fernsLeft: 0, fernsRight: 0,
+      torusMain: 0, torusFlower: 0, torusCore: 0,
+      vortexFunnels: 0, vortexLines: 0,
       flowers: 0, particles: 0
     };
 
@@ -5487,18 +5494,22 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     torusGroup.position.y = 220;
     mainGroup.add(torusGroup);
 
+    // Sub-group: Main torus meshes
+    const torusMainGroup = new THREE.Group();
+    torusGroup.add(torusMainGroup);
+
     const torusGeo = new THREE.TorusGeometry(80, 35, 16, 40);
     const torusMesh = new THREE.Mesh(torusGeo, new THREE.MeshBasicMaterial({
       color: primaryDark, wireframe: true, transparent: true, opacity: 0.4
     }));
-    torusGroup.add(torusMesh);
+    torusMainGroup.add(torusMesh);
 
     const torus2Geo = new THREE.TorusGeometry(80, 35, 12, 32);
     const torus2Mesh = new THREE.Mesh(torus2Geo, new THREE.MeshBasicMaterial({
       color: primaryLight, wireframe: true, transparent: true, opacity: 0.25
     }));
     torus2Mesh.rotation.y = Math.PI / 4;
-    torusGroup.add(torus2Mesh);
+    torusMainGroup.add(torus2Mesh);
 
     // Third torus for more density
     const torus3Geo = new THREE.TorusGeometry(80, 35, 10, 28);
@@ -5507,31 +5518,37 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     }));
     torus3Mesh.rotation.y = Math.PI / 2;
     torus3Mesh.rotation.x = 0.3;
-    torusGroup.add(torus3Mesh);
+    torusMainGroup.add(torus3Mesh);
 
     // Inner concentric rings
     for (let i = 1; i <= 5; i++) {
-      torusGroup.add(createRing(i * 10, 0, 48, inkLightMat));
+      torusMainGroup.add(createRing(i * 10, 0, 48, inkLightMat));
     }
 
-    // Core sphere
+    // Sub-group: Core sphere and icosahedron
+    const torusCoreGroup = new THREE.Group();
+    torusGroup.add(torusCoreGroup);
+
     const coreSphereGeo = new THREE.SphereGeometry(10, 16, 16);
     const coreSphereMesh = new THREE.Mesh(coreSphereGeo, new THREE.MeshBasicMaterial({
       color: accentColor, wireframe: true, transparent: true, opacity: 0.65
     }));
-    torusGroup.add(coreSphereMesh);
+    torusCoreGroup.add(coreSphereMesh);
 
     // Inner icosahedron
     const icoGeo = new THREE.IcosahedronGeometry(6, 0);
     const icoMesh = new THREE.Mesh(icoGeo, new THREE.MeshBasicMaterial({
       color: accentColor, wireframe: true, transparent: true, opacity: 0.85
     }));
-    torusGroup.add(icoMesh);
+    torusCoreGroup.add(icoMesh);
 
     // Central dot
-    torusGroup.add(createDot(0, 0, 0, 2.5, accentColor));
+    torusCoreGroup.add(createDot(0, 0, 0, 2.5, accentColor));
 
-    // Flower/radial pattern inside torus
+    // Sub-group: Flower/radial pattern
+    const torusFlowerGroup = new THREE.Group();
+    torusGroup.add(torusFlowerGroup);
+
     const petalCount = 8;
     for (let i = 0; i < petalCount; i++) {
       const a = (i / petalCount) * Math.PI * 2;
@@ -5541,8 +5558,8 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         new THREE.Vector3(Math.cos(a) * r * 0.5, Math.sin(a + 0.3) * 8, Math.sin(a) * r * 0.5),
         new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r)
       ];
-      torusGroup.add(createCurve(pts, greenFaintMat, 20));
-      torusGroup.add(createDot(Math.cos(a) * r, 0, Math.sin(a) * r, 1.5, primaryColor));
+      torusFlowerGroup.add(createCurve(pts, greenFaintMat, 20));
+      torusFlowerGroup.add(createDot(Math.cos(a) * r, 0, Math.sin(a) * r, 1.5, primaryColor));
     }
 
     // Stamen lines between petals
@@ -5551,13 +5568,17 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const r = 30;
       const stamenPts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(Math.cos(a) * r, 4, Math.sin(a) * r)];
       const stamenGeo = new THREE.BufferGeometry().setFromPoints(stamenPts);
-      torusGroup.add(new THREE.Line(stamenGeo, inkLightMat));
-      torusGroup.add(createDot(Math.cos(a) * r, 4, Math.sin(a) * r, 1, primaryLight));
+      torusFlowerGroup.add(new THREE.Line(stamenGeo, inkLightMat));
+      torusFlowerGroup.add(createDot(Math.cos(a) * r, 4, Math.sin(a) * r, 1, primaryLight));
     }
 
     // === 2. VORTEX FUNNELS ===
     const vortexGroup = new THREE.Group();
     mainGroup.add(vortexGroup);
+
+    // Sub-group: Funnels
+    const vortexFunnelsGroup = new THREE.Group();
+    vortexGroup.add(vortexFunnelsGroup);
 
     const createVortexFunnel = (x, y) => {
       const group = new THREE.Group();
@@ -5586,24 +5607,27 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       return group;
     };
 
-    vortexGroup.add(createVortexFunnel(-160, 320));
-    vortexGroup.add(createVortexFunnel(160, 320));
+    vortexFunnelsGroup.add(createVortexFunnel(-160, 320));
+    vortexFunnelsGroup.add(createVortexFunnel(160, 320));
 
-    // Connection lines
-    vortexGroup.add(createCurve([
+    // Sub-group: Connection lines and cubes
+    const vortexLinesGroup = new THREE.Group();
+    vortexGroup.add(vortexLinesGroup);
+
+    vortexLinesGroup.add(createCurve([
       new THREE.Vector3(-160, 355, 0), new THREE.Vector3(-130, 280, 20),
       new THREE.Vector3(-90, 240, 10), new THREE.Vector3(-60, 220, 0)
     ], inkMat));
-    vortexGroup.add(createCurve([
+    vortexLinesGroup.add(createCurve([
       new THREE.Vector3(160, 355, 0), new THREE.Vector3(130, 280, -20),
       new THREE.Vector3(90, 240, -10), new THREE.Vector3(60, 220, 0)
     ], inkMat));
 
     // Junction cubes
-    vortexGroup.add(createSmallCube(-160, 355, 0, 4));
-    vortexGroup.add(createSmallCube(160, 355, 0, 4));
-    vortexGroup.add(createSmallCube(-60, 220, 0, 4));
-    vortexGroup.add(createSmallCube(60, 220, 0, 4));
+    vortexLinesGroup.add(createSmallCube(-160, 355, 0, 4));
+    vortexLinesGroup.add(createSmallCube(160, 355, 0, 4));
+    vortexLinesGroup.add(createSmallCube(-60, 220, 0, 4));
+    vortexLinesGroup.add(createSmallCube(60, 220, 0, 4));
 
     // === 3. PYRAMID VESSEL ===
     const pyramidGroup = new THREE.Group();
@@ -5611,13 +5635,17 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     const pyH = 180, pyW = 100, pyTop = 150, pyBot = pyTop - pyH;
 
+    // Sub-group: Main pyramid structure
+    const pyramidMainGroup = new THREE.Group();
+    pyramidGroup.add(pyramidMainGroup);
+
     const pyGeo = new THREE.ConeGeometry(pyW, pyH, 4, 1, true);
     const pyMesh = new THREE.Mesh(pyGeo, new THREE.MeshBasicMaterial({
       color: primaryColor, wireframe: true, transparent: true, opacity: 0.6
     }));
     pyMesh.position.y = pyTop - pyH / 2;
     pyMesh.rotation.y = Math.PI / 4;
-    pyramidGroup.add(pyMesh);
+    pyramidMainGroup.add(pyMesh);
 
     // Pyramid edges
     const apexY = pyTop;
@@ -5629,31 +5657,34 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     for (const corner of baseCorners) {
       const pts = [new THREE.Vector3(0, apexY, 0), corner];
       const geo = new THREE.BufferGeometry().setFromPoints(pts);
-      pyramidGroup.add(new THREE.Line(geo, inkMat));
+      pyramidMainGroup.add(new THREE.Line(geo, inkMat));
     }
     for (let i = 0; i < 4; i++) {
       const pts = [baseCorners[i], baseCorners[(i + 1) % 4]];
       const geo = new THREE.BufferGeometry().setFromPoints(pts);
-      pyramidGroup.add(new THREE.Line(geo, inkMat));
+      pyramidMainGroup.add(new THREE.Line(geo, inkMat));
     }
 
     // Junction cubes
-    pyramidGroup.add(createSmallCube(0, apexY, 0, 5));
-    for (const c of baseCorners) pyramidGroup.add(createSmallCube(c.x, c.y, c.z, 5));
+    pyramidMainGroup.add(createSmallCube(0, apexY, 0, 5));
+    for (const c of baseCorners) pyramidMainGroup.add(createSmallCube(c.x, c.y, c.z, 5));
 
     // Central axis
     const axisPts = [new THREE.Vector3(0, apexY + 30, 0), new THREE.Vector3(0, pyBot - 30, 0)];
     const axisGeo = new THREE.BufferGeometry().setFromPoints(axisPts);
     const axisLine = new THREE.Line(axisGeo, inkDashMat);
     axisLine.computeLineDistances();
-    pyramidGroup.add(axisLine);
+    pyramidMainGroup.add(axisLine);
 
-    // Ring guides
+    // Sub-group: Ring guides
+    const pyramidRingsGroup = new THREE.Group();
+    pyramidGroup.add(pyramidRingsGroup);
+
     for (let i = 1; i <= 4; i++) {
       const t = i / 5;
       const y = pyTop - t * pyH;
       const r = pyW * t;
-      pyramidGroup.add(createRing(r, y, 32, inkLightMat));
+      pyramidRingsGroup.add(createRing(r, y, 32, inkLightMat));
     }
 
     // === 4. SEED (center) ===
@@ -5661,20 +5692,27 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     seedGroup.position.y = pyTop - pyH * 0.55;
     pyramidGroup.add(seedGroup);
 
+    // Main seed (always visible)
+    const seedCoreGroup = new THREE.Group();
+    seedGroup.add(seedCoreGroup);
+
     const seedGeo = new THREE.SphereGeometry(18, 16, 16);
     const seedMesh = new THREE.Mesh(seedGeo, new THREE.MeshBasicMaterial({
       color: primaryDark, wireframe: true, transparent: true, opacity: 0.6
     }));
-    seedGroup.add(seedMesh);
+    seedCoreGroup.add(seedMesh);
 
     const embryoGeo = new THREE.SphereGeometry(10, 12, 12);
     const embryoMesh = new THREE.Mesh(embryoGeo, new THREE.MeshBasicMaterial({
       color: primaryColor, wireframe: true, transparent: true, opacity: 0.5
     }));
-    seedGroup.add(embryoMesh);
-    seedGroup.add(createDot(0, 0, 0, 3, accentColor));
+    seedCoreGroup.add(embryoMesh);
+    seedCoreGroup.add(createDot(0, 0, 0, 3, accentColor));
 
-    // Energy orbits
+    // Sub-group: Energy orbits (controlled separately)
+    const seedOrbitsGroup = new THREE.Group();
+    seedGroup.add(seedOrbitsGroup);
+
     for (let i = 0; i < 3; i++) {
       const orbitGeo = new THREE.TorusGeometry(28 + i * 6, 0.3, 4, 48);
       const orbitMesh = new THREE.Mesh(orbitGeo, new THREE.MeshBasicMaterial({
@@ -5682,13 +5720,13 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }));
       orbitMesh.rotation.x = Math.PI / 2 + (i - 1) * 0.4;
       orbitMesh.rotation.z = i * 0.5;
-      seedGroup.add(orbitMesh);
+      seedOrbitsGroup.add(orbitMesh);
     }
 
     // Orbital dots
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2;
-      seedGroup.add(createDot(Math.cos(a) * 30, Math.sin(a) * 12, Math.sin(a) * 30, 1.5, primaryDark));
+      seedOrbitsGroup.add(createDot(Math.cos(a) * 30, Math.sin(a) * 12, Math.sin(a) * 30, 1.5, primaryDark));
     }
 
     // === 5. PLANT GROWING FROM SEED ===
@@ -5697,6 +5735,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     const stemBaseY = seedGroup.position.y;
     const stemTopY = apexY + 15;
+
+    // Sub-group: Stem
+    const plantStemGroup = new THREE.Group();
+    plantGroup.add(plantStemGroup);
 
     const stemCurve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(0, stemBaseY - 10, 0),
@@ -5710,11 +5752,11 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const stemTube = new THREE.Mesh(stemTubeGeo, new THREE.MeshBasicMaterial({
       color: primaryColor, wireframe: true, transparent: true, opacity: 0.65
     }));
-    plantGroup.add(stemTube);
+    plantStemGroup.add(stemTube);
 
     const stemPts = stemCurve.getPoints(50);
     const stemLineGeo = new THREE.BufferGeometry().setFromPoints(stemPts);
-    plantGroup.add(new THREE.Line(stemLineGeo, greenMat));
+    plantStemGroup.add(new THREE.Line(stemLineGeo, greenMat));
 
     // Leaves
     const createLeaf3D = (x, y, z, rotY, rotZ, scale = 1) => {
@@ -5752,6 +5794,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       return group;
     };
 
+    // Sub-group: Leaves
+    const plantLeavesGroup = new THREE.Group();
+    plantGroup.add(plantLeavesGroup);
+
     const leafPositions = [
       { y: stemBaseY + 25, rz: -0.8, rz2: 0.8 },
       { y: stemBaseY + 50, rz: -1.0, rz2: 0.6 },
@@ -5761,19 +5807,22 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     for (let i = 0; i < leafPositions.length; i++) {
       const lp = leafPositions[i];
       const sc = 1.2 - i * 0.15;
-      plantGroup.add(createLeaf3D(2, lp.y, 2, i * 1.2, lp.rz, sc));
-      plantGroup.add(createLeaf3D(-2, lp.y, -2, i * 1.2 + Math.PI, lp.rz2, sc * 0.9));
+      plantLeavesGroup.add(createLeaf3D(2, lp.y, 2, i * 1.2, lp.rz, sc));
+      plantLeavesGroup.add(createLeaf3D(-2, lp.y, -2, i * 1.2 + Math.PI, lp.rz2, sc * 0.9));
     }
 
-    // Bud
+    // Sub-group: Bud
+    const plantBudGroup = new THREE.Group();
+    plantGroup.add(plantBudGroup);
+
     const budGeo = new THREE.SphereGeometry(5, 8, 8);
     const budMesh = new THREE.Mesh(budGeo, new THREE.MeshBasicMaterial({
       color: primaryColor, wireframe: true, transparent: true, opacity: 0.6
     }));
     budMesh.position.set(0, stemTopY + 2, 0);
     budMesh.scale.set(1, 1.4, 1);
-    plantGroup.add(budMesh);
-    plantGroup.add(createDot(0, stemTopY + 8, 0, 2, accentColor));
+    plantBudGroup.add(budMesh);
+    plantBudGroup.add(createDot(0, stemTopY + 8, 0, 2, accentColor));
 
     // === 6. BASE BOX ===
     const baseGroup = new THREE.Group();
@@ -5782,14 +5831,21 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     const baseW = 130, baseH = 50, baseD = 80;
     const baseCY = pyBot - baseH / 2;
 
+    // Sub-group: Main box
+    const baseBoxGroup = new THREE.Group();
+    baseGroup.add(baseBoxGroup);
+
     const baseGeo = new THREE.BoxGeometry(baseW * 2, baseH, baseD * 2);
     const baseMesh = new THREE.Mesh(baseGeo, new THREE.MeshBasicMaterial({
       color: primaryColor, wireframe: true, transparent: true, opacity: 0.5
     }));
     baseMesh.position.y = baseCY;
-    baseGroup.add(baseMesh);
+    baseBoxGroup.add(baseMesh);
 
-    // Corner cubes
+    // Sub-group: Corner details
+    const baseDetailsGroup = new THREE.Group();
+    baseGroup.add(baseDetailsGroup);
+
     const bx = baseW, by = baseH / 2, bz = baseD;
     const boxCorners = [
       [-bx, baseCY + by, -bz], [bx, baseCY + by, -bz],
@@ -5797,17 +5853,21 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       [-bx, baseCY - by, -bz], [bx, baseCY - by, -bz],
       [-bx, baseCY - by, bz], [bx, baseCY - by, bz],
     ];
-    for (const c of boxCorners) baseGroup.add(createSmallCube(c[0], c[1], c[2], 4));
+    for (const c of boxCorners) baseDetailsGroup.add(createSmallCube(c[0], c[1], c[2], 4));
 
-    baseGroup.add(createDot(-bx, baseCY, 0, 2.5));
-    baseGroup.add(createDot(bx, baseCY, 0, 2.5));
-    baseGroup.add(createDot(0, baseCY, -bz, 2.5));
-    baseGroup.add(createDot(0, baseCY, bz, 2.5));
+    baseDetailsGroup.add(createDot(-bx, baseCY, 0, 2.5));
+    baseDetailsGroup.add(createDot(bx, baseCY, 0, 2.5));
+    baseDetailsGroup.add(createDot(0, baseCY, -bz, 2.5));
+    baseDetailsGroup.add(createDot(0, baseCY, bz, 2.5));
 
     // === 7. ROOT COIL ===
     const rootCoilGroup = new THREE.Group();
     rootCoilGroup.position.y = baseCY;
     baseGroup.add(rootCoilGroup);
+
+    // Sub-group: Main coils
+    const rootCoilMainGroup = new THREE.Group();
+    rootCoilGroup.add(rootCoilMainGroup);
 
     const coilPts = [];
     const coilTurns = 6, coilLen = 200, coilR = 18;
@@ -5819,7 +5879,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const z = Math.cos(a) * coilR;
       coilPts.push(new THREE.Vector3(x, y, z));
     }
-    rootCoilGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(coilPts), inkMedMat));
+    rootCoilMainGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(coilPts), inkMedMat));
 
     const coilPts2 = [];
     for (let i = 0; i <= 300; i++) {
@@ -5830,9 +5890,9 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const z = Math.cos(a) * coilR * 0.7;
       coilPts2.push(new THREE.Vector3(x, y, z));
     }
-    rootCoilGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(coilPts2), inkLightMat));
+    rootCoilMainGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(coilPts2), inkLightMat));
 
-    rootCoilGroup.add(createCurve([
+    rootCoilMainGroup.add(createCurve([
       new THREE.Vector3(-coilLen / 2 - 20, 0, 0),
       new THREE.Vector3(-coilLen / 4, 3, 5),
       new THREE.Vector3(0, -2, -3),
@@ -5840,21 +5900,41 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       new THREE.Vector3(coilLen / 2 + 20, 0, 0)
     ], greenMat, 40));
 
+    // Sub-group: Coil details (bulb and leaves)
+    const rootCoilDetailsGroup = new THREE.Group();
+    rootCoilGroup.add(rootCoilDetailsGroup);
+
     const bulbGeo = new THREE.SphereGeometry(10, 10, 10);
     const bulbMesh = new THREE.Mesh(bulbGeo, new THREE.MeshBasicMaterial({
       color: primaryDark, wireframe: true, transparent: true, opacity: 0.6
     }));
     bulbMesh.position.set(-coilLen / 2 - 20, 0, 0);
     bulbMesh.scale.set(1.3, 1, 1);
-    rootCoilGroup.add(bulbMesh);
+    rootCoilDetailsGroup.add(bulbMesh);
 
-    rootCoilGroup.add(createLeaf3D(-40, 5, 8, 0, -0.5, 0.5));
-    rootCoilGroup.add(createLeaf3D(30, -3, -6, Math.PI, 0.4, 0.4));
+    rootCoilDetailsGroup.add(createLeaf3D(-40, 5, 8, 0, -0.5, 0.5));
+    rootCoilDetailsGroup.add(createLeaf3D(30, -3, -6, Math.PI, 0.4, 0.4));
 
     // === 8. LOWER ROOT NETWORK ===
     const lowerGroup = new THREE.Group();
     lowerGroup.position.y = baseCY - baseH / 2;
     mainGroup.add(lowerGroup);
+
+    // Sub-group: Taproot
+    const rootsTaprootGroup = new THREE.Group();
+    lowerGroup.add(rootsTaprootGroup);
+
+    rootsTaprootGroup.add(createCurve([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(-2, -40, 3),
+      new THREE.Vector3(1, -80, -2),
+      new THREE.Vector3(0, -120, 0)
+    ], inkMat, 30));
+    rootsTaprootGroup.add(createDot(0, -140, 0, 3, primaryDark));
+
+    // Sub-group: Branching roots
+    const rootsBranchesGroup = new THREE.Group();
+    lowerGroup.add(rootsBranchesGroup);
 
     // Recursive roots
     const create3DRoot = (startX, startY, startZ, length, angleXZ, depth = 0, maxD = 4) => {
@@ -5870,7 +5950,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       ];
       const opacity = 0.8 - depth * 0.12;
       const mat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: Math.max(0.25, opacity) });
-      lowerGroup.add(createCurve(pts, mat, 15));
+      rootsBranchesGroup.add(createCurve(pts, mat, 15));
 
       const branches = depth < 2 ? 3 : 2;
       for (let i = 0; i < branches; i++) {
@@ -5879,21 +5959,16 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       }
     };
 
-    // Taproot
-    lowerGroup.add(createCurve([
-      new THREE.Vector3(0, 0, 0),
-      new THREE.Vector3(-2, -40, 3),
-      new THREE.Vector3(1, -80, -2),
-      new THREE.Vector3(0, -120, 0)
-    ], inkMat, 30));
-
     create3DRoot(-20, -15, -15, 40, -0.8, 0, 3);
     create3DRoot(20, -15, 15, 40, 0.8, 0, 3);
     create3DRoot(-10, -50, 10, 30, -1.2, 0, 2);
     create3DRoot(10, -50, -10, 30, 1.2, 0, 2);
     create3DRoot(0, -90, 0, 25, 0, 0, 2);
 
-    // Orbital ellipses
+    // Sub-group: Orbital ellipses and dots
+    const rootsOrbitsGroup = new THREE.Group();
+    lowerGroup.add(rootsOrbitsGroup);
+
     for (let i = 0; i < 3; i++) {
       const r = 120 + i * 50;
       const pts = [];
@@ -5907,18 +5982,17 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       });
       const line = new THREE.Line(geo, mat);
       line.computeLineDistances();
-      lowerGroup.add(line);
+      rootsOrbitsGroup.add(line);
     }
 
     for (let i = 0; i < 8; i++) {
       const a = (i / 8) * Math.PI * 2;
-      lowerGroup.add(createDot(Math.cos(a) * 170, -75, Math.sin(a) * 68, 2, primaryLight));
+      rootsOrbitsGroup.add(createDot(Math.cos(a) * 170, -75, Math.sin(a) * 68, 2, primaryLight));
     }
     for (let i = 0; i < 6; i++) {
       const a = (i / 6) * Math.PI * 2 + 0.3;
-      lowerGroup.add(createSmallCube(Math.cos(a) * 120, -60, Math.sin(a) * 48, 3.5, primaryLight));
+      rootsOrbitsGroup.add(createSmallCube(Math.cos(a) * 120, -60, Math.sin(a) * 48, 3.5, primaryLight));
     }
-    lowerGroup.add(createDot(0, -140, 0, 3, primaryDark));
 
     // === 9. FERNS ===
     const createFern3D = (x, y, z, rotY, scale = 1) => {
@@ -5959,12 +6033,20 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
 
     const fernGroup = new THREE.Group();
     mainGroup.add(fernGroup);
-    fernGroup.add(createFern3D(-180, 60, 40, -0.3, 1.0));
-    fernGroup.add(createFern3D(-200, 30, -30, -0.8, 0.85));
-    fernGroup.add(createFern3D(-160, 0, 60, 0.2, 0.7));
-    fernGroup.add(createFern3D(180, 60, -40, Math.PI + 0.3, 1.0));
-    fernGroup.add(createFern3D(200, 30, 30, Math.PI + 0.8, 0.85));
-    fernGroup.add(createFern3D(160, 0, -60, Math.PI - 0.2, 0.7));
+
+    // Sub-group: Left ferns
+    const fernsLeftGroup = new THREE.Group();
+    fernGroup.add(fernsLeftGroup);
+    fernsLeftGroup.add(createFern3D(-180, 60, 40, -0.3, 1.0));
+    fernsLeftGroup.add(createFern3D(-200, 30, -30, -0.8, 0.85));
+    fernsLeftGroup.add(createFern3D(-160, 0, 60, 0.2, 0.7));
+
+    // Sub-group: Right ferns
+    const fernsRightGroup = new THREE.Group();
+    fernGroup.add(fernsRightGroup);
+    fernsRightGroup.add(createFern3D(180, 60, -40, Math.PI + 0.3, 1.0));
+    fernsRightGroup.add(createFern3D(200, 30, 30, Math.PI + 0.8, 0.85));
+    fernsRightGroup.add(createFern3D(160, 0, -60, Math.PI - 0.2, 0.7));
 
     // === 10. FLOWER DIAGRAMS ===
     const createFlowerDiagram3D = (x, y, z, scale = 1) => {
@@ -6067,7 +6149,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       icoMesh.rotation.y = time * 0.7;
 
       // Seed orbit animation
-      seedGroup.children.forEach((child, i) => {
+      seedOrbitsGroup.children.forEach((child, i) => {
         if (child.geometry && child.geometry.type === 'TorusGeometry') {
           child.rotation.z = time * (0.3 + i * 0.12);
         }
@@ -6097,48 +6179,85 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const progress = Math.min(linesRead / totalLines, 1);
 
       // Define when each element should appear (progress thresholds)
-      // Smooth easing function for natural fade-in
-      const ease = (p, start, end) => {
-        if (p < start) return 0;
-        if (p > end) return 1;
-        const t = (p - start) / (end - start);
-        return t * t * (3 - 2 * t); // smoothstep
-      };
+      // Sharp step function - elements appear instantly at threshold
+      const step = (p, threshold) => p >= threshold ? 1 : 0;
 
       // Target opacities based on meditation progress
+      // 22 sub-elements spread across 50 lines = new element every ~2.3 lines
       // Natural growth: seed → roots → plant → bloom
-      // 50 lines total, each stage adds a new visual element
       const targets = {
-        seed: 1,                                 // Seed visible from start
-        roots: ease(progress, 0.02, 0.12),      // Lines 1-6: Roots grow down
-        rootCoil: ease(progress, 0.08, 0.18),   // Lines 4-9: Root coils spread
-        base: ease(progress, 0.14, 0.26),       // Lines 7-13: Garden plot base
-        seedOrbits: ease(progress, 0.22, 0.34), // Lines 11-17: Seed energy orbits
-        plant: ease(progress, 0.30, 0.44),      // Lines 15-22: Plant grows up
-        pyramid: ease(progress, 0.40, 0.54),    // Lines 20-27: Pyramid forms
-        ferns: ease(progress, 0.50, 0.64),      // Lines 25-32: Ferns unfold
-        torus: ease(progress, 0.60, 0.74),      // Lines 30-37: Torus blooms
-        vortex: ease(progress, 0.70, 0.84),     // Lines 35-42: Vortex appears
-        flowers: ease(progress, 0.80, 0.92),    // Lines 40-46: Flowers bloom
-        particles: ease(progress, 0.88, 1.0)    // Lines 44-50: Particles float
+        seed: 1,                              // Always visible
+        rootsTaproot: step(progress, 0.02),   // Line 1: Taproot appears
+        rootsBranches: step(progress, 0.06),  // Line 3: Branches spread
+        rootsOrbits: step(progress, 0.10),    // Line 5: Root orbits
+        rootCoilMain: step(progress, 0.14),   // Line 7: Main coils
+        rootCoilDetails: step(progress, 0.18),// Line 9: Coil details
+        baseBox: step(progress, 0.22),        // Line 11: Base box
+        baseDetails: step(progress, 0.26),    // Line 13: Base corners
+        seedOrbits: step(progress, 0.30),     // Line 15: Seed energy orbits
+        plantStem: step(progress, 0.34),      // Line 17: Plant stem grows
+        plantLeaves: step(progress, 0.38),    // Line 19: Leaves unfold
+        plantBud: step(progress, 0.42),       // Line 21: Bud forms
+        pyramidMain: step(progress, 0.46),    // Line 23: Pyramid structure
+        pyramidRings: step(progress, 0.50),   // Line 25: Pyramid rings
+        fernsLeft: step(progress, 0.54),      // Line 27: Left ferns
+        fernsRight: step(progress, 0.58),     // Line 29: Right ferns
+        torusMain: step(progress, 0.62),      // Line 31: Torus meshes
+        torusFlower: step(progress, 0.66),    // Line 33: Torus flower pattern
+        torusCore: step(progress, 0.70),      // Line 35: Torus core
+        vortexFunnels: step(progress, 0.74),  // Line 37: Vortex funnels
+        vortexLines: step(progress, 0.78),    // Line 39: Vortex connections
+        flowers: step(progress, 0.84),        // Line 42: Flower diagrams
+        particles: step(progress, 0.92)       // Line 46: Floating particles
       };
 
-      // Smooth lerp towards targets
-      const lerpSpeed = 0.06;
+      // Faster lerp for snappier response
+      const lerpSpeed = 0.15;
       for (const key in groupOpacities) {
         groupOpacities[key] += (targets[key] - groupOpacities[key]) * lerpSpeed;
       }
 
-      // Apply opacities - full visibility when elements appear
-      setGroupOpacity(seedGroup, groupOpacities.seed);
-      setGroupOpacity(lowerGroup, groupOpacities.roots);
-      setGroupOpacity(rootCoilGroup, groupOpacities.rootCoil);
-      setGroupOpacity(baseGroup, groupOpacities.base);
-      setGroupOpacity(plantGroup, groupOpacities.plant);
-      setGroupOpacity(pyramidGroup, groupOpacities.pyramid);
-      setGroupOpacity(fernGroup, groupOpacities.ferns);
-      setGroupOpacity(torusGroup, groupOpacities.torus);
-      setGroupOpacity(vortexGroup, groupOpacities.vortex);
+      // Apply opacities to all sub-groups
+      // Seed core is always visible, orbits fade in separately
+      setGroupOpacity(seedCoreGroup, groupOpacities.seed);
+      setGroupOpacity(seedOrbitsGroup, groupOpacities.seedOrbits);
+
+      // Roots sub-groups
+      setGroupOpacity(rootsTaprootGroup, groupOpacities.rootsTaproot);
+      setGroupOpacity(rootsBranchesGroup, groupOpacities.rootsBranches);
+      setGroupOpacity(rootsOrbitsGroup, groupOpacities.rootsOrbits);
+
+      // Root coil sub-groups
+      setGroupOpacity(rootCoilMainGroup, groupOpacities.rootCoilMain);
+      setGroupOpacity(rootCoilDetailsGroup, groupOpacities.rootCoilDetails);
+
+      // Base sub-groups
+      setGroupOpacity(baseBoxGroup, groupOpacities.baseBox);
+      setGroupOpacity(baseDetailsGroup, groupOpacities.baseDetails);
+
+      // Plant sub-groups
+      setGroupOpacity(plantStemGroup, groupOpacities.plantStem);
+      setGroupOpacity(plantLeavesGroup, groupOpacities.plantLeaves);
+      setGroupOpacity(plantBudGroup, groupOpacities.plantBud);
+
+      // Pyramid sub-groups
+      setGroupOpacity(pyramidMainGroup, groupOpacities.pyramidMain);
+      setGroupOpacity(pyramidRingsGroup, groupOpacities.pyramidRings);
+
+      // Fern sub-groups
+      setGroupOpacity(fernsLeftGroup, groupOpacities.fernsLeft);
+      setGroupOpacity(fernsRightGroup, groupOpacities.fernsRight);
+
+      // Torus sub-groups
+      setGroupOpacity(torusMainGroup, groupOpacities.torusMain);
+      setGroupOpacity(torusFlowerGroup, groupOpacities.torusFlower);
+      setGroupOpacity(torusCoreGroup, groupOpacities.torusCore);
+
+      // Vortex sub-groups
+      setGroupOpacity(vortexFunnelsGroup, groupOpacities.vortexFunnels);
+      setGroupOpacity(vortexLinesGroup, groupOpacities.vortexLines);
+
+      // Flowers
       setGroupOpacity(flowerDiagramGroup, groupOpacities.flowers);
 
       // Particles opacity via material
