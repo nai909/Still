@@ -18,8 +18,8 @@ Master your breath with guided techniques from ancient traditions and modern sci
 **GAZE**
 Enter a meditative state through trataka—the ancient practice of focused gazing. Explore over 20 stunning 3D visualizations: fractal trees, sacred geometry, deep ocean scenes, neural networks, crystalline structures, and more. Each visual responds to your touch, creating an interactive meditation experience.
 
-**REFLECT**
-Discover timeless wisdom from the world's greatest philosophical traditions. Over 400 carefully curated quotes from Stoic philosophers, Zen masters, Sufi poets, and modern thinkers appear alongside beautiful mantra visuals. Tap to cycle through themes of gratitude, forgiveness, inner peace, and connection.
+**MEDITATE**
+Experience guided meditations and powerful mantras paired with beautiful visuals. From loving-kindness (metta) meditation adapted from Ayya Khema's teachings to affirmations for gratitude, forgiveness, and inner peace—each session unfolds at your own pace with a simple tap.
 
 **LISTEN**
 Immerse yourself in ambient soundscapes designed for deep relaxation. Generative music adapts to your session, with handpan melodies, singing bowls, and atmospheric textures that never repeat the same way twice.
@@ -36,7 +36,7 @@ Still is meditation stripped to its essence—no guided voice, no gamification, 
 ---
 
 ## Keywords (100 characters max)
-meditation,breathwork,mindfulness,breathing,relax,calm,sleep,anxiety,stress,focus,zen,yoga,peaceful
+meditation,breathwork,mindfulness,breathing,relax,calm,sleep,anxiety,stress,mantra,zen,yoga,metta
 
 ---
 
@@ -50,7 +50,7 @@ Welcome to Still—your space for meditation and mindfulness.
 
 • 10 guided breathing techniques
 • 20+ interactive 3D visualizations
-• 400+ philosophical quotes
+• Guided meditations and mantras
 • Ambient generative soundscapes
 • Metta (loving-kindness) meditation
 
