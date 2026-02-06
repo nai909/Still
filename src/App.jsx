@@ -762,13 +762,14 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'rgba(0,0,0,0.5)',
+              background: 'rgba(0, 0, 0, 0.6)',
               zIndex: 10,
               animation: 'fadeInBreath 0.5s ease-out',
             }}
           />
           {/* Bottom drawer */}
           <div
+            onClick={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
@@ -777,37 +778,20 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
               bottom: 0,
               left: 0,
               right: 0,
-              maxHeight: '50vh',
-              background: 'rgba(10,10,15,0.95)',
-              borderRadius: '20px 20px 0 0',
-              backdropFilter: 'blur(20px)',
-              border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.12)`,
-              borderBottom: 'none',
+              background: 'rgba(0, 0, 0, 0.95)',
+              borderTop: `1px solid hsla(${primaryHue}, 52%, 68%, 0.2)`,
+              borderRadius: '1.5rem 1.5rem 0 0',
               zIndex: 11,
               animation: 'slideUpBreath 0.5s ease-out',
+              maxHeight: '80vh',
               display: 'flex',
               flexDirection: 'column',
               touchAction: 'auto',
             }}>
-            {/* Drawer handle */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              padding: '0.75rem',
-              cursor: 'pointer',
-            }} onClick={(e) => { e.stopPropagation(); setShowUI(false); }}>
-              <div style={{
-                width: '36px',
-                height: '4px',
-                background: `hsla(${primaryHue}, 52%, 68%, 0.3)`,
-                borderRadius: '2px',
-              }} />
-            </div>
-
             {/* Title */}
             <div style={{
+              padding: '1rem 1.5rem 0.75rem',
               textAlign: 'center',
-              padding: '0 1rem 0.75rem',
               borderBottom: '1px solid rgba(255,255,255,0.06)',
             }}>
               <span style={{
@@ -1946,13 +1930,14 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
               style={{
                 position: 'absolute',
                 inset: 0,
-                background: 'rgba(0,0,0,0.5)',
+                background: 'rgba(0, 0, 0, 0.6)',
                 zIndex: 20,
                 animation: 'fadeInMantra 0.5s ease-out',
               }}
             />
             {/* Bottom drawer */}
             <div
+              onClick={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
               onTouchEnd={(e) => e.stopPropagation()}
@@ -1961,27 +1946,19 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
                 bottom: 0,
                 left: 0,
                 right: 0,
-                maxHeight: '50vh',
-                background: 'rgba(10,10,15,0.95)',
-                borderRadius: '20px 20px 0 0',
-                border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.12)`,
-                borderBottom: 'none',
+                background: 'rgba(0, 0, 0, 0.95)',
+                borderTop: `1px solid hsla(${primaryHue}, 52%, 68%, 0.2)`,
+                borderRadius: '1.5rem 1.5rem 0 0',
                 zIndex: 25,
                 animation: 'slideUpMantra 0.5s ease-out',
+                maxHeight: '80vh',
                 display: 'flex',
                 flexDirection: 'column',
                 touchAction: 'auto',
               }}
             >
-              {/* Handle */}
-              <div
-                onClick={(e) => { e.stopPropagation(); setShowCategorySelector(false); }}
-                style={{ display: 'flex', justifyContent: 'center', padding: '0.75rem', cursor: 'pointer' }}
-              >
-                <div style={{ width: '36px', height: '4px', background: `hsla(${primaryHue}, 52%, 68%, 0.3)`, borderRadius: '2px' }} />
-              </div>
               {/* Title */}
-              <div style={{ textAlign: 'center', padding: '0 1rem 0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ padding: '1rem 1.5rem 0.75rem', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                 <span style={{ color: `hsla(${primaryHue}, 52%, 68%, 0.7)`, fontSize: '0.6rem', fontFamily: '"Jost", sans-serif', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
                   Meditations
                 </span>
@@ -2090,13 +2067,14 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'rgba(0,0,0,0.5)',
+              background: 'rgba(0, 0, 0, 0.6)',
               zIndex: 5,
               animation: 'fadeInMantra 0.5s ease-out',
             }}
           />
           {/* Bottom drawer */}
           <div
+            onClick={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
@@ -2105,27 +2083,19 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
               bottom: 0,
               left: 0,
               right: 0,
-              maxHeight: '50vh',
-              background: 'rgba(10,10,15,0.95)',
-              borderRadius: '20px 20px 0 0',
-              border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.12)`,
-              borderBottom: 'none',
+              background: 'rgba(0, 0, 0, 0.95)',
+              borderTop: `1px solid hsla(${primaryHue}, 52%, 68%, 0.2)`,
+              borderRadius: '1.5rem 1.5rem 0 0',
               zIndex: 10,
               animation: 'slideUpMantra 0.5s ease-out',
+              maxHeight: '80vh',
               display: 'flex',
               flexDirection: 'column',
               touchAction: 'auto',
             }}
           >
-            {/* Handle */}
-            <div
-              onClick={(e) => { e.stopPropagation(); setShowCategorySelector(false); }}
-              style={{ display: 'flex', justifyContent: 'center', padding: '0.75rem', cursor: 'pointer' }}
-            >
-              <div style={{ width: '36px', height: '4px', background: `hsla(${primaryHue}, 52%, 68%, 0.3)`, borderRadius: '2px' }} />
-            </div>
             {/* Title */}
-            <div style={{ textAlign: 'center', padding: '0 1rem 0.75rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ padding: '1rem 1.5rem 0.75rem', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <span style={{ color: `hsla(${primaryHue}, 52%, 68%, 0.7)`, fontSize: '0.6rem', fontFamily: '"Jost", sans-serif', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
                 Meditations
               </span>
