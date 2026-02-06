@@ -3920,15 +3920,12 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       const elapsed = clockRef.current.getElapsedTime();
       const targetBreath = getBreathPhase(elapsed);
 
-      // Smooth lerp with ease-in-out for organic feel
-      // Slightly higher factor (0.02) for responsiveness while staying fluid
-      const diff = targetBreath - smoothedBreath;
-      // Apply ease-in-out curve to the lerp factor based on distance from target
-      const easedFactor = 0.02 * (1 + Math.abs(diff) * 0.5); // Accelerate when far, decelerate when close
-      smoothedBreath += diff * easedFactor;
+      // Very smooth constant lerp - no acceleration, just steady flow
+      // 0.008 is slow enough to eliminate any visible jumps
+      smoothedBreath += (targetBreath - smoothedBreath) * 0.008;
 
-      // Apply smoothstep easing to the breath value for even smoother visual output
-      const easedBreath = smoothedBreath * smoothedBreath * (3 - 2 * smoothedBreath);
+      // Use smoothed value directly - no additional easing needed
+      const easedBreath = smoothedBreath;
 
       // Breath-synced scale using eased value (exaggerated range: 0.75 to 1.25)
       const targetScale = 0.75 + easedBreath * 0.5;
