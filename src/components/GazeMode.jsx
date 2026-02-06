@@ -5475,9 +5475,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
 
     // Current opacity values for smooth lerping
+    // Start with only roots visible, everything else fades in with each line
     const groupOpacities = {
-      seed: 1, seedOrbits: 1, plant: 0, pyramid: 0, base: 1,
-      rootCoil: 1, roots: 1, ferns: 0, torus: 0, vortex: 0,
+      seed: 0, seedOrbits: 0, plant: 0, pyramid: 0, base: 0,
+      rootCoil: 0, roots: 1, ferns: 0, torus: 0, vortex: 0,
       flowers: 0, particles: 0
     };
 
@@ -6105,21 +6106,21 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       };
 
       // Target opacities based on meditation progress
-      // Garden plot visible from start, then grows as meditation progresses
-      // 50 lines total, spread remaining elements evenly
+      // Start with only roots, each element appears progressively
+      // 50 lines total, each stage adds a new visual element
       const targets = {
-        seed: 1,                                  // Seed always visible
-        seedOrbits: 1,                           // Seed orbits always visible
-        roots: 1,                                // Roots always visible (garden plot)
-        rootCoil: 1,                             // Root coils always visible
-        base: 1,                                 // Base always visible (garden plot)
-        plant: ease(progress, 0.10, 0.30),       // Lines 5-15: Plant grows up
-        pyramid: ease(progress, 0.25, 0.45),     // Lines 12-22: Pyramid forms
-        ferns: ease(progress, 0.40, 0.58),       // Lines 20-29: Ferns unfold
-        torus: ease(progress, 0.53, 0.70),       // Lines 26-35: Torus blooms
-        vortex: ease(progress, 0.65, 0.80),      // Lines 32-40: Vortex appears
-        flowers: ease(progress, 0.75, 0.90),     // Lines 37-45: Flowers appear
-        particles: ease(progress, 0.85, 1.0)     // Lines 42-50: Particles float
+        roots: 1,                                // Always visible from start
+        rootCoil: ease(progress, 0.02, 0.10),   // Lines 1-5: Root coils appear
+        base: ease(progress, 0.08, 0.18),       // Lines 4-9: Garden plot base
+        seed: ease(progress, 0.14, 0.26),       // Lines 7-13: Seed appears
+        seedOrbits: ease(progress, 0.22, 0.34), // Lines 11-17: Seed orbits
+        plant: ease(progress, 0.30, 0.44),      // Lines 15-22: Plant grows
+        pyramid: ease(progress, 0.40, 0.54),    // Lines 20-27: Pyramid forms
+        ferns: ease(progress, 0.50, 0.64),      // Lines 25-32: Ferns unfold
+        torus: ease(progress, 0.60, 0.74),      // Lines 30-37: Torus blooms
+        vortex: ease(progress, 0.70, 0.84),     // Lines 35-42: Vortex appears
+        flowers: ease(progress, 0.80, 0.92),    // Lines 40-46: Flowers bloom
+        particles: ease(progress, 0.88, 1.0)    // Lines 44-50: Particles float
       };
 
       // Smooth lerp towards targets
@@ -6128,20 +6129,20 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         groupOpacities[key] += (targets[key] - groupOpacities[key]) * lerpSpeed;
       }
 
-      // Apply opacities - seed visible from start, everything else fades in
-      setGroupOpacity(seedGroup, Math.max(0.7, groupOpacities.seed, groupOpacities.seedOrbits));
-      setGroupOpacity(lowerGroup, groupOpacities.roots);
-      setGroupOpacity(rootCoilGroup, groupOpacities.rootCoil);
-      setGroupOpacity(baseGroup, groupOpacities.base);
-      setGroupOpacity(plantGroup, groupOpacities.plant);
-      setGroupOpacity(pyramidGroup, groupOpacities.pyramid);
-      setGroupOpacity(fernGroup, groupOpacities.ferns);
-      setGroupOpacity(torusGroup, groupOpacities.torus);
-      setGroupOpacity(vortexGroup, groupOpacities.vortex);
-      setGroupOpacity(flowerDiagramGroup, groupOpacities.flowers);
+      // Apply opacities - roots visible from start, everything else fades in progressively
+      setGroupOpacity(seedGroup, groupOpacities.seed * 0.9);
+      setGroupOpacity(lowerGroup, groupOpacities.roots * 0.85);
+      setGroupOpacity(rootCoilGroup, groupOpacities.rootCoil * 0.8);
+      setGroupOpacity(baseGroup, groupOpacities.base * 0.7);
+      setGroupOpacity(plantGroup, groupOpacities.plant * 0.85);
+      setGroupOpacity(pyramidGroup, groupOpacities.pyramid * 0.75);
+      setGroupOpacity(fernGroup, groupOpacities.ferns * 0.8);
+      setGroupOpacity(torusGroup, groupOpacities.torus * 0.7);
+      setGroupOpacity(vortexGroup, groupOpacities.vortex * 0.75);
+      setGroupOpacity(flowerDiagramGroup, groupOpacities.flowers * 0.8);
 
       // Particles opacity via material
-      particleMat3D.opacity = 0.7 * groupOpacities.particles;
+      particleMat3D.opacity = 0.8 * groupOpacities.particles;
 
       renderer.render(scene, camera);
     };
