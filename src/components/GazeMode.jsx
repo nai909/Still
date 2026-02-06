@@ -5475,10 +5475,10 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
 
     // Current opacity values for smooth lerping
-    // Start with only roots visible, everything else fades in with each line
+    // Start with seed visible, then roots grow down, then plant grows up
     const groupOpacities = {
-      seed: 0, seedOrbits: 0, plant: 0, pyramid: 0, base: 0,
-      rootCoil: 0, roots: 1, ferns: 0, torus: 0, vortex: 0,
+      seed: 1, seedOrbits: 0, plant: 0, pyramid: 0, base: 0,
+      rootCoil: 0, roots: 0, ferns: 0, torus: 0, vortex: 0,
       flowers: 0, particles: 0
     };
 
@@ -6106,15 +6106,15 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       };
 
       // Target opacities based on meditation progress
-      // Start with only roots, each element appears progressively
+      // Natural growth: seed → roots → plant → bloom
       // 50 lines total, each stage adds a new visual element
       const targets = {
-        roots: 1,                                // Always visible from start
-        rootCoil: ease(progress, 0.02, 0.10),   // Lines 1-5: Root coils appear
-        base: ease(progress, 0.08, 0.18),       // Lines 4-9: Garden plot base
-        seed: ease(progress, 0.14, 0.26),       // Lines 7-13: Seed appears
-        seedOrbits: ease(progress, 0.22, 0.34), // Lines 11-17: Seed orbits
-        plant: ease(progress, 0.30, 0.44),      // Lines 15-22: Plant grows
+        seed: 1,                                 // Seed visible from start
+        roots: ease(progress, 0.02, 0.12),      // Lines 1-6: Roots grow down
+        rootCoil: ease(progress, 0.08, 0.18),   // Lines 4-9: Root coils spread
+        base: ease(progress, 0.14, 0.26),       // Lines 7-13: Garden plot base
+        seedOrbits: ease(progress, 0.22, 0.34), // Lines 11-17: Seed energy orbits
+        plant: ease(progress, 0.30, 0.44),      // Lines 15-22: Plant grows up
         pyramid: ease(progress, 0.40, 0.54),    // Lines 20-27: Pyramid forms
         ferns: ease(progress, 0.50, 0.64),      // Lines 25-32: Ferns unfold
         torus: ease(progress, 0.60, 0.74),      // Lines 30-37: Torus blooms
@@ -6129,20 +6129,20 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
         groupOpacities[key] += (targets[key] - groupOpacities[key]) * lerpSpeed;
       }
 
-      // Apply opacities - roots visible from start, everything else fades in progressively
-      setGroupOpacity(seedGroup, groupOpacities.seed * 0.9);
-      setGroupOpacity(lowerGroup, groupOpacities.roots * 0.85);
-      setGroupOpacity(rootCoilGroup, groupOpacities.rootCoil * 0.8);
-      setGroupOpacity(baseGroup, groupOpacities.base * 0.7);
-      setGroupOpacity(plantGroup, groupOpacities.plant * 0.85);
-      setGroupOpacity(pyramidGroup, groupOpacities.pyramid * 0.75);
-      setGroupOpacity(fernGroup, groupOpacities.ferns * 0.8);
-      setGroupOpacity(torusGroup, groupOpacities.torus * 0.7);
-      setGroupOpacity(vortexGroup, groupOpacities.vortex * 0.75);
-      setGroupOpacity(flowerDiagramGroup, groupOpacities.flowers * 0.8);
+      // Apply opacities - seed visible from start, then roots grow, then everything else
+      setGroupOpacity(seedGroup, groupOpacities.seed * 0.95);
+      setGroupOpacity(lowerGroup, groupOpacities.roots * 0.9);
+      setGroupOpacity(rootCoilGroup, groupOpacities.rootCoil * 0.85);
+      setGroupOpacity(baseGroup, groupOpacities.base * 0.75);
+      setGroupOpacity(plantGroup, groupOpacities.plant * 0.9);
+      setGroupOpacity(pyramidGroup, groupOpacities.pyramid * 0.8);
+      setGroupOpacity(fernGroup, groupOpacities.ferns * 0.85);
+      setGroupOpacity(torusGroup, groupOpacities.torus * 0.75);
+      setGroupOpacity(vortexGroup, groupOpacities.vortex * 0.8);
+      setGroupOpacity(flowerDiagramGroup, groupOpacities.flowers * 0.85);
 
       // Particles opacity via material
-      particleMat3D.opacity = 0.8 * groupOpacities.particles;
+      particleMat3D.opacity = 0.85 * groupOpacities.particles;
 
       renderer.render(scene, camera);
     };
