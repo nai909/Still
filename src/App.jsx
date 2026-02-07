@@ -1800,7 +1800,7 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
         return saved;
       }
     } catch (e) {}
-    return 'gratitude';
+    return 'metta';
   };
 
   const getSavedMantraIndex = () => {
