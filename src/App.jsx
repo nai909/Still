@@ -14,6 +14,8 @@ import { breathTechniques } from './data/breathTechniques';
 import { haptic } from './config/haptic';
 import { gazeModes, BREATH_CYCLE, BREATH_SPEED, KEYS, KEY_FREQUENCIES, SCALE_TYPES, isMobile } from './config/constants';
 import GazeMode from './components/GazeMode';
+import SingingBowlMode from './components/SingingBowlMode';
+import HarpMode from './components/HarpMode';
 
 // Destructure React hooks for compatibility with original code
 const { useState, useEffect, useRef, useCallback } = React;
@@ -4901,7 +4903,8 @@ function Still() {
                 { key: 'hum', icon: '∿', label: 'Hum' },
                 { key: 'breathwork', icon: '◎', label: 'Breathe' },
                 { key: 'gaze', icon: '◯', label: 'Gaze' },
-                { key: 'mantra', icon: '◇', label: 'Meditate' },
+                { key: 'singingbowl', icon: '◠', label: 'Singing Bowl' },
+                { key: 'harp', icon: '𝄃', label: 'Harp' },
                 { key: 'zenboard', icon: '∞', label: 'Impermanence' },
               ];
               const currentMode = modes.find(m => m.key === view) || modes[0];
@@ -5453,6 +5456,16 @@ function Still() {
             primaryHue={primaryHue}
             primaryColor={primaryColor}
           />
+        )}
+
+        {/* Singing Bowl - Interactive resonance meditation */}
+        {view === 'singingbowl' && (
+          <SingingBowlMode primaryHue={primaryHue} />
+        )}
+
+        {/* Harp - Meditative virtual harp with Karplus-Strong synthesis */}
+        {view === 'harp' && (
+          <HarpMode primaryHue={primaryHue} />
         )}
 
         {/* Breathwork View is now always mounted below for WebGL warmup */}
