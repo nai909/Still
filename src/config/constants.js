@@ -60,7 +60,7 @@ export const gazeModes = [
   { key: 'templumSonorum', name: 'Sound Temple' },
   { key: 'arborMundi', name: 'World Tree' },
   { key: 'machinaTemporis', name: 'Clockwork' },
-  { key: 'jellyfish2d', name: 'Deep Sea' },
+  { key: 'jellyfish2d', name: 'Drift' },
 ];
 
 export const gazeShapes = [
