@@ -7820,177 +7820,6 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
     };
   }, [currentMode, hue]);
 
-  // ========== NERVUS COSMICUS (Cosmic Nerve) ==========
-  React.useEffect(() => {
-    if (currentMode !== 'nervusCosmicus' || !containerRef.current || typeof THREE === 'undefined') return;
-
-    touchPointsRef.current = [];
-
-    const container = containerRef.current;
-    const W = container.clientWidth || window.innerWidth;
-    const H = container.clientHeight || window.innerHeight;
-
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    scene.background = null;
-    scene.fog = new THREE.FogExp2(0x000000, 0.00025);
-
-    const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 2000);
-    camera.position.set(0, 80, 500);
-    camera.lookAt(0, 50, 0);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
-    container.appendChild(renderer.domElement);
-    renderer.domElement.style.pointerEvents = 'none';
-    rendererRef.current = renderer;
-
-    const hslToHex = (h, s, l) => {
-      s /= 100; l /= 100;
-      const a = s * Math.min(l, 1 - l);
-      const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); };
-      return (Math.round(f(0) * 255) << 16) + (Math.round(f(8) * 255) << 8) + Math.round(f(4) * 255);
-    };
-
-    const primaryColor = hslToHex(hue, 70, 60);
-    const primaryDark = hslToHex(hue, 60, 40);
-    const primaryLight = hslToHex(hue, 52, 78);
-    const primaryDim = hslToHex(hue, 40, 25);
-    const accentColor = hslToHex(hue, 60, 55);
-
-    const tealMat = new THREE.LineBasicMaterial({ color: primaryColor, transparent: true, opacity: 0.6 });
-    const tealDarkMat = new THREE.LineBasicMaterial({ color: primaryDark, transparent: true, opacity: 0.4 });
-    const tealBrightMat = new THREE.LineBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.6 });
-    const accentDotMat = new THREE.MeshBasicMaterial({ color: primaryLight, transparent: true, opacity: 0.8 });
-    const coreDotMat = new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.9 });
-
-    const mainGroup = new THREE.Group();
-    scene.add(mainGroup);
-
-    let seed = 999;
-    function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
-
-    function createDot(x, y, z, r = 1.5, mat = accentDotMat) {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 8), mat);
-      m.position.set(x, y, z);
-      return m;
-    }
-
-    function createCurve(points, mat = tealMat, segments = 30) {
-      const curve = new THREE.CatmullRomCurve3(points);
-      return new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(segments)), mat);
-    }
-
-    // Neurons
-    const neurons = [];
-    const neuronGroup = new THREE.Group();
-    mainGroup.add(neuronGroup);
-
-    for (let i = 0; i < 60; i++) {
-      const theta = rand() * Math.PI * 2, phi = Math.acos(2 * rand() - 1), r = 80 + rand() * 120;
-      const yMod = Math.cos(phi) * 0.6 + 0.4, xzMod = Math.sin(phi);
-      const x = Math.sin(phi) * Math.cos(theta) * r * xzMod;
-      const y = Math.cos(phi) * r * yMod + 80;
-      const z = Math.sin(phi) * Math.sin(theta) * r * xzMod;
-      const size = 3 + rand() * 5, isMain = rand() > 0.7;
-      const neuronMesh = new THREE.Mesh(new THREE.SphereGeometry(size, isMain ? 12 : 8, isMain ? 12 : 8), new THREE.MeshBasicMaterial({ color: isMain ? primaryLight : primaryColor, wireframe: true, transparent: true, opacity: isMain ? 0.4 : 0.25 }));
-      neuronMesh.position.set(x, y, z);
-      neuronGroup.add(neuronMesh);
-      if (isMain) neuronGroup.add(createDot(x, y, z, size * 0.4, coreDotMat));
-      neurons.push({ mesh: neuronMesh, pos: new THREE.Vector3(x, y, z), size, isMain, pulsePhase: rand() * Math.PI * 2, pulseSpeed: 0.5 + rand() * 1.5 });
-    }
-
-    // Synaptic connections
-    const synapseGroup = new THREE.Group();
-    mainGroup.add(synapseGroup);
-    const connections = [];
-    neurons.forEach((n1, i) => {
-      const distances = neurons.map((n2, j) => ({ index: j, dist: n1.pos.distanceTo(n2.pos) })).filter(d => d.index !== i).sort((a, b) => a.dist - b.dist);
-      const connectCount = 2 + Math.floor(rand() * 3);
-      for (let c = 0; c < Math.min(connectCount, distances.length); c++) {
-        if (distances[c].dist > 150) continue;
-        const n2 = neurons[distances[c].index];
-        const mid = new THREE.Vector3().addVectors(n1.pos, n2.pos).multiplyScalar(0.5);
-        mid.x += (rand() - 0.5) * 30; mid.y += (rand() - 0.5) * 30; mid.z += (rand() - 0.5) * 30;
-        const pts = [n1.pos.clone(), mid, n2.pos.clone()];
-        synapseGroup.add(createCurve(pts, n1.isMain ? tealDarkMat : new THREE.LineBasicMaterial({ color: primaryDim, transparent: true, opacity: 0.25 }), 20));
-        connections.push({ from: i, to: distances[c].index, curve: new THREE.CatmullRomCurve3(pts) });
-      }
-    });
-
-    // Brainstem
-    const brainstemGroup = new THREE.Group();
-    mainGroup.add(brainstemGroup);
-    const stemCurve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 200, 0), new THREE.Vector3(3, 150, 2), new THREE.Vector3(-2, 100, -1), new THREE.Vector3(2, 50, 2), new THREE.Vector3(-1, 0, -1), new THREE.Vector3(0, -50, 0)]);
-    brainstemGroup.add(new THREE.Mesh(new THREE.TubeGeometry(stemCurve, 40, 8, 8, false), new THREE.MeshBasicMaterial({ color: primaryDark, wireframe: true, transparent: true, opacity: 0.15 })));
-    brainstemGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(stemCurve.getPoints(50)), tealBrightMat));
-    for (let i = 0; i < 8; i++) { const t = i / 7; const p = stemCurve.getPoint(t); brainstemGroup.add(createDot(p.x, p.y, p.z, 3, i % 2 === 0 ? coreDotMat : accentDotMat)); }
-
-    // Neurotransmitter particles
-    const ntCount = 150;
-    const ntGeo = new THREE.BufferGeometry();
-    const ntPositions = new Float32Array(ntCount * 3);
-    const ntData = [];
-    for (let i = 0; i < ntCount; i++) {
-      const conn = connections[Math.floor(rand() * connections.length)];
-      const t = rand();
-      const pos = conn.curve.getPoint(t);
-      ntPositions[i * 3] = pos.x; ntPositions[i * 3 + 1] = pos.y; ntPositions[i * 3 + 2] = pos.z;
-      ntData.push({ connection: conn, t, speed: 0.002 + rand() * 0.008, direction: rand() > 0.5 ? 1 : -1 });
-    }
-    ntGeo.setAttribute("position", new THREE.BufferAttribute(ntPositions, 3));
-    const ntParticles = new THREE.Points(ntGeo, new THREE.PointsMaterial({ color: primaryLight, size: 2, transparent: true, opacity: 0.7 }));
-    mainGroup.add(ntParticles);
-
-    let time = 0, animId, frameCount = 0;
-
-    function animate() {
-      animId = requestAnimationFrame(animate);
-      time += 0.005;
-      frameCount++;
-
-      // Touch-responsive rotation (hold to rotate) - skip first 30 frames to avoid swipe interference
-      if (frameCount > 30 && touchPointsRef.current.length > 0) {
-        const activeTouch = touchPointsRef.current.find(p => p.active) || touchPointsRef.current[0];
-        if (activeTouch) {
-          const normalizedX = (activeTouch.x / window.innerWidth - 0.5) * 2;
-          const normalizedY = (activeTouch.y / window.innerHeight - 0.5) * 2;
-          mainGroup.rotation.y += normalizedX * 0.02;
-          mainGroup.rotation.x += normalizedY * 0.01;
-        }
-      } else if (frameCount > 30) {
-        mainGroup.rotation.y += 0.001;
-      }
-
-      neurons.forEach(n => { const pulse = 1 + Math.sin(time * n.pulseSpeed + n.pulsePhase) * 0.15; n.mesh.scale.setScalar(pulse); });
-
-      const ntPos = ntParticles.geometry.attributes.position.array;
-      ntData.forEach((nt, i) => {
-        nt.t += nt.speed * nt.direction;
-        if (nt.t > 1) { nt.t = 0; nt.direction = 1; }
-        if (nt.t < 0) { nt.t = 1; nt.direction = -1; }
-        const pos = nt.connection.curve.getPoint(nt.t);
-        ntPos[i * 3] = pos.x; ntPos[i * 3 + 1] = pos.y; ntPos[i * 3 + 2] = pos.z;
-      });
-      ntParticles.geometry.attributes.position.needsUpdate = true;
-      renderer.render(scene, camera);
-    }
-    animate();
-
-    const handleResize = () => { camera.aspect = (container.clientWidth || window.innerWidth) / (container.clientHeight || window.innerHeight); camera.updateProjectionMatrix(); renderer.setSize(container.clientWidth || window.innerWidth, container.clientHeight || window.innerHeight); };
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", handleResize);
-      scene.traverse((obj) => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } });
-      renderer.dispose();
-      if (container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
-    };
-  }, [currentMode, hue]);
-
   // ========== PORTA DIMENSIONUM (Dimensional Portal) ==========
   React.useEffect(() => {
     if (currentMode !== 'portaDimensionum' || !containerRef.current || typeof THREE === 'undefined') return;
@@ -9149,7 +8978,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' ||  currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'mountains' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden' || currentMode === 'corpusStellae' || currentMode === 'machinaTemporis' || currentMode === 'oceanusProfundus' || currentMode === 'arborMundi' || currentMode === 'nervusCosmicus' || currentMode === 'portaDimensionum' || currentMode === 'fungusDimensio' || currentMode === 'peyoteVisio') && (
+      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' ||  currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'mountains' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden' || currentMode === 'corpusStellae' || currentMode === 'machinaTemporis' || currentMode === 'oceanusProfundus' || currentMode === 'arborMundi' || currentMode === 'portaDimensionum' || currentMode === 'fungusDimensio' || currentMode === 'peyoteVisio') && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
@@ -9286,7 +9115,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       />
 
       {/* Canvas for 2D modes */}
-      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'mountains' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && currentMode !== 'corpusStellae' && currentMode !== 'machinaTemporis' && currentMode !== 'oceanusProfundus' && currentMode !== 'arborMundi' && currentMode !== 'nervusCosmicus' && currentMode !== 'portaDimensionum' && currentMode !== 'caelumMechanicum' && (
+      {currentMode !== 'geometry' && currentMode !== 'jellyfish' && currentMode !== 'flowerOfLife' && currentMode !== 'mushrooms' && currentMode !== 'tree' && currentMode !== 'fern' && currentMode !== 'dandelion' && currentMode !== 'succulent' && currentMode !== 'ripples' && currentMode !== 'lungs' && currentMode !== 'koiPond' && currentMode !== 'lavaTouch' && currentMode !== 'mountains' && currentMode !== 'maloka' && currentMode !== 'underwater' && currentMode !== 'lotus' && currentMode !== 'corpusStellae' && currentMode !== 'machinaTemporis' && currentMode !== 'oceanusProfundus' && currentMode !== 'arborMundi' && currentMode !== 'portaDimensionum' && currentMode !== 'caelumMechanicum' && (
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block', pointerEvents: 'none' }} />
       )}
 

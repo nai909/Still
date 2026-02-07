@@ -42,7 +42,6 @@ export const MOBILE_PIXEL_RATIO = isMobile ? Math.min(window.devicePixelRatio, 1
 // ============================================================================
 export const gazeModes = [
   { key: 'geometry', name: 'Torus' },
-  { key: 'nervusCosmicus', name: 'Neural' },
   { key: 'ripples', name: 'Ripples' },
   { key: 'fern', name: 'Fern' },
   { key: 'oceanusProfundus', name: 'Deep Ocean' },
