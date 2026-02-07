@@ -56,13 +56,11 @@ export const gazeModes = [
   { key: 'corpusStellae', name: 'Astral Body' },
   { key: 'machinaTemporis', name: 'Clockwork' },
   { key: 'oceanusProfundus', name: 'Deep Ocean' },
-  { key: 'aquaVitae', name: 'Water of Life' },
   { key: 'arborMundi', name: 'World Tree' },
   { key: 'crystallumInfinitum', name: 'Crystal' },
   { key: 'nervusCosmicus', name: 'Neural' },
   { key: 'portaDimensionum', name: 'Portal' },
   { key: 'templumSonorum', name: 'Sound Temple' },
-    { key: 'labyrinthisSacrum', name: 'Labyrinth' },
 ];
 
 export const gazeShapes = [
