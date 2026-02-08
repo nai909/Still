@@ -43,8 +43,6 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
   const accentColorRef = useRef(new THREE.Color());
   const rimMeshRef = useRef(null);
   const shellMeshRef = useRef(null);
-  const innerRingRef = useRef(null);
-  const glowRingsRef = useRef([]);
   const particlesRef = useRef(null);
 
   // Harmonics - ~5 second sustain after release
@@ -73,12 +71,6 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     if (shellMeshRef.current) {
       shellMeshRef.current.material.color.copy(primaryColorRef.current);
     }
-    if (innerRingRef.current) {
-      innerRingRef.current.material.color.copy(accentColorRef.current);
-    }
-    glowRingsRef.current.forEach(ring => {
-      ring.material.color.copy(accentColorRef.current);
-    });
   }, [primaryHue]);
 
   // =============================================
@@ -186,67 +178,6 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     });
   }, []);
 
-  const playStrikeSound = useCallback((force, angle = 0) => {
-    const audioCtx = audioCtxRef.current;
-    const masterGain = masterGainRef.current;
-    if (!audioCtx || !masterGain) return;
-
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-
-    const now = audioCtx.currentTime;
-    // Bell-like strike with natural decay (~1.5 seconds)
-    const strikeLen = 1.8;
-    const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * strikeLen, audioCtx.sampleRate);
-    const d = buf.getChannelData(0);
-
-    // Different tones based on position around the rim
-    // Divide rim into zones with different base frequencies
-    // Normalize angle to 0-2PI range
-    const normalizedAngle = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-
-    // Create 6 tonal zones around the rim (like a musical scale)
-    // Base frequencies form a pentatonic-like pattern for pleasing sounds
-    const toneZones = [174, 196, 220, 246, 262, 294]; // F3, G3, A3, B3, C4, D4 approx
-    const zoneIndex = Math.floor((normalizedAngle / (Math.PI * 2)) * toneZones.length);
-    const baseFreq = toneZones[zoneIndex];
-
-    for (let i = 0; i < d.length; i++) {
-      const t = i / audioCtx.sampleRate;
-      // Quick attack, natural bell-like decay
-      const attack = 1 - Math.exp(-t * 500);
-      const decay = Math.exp(-t * 2.5);
-      const env = attack * decay;
-
-      // Slightly different harmonic mix than circling - more initial brightness
-      d[i] = env * force * 0.55 * (
-        Math.sin(2 * Math.PI * baseFreq * t) * 0.35 +
-        Math.sin(2 * Math.PI * baseFreq * 2 * t) * 0.25 +
-        Math.sin(2 * Math.PI * baseFreq * 2.92 * t) * 0.18 +
-        Math.sin(2 * Math.PI * baseFreq * 4.16 * t) * 0.12 +
-        Math.sin(2 * Math.PI * baseFreq * 5.43 * t) * 0.07 +
-        Math.sin(2 * Math.PI * baseFreq * 6.8 * t) * 0.03
-      );
-    }
-
-    const src = audioCtx.createBufferSource();
-    src.buffer = buf;
-
-    // Panning based on where rim was struck
-    let output = masterGain;
-    if (audioCtx.createStereoPanner) {
-      const panner = audioCtx.createStereoPanner();
-      panner.pan.value = Math.sin(angle) * 0.6;
-      panner.connect(masterGain);
-      output = panner;
-    }
-
-    const strikeGain = audioCtx.createGain();
-    strikeGain.gain.value = 0.5;
-    src.connect(strikeGain);
-    strikeGain.connect(output);
-    src.start(now);
-  }, []);
-
   const playRimFriction = useCallback((speed, resonance, angle) => {
     const audioCtx = audioCtxRef.current;
     const masterGain = masterGainRef.current;
@@ -295,18 +226,19 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
   }, []);
 
   // =============================================
-  // HAPTICS
+  // HAPTICS - starts slow, picks up as you circle
   // =============================================
   const triggerResonanceHaptic = useCallback((resonance, currentTime) => {
     const timeSinceLastHaptic = currentTime - lastHapticTimeRef.current;
-    const minInterval = 0.15;
-    const maxInterval = 0.8;
-    const interval = maxInterval - (maxInterval - minInterval) * Math.pow(resonance, 0.7);
+    // Wide range: 1.5s at start, down to 0.08s at full resonance
+    const minInterval = 0.08;
+    const maxInterval = 1.5;
+    const interval = maxInterval - (maxInterval - minInterval) * Math.pow(resonance, 0.5);
 
-    if (timeSinceLastHaptic >= interval && resonance > 0.08) {
-      if (resonance > 0.7) {
+    if (timeSinceLastHaptic >= interval && resonance > 0.03) {
+      if (resonance > 0.6) {
         haptic.medium();
-      } else if (resonance > 0.4) {
+      } else if (resonance > 0.3) {
         haptic.soft();
       } else {
         haptic.selection();
@@ -382,29 +314,6 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     rim.position.y = 0.05;
     bowlGroup.add(rim);
     rimMeshRef.current = rim;
-
-    // Inner decorative ring
-    const innerRingGeom = new THREE.TorusGeometry(1.5, 0.03, 12, 80);
-    const innerRingMat = new THREE.MeshBasicMaterial({ color: aColor, transparent: true, opacity: 0.4 });
-    const innerRing = new THREE.Mesh(innerRingGeom, innerRingMat);
-    innerRing.rotation.x = Math.PI / 2;
-    innerRing.position.y = -0.15;
-    bowlGroup.add(innerRing);
-    innerRingRef.current = innerRing;
-
-    // Glow rings (for resonance visualization)
-    const glowRings = [];
-    for (let i = 0; i < 3; i++) {
-      const radius = 1.0 - i * 0.3;
-      const ringGeom = new THREE.TorusGeometry(radius, 0.02, 8, 48);
-      const ringMat = new THREE.MeshBasicMaterial({ color: aColor, transparent: true, opacity: 0 });
-      const ring = new THREE.Mesh(ringGeom, ringMat);
-      ring.rotation.x = Math.PI / 2;
-      ring.position.y = -0.3 - i * 0.15;
-      bowlGroup.add(ring);
-      glowRings.push(ring);
-    }
-    glowRingsRef.current = glowRings;
 
     // Stars background
     const starCount = 400;
@@ -497,21 +406,6 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
       if (shellMeshRef.current) {
         shellMeshRef.current.material.opacity = 0.18 + resonance * 0.2;
       }
-
-      // Inner ring pulses
-      if (innerRingRef.current) {
-        innerRingRef.current.material.opacity = 0.4 + resonance * 0.4;
-        innerRingRef.current.rotation.z = elapsed * 0.1;
-      }
-
-      // Glow rings appear with resonance
-      glowRingsRef.current.forEach((ring, i) => {
-        const threshold = 0.15 + i * 0.2;
-        const alpha = Math.max(0, (resonance - threshold) * 2);
-        ring.material.opacity = alpha * 0.5;
-        ring.rotation.z = elapsed * (0.1 + i * 0.05) * (i % 2 === 0 ? 1 : -1);
-        ring.scale.setScalar(1 + Math.sin(elapsed * 2 + i) * resonance * 0.1);
-      });
 
       // Bloom intensity
       if (bloomRef.current) {
