@@ -4,15 +4,24 @@ import { KEYS, KEY_FREQUENCIES, SCALE_TYPES } from '../config/constants';
 
 // =============================================
 // STRINGS MODE — Multi-instrument Harp
-// Exact copy of HarpMode for now, with different label
+// Play different instruments across harp-style strings
 // =============================================
+
+const INSTRUMENTS = [
+  { name: 'harp', file: 'harp.mp3', baseFreq: 130.81 },
+  { name: 'piano', file: 'piano.mp3', baseFreq: 130.81 },
+  { name: 'guitar', file: 'guitar.wav', baseFreq: 130.81 },
+  { name: 'cello', file: 'cello.mp3', baseFreq: 130.81 },
+];
 
 export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScaleType = 13 }) {
   const canvasRef = useRef(null);
   const audioCtxRef = useRef(null);
   const masterGainRef = useRef(null);
   const reverbNodeRef = useRef(null);
-  const harpBufferRef = useRef(null);
+
+  // Sample buffers for each instrument
+  const sampleBuffersRef = useRef({});
   const animationRef = useRef(null);
   const lastFrameRef = useRef(0);
   const stringsRef = useRef([]);
@@ -22,6 +31,7 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
   const primaryHueRef = useRef(primaryHue);
 
   const [showLabel, setShowLabel] = useState(true);
+  const [currentInstrument, setCurrentInstrument] = useState(0);
   const labelTimeoutRef = useRef(null);
 
   // Keep hue ref updated
@@ -116,12 +126,19 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
     masterGain.connect(audioCtx.destination);
     masterGainRef.current = masterGain;
 
-    // Load harp sample
-    fetch('harp.mp3')
-      .then(response => response.arrayBuffer())
-      .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
-      .then(audioBuffer => { harpBufferRef.current = audioBuffer; })
-      .catch(() => {});
+    // Load all instrument samples
+    INSTRUMENTS.forEach((instrument, index) => {
+      // Stagger loading to avoid overwhelming the browser
+      setTimeout(() => {
+        fetch(instrument.file)
+          .then(response => response.arrayBuffer())
+          .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+          .then(audioBuffer => {
+            sampleBuffersRef.current[instrument.name] = audioBuffer;
+          })
+          .catch(() => {});
+      }, index * 200);
+    });
 
     // Reverb
     const reverbTime = 5;
@@ -153,12 +170,13 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
     masterGain.gain.setTargetAtTime(0.65, audioCtx.currentTime, 0.1);
   }, []);
 
-  // Sampled harp playback - pitch shift from base note (C3 = 130.81Hz)
+  // Play current instrument - pitch shift from base note (C3 = 130.81Hz)
   const pluckStringAudio = useCallback((string, velocity) => {
     const audioCtx = audioCtxRef.current;
     const masterGain = masterGainRef.current;
-    const harpBuffer = harpBufferRef.current;
-    if (!audioCtx || !masterGain || !harpBuffer) return;
+    const instrument = INSTRUMENTS[currentInstrument];
+    const buffer = sampleBuffersRef.current[instrument.name];
+    if (!audioCtx || !masterGain || !buffer) return;
 
     // Resume AudioContext if suspended (iOS requirement after user interaction)
     if (audioCtx.state === 'suspended') {
@@ -167,11 +185,10 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
 
     const now = audioCtx.currentTime;
     const freq = string.freq;
-    const baseFreq = 130.81; // C3 - base frequency of the harp sample
-    const playbackRate = freq / baseFreq;
+    const playbackRate = freq / instrument.baseFreq;
 
     const source = audioCtx.createBufferSource();
-    source.buffer = harpBuffer;
+    source.buffer = buffer;
     source.playbackRate.value = playbackRate;
 
     // Filter - brighter for higher strings
@@ -180,12 +197,29 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
     filter.frequency.value = 2000 + string.normalizedIndex * 6000 + velocity * 2000;
     filter.Q.value = 0.5;
 
-    // Gain envelope
+    // Gain envelope - adjust based on instrument
     const gain = audioCtx.createGain();
     gain.gain.value = 0;
-    gain.gain.setTargetAtTime(1.0 * velocity, now, 0.01);
-    gain.gain.setTargetAtTime(0.7 * velocity, now + 0.1, 0.3);
-    gain.gain.setTargetAtTime(0, now + 0.5, 3.0);
+
+    // Different envelope characteristics per instrument
+    if (instrument.name === 'cello') {
+      gain.gain.setTargetAtTime(0.7 * velocity, now, 0.02);
+      gain.gain.setTargetAtTime(0.5 * velocity, now + 0.2, 0.5);
+      gain.gain.setTargetAtTime(0, now + 1.0, 3.5);
+    } else if (instrument.name === 'guitar') {
+      gain.gain.setTargetAtTime(0.8 * velocity, now, 0.01);
+      gain.gain.setTargetAtTime(0.5 * velocity, now + 0.15, 0.4);
+      gain.gain.setTargetAtTime(0, now + 0.8, 2.5);
+    } else if (instrument.name === 'piano') {
+      gain.gain.setTargetAtTime(0.8 * velocity, now, 0.01);
+      gain.gain.setTargetAtTime(0.5 * velocity, now + 0.1, 0.3);
+      gain.gain.setTargetAtTime(0, now + 0.5, 2.0);
+    } else {
+      // Default harp envelope
+      gain.gain.setTargetAtTime(1.0 * velocity, now, 0.01);
+      gain.gain.setTargetAtTime(0.7 * velocity, now + 0.1, 0.3);
+      gain.gain.setTargetAtTime(0, now + 0.5, 3.0);
+    }
 
     // Stereo panning based on string position
     let output = gain;
@@ -214,7 +248,7 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
         }, 30 + Math.random() * 60);
       }
     });
-  }, []);
+  }, [currentInstrument]);
 
   const exciteStringVisual = useCallback((string, velocity) => {
     const pluckSeg = Math.floor(string.pluckPoint * string.segments);
@@ -647,6 +681,34 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
           fontFamily: '"Jost", sans-serif',
         }}>
           {KEYS[musicKey].toLowerCase()} {SCALE_TYPES[musicScaleType].name}
+        </div>
+      </div>
+
+      {/* Instrument indicator */}
+      <div
+        onClick={() => setCurrentInstrument(prev => (prev + 1) % INSTRUMENTS.length)}
+        style={{
+          position: 'fixed',
+          bottom: '8%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          textAlign: 'center',
+          cursor: 'pointer',
+          padding: '0.5rem 1rem',
+          opacity: 0.7,
+          transition: 'opacity 0.3s ease',
+        }}
+      >
+        <div style={{
+          fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
+          letterSpacing: '0.15em',
+          textTransform: 'lowercase',
+          color: `hsla(${primaryHue}, 52%, 68%, 0.85)`,
+          fontFamily: '"Jost", sans-serif',
+          fontWeight: 300,
+        }}>
+          {INSTRUMENTS[currentInstrument].name}
         </div>
       </div>
 

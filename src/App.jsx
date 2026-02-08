@@ -14,7 +14,6 @@ import { breathTechniques } from './data/breathTechniques';
 import { haptic } from './config/haptic';
 import { gazeModes, BREATH_CYCLE, BREATH_SPEED, KEYS, KEY_FREQUENCIES, SCALE_TYPES, isMobile } from './config/constants';
 import GazeMode from './components/GazeMode';
-import SingingBowlMode from './components/SingingBowlMode';
 import HarpMode from './components/HarpMode';
 import StringsMode from './components/StringsMode';
 
@@ -4929,7 +4928,6 @@ function Still() {
                 { key: 'hum', icon: '∿', label: 'Hum' },
                 { key: 'harp', icon: '𝄃', label: 'Harp' },
                 { key: 'strings', icon: '𝄢', label: 'Strings' },
-                { key: 'singingbowl', icon: '◠', label: 'Singing Bowl' },
                 { key: 'gaze', icon: '◯', label: 'Gaze' },
                 { key: 'breathwork', icon: '◎', label: 'Breathe' },
                 { key: 'zenboard', icon: '∞', label: 'Impermanence' },
@@ -5483,11 +5481,6 @@ function Still() {
             primaryHue={primaryHue}
             primaryColor={primaryColor}
           />
-        )}
-
-        {/* Singing Bowl - Interactive resonance meditation */}
-        {view === 'singingbowl' && (
-          <SingingBowlMode primaryHue={primaryHue} />
         )}
 
         {/* Harp - Meditative virtual harp */}
