@@ -3474,14 +3474,8 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
     const isSwipe = Math.abs(deltaX) > swipeThreshold || Math.abs(deltaY) > swipeThreshold;
 
     if (isSwipe && deltaTime < 500) {
-      // Regular swipe - change instrument or texture
-      if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        // Horizontal swipe - change instrument
-        const dir = deltaX > 0 ? -1 : 1;
-        setCurrentInstrument(prev => (prev + dir + instruments.length) % instruments.length);
-        displayLabel();
-      } else {
-        // Vertical swipe - open scale selector
+      // Vertical swipe - open scale selector
+      if (Math.abs(deltaY) > Math.abs(deltaX)) {
         setShowScaleSelector(true);
       }
     } else {
@@ -3531,17 +3525,6 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
         return;
       }
 
-      // Horizontal swipe when menu is closed = change instrument
-      if (!showScaleSelector && Math.abs(wheelAccumXRef.current) > threshold && Math.abs(wheelAccumXRef.current) > Math.abs(wheelAccumYRef.current)) {
-        e.preventDefault();
-        const dir = wheelAccumXRef.current > 0 ? 1 : -1;
-        setCurrentInstrument(prev => (prev + dir + instruments.length) % instruments.length);
-        displayLabel();
-        wheelAccumXRef.current = 0;
-        wheelAccumYRef.current = 0;
-        return;
-      }
-
       // Only allow texture/key/scale changes when menu is open
       if (!showScaleSelector) return;
 
@@ -3567,26 +3550,15 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
           }
         }
       } else {
-        // Normal scroll: change instrument (horizontal) or texture (vertical)
-        if (Math.abs(wheelAccumXRef.current) > Math.abs(wheelAccumYRef.current)) {
-          if (Math.abs(wheelAccumXRef.current) > threshold) {
-            e.preventDefault();
-            const dir = wheelAccumXRef.current > 0 ? 1 : -1;
-            setCurrentInstrument(prev => (prev + dir + instruments.length) % instruments.length);
-            displayLabel();
-            wheelAccumXRef.current = 0;
-            wheelAccumYRef.current = 0;
-          }
-        } else {
-          if (Math.abs(wheelAccumYRef.current) > threshold) {
-            e.preventDefault();
-            const dir = wheelAccumYRef.current > 0 ? 1 : -1;
-            const newTexture = (currentTexture + dir + textures.length) % textures.length;
-            updateTexture(newTexture);
-            displayLabel();
-            wheelAccumXRef.current = 0;
-            wheelAccumYRef.current = 0;
-          }
+        // Normal scroll: change texture (vertical only)
+        if (Math.abs(wheelAccumYRef.current) > threshold) {
+          e.preventDefault();
+          const dir = wheelAccumYRef.current > 0 ? 1 : -1;
+          const newTexture = (currentTexture + dir + textures.length) % textures.length;
+          updateTexture(newTexture);
+          displayLabel();
+          wheelAccumXRef.current = 0;
+          wheelAccumYRef.current = 0;
         }
       }
     };
@@ -3737,6 +3709,41 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
           {KEYS[currentKey].toLowerCase()} {SCALE_TYPES[currentScaleType].name}
         </div>
       </div>
+
+      {/* Instrument indicator - tap to change */}
+      {isInitialized && !showScaleSelector && (
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            setCurrentInstrument(prev => (prev + 1) % instruments.length);
+            displayLabel();
+            haptic.tap();
+          }}
+          style={{
+            position: 'absolute',
+            bottom: 'calc(6% + env(safe-area-inset-bottom, 0px))',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10,
+            textAlign: 'center',
+            cursor: 'pointer',
+            padding: '0.5rem 1rem',
+            opacity: 0.7,
+            transition: 'opacity 0.3s ease',
+          }}
+        >
+          <div style={{
+            fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
+            letterSpacing: '0.15em',
+            textTransform: 'lowercase',
+            color: `hsla(${primaryHue}, 52%, 68%, 0.85)`,
+            fontFamily: '"Jost", sans-serif',
+            fontWeight: 300,
+          }}>
+            {instruments[currentInstrument].name}
+          </div>
+        </div>
+      )}
 
       {/* Swipe up arrow hint - REMOVED (gesture hints overlay covers this)
       {!showScaleSelector && isInitialized && (
