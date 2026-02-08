@@ -1139,14 +1139,14 @@ export default function StringsMode({
       if (audioCtx && audioCtx.state !== 'closed') {
         try {
           const now = audioCtx.currentTime;
-          // Fade out drone and master gain
+          // Fade out drone and master gain smoothly (0.3s time constant)
           if (droneGain) {
-            droneGain.gain.setTargetAtTime(0, now, 0.15);
+            droneGain.gain.setTargetAtTime(0, now, 0.3);
           }
           if (masterGain) {
-            masterGain.gain.setTargetAtTime(0, now, 0.15);
+            masterGain.gain.setTargetAtTime(0, now, 0.3);
           }
-          // Stop drone oscillators after fade
+          // Stop drone oscillators after fade completes (~1 second)
           setTimeout(() => {
             droneNodesRef.current.forEach(node => {
               if (node.osc) {
@@ -1155,7 +1155,7 @@ export default function StringsMode({
             });
             droneNodesRef.current = [];
             try { audioCtx.close(); } catch (e) {}
-          }, 400);
+          }, 1000);
         } catch (e) { /* ignore */ }
       }
       // Clear refs so remount gets fresh context
