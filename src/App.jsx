@@ -16,6 +16,7 @@ import { gazeModes, BREATH_CYCLE, BREATH_SPEED, KEYS, KEY_FREQUENCIES, SCALE_TYP
 import GazeMode from './components/GazeMode';
 import SingingBowlMode from './components/SingingBowlMode';
 import HarpMode from './components/HarpMode';
+import RainStickMode from './components/RainStickMode';
 
 // Destructure React hooks for compatibility with original code
 const { useState, useEffect, useRef, useCallback } = React;
@@ -4913,6 +4914,7 @@ function Still() {
                 { key: 'hum', icon: '∿', label: 'Hum' },
                 { key: 'harp', icon: '𝄃', label: 'Harp' },
                 { key: 'singingbowl', icon: '◠', label: 'Singing Bowl' },
+                { key: 'rainstick', icon: '⋮', label: 'Rain Stick' },
                 { key: 'breathwork', icon: '◎', label: 'Breathe' },
                 { key: 'gaze', icon: '◯', label: 'Gaze' },
                 { key: 'zenboard', icon: '∞', label: 'Impermanence' },
@@ -5473,7 +5475,12 @@ function Still() {
           <SingingBowlMode primaryHue={primaryHue} />
         )}
 
-        {/* Harp - Meditative virtual harp with Karplus-Strong synthesis */}
+        {/* Rain Stick - Accelerometer-driven meditation */}
+        {view === 'rainstick' && (
+          <RainStickMode primaryHue={primaryHue} />
+        )}
+
+        {/* Harp - Meditative virtual harp */}
         {view === 'harp' && (
           <HarpMode primaryHue={primaryHue} musicKey={sharedMusicKey} musicScaleType={sharedMusicScaleType} />
         )}
