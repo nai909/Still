@@ -372,11 +372,16 @@ export default function StringsMode({
     droneGain.connect(reverbNode);
     droneGainRef.current = droneGain;
 
+    // Match DroneMode's drone layers exactly
     const droneLayers = [
-      { ratio: 1, gain: 0.15, type: 'sine' },
-      { ratio: 2, gain: 0.08, type: 'sine' },
-      { ratio: 0.5, gain: 0.12, type: 'sine' },
-      { ratio: 1.5, gain: 0.05, type: 'triangle' },
+      { ratio: 1, type: 'sine', gain: 0.15, detune: 0 },
+      { ratio: 2, type: 'sine', gain: 0.12, detune: 3 },
+      { ratio: 1.5, type: 'sine', gain: 0.08, detune: -2 },
+      { ratio: 3, type: 'sine', gain: 0.05, detune: 5 },
+      { ratio: 4, type: 'sine', gain: 0.03, detune: -4 },
+      { ratio: 0.5, type: 'sine', gain: 0.1, detune: 0 },
+      { ratio: 2.01, type: 'sine', gain: 0.04, detune: 0 },
+      { ratio: 1.498, type: 'sine', gain: 0.03, detune: 0 },
     ];
 
     const keyFreq = KEY_FREQUENCIES[KEYS[3]] || 155.56; // D# default
@@ -386,6 +391,7 @@ export default function StringsMode({
       const gain = audioCtx.createGain();
       osc.type = layer.type;
       osc.frequency.value = baseFreq * layer.ratio;
+      osc.detune.value = layer.detune || 0;
       gain.gain.value = layer.gain;
       osc.connect(gain);
       gain.connect(droneGain);
