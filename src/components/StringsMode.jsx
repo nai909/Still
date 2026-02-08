@@ -70,6 +70,8 @@ export default function StringsMode({
   const lastPluckedRef = useRef(new Map());
   const primaryHueRef = useRef(primaryHue);
   const touchStartRef = useRef(null);
+  const audioCloseTimeoutRef = useRef(null);
+  const mountedRef = useRef(true);
 
   const [showLabel, setShowLabel] = useState(true);
   const [currentInstrument, setCurrentInstrument] = useState(0);
@@ -117,11 +119,22 @@ export default function StringsMode({
   // =============================================
   const createStrings = useCallback(() => {
     const { W, H } = dimsRef.current;
-    if (W === 0 || H === 0) return;
+    if (W === 0 || H === 0) {
+      // Dimensions not ready yet - will be called again after resize
+      return;
+    }
 
-    const frequencies = generateScale(musicKey, musicScaleType, 2);
+    // Validate key and scale indices - use defaults if invalid
+    const safeKey = (typeof musicKey === 'number' && musicKey >= 0 && musicKey < KEYS.length) ? musicKey : 3;
+    const safeScale = (typeof musicScaleType === 'number' && musicScaleType >= 0 && musicScaleType < SCALE_TYPES.length) ? musicScaleType : 13;
+
+    const frequencies = generateScale(safeKey, safeScale, 2);
     const numStrings = frequencies.length;
-    if (numStrings < 2) return; // Need at least 2 strings
+    if (numStrings < 2) {
+      // Invalid scale - clear strings and return
+      stringsRef.current = [];
+      return;
+    }
 
     const strings = [];
 
@@ -166,6 +179,9 @@ export default function StringsMode({
   // AUDIO ENGINE
   // =============================================
   const initAudio = useCallback(() => {
+    // Don't initialize if component is unmounted
+    if (!mountedRef.current) return;
+
     // Check if we have a valid, non-closed audio context
     if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
       // Just resume if suspended
@@ -173,6 +189,12 @@ export default function StringsMode({
         audioCtxRef.current.resume();
       }
       return;
+    }
+
+    // Clear any stale foley interval before creating new context
+    if (foleyIntervalRef.current) {
+      clearInterval(foleyIntervalRef.current);
+      foleyIntervalRef.current = null;
     }
 
     // Create new audio context (or recreate if previous was closed)
@@ -257,6 +279,7 @@ export default function StringsMode({
 
     // Start foley interval
     foleyIntervalRef.current = setInterval(() => {
+      if (!mountedRef.current) return;
       if (audioCtx.state === 'closed') return;
       const tex = TEXTURES[currentTextureRef.current];
       if (tex && tex.foley) {
@@ -357,6 +380,9 @@ export default function StringsMode({
 
   // Play current instrument
   const pluckStringAudio = useCallback((string, velocity) => {
+    // Skip if component unmounted
+    if (!mountedRef.current) return;
+
     const audioCtx = audioCtxRef.current;
     const masterGain = masterGainRef.current;
 
@@ -599,26 +625,46 @@ export default function StringsMode({
     }
 
     // Sympathetic resonance
-    stringsRef.current.forEach(s => {
-      if (s === string) return;
-      const ratio = s.freq / string.freq;
-      const nearestHarmonic = Math.round(ratio);
-      if (nearestHarmonic > 0 && nearestHarmonic <= 4 && Math.abs(ratio - nearestHarmonic) < 0.05) {
-        setTimeout(() => {
-          s.energy = Math.min(s.energy + velocity * 0.08, 0.3);
-          s.glowIntensity = Math.min(s.glowIntensity + 0.15, 0.3);
-          exciteStringVisual(s, velocity * 0.15);
-        }, 30 + Math.random() * 60);
+    try {
+      const currentStrings = stringsRef.current;
+      if (currentStrings && Array.isArray(currentStrings)) {
+        for (let i = 0; i < currentStrings.length; i++) {
+          const s = currentStrings[i];
+          if (!s || s === string || !s.freq || !string.freq) continue;
+          const ratio = s.freq / string.freq;
+          const nearestHarmonic = Math.round(ratio);
+          if (nearestHarmonic > 0 && nearestHarmonic <= 4 && Math.abs(ratio - nearestHarmonic) < 0.05) {
+            setTimeout(() => {
+              // Check if still mounted before modifying state
+              if (!mountedRef.current) return;
+              try {
+                // Re-check that s is still valid (strings may have been recreated)
+                if (s && typeof s.energy === 'number' && typeof s.glowIntensity === 'number') {
+                  s.energy = Math.min(s.energy + velocity * 0.08, 0.3);
+                  s.glowIntensity = Math.min(s.glowIntensity + 0.15, 0.3);
+                  exciteStringVisual(s, velocity * 0.15);
+                }
+              } catch (e) { /* ignore */ }
+            }, 30 + Math.random() * 60);
+          }
+        }
       }
-    });
+    } catch (e) {
+      // Silently ignore - sympathetic resonance is a nice-to-have
+    }
   }, [currentInstrument]);
 
   const exciteStringVisual = useCallback((string, velocity) => {
-    const pluckSeg = Math.floor(string.pluckPoint * string.segments);
-    for (let i = 0; i < string.segments; i++) {
-      const distFromPluck = Math.abs(i - pluckSeg) / string.segments;
-      const displacement = velocity * 12 * Math.max(0, 1 - distFromPluck * 2.5);
-      string.displacement[i] += displacement * (Math.random() > 0.5 ? 1 : -1);
+    if (!string || !string.displacement || !string.segments) return;
+    try {
+      const pluckSeg = Math.floor(string.pluckPoint * string.segments);
+      for (let i = 0; i < string.segments; i++) {
+        const distFromPluck = Math.abs(i - pluckSeg) / string.segments;
+        const displacement = velocity * 12 * Math.max(0, 1 - distFromPluck * 2.5);
+        string.displacement[i] += displacement * (Math.random() > 0.5 ? 1 : -1);
+      }
+    } catch (e) {
+      console.warn('exciteStringVisual error:', e);
     }
   }, []);
 
@@ -626,28 +672,36 @@ export default function StringsMode({
   // PLUCK
   // =============================================
   const pluck = useCallback((string, y, velocity) => {
-    string.pluckPoint = Math.max(0.1, Math.min(0.9, (y - string.topY) / (string.bottomY - string.topY)));
-    string.energy = Math.min(string.energy + velocity, 1);
-    string.glowIntensity = Math.min(velocity + 0.2, 1);
-    exciteStringVisual(string, velocity);
+    if (!string || typeof string.topY !== 'number' || typeof string.bottomY !== 'number') return;
+    try {
+      string.pluckPoint = Math.max(0.1, Math.min(0.9, (y - string.topY) / (string.bottomY - string.topY)));
+      string.energy = Math.min((string.energy || 0) + velocity, 1);
+      string.glowIntensity = Math.min(velocity + 0.2, 1);
+      exciteStringVisual(string, velocity);
 
-    string.ripples.push({
-      y,
-      spread: 0,
-      maxSpread: (string.bottomY - string.topY) * 0.8,
-      life: 1,
-      velocity,
-    });
+      if (string.ripples && Array.isArray(string.ripples)) {
+        string.ripples.push({
+          y,
+          spread: 0,
+          maxSpread: (string.bottomY - string.topY) * 0.8,
+          life: 1,
+          velocity,
+        });
+      }
 
-    pluckStringAudio(string, velocity);
+      pluckStringAudio(string, velocity);
 
-    // Haptic feedback based on string pitch
-    if (string.normalizedIndex < 0.33) {
-      haptic.medium();
-    } else if (string.normalizedIndex < 0.66) {
-      haptic.soft();
-    } else {
-      haptic.tap();
+      // Haptic feedback based on string pitch
+      const idx = string.normalizedIndex || 0;
+      if (idx < 0.33) {
+        haptic.medium();
+      } else if (idx < 0.66) {
+        haptic.soft();
+      } else {
+        haptic.tap();
+      }
+    } catch (e) {
+      console.warn('pluck error:', e);
     }
   }, [pluckStringAudio, exciteStringVisual]);
 
@@ -656,20 +710,28 @@ export default function StringsMode({
   // =============================================
   const findNearestString = useCallback((x) => {
     const strings = stringsRef.current;
+    if (!strings || !Array.isArray(strings) || strings.length === 0) return null;
     const { W } = dimsRef.current;
+    if (!W || W === 0) return null;
+
     let nearest = null;
     let minDist = Infinity;
 
-    strings.forEach(s => {
+    for (let i = 0; i < strings.length; i++) {
+      const s = strings[i];
+      if (!s || typeof s.x !== 'number') continue;
       const d = Math.abs(x - s.x);
       if (d < minDist) { minDist = d; nearest = s; }
-    });
+    }
 
     const maxDist = W / strings.length * 0.8;
     return minDist < maxDist ? nearest : null;
   }, []);
 
   const handleStart = useCallback((id, x, y) => {
+    // Skip if component unmounted
+    if (!mountedRef.current) return;
+
     // Initialize or reinitialize audio if needed
     if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
       initAudio();
@@ -686,27 +748,36 @@ export default function StringsMode({
   }, [initAudio, findNearestString, pluck]);
 
   const handleMove = useCallback((id, x, y) => {
-    const prev = activeRef.current.get(id);
-    if (!prev) return;
+    if (!mountedRef.current) return;
+    try {
+      const prev = activeRef.current.get(id);
+      if (!prev) return;
 
-    const dx = x - prev.x;
-    const strings = stringsRef.current;
+      const dx = x - prev.x;
+      const strings = stringsRef.current;
+      if (!strings || !Array.isArray(strings)) return;
 
-    strings.forEach(s => {
-      const crossedRight = prev.x < s.x && x >= s.x;
-      const crossedLeft = prev.x > s.x && x <= s.x;
+      for (let i = 0; i < strings.length; i++) {
+        const s = strings[i];
+        if (!s || typeof s.x !== 'number') continue;
 
-      if ((crossedRight || crossedLeft) && y > s.topY && y < s.bottomY) {
-        const lastTime = lastPluckedRef.current.get(s.index) || 0;
-        if (performance.now() - lastTime < 100) return;
-        lastPluckedRef.current.set(s.index, performance.now());
+        const crossedRight = prev.x < s.x && x >= s.x;
+        const crossedLeft = prev.x > s.x && x <= s.x;
 
-        const velocity = Math.min(Math.abs(dx) / 30, 1) * 0.5 + 0.3;
-        pluck(s, y, velocity);
+        if ((crossedRight || crossedLeft) && y > s.topY && y < s.bottomY) {
+          const lastTime = lastPluckedRef.current.get(s.index) || 0;
+          if (performance.now() - lastTime < 100) continue;
+          lastPluckedRef.current.set(s.index, performance.now());
+
+          const velocity = Math.min(Math.abs(dx) / 30, 1) * 0.5 + 0.3;
+          pluck(s, y, velocity);
+        }
       }
-    });
 
-    activeRef.current.set(id, { x, y });
+      activeRef.current.set(id, { x, y });
+    } catch (e) {
+      console.warn('handleMove error:', e);
+    }
   }, [pluck]);
 
   const handleEnd = useCallback((id) => {
@@ -750,7 +821,7 @@ export default function StringsMode({
     let running = true;
     let lastFrame = 0;
     const loop = (ts) => {
-      if (!running) return;
+      if (!running || !mountedRef.current) return;
 
       try {
         const ctx = canvas.getContext('2d');
@@ -763,9 +834,14 @@ export default function StringsMode({
         const dt = Math.min((ts - lastFrame) / 1000, 0.05);
         lastFrame = ts;
 
-      // Physics
+      // Physics - get a local reference to strings
       const strings = stringsRef.current;
-      if (strings && strings.length > 0) {
+      if (!strings || !Array.isArray(strings)) {
+        animationRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      if (strings.length > 0) {
         const c = 0.4;
         for (let si = 0; si < strings.length; si++) {
           const s = strings[si];
@@ -805,7 +881,17 @@ export default function StringsMode({
           const sat = 35;
           const l = 50;
           ctx.clearRect(0, 0, W, H);
-          const totalEnergy = strings.reduce((sum, str) => sum + str.energy, 0) / Math.max(strings.length, 1);
+
+          // Calculate total energy safely
+          let totalEnergy = 0;
+          for (let i = 0; i < strings.length; i++) {
+            const s = strings[i];
+            if (s && typeof s.energy === 'number') {
+              totalEnergy += s.energy;
+            }
+          }
+          totalEnergy = totalEnergy / Math.max(strings.length, 1);
+
           const bgL = 1.5 + totalEnergy * 3;
           ctx.fillStyle = `hsl(${h}, ${sat * 0.3}%, ${bgL}%)`;
           ctx.fillRect(0, 0, W, H);
@@ -816,51 +902,73 @@ export default function StringsMode({
             ctx.fillStyle = ambGrad;
             ctx.fillRect(0, 0, W, H);
           }
-          strings.forEach(str => {
-            if (str.glowIntensity > 0.01) {
+
+          // Draw strings with null checks
+          for (let si = 0; si < strings.length; si++) {
+            const str = strings[si];
+            if (!str || !str.displacement || typeof str.segments !== 'number') continue;
+
+            const glowIntensity = str.glowIntensity || 0;
+            const energy = str.energy || 0;
+            const thickness = str.thickness || 1;
+            const x = str.x;
+            const topY = str.topY;
+            const bottomY = str.bottomY;
+
+            if (typeof x !== 'number' || typeof topY !== 'number' || typeof bottomY !== 'number') continue;
+
+            if (glowIntensity > 0.01) {
               ctx.save();
-              ctx.globalAlpha = str.glowIntensity * 0.25;
+              ctx.globalAlpha = glowIntensity * 0.25;
               ctx.shadowColor = `hsla(${h}, ${sat + 20}%, ${l + 20}%, 0.8)`;
-              ctx.shadowBlur = 15 + str.glowIntensity * 20;
+              ctx.shadowBlur = 15 + glowIntensity * 20;
               ctx.beginPath();
-              ctx.moveTo(str.x, str.topY);
+              ctx.moveTo(x, topY);
               for (let i = 0; i < str.segments; i++) {
-                const segY = str.topY + (i / (str.segments - 1)) * (str.bottomY - str.topY);
-                ctx.lineTo(str.x + str.displacement[i], segY);
+                const segY = topY + (i / (str.segments - 1)) * (bottomY - topY);
+                const disp = str.displacement[i] || 0;
+                ctx.lineTo(x + disp, segY);
               }
-              ctx.strokeStyle = `hsla(${h}, ${sat + 20}%, ${l + 25}%, ${0.3 + str.glowIntensity * 0.5})`;
-              ctx.lineWidth = str.thickness + str.glowIntensity * 4;
+              ctx.strokeStyle = `hsla(${h}, ${sat + 20}%, ${l + 25}%, ${0.3 + glowIntensity * 0.5})`;
+              ctx.lineWidth = thickness + glowIntensity * 4;
               ctx.stroke();
               ctx.restore();
             }
             ctx.beginPath();
-            ctx.moveTo(str.x, str.topY);
+            ctx.moveTo(x, topY);
             for (let i = 0; i < str.segments; i++) {
               const t = i / (str.segments - 1);
-              ctx.lineTo(str.x + str.displacement[i], str.topY + t * (str.bottomY - str.topY));
+              const disp = str.displacement[i] || 0;
+              ctx.lineTo(x + disp, topY + t * (bottomY - topY));
             }
-            ctx.strokeStyle = `hsla(${h}, ${sat}%, ${l * 0.4 + str.glowIntensity * l * 0.6 + 10}%, ${0.35 + str.energy * 0.5 + str.glowIntensity * 0.15})`;
-            ctx.lineWidth = str.thickness;
+            ctx.strokeStyle = `hsla(${h}, ${sat}%, ${l * 0.4 + glowIntensity * l * 0.6 + 10}%, ${0.35 + energy * 0.5 + glowIntensity * 0.15})`;
+            ctx.lineWidth = thickness;
             ctx.lineCap = 'round';
             ctx.stroke();
-            str.ripples.forEach(r => {
-              if (r.life > 0) {
-                ctx.beginPath();
-                ctx.ellipse(str.x, r.y, 3 + r.spread * 0.1, r.spread, 0, 0, Math.PI * 2);
-                ctx.strokeStyle = `hsla(${h}, ${sat + 15}%, ${l + 15}%, ${r.life * 0.4 * r.velocity})`;
-                ctx.lineWidth = 0.5 + r.velocity;
-                ctx.stroke();
+
+            // Draw ripples
+            if (str.ripples && Array.isArray(str.ripples)) {
+              for (let ri = 0; ri < str.ripples.length; ri++) {
+                const r = str.ripples[ri];
+                if (r && r.life > 0 && typeof r.y === 'number' && typeof r.spread === 'number') {
+                  ctx.beginPath();
+                  ctx.ellipse(x, r.y, 3 + r.spread * 0.1, r.spread, 0, 0, Math.PI * 2);
+                  ctx.strokeStyle = `hsla(${h}, ${sat + 15}%, ${l + 15}%, ${r.life * 0.4 * (r.velocity || 0.5)})`;
+                  ctx.lineWidth = 0.5 + (r.velocity || 0.5);
+                  ctx.stroke();
+                }
               }
-            });
+            }
+
             ctx.beginPath();
-            ctx.arc(str.x, str.topY, 2, 0, Math.PI * 2);
+            ctx.arc(x, topY, 2, 0, Math.PI * 2);
             ctx.fillStyle = `hsla(${h}, ${sat - 10}%, ${l + 20}%, 0.3)`;
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(str.x, str.bottomY, 1.5, 0, Math.PI * 2);
+            ctx.arc(x, bottomY, 1.5, 0, Math.PI * 2);
             ctx.fillStyle = `hsla(${h}, ${sat - 10}%, ${l + 15}%, 0.2)`;
             ctx.fill();
-          });
+          }
         }
       }
       } catch (e) {
@@ -873,25 +981,36 @@ export default function StringsMode({
     animationRef.current = requestAnimationFrame(loop);
 
     labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 2500);
+    mountedRef.current = true;
 
     return () => {
       running = false;
+      mountedRef.current = false;
       window.removeEventListener('resize', handleResize);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
       if (foleyIntervalRef.current) clearInterval(foleyIntervalRef.current);
 
-      // Fade out audio gracefully
+      // Cancel any pending audio close timeout
+      if (audioCloseTimeoutRef.current) {
+        clearTimeout(audioCloseTimeoutRef.current);
+        audioCloseTimeoutRef.current = null;
+      }
+
+      // Close audio immediately on unmount - no fade needed since we're unmounting
       const audioCtx = audioCtxRef.current;
       const masterGain = masterGainRef.current;
-      if (audioCtx && masterGain && audioCtx.state !== 'closed') {
-        const now = audioCtx.currentTime;
-        const fadeTime = 0.6;
-        masterGain.gain.setTargetAtTime(0, now, fadeTime / 3);
-        setTimeout(() => {
-          try { audioCtx.close(); } catch (e) {}
-        }, fadeTime * 1000);
+      if (audioCtx && audioCtx.state !== 'closed') {
+        try {
+          if (masterGain) {
+            masterGain.gain.value = 0;
+          }
+          audioCtx.close();
+        } catch (e) { /* ignore */ }
       }
+      // Clear refs so remount gets fresh context
+      audioCtxRef.current = null;
+      masterGainRef.current = null;
     };
   }, []); // Empty deps - only run on mount/unmount
 
