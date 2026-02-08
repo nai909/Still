@@ -4193,10 +4193,13 @@ function Still() {
   const [showSettingsHint, setShowSettingsHint] = useState(false);
   const [gazeVisual, setGazeVisual] = useState('geometry');
 
-  // Shared music state - synced from DroneMode, used by HarpMode
+  // Shared music state - synced from DroneMode, used by HarpMode and StringsMode
   const [sharedMusicKey, setSharedMusicKey] = useState(3); // D#
   const [sharedMusicScaleType, setSharedMusicScaleType] = useState(13); // insen
   const [sharedInstrument, setSharedInstrument] = useState(0); // handpan
+  const [sharedTexture, setSharedTexture] = useState(2); // forest
+  const [sharedShowNotes, setSharedShowNotes] = useState(false);
+  const [sharedDroneEnabled, setSharedDroneEnabled] = useState(false);
 
   // Settings hint timer - shows hint every 20 seconds until settings opened
   useEffect(() => {
@@ -5461,16 +5464,16 @@ function Still() {
         {view === 'strings' && (
           <StringsMode
             primaryHue={primaryHue}
-            musicKey={currentKey}
-            musicScaleType={currentScaleType}
-            texture={currentTexture}
-            showNotes={showNotes}
-            droneEnabled={droneEnabled}
-            onKeyChange={setCurrentKey}
-            onScaleChange={setCurrentScaleType}
-            onTextureChange={setCurrentTexture}
-            onShowNotesChange={setShowNotes}
-            onDroneEnabledChange={setDroneEnabled}
+            musicKey={sharedMusicKey}
+            musicScaleType={sharedMusicScaleType}
+            texture={sharedTexture}
+            showNotes={sharedShowNotes}
+            droneEnabled={sharedDroneEnabled}
+            onKeyChange={setSharedMusicKey}
+            onScaleChange={setSharedMusicScaleType}
+            onTextureChange={setSharedTexture}
+            onShowNotesChange={setSharedShowNotes}
+            onDroneEnabledChange={setSharedDroneEnabled}
           />
         )}
 
