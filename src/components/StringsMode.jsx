@@ -49,6 +49,8 @@ export default function StringsMode({
   const reverbNodeRef = useRef(null);
   const noiseGainRef = useRef(null);
   const foleyIntervalRef = useRef(null);
+  const droneNodesRef = useRef([]);
+  const droneGainRef = useRef(null);
 
   // Sample buffers for each instrument
   const sampleBuffersRef = useRef({});
@@ -84,6 +86,97 @@ export default function StringsMode({
   useEffect(() => {
     currentTextureRef.current = currentTexture;
   }, [currentTexture]);
+
+  // Ref to track showNotes for use in callbacks
+  const showNotesRef = useRef(showNotes);
+  useEffect(() => {
+    showNotesRef.current = showNotes;
+  }, [showNotes]);
+
+  // Control drone volume when enabled/disabled
+  useEffect(() => {
+    const droneGain = droneGainRef.current;
+    const audioCtx = audioCtxRef.current;
+    if (!droneGain || !audioCtx || audioCtx.state === 'closed') return;
+
+    const targetGain = droneEnabled ? 1 : 0;
+    droneGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.5);
+  }, [droneEnabled]);
+
+  // Update drone frequencies when key changes
+  useEffect(() => {
+    const audioCtx = audioCtxRef.current;
+    if (!audioCtx || audioCtx.state === 'closed') return;
+    if (droneNodesRef.current.length === 0) return;
+
+    const baseFreq = KEY_FREQUENCIES[KEYS[currentKey]] || 155.56;
+    droneNodesRef.current.forEach(node => {
+      if (node.osc && node.ratio) {
+        node.osc.frequency.setTargetAtTime(baseFreq * node.ratio, audioCtx.currentTime, 0.3);
+      }
+    });
+  }, [currentKey]);
+
+  // Convert frequency to note name
+  const freqToNoteName = useCallback((freq) => {
+    const noteNames = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+    const A4 = 440;
+    const semitonesFromA4 = 12 * Math.log2(freq / A4);
+    const noteIndex = Math.round(semitonesFromA4) + 9; // A is index 9
+    const octave = Math.floor((noteIndex + 12 * 10) / 12) - 10 + 4;
+    const noteName = noteNames[((noteIndex % 12) + 12) % 12];
+    return `${noteName}${octave}`;
+  }, []);
+
+  // Show note and fade it using DOM manipulation
+  const showPlayedNote = useCallback((freq) => {
+    const noteName = freqToNoteName(freq);
+
+    // Inject keyframes if not already present
+    if (!document.getElementById('strings-note-fade-style')) {
+      const style = document.createElement('style');
+      style.id = 'strings-note-fade-style';
+      style.textContent = `
+        @keyframes stringsNoteFade {
+          0% { opacity: 0; }
+          15% { opacity: 1; }
+          70% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Remove any existing note display
+    const existing = document.getElementById('strings-played-note-display');
+    if (existing) existing.remove();
+
+    // Create new note display element
+    const noteEl = document.createElement('div');
+    noteEl.id = 'strings-played-note-display';
+    noteEl.textContent = noteName;
+    noteEl.style.cssText = `
+      position: fixed;
+      bottom: 3%;
+      left: 50%;
+      transform: translate(-50%, 0);
+      font-family: "Jost", sans-serif;
+      font-size: 1.5rem;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      color: hsla(${primaryHueRef.current}, 52%, 68%, 0.9);
+      text-shadow: 0 0 20px hsla(${primaryHueRef.current}, 52%, 68%, 0.5);
+      z-index: 9998;
+      pointer-events: none;
+      animation: stringsNoteFade 1.2s ease-out forwards;
+    `;
+    document.body.appendChild(noteEl);
+
+    // Remove element after animation
+    setTimeout(() => {
+      if (noteEl.parentNode) noteEl.remove();
+    }, 1200);
+  }, [freqToNoteName]);
 
   // Generate scale frequencies
   const generateScale = useCallback((keyIndex, scaleTypeIndex, octaves = 2) => {
@@ -271,6 +364,32 @@ export default function StringsMode({
 
     masterGain.connect(reverbNode);
     masterGain.gain.setTargetAtTime(0.65, audioCtx.currentTime, 0.1);
+
+    // Create ambient drone oscillators (harmonic layers)
+    const droneGain = audioCtx.createGain();
+    droneGain.gain.value = 0; // Start silent
+    droneGain.connect(reverbNode);
+    droneGainRef.current = droneGain;
+
+    const droneLayers = [
+      { ratio: 1, gain: 0.15, type: 'sine' },
+      { ratio: 2, gain: 0.08, type: 'sine' },
+      { ratio: 0.5, gain: 0.12, type: 'sine' },
+      { ratio: 1.5, gain: 0.05, type: 'triangle' },
+    ];
+
+    const baseFreq = KEY_FREQUENCIES[KEYS[3]] || 155.56; // D# default
+    droneLayers.forEach(layer => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = layer.type;
+      osc.frequency.value = baseFreq * layer.ratio;
+      gain.gain.value = layer.gain;
+      osc.connect(gain);
+      gain.connect(droneGain);
+      osc.start();
+      droneNodesRef.current.push({ osc, gain, ratio: layer.ratio });
+    });
 
     // Start foley interval
     foleyIntervalRef.current = setInterval(() => {
@@ -685,6 +804,11 @@ export default function StringsMode({
       }
 
       pluckStringAudio(string, velocity);
+
+      // Show note name if enabled
+      if (showNotesRef.current) {
+        showPlayedNote(string.freq);
+      }
 
       // Haptic feedback based on string pitch
       const idx = string.normalizedIndex || 0;
