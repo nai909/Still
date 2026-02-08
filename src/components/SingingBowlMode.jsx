@@ -172,6 +172,11 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     const audioCtx = audioCtxRef.current;
     if (!audioCtx) return;
 
+    // Resume if suspended (can happen after period of inactivity)
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+
     const now = audioCtx.currentTime;
     const harmonics = harmonicsRef.current;
 
@@ -496,6 +501,12 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
 
   const handleStart = useCallback((clientX, clientY) => {
     if (!isInitialized) initAudio();
+
+    // Resume audio context on user gesture (required for browsers)
+    const audioCtx = audioCtxRef.current;
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
 
     fingerPosRef.current = { x: clientX, y: clientY };
     const angle = getAngleFromCenter(clientX, clientY);
