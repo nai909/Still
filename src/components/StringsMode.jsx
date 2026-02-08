@@ -1108,6 +1108,7 @@ export default function StringsMode({
           top: 0,
           left: 0,
           zIndex: 1,
+          pointerEvents: showSettings ? 'none' : 'auto',
         }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -1202,7 +1203,7 @@ export default function StringsMode({
               setShowSettings(false);
             }}
             style={{
-              position: 'fixed',
+              position: 'absolute',
               inset: 0,
               background: 'rgba(0, 0, 0, 0.6)',
               zIndex: 20,
@@ -1216,7 +1217,7 @@ export default function StringsMode({
             onTouchMove={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
             style={{
-              position: 'fixed',
+              position: 'absolute',
               bottom: 0,
               left: 0,
               right: 0,

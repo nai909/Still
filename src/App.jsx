@@ -2270,7 +2270,23 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
   );
 }
 
-const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false, onSamplesReady = null, onKeyScaleChange = null, onInstrumentChange = null }, ref) {
+const DroneMode = React.forwardRef(function DroneMode({
+  primaryHue = 162,
+  primaryColor = 'hsl(162, 52%, 68%)',
+  backgroundMode = false,
+  onSamplesReady = null,
+  onKeyScaleChange = null,
+  onInstrumentChange = null,
+  // Shared settings props for two-way sync
+  musicKey: propMusicKey,
+  musicScaleType: propMusicScaleType,
+  texture: propTexture,
+  showNotesProp,
+  droneEnabledProp,
+  onTextureChange,
+  onShowNotesChange,
+  onDroneEnabledChange,
+}, ref) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [samplesLoading, setSamplesLoading] = useState(false);
   const [samplesReady, setSamplesReady] = useState(false);
@@ -2278,15 +2294,15 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
   const samplesLoadedCountRef = useRef(0);
   const totalSamplesToLoad = 20; // Number of handpan samples
   const [currentInstrument, setCurrentInstrument] = useState(0); // handpan
-  const [currentTexture, setCurrentTexture] = useState(2); // forest
-  const [currentKey, setCurrentKey] = useState(3); // D#
-  const [currentScaleType, setCurrentScaleType] = useState(13); // insen
+  const [currentTexture, setCurrentTexture] = useState(propTexture ?? 2); // forest
+  const [currentKey, setCurrentKey] = useState(propMusicKey ?? 3); // D#
+  const [currentScaleType, setCurrentScaleType] = useState(propMusicScaleType ?? 13); // insen
   const [showLabel, setShowLabel] = useState(false);
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathValue, setBreathValue] = useState(0);
-  const [showNotes, setShowNotes] = useState(false);
-  const [droneEnabled, setDroneEnabled] = useState(false);
+  const [showNotes, setShowNotes] = useState(showNotesProp ?? false);
+  const [droneEnabled, setDroneEnabled] = useState(droneEnabledProp ?? false);
   const droneEnabledRef = useRef(true);
 
   // Keep ref in sync with state for animation loop access
@@ -2294,12 +2310,64 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
     droneEnabledRef.current = droneEnabled;
   }, [droneEnabled]);
 
+  // Sync local state with props when they change from parent (e.g., from StringsMode)
+  useEffect(() => {
+    if (propMusicKey !== undefined && propMusicKey !== currentKey) {
+      setCurrentKey(propMusicKey);
+    }
+  }, [propMusicKey]);
+
+  useEffect(() => {
+    if (propMusicScaleType !== undefined && propMusicScaleType !== currentScaleType) {
+      setCurrentScaleType(propMusicScaleType);
+    }
+  }, [propMusicScaleType]);
+
+  useEffect(() => {
+    if (propTexture !== undefined && propTexture !== currentTexture) {
+      setCurrentTexture(propTexture);
+    }
+  }, [propTexture]);
+
+  useEffect(() => {
+    if (showNotesProp !== undefined && showNotesProp !== showNotes) {
+      setShowNotes(showNotesProp);
+    }
+  }, [showNotesProp]);
+
+  useEffect(() => {
+    if (droneEnabledProp !== undefined && droneEnabledProp !== droneEnabled) {
+      setDroneEnabled(droneEnabledProp);
+    }
+  }, [droneEnabledProp]);
+
   // Notify parent when key/scale changes
   useEffect(() => {
     if (onKeyScaleChange) {
       onKeyScaleChange(currentKey, currentScaleType);
     }
   }, [currentKey, currentScaleType, onKeyScaleChange]);
+
+  // Notify parent when texture changes
+  useEffect(() => {
+    if (onTextureChange) {
+      onTextureChange(currentTexture);
+    }
+  }, [currentTexture, onTextureChange]);
+
+  // Notify parent when showNotes changes
+  useEffect(() => {
+    if (onShowNotesChange) {
+      onShowNotesChange(showNotes);
+    }
+  }, [showNotes, onShowNotesChange]);
+
+  // Notify parent when droneEnabled changes
+  useEffect(() => {
+    if (onDroneEnabledChange) {
+      onDroneEnabledChange(droneEnabled);
+    }
+  }, [droneEnabled, onDroneEnabledChange]);
 
   // Notify parent when instrument changes
   useEffect(() => {
@@ -5512,6 +5580,15 @@ function Still() {
             onSamplesReady={handleSamplesReady}
             onKeyScaleChange={(key, scale) => { setSharedMusicKey(key); setSharedMusicScaleType(scale); }}
             onInstrumentChange={(instrument) => setSharedInstrument(instrument)}
+            // Two-way sync props
+            musicKey={sharedMusicKey}
+            musicScaleType={sharedMusicScaleType}
+            texture={sharedTexture}
+            showNotesProp={sharedShowNotes}
+            droneEnabledProp={sharedDroneEnabled}
+            onTextureChange={setSharedTexture}
+            onShowNotesChange={setSharedShowNotes}
+            onDroneEnabledChange={setSharedDroneEnabled}
           />
         </div>
         {false && view === 'breathwork-old' && (
