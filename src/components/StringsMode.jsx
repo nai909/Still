@@ -752,51 +752,51 @@ export default function StringsMode({
     const loop = (ts) => {
       if (!running) return;
 
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        animationRef.current = requestAnimationFrame(loop);
-        return;
-      }
+      try {
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          animationRef.current = requestAnimationFrame(loop);
+          return;
+        }
 
-      if (!lastFrame) lastFrame = ts;
-      const dt = Math.min((ts - lastFrame) / 1000, 0.05);
-      lastFrame = ts;
+        if (!lastFrame) lastFrame = ts;
+        const dt = Math.min((ts - lastFrame) / 1000, 0.05);
+        lastFrame = ts;
 
       // Physics
       const strings = stringsRef.current;
       if (strings && strings.length > 0) {
         const c = 0.4;
-        strings.forEach(s => {
+        for (let si = 0; si < strings.length; si++) {
+          const s = strings[si];
+          if (!s || !s.displacement || !s.prevDisplacement) continue;
+
           const damping = 0.985 + s.normalizedIndex * 0.008;
-          // Reuse temp array to avoid allocations
-          if (!s.tempDisp) s.tempDisp = new Float32Array(s.segments);
-          const newDisp = s.tempDisp;
+          const segments = s.segments;
+          const disp = s.displacement;
+          const prev = s.prevDisplacement;
 
-          for (let i = 1; i < s.segments - 1; i++) {
-            const accel = c * c * (s.displacement[i - 1] + s.displacement[i + 1] - 2 * s.displacement[i]);
-            newDisp[i] = 2 * s.displacement[i] - s.prevDisplacement[i] + accel;
-            newDisp[i] *= damping;
+          // Update physics in-place using wave equation
+          for (let i = 1; i < segments - 1; i++) {
+            const accel = c * c * (disp[i - 1] + disp[i + 1] - 2 * disp[i]);
+            const newVal = (2 * disp[i] - prev[i] + accel) * damping;
+            prev[i] = disp[i];
+            disp[i] = newVal;
           }
-          newDisp[0] = 0;
-          newDisp[s.segments - 1] = 0;
-
-          // Swap arrays instead of creating new ones
-          const temp = s.prevDisplacement;
-          s.prevDisplacement = s.displacement;
-          s.displacement = newDisp;
-          s.tempDisp = temp;
 
           s.energy *= s.decay;
           if (s.energy < 0.001) s.energy = 0;
           s.glowIntensity *= 0.97;
           if (s.glowIntensity < 0.005) s.glowIntensity = 0;
+
+          // Update ripples
           for (let ri = s.ripples.length - 1; ri >= 0; ri--) {
             const r = s.ripples[ri];
             r.spread += dt * 400;
             r.life -= dt * 0.5;
             if (r.life <= 0) s.ripples.splice(ri, 1);
           }
-        });
+        }
 
         // Draw
         const { W, H } = dimsRef.current;
@@ -862,6 +862,10 @@ export default function StringsMode({
             ctx.fill();
           });
         }
+      }
+      } catch (e) {
+        // Silently continue on errors to prevent crash
+        console.warn('StringsMode animation error:', e);
       }
 
       animationRef.current = requestAnimationFrame(loop);
