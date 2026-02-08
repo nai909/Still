@@ -2271,7 +2271,7 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
   );
 }
 
-const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false, onSamplesReady = null }, ref) {
+const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false, onSamplesReady = null, onKeyScaleChange = null }, ref) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [samplesLoading, setSamplesLoading] = useState(false);
   const [samplesReady, setSamplesReady] = useState(false);
@@ -2287,13 +2287,20 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathValue, setBreathValue] = useState(0);
   const [showNotes, setShowNotes] = useState(false);
-  const [droneEnabled, setDroneEnabled] = useState(true);
+  const [droneEnabled, setDroneEnabled] = useState(false);
   const droneEnabledRef = useRef(true);
 
   // Keep ref in sync with state for animation loop access
   useEffect(() => {
     droneEnabledRef.current = droneEnabled;
   }, [droneEnabled]);
+
+  // Notify parent when key/scale changes
+  useEffect(() => {
+    if (onKeyScaleChange) {
+      onKeyScaleChange(currentKey, currentScaleType);
+    }
+  }, [currentKey, currentScaleType, onKeyScaleChange]);
 
   // Generate current scale based on key and scale type (memoized to prevent stale closures)
   const scale = React.useMemo(() =>
@@ -4204,6 +4211,10 @@ function Still() {
   const [showSettingsHint, setShowSettingsHint] = useState(false);
   const [gazeVisual, setGazeVisual] = useState('geometry');
 
+  // Shared music state - synced from DroneMode, used by HarpMode
+  const [sharedMusicKey, setSharedMusicKey] = useState(3); // D#
+  const [sharedMusicScaleType, setSharedMusicScaleType] = useState(13); // insen
+
   // Settings hint timer - shows hint every 20 seconds until settings opened
   useEffect(() => {
     if (hasOpenedSettings) {
@@ -5465,7 +5476,7 @@ function Still() {
 
         {/* Harp - Meditative virtual harp with Karplus-Strong synthesis */}
         {view === 'harp' && (
-          <HarpMode primaryHue={primaryHue} />
+          <HarpMode primaryHue={primaryHue} musicKey={sharedMusicKey} musicScaleType={sharedMusicScaleType} />
         )}
 
         {/* Breathwork View is now always mounted below for WebGL warmup */}
@@ -5501,6 +5512,7 @@ function Still() {
             primaryColor={primaryColor}
             backgroundMode={view !== 'hum'}
             onSamplesReady={handleSamplesReady}
+            onKeyScaleChange={(key, scale) => { setSharedMusicKey(key); setSharedMusicScaleType(scale); }}
           />
         </div>
         {false && view === 'breathwork-old' && (

@@ -7,7 +7,7 @@ import { KEYS, KEY_FREQUENCIES, SCALE_TYPES } from '../config/constants';
 // Sampled harp with physics-based string visuals
 // =============================================
 
-export default function HarpMode({ primaryHue = 220 }) {
+export default function HarpMode({ primaryHue = 220, musicKey = 3, musicScaleType = 13 }) {
   const canvasRef = useRef(null);
   const audioCtxRef = useRef(null);
   const masterGainRef = useRef(null);
@@ -20,9 +20,6 @@ export default function HarpMode({ primaryHue = 220 }) {
   const activeRef = useRef(new Map());
   const lastPluckedRef = useRef(new Map());
 
-  const [currentKey, setCurrentKey] = useState(0); // C
-  const [currentScaleType, setCurrentScaleType] = useState(9); // pentatonic major
-  const [showDrawer, setShowDrawer] = useState(false);
   const [showLabel, setShowLabel] = useState(true);
   const labelTimeoutRef = useRef(null);
 
@@ -53,7 +50,7 @@ export default function HarpMode({ primaryHue = 220 }) {
     const { W, H } = dimsRef.current;
     if (W === 0 || H === 0) return;
 
-    const frequencies = generateScale(currentKey, currentScaleType, 2);
+    const frequencies = generateScale(musicKey, musicScaleType, 2);
     const numStrings = frequencies.length;
     const strings = [];
 
@@ -92,7 +89,7 @@ export default function HarpMode({ primaryHue = 220 }) {
     });
 
     stringsRef.current = strings;
-  }, [currentKey, currentScaleType, generateScale]);
+  }, [musicKey, musicScaleType, generateScale]);
 
   // =============================================
   // AUDIO ENGINE
@@ -151,6 +148,11 @@ export default function HarpMode({ primaryHue = 220 }) {
     const masterGain = masterGainRef.current;
     const harpBuffer = harpBufferRef.current;
     if (!audioCtx || !masterGain || !harpBuffer) return;
+
+    // Resume AudioContext if suspended (iOS requirement after user interaction)
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
 
     const now = audioCtx.currentTime;
     const freq = string.freq;
@@ -496,12 +498,6 @@ export default function HarpMode({ primaryHue = 220 }) {
   }, [createStrings]);
 
   // Display label temporarily
-  const displayLabel = useCallback(() => {
-    setShowLabel(true);
-    if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
-    labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 1500);
-  }, []);
-
   // =============================================
   // LIFECYCLE
   // =============================================
@@ -523,13 +519,13 @@ export default function HarpMode({ primaryHue = 220 }) {
   // Update strings when key/scale changes
   useEffect(() => {
     createStrings();
-  }, [currentKey, currentScaleType, createStrings]);
+  }, [musicKey, musicScaleType, createStrings]);
 
   // Touch handlers
   const onTouchStart = useCallback((e) => {
     e.preventDefault();
-    for (const touch of e.changedTouches) {
-      handleStart(touch.identifier, touch.clientX, touch.clientY);
+    for (const t of e.changedTouches) {
+      handleStart(t.identifier, t.clientX, t.clientY);
     }
   }, [handleStart]);
 
@@ -542,8 +538,8 @@ export default function HarpMode({ primaryHue = 220 }) {
 
   const onTouchEnd = useCallback((e) => {
     e.preventDefault();
-    for (const touch of e.changedTouches) {
-      handleEnd(touch.identifier);
+    for (const t of e.changedTouches) {
+      handleEnd(t.identifier);
     }
   }, [handleEnd]);
 
@@ -629,216 +625,10 @@ export default function HarpMode({ primaryHue = 220 }) {
           color: `hsla(${primaryHue}, 52%, 68%, 0.6)`,
           fontFamily: '"Jost", sans-serif',
         }}>
-          {KEYS[currentKey].toLowerCase()} {SCALE_TYPES[currentScaleType].name}
+          {KEYS[musicKey].toLowerCase()} {SCALE_TYPES[musicScaleType].name}
         </div>
       </div>
 
-      {/* Settings hint */}
-      <div
-        onClick={() => { haptic.tap(); setShowDrawer(true); }}
-        onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); haptic.tap(); setShowDrawer(true); }}
-        style={{
-          position: 'fixed',
-          bottom: 20,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 20,
-          color: `hsla(${primaryHue}, 52%, 68%, 0.3)`,
-          fontSize: '0.65rem',
-          fontFamily: '"Jost", sans-serif',
-          letterSpacing: '0.15em',
-          textTransform: 'lowercase',
-          cursor: 'pointer',
-          padding: '8px 16px',
-          touchAction: 'auto',
-        }}
-      >
-        tap for settings
-      </div>
-
-      {/* Scale selector drawer - matching DroneMode */}
-      {showDrawer && (
-        <>
-          {/* Backdrop */}
-          <div
-            onClick={() => setShowDrawer(false)}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'rgba(0, 0, 0, 0.6)',
-              zIndex: 100,
-              animation: 'fadeInScale 0.5s ease-out',
-            }}
-          />
-          {/* Drawer */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchMove={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()}
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              background: 'rgba(0, 0, 0, 0.95)',
-              borderTop: `1px solid hsla(${primaryHue}, 52%, 68%, 0.2)`,
-              borderRadius: '1.5rem 1.5rem 0 0',
-              zIndex: 101,
-              animation: 'slideUpScale 0.5s ease-out',
-              maxHeight: '70vh',
-              display: 'flex',
-              flexDirection: 'column',
-              touchAction: 'auto',
-            }}
-          >
-            {/* Header */}
-            <div style={{
-              padding: '1rem 1.5rem 0.75rem',
-              textAlign: 'center',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-            }}>
-              <span style={{
-                color: `hsla(${primaryHue}, 52%, 68%, 0.7)`,
-                fontSize: '0.6rem',
-                fontFamily: '"Jost", sans-serif',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-              }}>Settings</span>
-            </div>
-
-            {/* Two column layout */}
-            <div style={{
-              display: 'flex',
-              flex: 1,
-              minHeight: 0,
-              overflow: 'hidden',
-            }}>
-              {/* Keys column */}
-              <div
-                onTouchStart={(e) => e.stopPropagation()}
-                onTouchMove={(e) => e.stopPropagation()}
-                onTouchEnd={(e) => e.stopPropagation()}
-                style={{
-                  flex: 1,
-                  borderRight: '1px solid rgba(255,255,255,0.06)',
-                  overflowY: 'auto',
-                  overflowX: 'hidden',
-                  WebkitOverflowScrolling: 'touch',
-                  touchAction: 'pan-y',
-                  overscrollBehavior: 'contain',
-                }}>
-                <div style={{
-                  padding: '0.5rem 0.75rem',
-                  fontSize: '0.55rem',
-                  color: 'rgba(255,255,255,0.4)',
-                  fontFamily: '"Jost", sans-serif',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  position: 'sticky',
-                  top: 0,
-                  background: 'rgba(0, 0, 0, 0.95)',
-                  zIndex: 1,
-                }}>Key</div>
-                {KEYS.map((key, index) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      setCurrentKey(index);
-                      displayLabel();
-                      haptic.tap();
-                    }}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      background: currentKey === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
-                      border: 'none',
-                      borderLeft: currentKey === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
-                      color: currentKey === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
-                      padding: '0.7rem 1rem',
-                      cursor: 'pointer',
-                      fontSize: '0.9rem',
-                      fontFamily: '"Jost", sans-serif',
-                      textAlign: 'left',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    {key}
-                  </button>
-                ))}
-                {/* Bottom spacer for scroll */}
-                <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom, 0px))', flexShrink: 0 }} />
-              </div>
-
-              {/* Scales column */}
-              <div
-                onTouchStart={(e) => e.stopPropagation()}
-                onTouchMove={(e) => e.stopPropagation()}
-                onTouchEnd={(e) => e.stopPropagation()}
-                style={{
-                  flex: 2,
-                  overflowY: 'auto',
-                  overflowX: 'hidden',
-                  WebkitOverflowScrolling: 'touch',
-                  touchAction: 'pan-y',
-                  overscrollBehavior: 'contain',
-                }}>
-                <div style={{
-                  padding: '0.5rem 0.75rem',
-                  fontSize: '0.55rem',
-                  color: 'rgba(255,255,255,0.4)',
-                  fontFamily: '"Jost", sans-serif',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  position: 'sticky',
-                  top: 0,
-                  background: 'rgba(0, 0, 0, 0.95)',
-                  zIndex: 1,
-                }}>Scale</div>
-                {SCALE_TYPES.map((scaleType, index) => (
-                  <button
-                    key={scaleType.name}
-                    onClick={() => {
-                      setCurrentScaleType(index);
-                      displayLabel();
-                      haptic.tap();
-                    }}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      background: currentScaleType === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
-                      border: 'none',
-                      borderLeft: currentScaleType === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
-                      color: currentScaleType === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
-                      padding: '0.7rem 1rem',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontFamily: '"Jost", sans-serif',
-                      textAlign: 'left',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    {scaleType.name}
-                  </button>
-                ))}
-                {/* Bottom spacer for scroll */}
-                <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom, 0px))', flexShrink: 0 }} />
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      <style>{`
-        @keyframes fadeInScale {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideUpScale {
-          from { transform: translateY(100%); }
-          to { transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }
