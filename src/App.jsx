@@ -5494,6 +5494,7 @@ function Still() {
             primaryHue={primaryHue}
             musicKey={sharedMusicKey}
             musicScaleType={sharedMusicScaleType}
+            onKeyScaleChange={(key, scale) => { setSharedMusicKey(key); setSharedMusicScaleType(scale); }}
           />
         )}
 

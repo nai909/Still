@@ -32,11 +32,26 @@ const HANDPAN_NOTES = {
   'C6': 1046.50,
 };
 
-export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScaleType = 13 }) {
+const TEXTURES = [
+  { name: 'silence', noise: 0, foley: false },
+  { name: 'rain', noise: 0.008, foley: true, foleyType: 'rain' },
+  { name: 'forest', noise: 0, foley: true, foleyType: 'forest' },
+  { name: 'water', noise: 0, foley: true, foleyType: 'water' },
+  { name: 'night', noise: 0, foley: true, foleyType: 'night' }
+];
+
+export default function StringsMode({
+  primaryHue = 220,
+  musicKey: initialKey = 3,
+  musicScaleType: initialScale = 13,
+  onKeyScaleChange
+}) {
   const canvasRef = useRef(null);
   const audioCtxRef = useRef(null);
   const masterGainRef = useRef(null);
   const reverbNodeRef = useRef(null);
+  const noiseGainRef = useRef(null);
+  const foleyIntervalRef = useRef(null);
 
   // Sample buffers for each instrument
   const sampleBuffersRef = useRef({});
@@ -48,9 +63,15 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
   const activeRef = useRef(new Map());
   const lastPluckedRef = useRef(new Map());
   const primaryHueRef = useRef(primaryHue);
+  const touchStartRef = useRef(null);
 
   const [showLabel, setShowLabel] = useState(true);
   const [currentInstrument, setCurrentInstrument] = useState(0);
+  const [showSettings, setShowSettings] = useState(false);
+  const [currentKey, setCurrentKey] = useState(initialKey);
+  const [currentScaleType, setCurrentScaleType] = useState(initialScale);
+  const [currentTexture, setCurrentTexture] = useState(0);
+  const currentTextureRef = useRef(0);
   const labelTimeoutRef = useRef(null);
 
   // Keep hue ref updated
@@ -85,7 +106,7 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
     const { W, H } = dimsRef.current;
     if (W === 0 || H === 0) return;
 
-    const frequencies = generateScale(musicKey, musicScaleType, 2);
+    const frequencies = generateScale(currentKey, currentScaleType, 2);
     const numStrings = frequencies.length;
     const strings = [];
 
@@ -124,7 +145,7 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
     });
 
     stringsRef.current = strings;
-  }, [musicKey, musicScaleType, generateScale]);
+  }, [currentKey, currentScaleType, generateScale]);
 
   // =============================================
   // AUDIO ENGINE
@@ -212,7 +233,104 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
 
     masterGain.connect(reverbNode);
     masterGain.gain.setTargetAtTime(0.65, audioCtx.currentTime, 0.1);
+
+    // Start foley interval
+    foleyIntervalRef.current = setInterval(() => {
+      const tex = TEXTURES[currentTextureRef.current];
+      if (tex && tex.foley) {
+        playFoley(audioCtx, masterGain, tex.foleyType);
+      }
+    }, 1500 + Math.random() * 2000);
   }, []);
+
+  // Foley sounds for ambient textures
+  const playFoley = (ctx, masterGain, type) => {
+    if (Math.random() > 0.4) return;
+    const now = ctx.currentTime;
+
+    if (type === 'rain') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 1000 + Math.random() * 500;
+      osc.frequency.setTargetAtTime(400 + Math.random() * 200, now, 0.02);
+      gain.gain.value = 0.015;
+      gain.gain.setTargetAtTime(0, now, 0.08);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === 'forest') {
+      if (Math.random() > 0.5) {
+        // Bird chirp
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        const baseFreq = 2000 + Math.random() * 1500;
+        osc.frequency.value = baseFreq;
+        osc.frequency.setTargetAtTime(baseFreq * 1.2, now, 0.03);
+        osc.frequency.setTargetAtTime(baseFreq * 0.9, now + 0.05, 0.02);
+        gain.gain.value = 0;
+        gain.gain.setTargetAtTime(0.02, now, 0.01);
+        gain.gain.setTargetAtTime(0, now + 0.08, 0.03);
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + 0.2);
+      } else {
+        // Leaf rustle
+        const noise = ctx.createBufferSource();
+        const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < data.length; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.03));
+        }
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 3000;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.01;
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(masterGain);
+        noise.start(now);
+      }
+    } else if (type === 'water') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 200 + Math.random() * 150;
+      osc.frequency.setTargetAtTime(400 + Math.random() * 200, now, 0.03);
+      gain.gain.value = 0.015;
+      gain.gain.setTargetAtTime(0, now, 0.1);
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === 'night') {
+      if (Math.random() > 0.7) {
+        // Cricket
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const lfo = ctx.createOscillator();
+        const lfoGain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 4000 + Math.random() * 1000;
+        lfo.frequency.value = 30 + Math.random() * 20;
+        lfoGain.gain.value = 0.01;
+        lfo.connect(lfoGain);
+        lfoGain.connect(gain.gain);
+        gain.gain.value = 0.01;
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(now);
+        lfo.start(now);
+        osc.stop(now + 0.1 + Math.random() * 0.1);
+        lfo.stop(now + 0.2);
+      }
+    }
+  };
 
   // Play current instrument
   const pluckStringAudio = useCallback((string, velocity) => {
@@ -776,6 +894,7 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
       window.removeEventListener('resize', resize);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
+      if (foleyIntervalRef.current) clearInterval(foleyIntervalRef.current);
 
       // Fade out audio gracefully
       const audioCtx = audioCtxRef.current;
@@ -794,13 +913,22 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
   // Update strings when key/scale changes
   useEffect(() => {
     createStrings();
-  }, [musicKey, musicScaleType, createStrings]);
+  }, [currentKey, currentScaleType, createStrings]);
 
-  // Touch handlers
+  // Notify parent of key/scale changes
+  useEffect(() => {
+    if (onKeyScaleChange) {
+      onKeyScaleChange(currentKey, currentScaleType);
+    }
+  }, [currentKey, currentScaleType, onKeyScaleChange]);
+
+  // Touch handlers with swipe detection for settings
   const onTouchStart = useCallback((e) => {
     e.preventDefault();
-    for (const t of e.changedTouches) {
-      handleStart(t.identifier, t.clientX, t.clientY);
+    const t = e.changedTouches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY, time: Date.now() };
+    for (const touch of e.changedTouches) {
+      handleStart(touch.identifier, touch.clientX, touch.clientY);
     }
   }, [handleStart]);
 
@@ -816,6 +944,17 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
     for (const t of e.changedTouches) {
       handleEnd(t.identifier);
     }
+    // Check for swipe up to open settings
+    if (touchStartRef.current && e.changedTouches.length > 0) {
+      const t = e.changedTouches[0];
+      const deltaY = t.clientY - touchStartRef.current.y;
+      const deltaX = t.clientX - touchStartRef.current.x;
+      const deltaTime = Date.now() - touchStartRef.current.time;
+      if (deltaTime < 500 && deltaY < -50 && Math.abs(deltaY) > Math.abs(deltaX)) {
+        setShowSettings(true);
+      }
+    }
+    touchStartRef.current = null;
   }, [handleEnd]);
 
   const onMouseDown = useCallback((e) => {
@@ -900,37 +1039,218 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
           color: `hsla(${primaryHue}, 52%, 68%, 0.6)`,
           fontFamily: '"Jost", sans-serif',
         }}>
-          {KEYS[musicKey].toLowerCase()} {SCALE_TYPES[musicScaleType].name}
+          {KEYS[currentKey].toLowerCase()} {SCALE_TYPES[currentScaleType].name}
         </div>
       </div>
 
-      {/* Instrument indicator */}
-      <div
-        onClick={() => setCurrentInstrument(prev => (prev + 1) % INSTRUMENTS.length)}
-        style={{
-          position: 'fixed',
-          bottom: '8%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 10,
-          textAlign: 'center',
-          cursor: 'pointer',
-          padding: '0.5rem 1rem',
-          opacity: 0.7,
-          transition: 'opacity 0.3s ease',
-        }}
-      >
-        <div style={{
-          fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
-          letterSpacing: '0.15em',
-          textTransform: 'lowercase',
-          color: `hsla(${primaryHue}, 52%, 68%, 0.85)`,
-          fontFamily: '"Jost", sans-serif',
-          fontWeight: 300,
-        }}>
-          {INSTRUMENTS[currentInstrument].name}
+      {/* Instrument indicator - hidden when settings open */}
+      {!showSettings && (
+        <div
+          onClick={() => setCurrentInstrument(prev => (prev + 1) % INSTRUMENTS.length)}
+          style={{
+            position: 'fixed',
+            bottom: '8%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10,
+            textAlign: 'center',
+            cursor: 'pointer',
+            padding: '0.5rem 1rem',
+            opacity: 0.7,
+            transition: 'opacity 0.3s ease',
+          }}
+        >
+          <div style={{
+            fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
+            letterSpacing: '0.15em',
+            textTransform: 'lowercase',
+            color: `hsla(${primaryHue}, 52%, 68%, 0.85)`,
+            fontFamily: '"Jost", sans-serif',
+            fontWeight: 300,
+          }}>
+            {INSTRUMENTS[currentInstrument].name}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Settings drawer */}
+      {showSettings && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setShowSettings(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.6)',
+              zIndex: 20,
+            }}
+          />
+          {/* Drawer */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            style={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: 'rgba(0, 0, 0, 0.95)',
+              borderTop: `1px solid hsla(${primaryHue}, 52%, 68%, 0.2)`,
+              borderRadius: '1.5rem 1.5rem 0 0',
+              zIndex: 21,
+              maxHeight: '70vh',
+              overflowY: 'auto',
+              padding: '1rem 0 calc(2rem + env(safe-area-inset-bottom, 0px))',
+            }}
+          >
+            {/* Header */}
+            <div style={{
+              padding: '0.5rem 1.5rem 1rem',
+              textAlign: 'center',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              <div style={{
+                width: '40px',
+                height: '4px',
+                background: 'rgba(255,255,255,0.3)',
+                borderRadius: '2px',
+                margin: '0 auto 1rem',
+              }} />
+              <span style={{
+                color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
+                fontSize: '0.9rem',
+                letterSpacing: '0.15em',
+                textTransform: 'lowercase',
+              }}>
+                settings
+              </span>
+            </div>
+
+            {/* Texture selection */}
+            <div style={{ padding: '1rem 1.5rem' }}>
+              <div style={{
+                color: 'rgba(255,255,255,0.5)',
+                fontSize: '0.65rem',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                marginBottom: '0.75rem',
+              }}>
+                Ambient
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {TEXTURES.map((tex, index) => (
+                  <button
+                    key={tex.name}
+                    onClick={() => { setCurrentTexture(index); currentTextureRef.current = index; haptic.tap(); }}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      borderRadius: '1rem',
+                      border: 'none',
+                      background: currentTexture === index ? `hsla(${primaryHue}, 52%, 68%, 0.2)` : 'rgba(255,255,255,0.05)',
+                      color: currentTexture === index ? `hsla(${primaryHue}, 52%, 68%, 0.9)` : 'rgba(255,255,255,0.6)',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      textTransform: 'lowercase',
+                      letterSpacing: '0.1em',
+                    }}
+                  >
+                    {tex.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Key selection */}
+            <div style={{ padding: '1rem 1.5rem' }}>
+              <div style={{
+                color: 'rgba(255,255,255,0.5)',
+                fontSize: '0.65rem',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                marginBottom: '0.75rem',
+              }}>
+                Key
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {KEYS.map((key, index) => (
+                  <button
+                    key={key}
+                    onClick={() => { setCurrentKey(index); haptic.tap(); }}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '0.5rem',
+                      border: 'none',
+                      background: currentKey === index ? `hsla(${primaryHue}, 52%, 68%, 0.2)` : 'rgba(255,255,255,0.05)',
+                      color: currentKey === index ? `hsla(${primaryHue}, 52%, 68%, 0.9)` : 'rgba(255,255,255,0.6)',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      minWidth: '2.5rem',
+                    }}
+                  >
+                    {key}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Scale selection */}
+            <div style={{ padding: '1rem 1.5rem' }}>
+              <div style={{
+                color: 'rgba(255,255,255,0.5)',
+                fontSize: '0.65rem',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                marginBottom: '0.75rem',
+              }}>
+                Scale
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {SCALE_TYPES.map((scale, index) => (
+                  <button
+                    key={scale.name}
+                    onClick={() => { setCurrentScaleType(index); haptic.tap(); }}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      borderRadius: '1rem',
+                      border: 'none',
+                      background: currentScaleType === index ? `hsla(${primaryHue}, 52%, 68%, 0.2)` : 'rgba(255,255,255,0.05)',
+                      color: currentScaleType === index ? `hsla(${primaryHue}, 52%, 68%, 0.9)` : 'rgba(255,255,255,0.6)',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      textTransform: 'lowercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    {scale.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Close button */}
+            <div style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
+              <button
+                onClick={() => setShowSettings(false)}
+                style={{
+                  padding: '0.75rem 2rem',
+                  borderRadius: '2rem',
+                  border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
+                  background: 'transparent',
+                  color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  letterSpacing: '0.1em',
+                }}
+              >
+                done
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
     </div>
   );
