@@ -150,7 +150,7 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
     reverbGain.connect(audioCtx.destination);
 
     masterGain.connect(reverbNode);
-    masterGain.gain.setTargetAtTime(0.65, audioCtx.currentTime, 1.5);
+    masterGain.gain.setTargetAtTime(0.65, audioCtx.currentTime, 0.1);
   }, []);
 
   // Sampled harp playback - pitch shift from base note (C3 = 130.81Hz)
