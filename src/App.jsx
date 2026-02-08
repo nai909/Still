@@ -5449,9 +5449,16 @@ function Still() {
         {view === 'strings' && (
           <StringsMode
             primaryHue={primaryHue}
-            musicKey={sharedMusicKey}
-            musicScaleType={sharedMusicScaleType}
-            onKeyScaleChange={(key, scale) => { setSharedMusicKey(key); setSharedMusicScaleType(scale); }}
+            musicKey={currentKey}
+            musicScaleType={currentScaleType}
+            texture={currentTexture}
+            showNotes={showNotes}
+            droneEnabled={droneEnabled}
+            onKeyChange={setCurrentKey}
+            onScaleChange={setCurrentScaleType}
+            onTextureChange={setCurrentTexture}
+            onShowNotesChange={setShowNotes}
+            onDroneEnabledChange={setDroneEnabled}
           />
         )}
 

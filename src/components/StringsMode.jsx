@@ -42,9 +42,16 @@ const TEXTURES = [
 
 export default function StringsMode({
   primaryHue = 220,
-  musicKey: initialKey = 3,
-  musicScaleType: initialScale = 13,
-  onKeyScaleChange
+  musicKey = 3,
+  musicScaleType = 13,
+  texture = 0,
+  showNotes = false,
+  droneEnabled = false,
+  onKeyChange,
+  onScaleChange,
+  onTextureChange,
+  onShowNotesChange,
+  onDroneEnabledChange,
 }) {
   const canvasRef = useRef(null);
   const audioCtxRef = useRef(null);
@@ -68,16 +75,19 @@ export default function StringsMode({
   const [showLabel, setShowLabel] = useState(true);
   const [currentInstrument, setCurrentInstrument] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const [currentKey, setCurrentKey] = useState(initialKey);
-  const [currentScaleType, setCurrentScaleType] = useState(initialScale);
-  const [currentTexture, setCurrentTexture] = useState(0);
-  const currentTextureRef = useRef(0);
+  // Settings are now controlled by parent - use props directly
+  const currentTextureRef = useRef(texture);
   const labelTimeoutRef = useRef(null);
 
   // Keep hue ref updated
   useEffect(() => {
     primaryHueRef.current = primaryHue;
   }, [primaryHue]);
+
+  // Keep texture ref synced with prop
+  useEffect(() => {
+    currentTextureRef.current = texture;
+  }, [texture]);
 
   // Generate scale frequencies
   const generateScale = useCallback((keyIndex, scaleTypeIndex, octaves = 2) => {
@@ -106,7 +116,7 @@ export default function StringsMode({
     const { W, H } = dimsRef.current;
     if (W === 0 || H === 0) return;
 
-    const frequencies = generateScale(currentKey, currentScaleType, 2);
+    const frequencies = generateScale(musicKey, musicScaleType, 2);
     const numStrings = frequencies.length;
     const strings = [];
 
@@ -145,7 +155,7 @@ export default function StringsMode({
     });
 
     stringsRef.current = strings;
-  }, [currentKey, currentScaleType, generateScale]);
+  }, [musicKey, musicScaleType, generateScale]);
 
   // =============================================
   // AUDIO ENGINE
@@ -926,14 +936,7 @@ export default function StringsMode({
   // Update strings when key/scale changes
   useEffect(() => {
     createStrings();
-  }, [currentKey, currentScaleType, createStrings]);
-
-  // Notify parent of key/scale changes
-  useEffect(() => {
-    if (onKeyScaleChange) {
-      onKeyScaleChange(currentKey, currentScaleType);
-    }
-  }, [currentKey, currentScaleType, onKeyScaleChange]);
+  }, [musicKey, musicScaleType, createStrings]);
 
   // Resume audio context when settings close (iOS can suspend during UI interactions)
   useEffect(() => {
@@ -1061,7 +1064,7 @@ export default function StringsMode({
           color: `hsla(${primaryHue}, 52%, 68%, 0.6)`,
           fontFamily: '"Jost", sans-serif',
         }}>
-          {KEYS[currentKey].toLowerCase()} {SCALE_TYPES[currentScaleType].name}
+          {KEYS[musicKey].toLowerCase()} {SCALE_TYPES[musicScaleType].name}
         </div>
       </div>
 
@@ -1170,15 +1173,15 @@ export default function StringsMode({
                   <button
                     key={tex.name}
                     onClick={() => {
-                      setCurrentTexture(index);
+                      onTextureChange?.(index);
                       currentTextureRef.current = index;
                       haptic.tap();
                     }}
                     style={{
-                      background: currentTexture === index ? `hsla(${primaryHue}, 52%, 68%, 0.2)` : 'rgba(255,255,255,0.05)',
-                      border: currentTexture === index ? `1px solid hsla(${primaryHue}, 52%, 68%, 0.5)` : '1px solid rgba(255,255,255,0.1)',
+                      background: texture === index ? `hsla(${primaryHue}, 52%, 68%, 0.2)` : 'rgba(255,255,255,0.05)',
+                      border: texture === index ? `1px solid hsla(${primaryHue}, 52%, 68%, 0.5)` : '1px solid rgba(255,255,255,0.1)',
                       borderRadius: '4px',
-                      color: currentTexture === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      color: texture === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
                       padding: '0.4rem 0.75rem',
                       cursor: 'pointer',
                       fontSize: '0.75rem',
@@ -1191,6 +1194,96 @@ export default function StringsMode({
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Show notes toggle */}
+            <div style={{
+              padding: '0.75rem 1rem',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <div style={{
+                fontSize: '0.55rem',
+                color: 'rgba(255,255,255,0.4)',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}>Show Notes</div>
+              <button
+                onClick={() => {
+                  onShowNotesChange?.(!showNotes);
+                  haptic.tap();
+                }}
+                style={{
+                  width: '44px',
+                  height: '24px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: showNotes ? `hsla(${primaryHue}, 52%, 68%, 0.4)` : 'rgba(255,255,255,0.1)',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  transition: 'background 0.2s ease',
+                }}
+              >
+                <div style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  background: showNotes ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.5)',
+                  position: 'absolute',
+                  top: '3px',
+                  left: showNotes ? '23px' : '3px',
+                  transition: 'all 0.2s ease',
+                  pointerEvents: 'none',
+                }} />
+              </button>
+            </div>
+
+            {/* Ambient Drone toggle */}
+            <div style={{
+              padding: '0.75rem 1rem',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}>
+              <div style={{
+                fontSize: '0.55rem',
+                color: 'rgba(255,255,255,0.4)',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+              }}>Ambient Drone</div>
+              <button
+                onClick={() => {
+                  onDroneEnabledChange?.(!droneEnabled);
+                  haptic.tap();
+                }}
+                style={{
+                  width: '44px',
+                  height: '24px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: droneEnabled ? `hsla(${primaryHue}, 52%, 68%, 0.4)` : 'rgba(255,255,255,0.1)',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  transition: 'background 0.2s ease',
+                }}
+              >
+                <div style={{
+                  width: '18px',
+                  height: '18px',
+                  borderRadius: '50%',
+                  background: droneEnabled ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.5)',
+                  position: 'absolute',
+                  top: '3px',
+                  left: droneEnabled ? '23px' : '3px',
+                  transition: 'all 0.2s ease',
+                  pointerEvents: 'none',
+                }} />
+              </button>
             </div>
 
             {/* Two column layout */}
@@ -1230,16 +1323,16 @@ export default function StringsMode({
                   <button
                     key={key}
                     onClick={() => {
-                      setCurrentKey(index);
+                      onKeyChange?.(index);
                       haptic.tap();
                     }}
                     style={{
                       display: 'block',
                       width: '100%',
-                      background: currentKey === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
+                      background: musicKey === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
                       border: 'none',
-                      borderLeft: currentKey === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
-                      color: currentKey === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      borderLeft: musicKey === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
+                      color: musicKey === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
                       padding: '0.7rem 1rem',
                       cursor: 'pointer',
                       fontSize: '0.9rem',
@@ -1283,16 +1376,16 @@ export default function StringsMode({
                   <button
                     key={scale.name}
                     onClick={() => {
-                      setCurrentScaleType(index);
+                      onScaleChange?.(index);
                       haptic.tap();
                     }}
                     style={{
                       display: 'block',
                       width: '100%',
-                      background: currentScaleType === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
+                      background: musicScaleType === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
                       border: 'none',
-                      borderLeft: currentScaleType === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
-                      color: currentScaleType === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      borderLeft: musicScaleType === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
+                      color: musicScaleType === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
                       padding: '0.7rem 1rem',
                       cursor: 'pointer',
                       fontSize: '0.85rem',
