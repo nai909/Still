@@ -3667,49 +3667,6 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
 
       {/* Note display is handled via DOM manipulation in showPlayedNote */}
 
-      {/* Center label - positioned above the handpan */}
-      <div
-        style={{
-          position: 'absolute',
-          top: Capacitor.isNativePlatform() ? '22%' : '16%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          textAlign: 'center',
-          pointerEvents: 'none',
-          opacity: showLabel ? 1 : 0,
-          transition: 'opacity 1s ease',
-          zIndex: 10,
-        }}
-      >
-        <div style={{
-          fontSize: '2rem',
-          letterSpacing: '0.3em',
-          textTransform: 'lowercase',
-          color: '#fff',
-          marginBottom: '0.5rem',
-          fontWeight: 300,
-        }}>
-          {instruments[currentInstrument].name}
-        </div>
-        <div style={{
-          fontSize: '0.9rem',
-          letterSpacing: '0.3em',
-          textTransform: 'lowercase',
-          color: '#fff',
-        }}>
-          {textures[currentTexture].name}
-        </div>
-        <div style={{
-          fontSize: '0.75rem',
-          letterSpacing: '0.2em',
-          textTransform: 'lowercase',
-          color: '#fff',
-          marginTop: '0.75rem',
-        }}>
-          {KEYS[currentKey].toLowerCase()} {SCALE_TYPES[currentScaleType].name}
-        </div>
-      </div>
-
       {/* Instrument indicator - tap to change */}
       {!showScaleSelector && (
         <div

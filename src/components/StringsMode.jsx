@@ -151,15 +151,21 @@ export default function StringsMode({
   // AUDIO ENGINE
   // =============================================
   const initAudio = useCallback(() => {
-    if (audioCtxRef.current) return;
+    // Check if we have a valid, non-closed audio context
+    if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+      // Just resume if suspended
+      if (audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
+      }
+      return;
+    }
 
+    // Create new audio context (or recreate if previous was closed)
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     audioCtxRef.current = audioCtx;
 
-    // Resume audio context (required for mobile browsers)
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
+    // Resume audio context immediately (required for mobile browsers)
+    audioCtx.resume().catch(() => {});
 
     const masterGain = audioCtx.createGain();
     masterGain.gain.value = 0;
@@ -336,7 +342,9 @@ export default function StringsMode({
   const pluckStringAudio = useCallback((string, velocity) => {
     const audioCtx = audioCtxRef.current;
     const masterGain = masterGainRef.current;
-    if (!audioCtx || !masterGain) return;
+
+    // Skip if audio not ready or context is closed
+    if (!audioCtx || !masterGain || audioCtx.state === 'closed') return;
 
     // Resume AudioContext if suspended (iOS requirement after user interaction)
     if (audioCtx.state === 'suspended') {
@@ -645,7 +653,8 @@ export default function StringsMode({
   }, []);
 
   const handleStart = useCallback((id, x, y) => {
-    if (!audioCtxRef.current) {
+    // Initialize or reinitialize audio if needed
+    if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
       initAudio();
     } else if (audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume();
