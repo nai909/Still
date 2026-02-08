@@ -2411,7 +2411,6 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
     { name: 'guitar', type: 'sampledGuitar' },
     { name: 'synth', type: 'feltPiano' },
     { name: 'music box', type: 'musicBox' },
-    { name: 'harp', type: 'sampledHarp' },
     { name: 'cello', type: 'sampledCello' },
     { name: 'flute', type: 'organicFlute' },
     { name: 'voice', type: 'sampledVoice' },
