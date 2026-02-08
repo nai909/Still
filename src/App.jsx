@@ -2293,11 +2293,20 @@ const DroneMode = React.forwardRef(function DroneMode({
   const [showNotes, setShowNotes] = useState(false);
   const [droneEnabled, setDroneEnabled] = useState(false);
   const droneEnabledRef = useRef(true);
+  const backgroundModeRef = useRef(backgroundMode);
 
-  // Keep ref in sync with state for animation loop access
+  // Keep refs in sync with state/props for animation loop access
   useEffect(() => {
     droneEnabledRef.current = droneEnabled;
   }, [droneEnabled]);
+
+  useEffect(() => {
+    backgroundModeRef.current = backgroundMode;
+    // Turn off drone when entering background mode
+    if (backgroundMode && droneEnabled) {
+      setDroneEnabled(false);
+    }
+  }, [backgroundMode]);
 
   // Generate current scale based on key and scale type (memoized to prevent stale closures)
   const scale = React.useMemo(() =>
@@ -2712,9 +2721,9 @@ const DroneMode = React.forwardRef(function DroneMode({
       setBreathPhase(phase);
       setBreathValue(value);
 
-      // Modulate drone (respects drone toggle)
+      // Modulate drone (respects drone toggle AND background mode)
       droneOscillatorsRef.current.forEach(node => {
-        const droneMultiplier = droneEnabledRef.current ? 1 : 0;
+        const droneMultiplier = (droneEnabledRef.current && !backgroundModeRef.current) ? 1 : 0;
         const target = node.baseGain * (0.4 + value * 0.6) * droneMultiplier;
         node.gain.gain.setTargetAtTime(target, ctx.currentTime, 0.5);
       });
