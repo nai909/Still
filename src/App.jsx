@@ -3676,12 +3676,22 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
             displayLabel();
             haptic.tap();
           }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+          }}
+          onTouchEnd={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            setCurrentInstrument(prev => (prev + 1) % instruments.length);
+            displayLabel();
+            haptic.tap();
+          }}
           style={{
             position: 'absolute',
             bottom: 'calc(6% + env(safe-area-inset-bottom, 0px))',
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 10,
+            zIndex: 100,
             textAlign: 'center',
             cursor: 'pointer',
             padding: '0.5rem 1rem',

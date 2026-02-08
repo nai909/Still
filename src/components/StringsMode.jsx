@@ -877,7 +877,7 @@ export default function StringsMode({
     }
 
     draw(ctx);
-    animationRef.current = requestAnimationFrame(update);
+    // Animation loop is managed by the lifecycle effect
   }, [updatePhysics, draw]);
 
   // =============================================
@@ -903,18 +903,39 @@ export default function StringsMode({
     createStrings();
   }, [createStrings]);
 
+  // Store callbacks in refs to avoid effect re-runs
+  const resizeRef = useRef(resize);
+  const updateRef = useRef(update);
+  useEffect(() => { resizeRef.current = resize; }, [resize]);
+  useEffect(() => { updateRef.current = update; }, [update]);
+
   // =============================================
   // LIFECYCLE
   // =============================================
   useEffect(() => {
-    resize();
-    window.addEventListener('resize', resize);
-    animationRef.current = requestAnimationFrame(update);
+    // Use wrapper functions that call the refs
+    const handleResize = () => resizeRef.current();
+    const animate = (ts) => {
+      updateRef.current(ts);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    // Start animation loop
+    let running = true;
+    const loop = (ts) => {
+      if (!running) return;
+      animate(ts);
+      animationRef.current = requestAnimationFrame(loop);
+    };
+    animationRef.current = requestAnimationFrame(loop);
 
     labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 2500);
 
     return () => {
-      window.removeEventListener('resize', resize);
+      running = false;
+      window.removeEventListener('resize', handleResize);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
       if (foleyIntervalRef.current) clearInterval(foleyIntervalRef.current);
@@ -922,7 +943,7 @@ export default function StringsMode({
       // Fade out audio gracefully
       const audioCtx = audioCtxRef.current;
       const masterGain = masterGainRef.current;
-      if (audioCtx && masterGain) {
+      if (audioCtx && masterGain && audioCtx.state !== 'closed') {
         const now = audioCtx.currentTime;
         const fadeTime = 0.6;
         masterGain.gain.setTargetAtTime(0, now, fadeTime / 3);
@@ -931,7 +952,7 @@ export default function StringsMode({
         }, fadeTime * 1000);
       }
     };
-  }, [resize, update]);
+  }, []); // Empty deps - only run on mount/unmount
 
   // Update strings when key/scale changes
   useEffect(() => {
