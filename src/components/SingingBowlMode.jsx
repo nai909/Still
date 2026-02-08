@@ -197,8 +197,17 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * strikeLen, audioCtx.sampleRate);
     const d = buf.getChannelData(0);
 
-    // Strike sound - distinct from circling, more metallic attack with bell decay
-    const baseFreq = 174;
+    // Different tones based on position around the rim
+    // Divide rim into zones with different base frequencies
+    // Normalize angle to 0-2PI range
+    const normalizedAngle = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+
+    // Create 6 tonal zones around the rim (like a musical scale)
+    // Base frequencies form a pentatonic-like pattern for pleasing sounds
+    const toneZones = [174, 196, 220, 246, 262, 294]; // F3, G3, A3, B3, C4, D4 approx
+    const zoneIndex = Math.floor((normalizedAngle / (Math.PI * 2)) * toneZones.length);
+    const baseFreq = toneZones[zoneIndex];
+
     for (let i = 0; i < d.length; i++) {
       const t = i / audioCtx.sampleRate;
       // Quick attack, natural bell-like decay
@@ -210,10 +219,10 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
       d[i] = env * force * 0.55 * (
         Math.sin(2 * Math.PI * baseFreq * t) * 0.35 +
         Math.sin(2 * Math.PI * baseFreq * 2 * t) * 0.25 +
-        Math.sin(2 * Math.PI * baseFreq * 2.92 * t) * 0.18 +  // Slightly detuned for bell character
+        Math.sin(2 * Math.PI * baseFreq * 2.92 * t) * 0.18 +
         Math.sin(2 * Math.PI * baseFreq * 4.16 * t) * 0.12 +
         Math.sin(2 * Math.PI * baseFreq * 5.43 * t) * 0.07 +
-        Math.sin(2 * Math.PI * baseFreq * 6.8 * t) * 0.03    // Extra high partial for strike
+        Math.sin(2 * Math.PI * baseFreq * 6.8 * t) * 0.03
       );
     }
 

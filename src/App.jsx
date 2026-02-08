@@ -4919,8 +4919,8 @@ function Still() {
                 { key: 'hum', icon: '∿', label: 'Hum' },
                 { key: 'harp', icon: '𝄃', label: 'Harp' },
                 { key: 'singingbowl', icon: '◠', label: 'Singing Bowl' },
-                { key: 'breathwork', icon: '◎', label: 'Breathe' },
                 { key: 'gaze', icon: '◯', label: 'Gaze' },
+                { key: 'breathwork', icon: '◎', label: 'Breathe' },
                 { key: 'zenboard', icon: '∞', label: 'Impermanence' },
               ];
               const currentMode = modes.find(m => m.key === view) || modes[0];
