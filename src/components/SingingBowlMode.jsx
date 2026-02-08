@@ -587,14 +587,11 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
   // =============================================
   // INTERACTION HANDLERS
   // =============================================
-  const strike = useCallback((force, angle = 0) => {
+  const strike = useCallback(() => {
     if (!isInitialized) initAudio();
-
-    // Only play the transient strike sound - don't build sustained harmonics
-    // Sustained sound comes from circling the rim
-    playStrikeSound(force, angle);
-    haptic.medium();
-  }, [isInitialized, initAudio, playStrikeSound]);
+    // Just haptic feedback on tap - sound comes from circling only
+    haptic.soft();
+  }, [isInitialized, initAudio]);
 
   const handleStart = useCallback((clientX, clientY) => {
     if (!isInitialized) initAudio();
@@ -603,11 +600,8 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     const angle = getAngleFromCenter(clientX, clientY);
 
     if (isOnRim(clientX, clientY)) {
-      // Tap on rim edge produces a strike/ding
-      const force = 0.75;
-      strike(force, angle);
-
-      // Also start rim contact for potential circling
+      // Start rim contact for circling - sound comes from movement
+      strike();
       rimContactRef.current = true;
       rimAngleRef.current = angle;
       setShowHint(false);
@@ -761,30 +755,6 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
         pointerEvents: 'none',
         background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(3,3,6,0.6) 60%, rgba(3,3,6,0.98) 85%)',
       }} />
-
-      {/* Label */}
-      <div style={{
-        position: 'fixed',
-        top: '18%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 10,
-        textAlign: 'center',
-        pointerEvents: 'none',
-        opacity: 0.7,
-        transition: 'opacity 1s ease',
-      }}>
-        <div style={{
-          fontSize: 'clamp(1.5rem, 5vw, 2.2rem)',
-          letterSpacing: '0.3em',
-          textTransform: 'lowercase',
-          color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
-          fontFamily: '"Jost", sans-serif',
-          fontWeight: 300,
-        }}>
-          singing bowl
-        </div>
-      </div>
 
       {/* Hint */}
       <div style={{
