@@ -847,18 +847,26 @@ export default function StringsMode({
           const s = strings[si];
           if (!s || !s.displacement || !s.prevDisplacement) continue;
 
-          const damping = 0.985 + s.normalizedIndex * 0.008;
+          const damping = 0.96 + s.normalizedIndex * 0.015;
           const segments = s.segments;
           const disp = s.displacement;
           const prev = s.prevDisplacement;
 
-          // Update physics in-place using wave equation
+          // Wave equation with proper double-buffering:
+          // prev holds y(t-dt), disp holds y(t)
+          // Compute y(t+dt) into prev array (we read from disp which stays unchanged)
           for (let i = 1; i < segments - 1; i++) {
             const accel = c * c * (disp[i - 1] + disp[i + 1] - 2 * disp[i]);
-            const newVal = (2 * disp[i] - prev[i] + accel) * damping;
-            prev[i] = disp[i];
-            disp[i] = newVal;
+            prev[i] = (2 * disp[i] - prev[i] + accel) * damping;
           }
+          // Fix boundary conditions
+          prev[0] = 0;
+          prev[segments - 1] = 0;
+
+          // Swap arrays: prev now holds y(t+dt), disp holds y(t)
+          // After swap: displacement = y(t+dt), prevDisplacement = y(t)
+          s.displacement = prev;
+          s.prevDisplacement = disp;
 
           s.energy *= s.decay;
           if (s.energy < 0.001) s.energy = 0;
