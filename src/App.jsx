@@ -2297,14 +2297,7 @@ const DroneMode = React.forwardRef(function DroneMode({
   // Keep ref in sync with state for animation loop access
   useEffect(() => {
     droneEnabledRef.current = droneEnabled;
-  }, [droneEnabled, onDroneEnabledChange]);
-
-  // Notify parent when instrument changes
-  useEffect(() => {
-    if (onInstrumentChange) {
-      onInstrumentChange(currentInstrument);
-    }
-  }, [currentInstrument, onInstrumentChange]);
+  }, [droneEnabled]);
 
   // Generate current scale based on key and scale type (memoized to prevent stale closures)
   const scale = React.useMemo(() =>
