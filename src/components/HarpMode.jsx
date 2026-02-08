@@ -19,9 +19,15 @@ export default function HarpMode({ primaryHue = 220, musicKey = 3, musicScaleTyp
   const dimsRef = useRef({ W: 0, H: 0 });
   const activeRef = useRef(new Map());
   const lastPluckedRef = useRef(new Map());
+  const primaryHueRef = useRef(primaryHue);
 
   const [showLabel, setShowLabel] = useState(true);
   const labelTimeoutRef = useRef(null);
+
+  // Keep hue ref updated
+  useEffect(() => {
+    primaryHueRef.current = primaryHue;
+  }, [primaryHue]);
 
   // Generate scale frequencies
   const generateScale = useCallback((keyIndex, scaleTypeIndex, octaves = 2) => {
@@ -344,7 +350,7 @@ export default function HarpMode({ primaryHue = 220, musicKey = 3, musicScaleTyp
   const draw = useCallback((ctx) => {
     const { W, H } = dimsRef.current;
     const strings = stringsRef.current;
-    const h = primaryHue;
+    const h = primaryHueRef.current;
     const s = 35;
     const l = 50;
 
@@ -449,7 +455,7 @@ export default function HarpMode({ primaryHue = 220, musicKey = 3, musicScaleTyp
         }
       });
     }
-  }, [primaryHue]);
+  }, []);
 
   // =============================================
   // MAIN LOOP

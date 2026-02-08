@@ -38,6 +38,7 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
   const sessionTimeRef = useRef(0);
 
   // Visual refs
+  const primaryHueRef = useRef(primaryHue);
   const primaryColorRef = useRef(new THREE.Color());
   const accentColorRef = useRef(new THREE.Color());
   const rimMeshRef = useRef(null);
@@ -62,6 +63,7 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
 
   // Update colors when hue changes
   useEffect(() => {
+    primaryHueRef.current = primaryHue;
     primaryColorRef.current = new THREE.Color(`hsl(${primaryHue}, 52%, 68%)`);
     accentColorRef.current = new THREE.Color(`hsl(${primaryHue}, 52%, 82%)`);
 
@@ -353,9 +355,9 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     // Clock
     clockRef.current = new THREE.Clock();
 
-    // Colors
-    const pColor = new THREE.Color(`hsl(${primaryHue}, 52%, 68%)`);
-    const aColor = new THREE.Color(`hsl(${primaryHue}, 52%, 82%)`);
+    // Colors - use ref to avoid re-running entire effect on hue change
+    const pColor = new THREE.Color(`hsl(${primaryHueRef.current}, 52%, 68%)`);
+    const aColor = new THREE.Color(`hsl(${primaryHueRef.current}, 52%, 82%)`);
     primaryColorRef.current = pColor;
     accentColorRef.current = aColor;
 
@@ -545,7 +547,7 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
         }, fadeTime * 1000);
       }
     };
-  }, [primaryHue, updateAudio, triggerResonanceHaptic]);
+  }, [updateAudio, triggerResonanceHaptic]);
 
   // =============================================
   // INTERACTION HELPERS
