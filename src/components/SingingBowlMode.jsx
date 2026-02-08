@@ -116,7 +116,7 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     masterGain.connect(reverbNode);
     masterGainRef.current = masterGain;
 
-    masterGain.gain.setTargetAtTime(0.7, audioCtx.currentTime, 2.0);
+    masterGain.gain.setTargetAtTime(0.7, audioCtx.currentTime, 0.3);
 
     // Create oscillators for each harmonic
     const harmonics = harmonicsRef.current;
