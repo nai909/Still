@@ -46,13 +46,13 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
   const glowRingsRef = useRef([]);
   const particlesRef = useRef(null);
 
-  // Harmonics
+  // Harmonics - improved build rates for better touch response
   const harmonicsRef = useRef([
-    { freq: 174, ratio: 1, amplitude: 0, maxAmp: 0.30, decay: 0.997, baseBuildRate: 0.003, name: 'fundamental' },
-    { freq: 174 * 2, ratio: 2, amplitude: 0, maxAmp: 0.18, decay: 0.995, baseBuildRate: 0.002, name: 'octave' },
-    { freq: 174 * 3, ratio: 3, amplitude: 0, maxAmp: 0.12, decay: 0.993, baseBuildRate: 0.0012, name: 'fifth' },
-    { freq: 174 * 4.16, ratio: 4.16, amplitude: 0, maxAmp: 0.07, decay: 0.991, baseBuildRate: 0.0008, name: 'high partial' },
-    { freq: 174 * 5.43, ratio: 5.43, amplitude: 0, maxAmp: 0.04, decay: 0.988, baseBuildRate: 0.0005, name: 'shimmer' },
+    { freq: 174, ratio: 1, amplitude: 0, maxAmp: 0.35, decay: 0.9975, baseBuildRate: 0.005, name: 'fundamental' },
+    { freq: 174 * 2, ratio: 2, amplitude: 0, maxAmp: 0.22, decay: 0.996, baseBuildRate: 0.004, name: 'octave' },
+    { freq: 174 * 3, ratio: 3, amplitude: 0, maxAmp: 0.14, decay: 0.994, baseBuildRate: 0.0025, name: 'fifth' },
+    { freq: 174 * 4.16, ratio: 4.16, amplitude: 0, maxAmp: 0.09, decay: 0.992, baseBuildRate: 0.0015, name: 'high partial' },
+    { freq: 174 * 5.43, ratio: 5.43, amplitude: 0, maxAmp: 0.05, decay: 0.989, baseBuildRate: 0.001, name: 'shimmer' },
   ]);
 
   const [showHint, setShowHint] = useState(false);
@@ -183,67 +183,96 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     });
   }, []);
 
-  const playStrikeSound = useCallback((force) => {
+  const playStrikeSound = useCallback((force, angle = 0) => {
     const audioCtx = audioCtxRef.current;
     const masterGain = masterGainRef.current;
     if (!audioCtx || !masterGain) return;
 
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
     const now = audioCtx.currentTime;
-    const strikeLen = 0.18;
+    const strikeLen = 0.35;
     const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * strikeLen, audioCtx.sampleRate);
     const d = buf.getChannelData(0);
 
+    // Pure sine harmonics - no noise, clean bell-like strike
+    const baseFreq = 174;
     for (let i = 0; i < d.length; i++) {
       const t = i / audioCtx.sampleRate;
-      const env = Math.exp(-t * 25);
-      d[i] = env * force * 0.5 * (
-        Math.sin(2 * Math.PI * 174 * t) * 0.4 +
-        Math.sin(2 * Math.PI * 348 * t) * 0.25 +
-        Math.sin(2 * Math.PI * 522 * t) * 0.15 +
-        Math.sin(2 * Math.PI * 724 * t) * 0.1 +
-        (Math.random() * 2 - 1) * 0.08 * Math.exp(-t * 50)
+      // Quick attack, smooth decay
+      const env = Math.exp(-t * 12) * (1 - Math.exp(-t * 200));
+      d[i] = env * force * 0.6 * (
+        Math.sin(2 * Math.PI * baseFreq * t) * 0.45 +
+        Math.sin(2 * Math.PI * baseFreq * 2 * t) * 0.28 +
+        Math.sin(2 * Math.PI * baseFreq * 3 * t) * 0.15 +
+        Math.sin(2 * Math.PI * baseFreq * 4.16 * t) * 0.08 +
+        Math.sin(2 * Math.PI * baseFreq * 5.43 * t) * 0.04
       );
     }
 
     const src = audioCtx.createBufferSource();
     src.buffer = buf;
+
+    // Panning based on where rim was struck
+    let output = masterGain;
+    if (audioCtx.createStereoPanner) {
+      const panner = audioCtx.createStereoPanner();
+      panner.pan.value = Math.sin(angle) * 0.6;
+      panner.connect(masterGain);
+      output = panner;
+    }
+
     const strikeGain = audioCtx.createGain();
-    strikeGain.gain.value = 0.6;
+    strikeGain.gain.value = 0.7;
     src.connect(strikeGain);
-    strikeGain.connect(masterGain);
+    strikeGain.connect(output);
     src.start(now);
   }, []);
 
-  const playRimFriction = useCallback((speed, resonance) => {
+  const playRimFriction = useCallback((speed, resonance, angle) => {
     const audioCtx = audioCtxRef.current;
     const masterGain = masterGainRef.current;
     if (!audioCtx || !masterGain) return;
 
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
     const now = audioCtx.currentTime;
-    const len = 0.05;
+
+    // Create subtle harmonic content based on bowl harmonics
+    const baseFreq = 174;
+    const len = 0.06;
     const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * len, audioCtx.sampleRate);
     const d = buf.getChannelData(0);
 
     for (let i = 0; i < d.length; i++) {
       const t = i / audioCtx.sampleRate;
       const env = Math.sin(Math.PI * t / len);
-      d[i] = (Math.random() * 2 - 1) * env * speed * 0.03;
+      // Subtle harmonic shimmer instead of noise
+      d[i] = env * speed * 0.15 * (
+        Math.sin(2 * Math.PI * baseFreq * 2 * t + angle * 3) * 0.4 +
+        Math.sin(2 * Math.PI * baseFreq * 3 * t + angle * 5) * 0.3 +
+        Math.sin(2 * Math.PI * baseFreq * 4.16 * t + angle * 7) * 0.2 +
+        Math.sin(2 * Math.PI * baseFreq * 5.43 * t + angle * 11) * 0.1
+      );
     }
 
     const src = audioCtx.createBufferSource();
     src.buffer = buf;
 
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 1500 + speed * 2000 + resonance * 2000;
-    filter.Q.value = 1.5;
+    // Panning follows finger position
+    let output = masterGain;
+    if (audioCtx.createStereoPanner) {
+      const panner = audioCtx.createStereoPanner();
+      panner.pan.value = Math.sin(angle) * 0.7;
+      panner.connect(masterGain);
+      output = panner;
+    }
 
     const frictionGain = audioCtx.createGain();
-    frictionGain.gain.value = Math.min(speed * 0.2 + resonance * 0.1, 0.15);
+    frictionGain.gain.value = Math.min(speed * 0.25 + resonance * 0.15, 0.2);
 
-    src.connect(filter);
-    filter.connect(frictionGain);
-    frictionGain.connect(masterGain);
+    src.connect(frictionGain);
+    frictionGain.connect(output);
     src.start(now);
   }, []);
 
@@ -282,10 +311,10 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     const scene = new THREE.Scene();
     sceneRef.current = scene;
 
-    // Camera
+    // Camera - zoomed out to see full bowl
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 6, 4.5);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(0, 8, 6.5);
+    camera.lookAt(0, -0.5, 0);
     cameraRef.current = camera;
 
     // Renderer
@@ -510,17 +539,19 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
 
   const isOnRim = useCallback((clientX, clientY) => {
     const { x, y } = screenToWorld(clientX, clientY);
-    // Approximate rim detection - ellipse in screen space
-    const rimRadius = 0.65;
-    const dist = Math.sqrt(x * x + (y - 0.15) * (y - 0.15) * 4);
-    return dist > rimRadius * 0.7 && dist < rimRadius * 1.3;
+    // Rim is a ring at the outer edge - adjusted for zoomed out view
+    const rimCenter = 0.52;
+    const rimWidth = 0.18;
+    const dist = Math.sqrt(x * x + (y - 0.08) * (y - 0.08) * 3.5);
+    return dist > rimCenter - rimWidth && dist < rimCenter + rimWidth;
   }, [screenToWorld]);
 
-  const isOnBowl = useCallback((clientX, clientY) => {
+  const isInsideBowl = useCallback((clientX, clientY) => {
     const { x, y } = screenToWorld(clientX, clientY);
-    const rimRadius = 0.65;
-    const dist = Math.sqrt(x * x + (y - 0.15) * (y - 0.15) * 4);
-    return dist < rimRadius * 0.7;
+    // Inside the bowl (center area) - no strike here
+    const innerRadius = 0.35;
+    const dist = Math.sqrt(x * x + (y - 0.08) * (y - 0.08) * 3.5);
+    return dist < innerRadius;
   }, [screenToWorld]);
 
   const getAngleFromCenter = useCallback((clientX, clientY) => {
@@ -531,18 +562,18 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
   // =============================================
   // INTERACTION HANDLERS
   // =============================================
-  const strike = useCallback((force) => {
+  const strike = useCallback((force, angle = 0) => {
     if (!isInitialized) initAudio();
 
     const harmonics = harmonicsRef.current;
     harmonics.forEach((h, i) => {
-      const excitation = force * (i === 0 ? 0.7 : 0.35 / (i + 1));
+      const excitation = force * (i === 0 ? 0.8 : 0.4 / (i + 1));
       h.amplitude = Math.min(h.amplitude + excitation, 1);
     });
 
-    targetResonanceRef.current = Math.min(targetResonanceRef.current + force * 0.35, 1);
+    targetResonanceRef.current = Math.min(targetResonanceRef.current + force * 0.45, 1);
 
-    playStrikeSound(force);
+    playStrikeSound(force, angle);
     haptic.medium();
   }, [isInitialized, initAudio, playStrikeSound]);
 
@@ -550,21 +581,25 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     if (!isInitialized) initAudio();
 
     fingerPosRef.current = { x: clientX, y: clientY };
+    const angle = getAngleFromCenter(clientX, clientY);
 
     if (isOnRim(clientX, clientY)) {
+      // Tap on rim edge produces a strike/ding
+      const force = 0.75;
+      strike(force, angle);
+
+      // Also start rim contact for potential circling
       rimContactRef.current = true;
-      rimAngleRef.current = getAngleFromCenter(clientX, clientY);
+      rimAngleRef.current = angle;
       setShowHint(false);
-      haptic.soft();
-    } else if (isOnBowl(clientX, clientY)) {
-      const force = 0.7;
-      strike(force);
+    } else if (isInsideBowl(clientX, clientY)) {
+      // Inside the bowl - just start rim tracking in case they drag to rim
+      rimContactRef.current = false;
+      haptic.selection();
     }
-  }, [isInitialized, initAudio, isOnRim, isOnBowl, getAngleFromCenter, strike]);
+  }, [isInitialized, initAudio, isOnRim, isInsideBowl, getAngleFromCenter, strike]);
 
   const handleMove = useCallback((clientX, clientY) => {
-    if (!rimContactRef.current) return;
-
     fingerPosRef.current = { x: clientX, y: clientY };
 
     const newAngle = getAngleFromCenter(clientX, clientY);
@@ -573,11 +608,26 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     if (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
     if (angleDelta < -Math.PI) angleDelta += Math.PI * 2;
 
-    rimSpeedRef.current = rimSpeedRef.current * 0.7 + Math.abs(angleDelta) * 0.3;
+    // Check if on rim - can start rim contact from dragging onto rim
+    const onRim = isOnRim(clientX, clientY);
+
+    if (!rimContactRef.current && onRim) {
+      // Started touching rim
+      rimContactRef.current = true;
+      rimAngleRef.current = newAngle;
+      setShowHint(false);
+      haptic.soft();
+      return;
+    }
+
+    if (!rimContactRef.current) return;
+
+    // Smoother speed tracking
+    rimSpeedRef.current = rimSpeedRef.current * 0.6 + Math.abs(angleDelta) * 0.4;
     rimAngleRef.current = newAngle;
 
-    // Check if still on rim
-    if (!isOnRim(clientX, clientY)) {
+    // If left rim area, stop contact
+    if (!onRim) {
       rimContactRef.current = false;
       rimSpeedRef.current = 0;
       return;
@@ -586,23 +636,35 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     const rimSpeed = rimSpeedRef.current;
     const currentResonance = resonanceRef.current;
 
-    if (rimSpeed > 0.002) {
-      const optimalSpeed = 0.035;
-      const speedFactor = 1 - Math.min(Math.abs(rimSpeed - optimalSpeed) / optimalSpeed, 1);
-      const resonanceMultiplier = 0.5 + currentResonance * 3.5;
+    // More sensitive - lower threshold for building resonance
+    if (rimSpeed > 0.001) {
+      // Wider optimal speed range for easier resonance building
+      const optimalSpeed = 0.03;
+      const speedDeviation = Math.abs(rimSpeed - optimalSpeed) / optimalSpeed;
+      const speedFactor = Math.max(0.3, 1 - speedDeviation * 0.5);
+
+      // Stronger resonance multiplier effect
+      const resonanceMultiplier = 0.8 + currentResonance * 4.0;
 
       const harmonics = harmonicsRef.current;
       harmonics.forEach((h, i) => {
-        const harmonicFactor = i === 0 ? 1 : i < 3 ? (0.5 + rimSpeed * 6) : (rimSpeed * 12);
-        const buildRate = h.baseBuildRate * resonanceMultiplier * harmonicFactor * speedFactor;
+        // More aggressive harmonic buildup
+        const harmonicFactor = i === 0 ? 1.2 : i < 3 ? (0.6 + rimSpeed * 8) : (rimSpeed * 15);
+        const buildRate = h.baseBuildRate * 1.5 * resonanceMultiplier * harmonicFactor * speedFactor;
         h.amplitude = Math.min(h.amplitude + buildRate, 1);
       });
 
-      const buildAmount = (speedFactor * 0.004 + 0.001) * resonanceMultiplier;
+      const buildAmount = (speedFactor * 0.006 + 0.002) * resonanceMultiplier;
       targetResonanceRef.current = Math.min(targetResonanceRef.current + buildAmount, 1);
 
-      if (Math.random() < rimSpeed * 6 + currentResonance * 0.2) {
-        playRimFriction(rimSpeed, currentResonance);
+      // Play friction sound more often, with angle for panning
+      if (Math.random() < rimSpeed * 8 + currentResonance * 0.3) {
+        playRimFriction(rimSpeed, currentResonance, newAngle);
+      }
+
+      // Periodic haptic feedback while circling
+      if (rimSpeed > 0.01 && Math.random() < rimSpeed * 3) {
+        haptic.selection();
       }
     }
   }, [getAngleFromCenter, isOnRim, playRimFriction]);
