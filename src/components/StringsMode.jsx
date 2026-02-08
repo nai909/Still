@@ -1038,22 +1038,26 @@ export default function StringsMode({
 
   // Touch handlers with swipe detection for settings
   const onTouchStart = useCallback((e) => {
+    // Don't handle canvas touches when settings is open
+    if (showSettings) return;
     e.preventDefault();
     const t = e.changedTouches[0];
     touchStartRef.current = { x: t.clientX, y: t.clientY, time: Date.now() };
     for (const touch of e.changedTouches) {
       handleStart(touch.identifier, touch.clientX, touch.clientY);
     }
-  }, [handleStart]);
+  }, [handleStart, showSettings]);
 
   const onTouchMove = useCallback((e) => {
+    if (showSettings) return;
     e.preventDefault();
     for (const touch of e.changedTouches) {
       handleMove(touch.identifier, touch.clientX, touch.clientY);
     }
-  }, [handleMove]);
+  }, [handleMove, showSettings]);
 
   const onTouchEnd = useCallback((e) => {
+    if (showSettings) return;
     e.preventDefault();
     for (const t of e.changedTouches) {
       handleEnd(t.identifier);
@@ -1069,7 +1073,7 @@ export default function StringsMode({
       }
     }
     touchStartRef.current = null;
-  }, [handleEnd]);
+  }, [handleEnd, showSettings]);
 
   const onMouseDown = useCallback((e) => {
     handleStart('mouse', e.clientX, e.clientY);
@@ -1193,6 +1197,10 @@ export default function StringsMode({
           {/* Backdrop */}
           <div
             onClick={() => setShowSettings(false)}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              setShowSettings(false);
+            }}
             style={{
               position: 'fixed',
               inset: 0,

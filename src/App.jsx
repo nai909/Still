@@ -5751,7 +5751,7 @@ function Still() {
               position: 'fixed',
               inset: 0,
               background: 'rgba(0, 0, 0, 0.92)',
-              zIndex: 300,
+              zIndex: 10000,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -5824,8 +5824,8 @@ function Still() {
                 fontFamily: '"Jost", sans-serif',
                 textAlign: 'center',
               }}>
-                <div>swipe horizontal — change sound or visual</div>
                 <div>swipe up — options</div>
+                <div>tap instrument name — change sound</div>
                 <div>touch + drag — interact</div>
               </div>
               <div style={{
