@@ -645,7 +645,11 @@ export default function StringsMode({
   }, []);
 
   const handleStart = useCallback((id, x, y) => {
-    if (!audioCtxRef.current) initAudio();
+    if (!audioCtxRef.current) {
+      initAudio();
+    } else if (audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume();
+    }
     activeRef.current.set(id, { x, y });
 
     const s = findNearestString(x);
@@ -922,6 +926,15 @@ export default function StringsMode({
     }
   }, [currentKey, currentScaleType, onKeyScaleChange]);
 
+  // Resume audio context when settings close (iOS can suspend during UI interactions)
+  useEffect(() => {
+    if (!showSettings && audioCtxRef.current) {
+      if (audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
+      }
+    }
+  }, [showSettings]);
+
   // Touch handlers with swipe detection for settings
   const onTouchStart = useCallback((e) => {
     e.preventDefault();
@@ -1073,7 +1086,7 @@ export default function StringsMode({
         </div>
       )}
 
-      {/* Settings drawer */}
+      {/* Settings drawer - matches handpan mode style */}
       {showSettings && (
         <>
           {/* Backdrop */}
@@ -1084,6 +1097,7 @@ export default function StringsMode({
               inset: 0,
               background: 'rgba(0, 0, 0, 0.6)',
               zIndex: 20,
+              animation: 'fadeInSettings 0.5s ease-out',
             }}
           />
           {/* Drawer */}
@@ -1101,60 +1115,67 @@ export default function StringsMode({
               borderTop: `1px solid hsla(${primaryHue}, 52%, 68%, 0.2)`,
               borderRadius: '1.5rem 1.5rem 0 0',
               zIndex: 21,
-              maxHeight: '70vh',
-              overflowY: 'auto',
-              padding: '1rem 0 calc(2rem + env(safe-area-inset-bottom, 0px))',
+              animation: 'slideUpSettings 0.5s ease-out',
+              maxHeight: '80vh',
+              display: 'flex',
+              flexDirection: 'column',
+              touchAction: 'auto',
             }}
           >
             {/* Header */}
             <div style={{
-              padding: '0.5rem 1.5rem 1rem',
+              padding: '1rem 1.5rem 0.75rem',
               textAlign: 'center',
               borderBottom: '1px solid rgba(255,255,255,0.06)',
             }}>
-              <div style={{
-                width: '40px',
-                height: '4px',
-                background: 'rgba(255,255,255,0.3)',
-                borderRadius: '2px',
-                margin: '0 auto 1rem',
-              }} />
               <span style={{
-                color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
-                fontSize: '0.9rem',
-                letterSpacing: '0.15em',
-                textTransform: 'lowercase',
-              }}>
-                settings
-              </span>
-            </div>
-
-            {/* Texture selection */}
-            <div style={{ padding: '1rem 1.5rem' }}>
-              <div style={{
-                color: 'rgba(255,255,255,0.5)',
-                fontSize: '0.65rem',
+                color: `hsla(${primaryHue}, 52%, 68%, 0.7)`,
+                fontSize: '0.6rem',
+                fontFamily: '"Jost", sans-serif',
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
-                marginBottom: '0.75rem',
+              }}>Settings</span>
+            </div>
+
+            {/* Texture selection row */}
+            <div style={{
+              padding: '0.75rem 1rem',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}>
+              <div style={{
+                fontSize: '0.55rem',
+                color: 'rgba(255,255,255,0.4)',
+                fontFamily: '"Jost", sans-serif',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                marginBottom: '0.5rem',
+              }}>Texture</div>
+              <div style={{
+                display: 'flex',
+                flexWrap: 'nowrap',
+                gap: '0.5rem',
+                overflowX: 'auto',
+                paddingBottom: '0.25rem',
               }}>
-                Ambient
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                 {TEXTURES.map((tex, index) => (
                   <button
                     key={tex.name}
-                    onClick={() => { setCurrentTexture(index); currentTextureRef.current = index; haptic.tap(); }}
+                    onClick={() => {
+                      setCurrentTexture(index);
+                      currentTextureRef.current = index;
+                      haptic.tap();
+                    }}
                     style={{
-                      padding: '0.5rem 1rem',
-                      borderRadius: '1rem',
-                      border: 'none',
                       background: currentTexture === index ? `hsla(${primaryHue}, 52%, 68%, 0.2)` : 'rgba(255,255,255,0.05)',
-                      color: currentTexture === index ? `hsla(${primaryHue}, 52%, 68%, 0.9)` : 'rgba(255,255,255,0.6)',
-                      fontSize: '0.8rem',
+                      border: currentTexture === index ? `1px solid hsla(${primaryHue}, 52%, 68%, 0.5)` : '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '4px',
+                      color: currentTexture === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      padding: '0.4rem 0.75rem',
                       cursor: 'pointer',
-                      textTransform: 'lowercase',
-                      letterSpacing: '0.1em',
+                      fontSize: '0.75rem',
+                      fontFamily: '"Jost", sans-serif',
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {tex.name}
@@ -1163,94 +1184,134 @@ export default function StringsMode({
               </div>
             </div>
 
-            {/* Key selection */}
-            <div style={{ padding: '1rem 1.5rem' }}>
-              <div style={{
-                color: 'rgba(255,255,255,0.5)',
-                fontSize: '0.65rem',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                marginBottom: '0.75rem',
-              }}>
-                Key
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {/* Two column layout */}
+            <div style={{
+              display: 'flex',
+              flex: 1,
+              minHeight: 0,
+              overflow: 'hidden',
+            }}>
+              {/* Keys column */}
+              <div
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
+                style={{
+                  flex: 1,
+                  borderRight: '1px solid rgba(255,255,255,0.06)',
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  WebkitOverflowScrolling: 'touch',
+                  touchAction: 'pan-y',
+                  overscrollBehavior: 'contain',
+                }}>
+                <div style={{
+                  padding: '0.5rem 0.75rem',
+                  fontSize: '0.55rem',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontFamily: '"Jost", sans-serif',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  position: 'sticky',
+                  top: 0,
+                  background: 'rgba(0, 0, 0, 0.95)',
+                  zIndex: 1,
+                }}>Key</div>
                 {KEYS.map((key, index) => (
                   <button
                     key={key}
-                    onClick={() => { setCurrentKey(index); haptic.tap(); }}
+                    onClick={() => {
+                      setCurrentKey(index);
+                      haptic.tap();
+                    }}
                     style={{
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: '0.5rem',
+                      display: 'block',
+                      width: '100%',
+                      background: currentKey === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
                       border: 'none',
-                      background: currentKey === index ? `hsla(${primaryHue}, 52%, 68%, 0.2)` : 'rgba(255,255,255,0.05)',
-                      color: currentKey === index ? `hsla(${primaryHue}, 52%, 68%, 0.9)` : 'rgba(255,255,255,0.6)',
-                      fontSize: '0.85rem',
+                      borderLeft: currentKey === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
+                      color: currentKey === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      padding: '0.7rem 1rem',
                       cursor: 'pointer',
-                      minWidth: '2.5rem',
+                      fontSize: '0.9rem',
+                      fontFamily: '"Jost", sans-serif',
+                      textAlign: 'left',
+                      transition: 'all 0.2s ease',
                     }}
                   >
                     {key}
                   </button>
                 ))}
+                <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom, 0px))', flexShrink: 0 }} />
               </div>
-            </div>
 
-            {/* Scale selection */}
-            <div style={{ padding: '1rem 1.5rem' }}>
-              <div style={{
-                color: 'rgba(255,255,255,0.5)',
-                fontSize: '0.65rem',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                marginBottom: '0.75rem',
-              }}>
-                Scale
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {/* Scales column */}
+              <div
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
+                style={{
+                  flex: 2,
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  WebkitOverflowScrolling: 'touch',
+                  touchAction: 'pan-y',
+                  overscrollBehavior: 'contain',
+                }}>
+                <div style={{
+                  padding: '0.5rem 0.75rem',
+                  fontSize: '0.55rem',
+                  color: 'rgba(255,255,255,0.4)',
+                  fontFamily: '"Jost", sans-serif',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  position: 'sticky',
+                  top: 0,
+                  background: 'rgba(0, 0, 0, 0.95)',
+                  zIndex: 1,
+                }}>Scale</div>
                 {SCALE_TYPES.map((scale, index) => (
                   <button
                     key={scale.name}
-                    onClick={() => { setCurrentScaleType(index); haptic.tap(); }}
+                    onClick={() => {
+                      setCurrentScaleType(index);
+                      haptic.tap();
+                    }}
                     style={{
-                      padding: '0.5rem 1rem',
-                      borderRadius: '1rem',
+                      display: 'block',
+                      width: '100%',
+                      background: currentScaleType === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
                       border: 'none',
-                      background: currentScaleType === index ? `hsla(${primaryHue}, 52%, 68%, 0.2)` : 'rgba(255,255,255,0.05)',
-                      color: currentScaleType === index ? `hsla(${primaryHue}, 52%, 68%, 0.9)` : 'rgba(255,255,255,0.6)',
-                      fontSize: '0.75rem',
+                      borderLeft: currentScaleType === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
+                      color: currentScaleType === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      padding: '0.7rem 1rem',
                       cursor: 'pointer',
-                      textTransform: 'lowercase',
-                      letterSpacing: '0.05em',
+                      fontSize: '0.85rem',
+                      fontFamily: '"Jost", sans-serif',
+                      textAlign: 'left',
+                      transition: 'all 0.2s ease',
                     }}
                   >
                     {scale.name}
                   </button>
                 ))}
+                <div style={{ height: 'calc(8rem + env(safe-area-inset-bottom, 0px))', flexShrink: 0 }} />
               </div>
-            </div>
-
-            {/* Close button */}
-            <div style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
-              <button
-                onClick={() => setShowSettings(false)}
-                style={{
-                  padding: '0.75rem 2rem',
-                  borderRadius: '2rem',
-                  border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
-                  background: 'transparent',
-                  color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  letterSpacing: '0.1em',
-                }}
-              >
-                done
-              </button>
             </div>
           </div>
         </>
       )}
+
+      <style>{`
+        @keyframes fadeInSettings {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUpSettings {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+      `}</style>
 
     </div>
   );

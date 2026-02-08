@@ -3711,7 +3711,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
       </div>
 
       {/* Instrument indicator - tap to change */}
-      {isInitialized && !showScaleSelector && (
+      {!showScaleSelector && (
         <div
           onClick={(e) => {
             e.stopPropagation();
