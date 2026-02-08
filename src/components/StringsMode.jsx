@@ -70,7 +70,7 @@ export default function StringsMode({
   const [showSettings, setShowSettings] = useState(false);
   // Independent local state for StringsMode settings
   const [currentKey, setCurrentKey] = useState(3); // D#
-  const [currentScaleType, setCurrentScaleType] = useState(13); // insen
+  const [currentScaleType, setCurrentScaleType] = useState(0); // major
   const [currentTexture, setCurrentTexture] = useState(2); // forest
   const [showNotes, setShowNotes] = useState(false);
   const [droneEnabled, setDroneEnabled] = useState(false);
@@ -109,7 +109,8 @@ export default function StringsMode({
     if (!audioCtx || audioCtx.state === 'closed') return;
     if (droneNodesRef.current.length === 0) return;
 
-    const baseFreq = KEY_FREQUENCIES[KEYS[currentKey]] || 155.56;
+    const keyFreq = KEY_FREQUENCIES[KEYS[currentKey]] || 155.56;
+    const baseFreq = keyFreq / 4; // Low octave like DroneMode
     droneNodesRef.current.forEach(node => {
       if (node.osc && node.ratio) {
         node.osc.frequency.setTargetAtTime(baseFreq * node.ratio, audioCtx.currentTime, 0.3);
@@ -378,7 +379,8 @@ export default function StringsMode({
       { ratio: 1.5, gain: 0.05, type: 'triangle' },
     ];
 
-    const baseFreq = KEY_FREQUENCIES[KEYS[3]] || 155.56; // D# default
+    const keyFreq = KEY_FREQUENCIES[KEYS[3]] || 155.56; // D# default
+    const baseFreq = keyFreq / 4; // Low octave like DroneMode
     droneLayers.forEach(layer => {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
@@ -1124,20 +1126,36 @@ export default function StringsMode({
         audioCloseTimeoutRef.current = null;
       }
 
-      // Close audio immediately on unmount - no fade needed since we're unmounting
+      // Fade out audio on unmount for smooth transition
       const audioCtx = audioCtxRef.current;
       const masterGain = masterGainRef.current;
+      const droneGain = droneGainRef.current;
       if (audioCtx && audioCtx.state !== 'closed') {
         try {
-          if (masterGain) {
-            masterGain.gain.value = 0;
+          const now = audioCtx.currentTime;
+          // Fade out drone and master gain
+          if (droneGain) {
+            droneGain.gain.setTargetAtTime(0, now, 0.15);
           }
-          audioCtx.close();
+          if (masterGain) {
+            masterGain.gain.setTargetAtTime(0, now, 0.15);
+          }
+          // Stop drone oscillators after fade
+          setTimeout(() => {
+            droneNodesRef.current.forEach(node => {
+              if (node.osc) {
+                try { node.osc.stop(); } catch (e) {}
+              }
+            });
+            droneNodesRef.current = [];
+            try { audioCtx.close(); } catch (e) {}
+          }, 400);
         } catch (e) { /* ignore */ }
       }
       // Clear refs so remount gets fresh context
       audioCtxRef.current = null;
       masterGainRef.current = null;
+      droneGainRef.current = null;
     };
   }, []); // Empty deps - only run on mount/unmount
 

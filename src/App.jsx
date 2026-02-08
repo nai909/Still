@@ -2285,7 +2285,7 @@ const DroneMode = React.forwardRef(function DroneMode({
   const [currentInstrument, setCurrentInstrument] = useState(0); // handpan
   const [currentTexture, setCurrentTexture] = useState(2); // forest
   const [currentKey, setCurrentKey] = useState(3); // D#
-  const [currentScaleType, setCurrentScaleType] = useState(13); // insen
+  const [currentScaleType, setCurrentScaleType] = useState(0); // major
   const [showLabel, setShowLabel] = useState(false);
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
@@ -2782,15 +2782,16 @@ const DroneMode = React.forwardRef(function DroneMode({
     });
   }, [currentKey, isInitialized]);
 
-  // Fade drone in/out when toggle changes
+  // Fade drone in/out when toggle changes or when entering/leaving background mode
   useEffect(() => {
     if (!isInitialized || !ctxRef.current || droneOscillatorsRef.current.length === 0) return;
 
-    const targetGain = droneEnabled ? 1 : 0;
+    // Drone only plays when enabled AND not in background mode
+    const targetGain = (droneEnabled && !backgroundMode) ? 1 : 0;
     droneOscillatorsRef.current.forEach(node => {
-      node.gain.gain.setTargetAtTime(node.baseGain * targetGain, ctxRef.current.currentTime, 0.5);
+      node.gain.gain.setTargetAtTime(node.baseGain * targetGain, ctxRef.current.currentTime, 0.3);
     });
-  }, [droneEnabled, isInitialized]);
+  }, [droneEnabled, isInitialized, backgroundMode]);
 
   // Resume audio context when app returns from background (iOS)
   useEffect(() => {
