@@ -292,6 +292,7 @@ export default function RainStickMode({ primaryHue = 120 }) {
   }, []);
 
   const initOrientation = useCallback(() => {
+    // iOS 13+ requires permission request (must be triggered by user gesture)
     if (typeof DeviceOrientationEvent !== 'undefined' &&
         typeof DeviceOrientationEvent.requestPermission === 'function') {
       DeviceOrientationEvent.requestPermission()
@@ -303,8 +304,22 @@ export default function RainStickMode({ primaryHue = 120 }) {
         })
         .catch(() => {});
     } else if ('DeviceOrientationEvent' in window) {
+      // Android and older iOS - just add listener
+      window.addEventListener('deviceorientation', handleOrientation);
+      hasGyroRef.current = true;
+    }
+  }, [handleOrientation]);
+
+  // Try to initialize orientation on mount for Android/older browsers
+  useEffect(() => {
+    // For non-iOS devices, we can add the listener immediately
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission !== 'function') {
       window.addEventListener('deviceorientation', handleOrientation);
     }
+    return () => {
+      window.removeEventListener('deviceorientation', handleOrientation);
+    };
   }, [handleOrientation]);
 
   // =============================================
@@ -654,7 +669,13 @@ export default function RainStickMode({ primaryHue = 120 }) {
     e.preventDefault();
     if (!isInitialized) {
       initAudio();
+      // iOS requires orientation permission from user gesture
       initOrientation();
+    } else {
+      // Ensure audio context is resumed (iOS requirement)
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
+      }
     }
     handleTouch(e);
   }, [isInitialized, initAudio, initOrientation, handleTouch]);
@@ -669,11 +690,10 @@ export default function RainStickMode({ primaryHue = 120 }) {
 
     return () => {
       window.removeEventListener('resize', resize);
-      window.removeEventListener('deviceorientation', handleOrientation);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (audioCtxRef.current) audioCtxRef.current.close();
     };
-  }, [resize, update, handleOrientation]);
+  }, [resize, update]);
 
   return (
     <div style={{

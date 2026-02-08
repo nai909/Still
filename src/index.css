@@ -100,3 +100,41 @@ button:active {
     padding-right: env(safe-area-inset-right);
   }
 }
+
+/* Landscape orientation overlay */
+.landscape-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 99999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 24px;
+  color: #7FDBCA;
+  font-family: 'Jost', sans-serif;
+}
+
+.landscape-overlay .rotate-icon {
+  font-size: 48px;
+  animation: rotateHint 2s ease-in-out infinite;
+}
+
+.landscape-overlay .rotate-message {
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+}
+
+@keyframes rotateHint {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-15deg); }
+  75% { transform: rotate(15deg); }
+}
+
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .landscape-overlay {
+    display: flex;
+  }
+}

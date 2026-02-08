@@ -4750,6 +4750,12 @@ function Still() {
 
   return (
     <>
+      {/* Landscape orientation overlay */}
+      <div className="landscape-overlay">
+        <div className="rotate-icon">📱</div>
+        <div className="rotate-message">Please rotate to portrait</div>
+      </div>
+
       {/* Simple intro - touch to begin, then handpan fades in */}
       {showIntro && (
         <div
