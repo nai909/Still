@@ -42,16 +42,6 @@ const TEXTURES = [
 
 export default function StringsMode({
   primaryHue = 220,
-  musicKey = 3,
-  musicScaleType = 13,
-  texture = 0,
-  showNotes = false,
-  droneEnabled = false,
-  onKeyChange,
-  onScaleChange,
-  onTextureChange,
-  onShowNotesChange,
-  onDroneEnabledChange,
 }) {
   const canvasRef = useRef(null);
   const audioCtxRef = useRef(null);
@@ -76,8 +66,13 @@ export default function StringsMode({
   const [showLabel, setShowLabel] = useState(true);
   const [currentInstrument, setCurrentInstrument] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  // Settings are now controlled by parent - use props directly
-  const currentTextureRef = useRef(texture);
+  // Independent local state for StringsMode settings
+  const [currentKey, setCurrentKey] = useState(3); // D#
+  const [currentScaleType, setCurrentScaleType] = useState(13); // insen
+  const [currentTexture, setCurrentTexture] = useState(2); // forest
+  const [showNotes, setShowNotes] = useState(false);
+  const [droneEnabled, setDroneEnabled] = useState(false);
+  const currentTextureRef = useRef(currentTexture);
   const labelTimeoutRef = useRef(null);
 
   // Keep hue ref updated
@@ -85,10 +80,10 @@ export default function StringsMode({
     primaryHueRef.current = primaryHue;
   }, [primaryHue]);
 
-  // Keep texture ref synced with prop
+  // Keep texture ref synced with state
   useEffect(() => {
-    currentTextureRef.current = texture;
-  }, [texture]);
+    currentTextureRef.current = currentTexture;
+  }, [currentTexture]);
 
   // Generate scale frequencies
   const generateScale = useCallback((keyIndex, scaleTypeIndex, octaves = 2) => {
@@ -125,8 +120,8 @@ export default function StringsMode({
     }
 
     // Validate key and scale indices - use defaults if invalid
-    const safeKey = (typeof musicKey === 'number' && musicKey >= 0 && musicKey < KEYS.length) ? musicKey : 3;
-    const safeScale = (typeof musicScaleType === 'number' && musicScaleType >= 0 && musicScaleType < SCALE_TYPES.length) ? musicScaleType : 13;
+    const safeKey = (typeof currentKey === 'number' && currentKey >= 0 && currentKey < KEYS.length) ? currentKey : 3;
+    const safeScale = (typeof currentScaleType === 'number' && currentScaleType >= 0 && currentScaleType < SCALE_TYPES.length) ? currentScaleType : 13;
 
     const frequencies = generateScale(safeKey, safeScale, 2);
     const numStrings = frequencies.length;
@@ -173,7 +168,7 @@ export default function StringsMode({
     });
 
     stringsRef.current = strings;
-  }, [musicKey, musicScaleType, generateScale]);
+  }, [currentKey, currentScaleType, generateScale]);
 
   // =============================================
   // AUDIO ENGINE
@@ -1025,7 +1020,7 @@ export default function StringsMode({
   // Update strings when key/scale changes
   useEffect(() => {
     createStrings();
-  }, [musicKey, musicScaleType, createStrings]);
+  }, [currentKey, currentScaleType, createStrings]);
 
   // Resume audio context when settings close (iOS can suspend during UI interactions)
   useEffect(() => {
@@ -1158,7 +1153,7 @@ export default function StringsMode({
           color: `hsla(${primaryHue}, 52%, 68%, 0.6)`,
           fontFamily: '"Jost", sans-serif',
         }}>
-          {(KEYS[musicKey] || 'C').toLowerCase()} {SCALE_TYPES[musicScaleType]?.name || 'major'}
+          {(KEYS[currentKey] || 'C').toLowerCase()} {SCALE_TYPES[currentScaleType]?.name || 'major'}
         </div>
       </div>
 
@@ -1273,20 +1268,20 @@ export default function StringsMode({
                     onTouchEnd={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      onTextureChange?.(index);
+                      setCurrentTexture(index);
                       currentTextureRef.current = index;
                       haptic.tap();
                     }}
                     onClick={() => {
-                      onTextureChange?.(index);
+                      setCurrentTexture(index);
                       currentTextureRef.current = index;
                       haptic.tap();
                     }}
                     style={{
-                      background: texture === index ? `hsla(${primaryHue}, 52%, 68%, 0.2)` : 'rgba(255,255,255,0.05)',
-                      border: texture === index ? `1px solid hsla(${primaryHue}, 52%, 68%, 0.5)` : '1px solid rgba(255,255,255,0.1)',
+                      background: currentTexture === index ? `hsla(${primaryHue}, 52%, 68%, 0.2)` : 'rgba(255,255,255,0.05)',
+                      border: currentTexture === index ? `1px solid hsla(${primaryHue}, 52%, 68%, 0.5)` : '1px solid rgba(255,255,255,0.1)',
                       borderRadius: '4px',
-                      color: texture === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      color: currentTexture === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
                       padding: '0.4rem 0.75rem',
                       cursor: 'pointer',
                       fontSize: '0.75rem',
@@ -1320,11 +1315,11 @@ export default function StringsMode({
                 onTouchEnd={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  onShowNotesChange?.(!showNotes);
+                  setShowNotes(!showNotes);
                   haptic.tap();
                 }}
                 onClick={() => {
-                  onShowNotesChange?.(!showNotes);
+                  setShowNotes(!showNotes);
                   haptic.tap();
                 }}
                 style={{
@@ -1371,11 +1366,11 @@ export default function StringsMode({
                 onTouchEnd={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  onDroneEnabledChange?.(!droneEnabled);
+                  setDroneEnabled(!droneEnabled);
                   haptic.tap();
                 }}
                 onClick={() => {
-                  onDroneEnabledChange?.(!droneEnabled);
+                  setDroneEnabled(!droneEnabled);
                   haptic.tap();
                 }}
                 style={{
@@ -1442,20 +1437,20 @@ export default function StringsMode({
                     onTouchEnd={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      onKeyChange?.(index);
+                      setCurrentKey(index);
                       haptic.tap();
                     }}
                     onClick={() => {
-                      onKeyChange?.(index);
+                      setCurrentKey(index);
                       haptic.tap();
                     }}
                     style={{
                       display: 'block',
                       width: '100%',
-                      background: musicKey === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
+                      background: currentKey === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
                       border: 'none',
-                      borderLeft: musicKey === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
-                      color: musicKey === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      borderLeft: currentKey === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
+                      color: currentKey === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
                       padding: '0.7rem 1rem',
                       cursor: 'pointer',
                       fontSize: '0.9rem',
@@ -1501,20 +1496,20 @@ export default function StringsMode({
                     onTouchEnd={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      onScaleChange?.(index);
+                      setCurrentScaleType(index);
                       haptic.tap();
                     }}
                     onClick={() => {
-                      onScaleChange?.(index);
+                      setCurrentScaleType(index);
                       haptic.tap();
                     }}
                     style={{
                       display: 'block',
                       width: '100%',
-                      background: musicScaleType === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
+                      background: currentScaleType === index ? `hsla(${primaryHue}, 52%, 68%, 0.15)` : 'transparent',
                       border: 'none',
-                      borderLeft: musicScaleType === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
-                      color: musicScaleType === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
+                      borderLeft: currentScaleType === index ? `3px solid hsla(${primaryHue}, 52%, 68%, 0.6)` : '3px solid transparent',
+                      color: currentScaleType === index ? `hsl(${primaryHue}, 52%, 68%)` : 'rgba(255,255,255,0.6)',
                       padding: '0.7rem 1rem',
                       cursor: 'pointer',
                       fontSize: '0.85rem',
