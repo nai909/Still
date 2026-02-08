@@ -1094,7 +1094,7 @@ export default function StringsMode({
       position: 'absolute',
       inset: 0,
       background: '#030306',
-      touchAction: 'none',
+      touchAction: showSettings ? 'auto' : 'none',
       userSelect: 'none',
       WebkitUserSelect: 'none',
     }}>
@@ -1269,6 +1269,13 @@ export default function StringsMode({
                 {TEXTURES.map((tex, index) => (
                   <button
                     key={tex.name}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onTextureChange?.(index);
+                      currentTextureRef.current = index;
+                      haptic.tap();
+                    }}
                     onClick={() => {
                       onTextureChange?.(index);
                       currentTextureRef.current = index;
@@ -1309,6 +1316,12 @@ export default function StringsMode({
                 textTransform: 'uppercase',
               }}>Show Notes</div>
               <button
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onShowNotesChange?.(!showNotes);
+                  haptic.tap();
+                }}
                 onClick={() => {
                   onShowNotesChange?.(!showNotes);
                   haptic.tap();
@@ -1354,6 +1367,12 @@ export default function StringsMode({
                 textTransform: 'uppercase',
               }}>Ambient Drone</div>
               <button
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDroneEnabledChange?.(!droneEnabled);
+                  haptic.tap();
+                }}
                 onClick={() => {
                   onDroneEnabledChange?.(!droneEnabled);
                   haptic.tap();
@@ -1419,6 +1438,12 @@ export default function StringsMode({
                 {KEYS.map((key, index) => (
                   <button
                     key={key}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onKeyChange?.(index);
+                      haptic.tap();
+                    }}
                     onClick={() => {
                       onKeyChange?.(index);
                       haptic.tap();
@@ -1472,6 +1497,12 @@ export default function StringsMode({
                 {SCALE_TYPES.map((scale, index) => (
                   <button
                     key={scale.name}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onScaleChange?.(index);
+                      haptic.tap();
+                    }}
                     onClick={() => {
                       onScaleChange?.(index);
                       haptic.tap();
