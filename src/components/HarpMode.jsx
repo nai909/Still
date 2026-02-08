@@ -512,7 +512,18 @@ export default function HarpMode({ primaryHue = 220, musicKey = 3, musicScaleTyp
       window.removeEventListener('resize', resize);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
       if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
-      if (audioCtxRef.current) audioCtxRef.current.close();
+
+      // Fade out audio gracefully
+      const audioCtx = audioCtxRef.current;
+      const masterGain = masterGainRef.current;
+      if (audioCtx && masterGain) {
+        const now = audioCtx.currentTime;
+        const fadeTime = 0.6;
+        masterGain.gain.setTargetAtTime(0, now, fadeTime / 3);
+        setTimeout(() => {
+          try { audioCtx.close(); } catch (e) {}
+        }, fadeTime * 1000);
+      }
     };
   }, [resize, update]);
 

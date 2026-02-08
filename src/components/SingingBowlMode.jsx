@@ -46,13 +46,14 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
   const glowRingsRef = useRef([]);
   const particlesRef = useRef(null);
 
-  // Harmonics - improved build rates for better touch response
+  // Harmonics - ~5 second sustain after release
+  // decay^300 (5 sec at 60fps) ≈ 0.01 means decay ≈ 0.985
   const harmonicsRef = useRef([
-    { freq: 174, ratio: 1, amplitude: 0, maxAmp: 0.35, decay: 0.9975, baseBuildRate: 0.005, name: 'fundamental' },
-    { freq: 174 * 2, ratio: 2, amplitude: 0, maxAmp: 0.22, decay: 0.996, baseBuildRate: 0.004, name: 'octave' },
-    { freq: 174 * 3, ratio: 3, amplitude: 0, maxAmp: 0.14, decay: 0.994, baseBuildRate: 0.0025, name: 'fifth' },
-    { freq: 174 * 4.16, ratio: 4.16, amplitude: 0, maxAmp: 0.09, decay: 0.992, baseBuildRate: 0.0015, name: 'high partial' },
-    { freq: 174 * 5.43, ratio: 5.43, amplitude: 0, maxAmp: 0.05, decay: 0.989, baseBuildRate: 0.001, name: 'shimmer' },
+    { freq: 174, ratio: 1, amplitude: 0, maxAmp: 0.40, decay: 0.986, baseBuildRate: 0.008, name: 'fundamental' },
+    { freq: 174 * 2, ratio: 2, amplitude: 0, maxAmp: 0.25, decay: 0.984, baseBuildRate: 0.006, name: 'octave' },
+    { freq: 174 * 3, ratio: 3, amplitude: 0, maxAmp: 0.15, decay: 0.982, baseBuildRate: 0.004, name: 'fifth' },
+    { freq: 174 * 4.16, ratio: 4.16, amplitude: 0, maxAmp: 0.08, decay: 0.978, baseBuildRate: 0.003, name: 'high partial' },
+    { freq: 174 * 5.43, ratio: 5.43, amplitude: 0, maxAmp: 0.04, decay: 0.974, baseBuildRate: 0.002, name: 'shimmer' },
   ]);
 
   const [showHint, setShowHint] = useState(false);
@@ -191,22 +192,28 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
     const now = audioCtx.currentTime;
-    const strikeLen = 0.35;
+    // Bell-like strike with natural decay (~1.5 seconds)
+    const strikeLen = 1.8;
     const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * strikeLen, audioCtx.sampleRate);
     const d = buf.getChannelData(0);
 
-    // Pure sine harmonics - no noise, clean bell-like strike
+    // Strike sound - distinct from circling, more metallic attack with bell decay
     const baseFreq = 174;
     for (let i = 0; i < d.length; i++) {
       const t = i / audioCtx.sampleRate;
-      // Quick attack, smooth decay
-      const env = Math.exp(-t * 12) * (1 - Math.exp(-t * 200));
-      d[i] = env * force * 0.6 * (
-        Math.sin(2 * Math.PI * baseFreq * t) * 0.45 +
-        Math.sin(2 * Math.PI * baseFreq * 2 * t) * 0.28 +
-        Math.sin(2 * Math.PI * baseFreq * 3 * t) * 0.15 +
-        Math.sin(2 * Math.PI * baseFreq * 4.16 * t) * 0.08 +
-        Math.sin(2 * Math.PI * baseFreq * 5.43 * t) * 0.04
+      // Quick attack, natural bell-like decay
+      const attack = 1 - Math.exp(-t * 500);
+      const decay = Math.exp(-t * 2.5);
+      const env = attack * decay;
+
+      // Slightly different harmonic mix than circling - more initial brightness
+      d[i] = env * force * 0.55 * (
+        Math.sin(2 * Math.PI * baseFreq * t) * 0.35 +
+        Math.sin(2 * Math.PI * baseFreq * 2 * t) * 0.25 +
+        Math.sin(2 * Math.PI * baseFreq * 2.92 * t) * 0.18 +  // Slightly detuned for bell character
+        Math.sin(2 * Math.PI * baseFreq * 4.16 * t) * 0.12 +
+        Math.sin(2 * Math.PI * baseFreq * 5.43 * t) * 0.07 +
+        Math.sin(2 * Math.PI * baseFreq * 6.8 * t) * 0.03    // Extra high partial for strike
       );
     }
 
@@ -223,7 +230,7 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     }
 
     const strikeGain = audioCtx.createGain();
-    strikeGain.gain.value = 0.7;
+    strikeGain.gain.value = 0.5;
     src.connect(strikeGain);
     strikeGain.connect(output);
     src.start(now);
@@ -511,13 +518,22 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
       renderer.dispose();
       container.removeChild(renderer.domElement);
 
-      // Cleanup audio
-      oscillatorsRef.current.forEach(({ osc, osc2 }) => {
-        try { osc.stop(); } catch (e) {}
-        try { osc2.stop(); } catch (e) {}
-      });
-      if (audioCtxRef.current) {
-        audioCtxRef.current.close();
+      // Fade out audio gracefully before cleanup
+      const audioCtx = audioCtxRef.current;
+      const masterGain = masterGainRef.current;
+      if (audioCtx && masterGain) {
+        const now = audioCtx.currentTime;
+        const fadeTime = 0.8;
+        masterGain.gain.setTargetAtTime(0, now, fadeTime / 3);
+
+        // Stop oscillators and close context after fade completes
+        setTimeout(() => {
+          oscillatorsRef.current.forEach(({ osc, osc2 }) => {
+            try { osc.stop(); } catch (e) {}
+            try { osc2.stop(); } catch (e) {}
+          });
+          try { audioCtx.close(); } catch (e) {}
+        }, fadeTime * 1000);
       }
     };
   }, [primaryHue, updateAudio, triggerResonanceHaptic]);
@@ -565,14 +581,8 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
   const strike = useCallback((force, angle = 0) => {
     if (!isInitialized) initAudio();
 
-    const harmonics = harmonicsRef.current;
-    harmonics.forEach((h, i) => {
-      const excitation = force * (i === 0 ? 0.8 : 0.4 / (i + 1));
-      h.amplitude = Math.min(h.amplitude + excitation, 1);
-    });
-
-    targetResonanceRef.current = Math.min(targetResonanceRef.current + force * 0.45, 1);
-
+    // Only play the transient strike sound - don't build sustained harmonics
+    // Sustained sound comes from circling the rim
     playStrikeSound(force, angle);
     haptic.medium();
   }, [isInitialized, initAudio, playStrikeSound]);
