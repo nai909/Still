@@ -82,6 +82,11 @@ export default function SingingBowlMode({ primaryHue = 220 }) {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     audioCtxRef.current = audioCtx;
 
+    // Resume audio context (required for mobile browsers)
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+
     // Create convolution reverb
     const reverbTime = 4.5;
     const sampleRate = audioCtx.sampleRate;

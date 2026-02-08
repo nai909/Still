@@ -3,11 +3,11 @@ import { haptic } from '../config/haptic';
 import { KEYS, KEY_FREQUENCIES, SCALE_TYPES } from '../config/constants';
 
 // =============================================
-// HARP MODE — Meditative Virtual Harp
-// Sampled harp with physics-based string visuals
+// STRINGS MODE — Multi-instrument Harp
+// Exact copy of HarpMode for now, with different label
 // =============================================
 
-export default function HarpMode({ primaryHue = 220, musicKey = 3, musicScaleType = 13 }) {
+export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScaleType = 13 }) {
   const canvasRef = useRef(null);
   const audioCtxRef = useRef(null);
   const masterGainRef = useRef(null);
@@ -508,7 +508,6 @@ export default function HarpMode({ primaryHue = 220, musicKey = 3, musicScaleTyp
     createStrings();
   }, [createStrings]);
 
-  // Display label temporarily
   // =============================================
   // LIFECYCLE
   // =============================================
@@ -638,7 +637,7 @@ export default function HarpMode({ primaryHue = 220, musicKey = 3, musicScaleTyp
           fontWeight: 300,
           marginBottom: '0.5rem',
         }}>
-          harp
+          strings
         </div>
         <div style={{
           fontSize: 'clamp(0.7rem, 2.5vw, 0.9rem)',

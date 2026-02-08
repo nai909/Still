@@ -16,6 +16,7 @@ import { gazeModes, BREATH_CYCLE, BREATH_SPEED, KEYS, KEY_FREQUENCIES, SCALE_TYP
 import GazeMode from './components/GazeMode';
 import SingingBowlMode from './components/SingingBowlMode';
 import HarpMode from './components/HarpMode';
+import StringsMode from './components/StringsMode';
 
 // Destructure React hooks for compatibility with original code
 const { useState, useEffect, useRef, useCallback } = React;
@@ -2271,7 +2272,7 @@ function MantraMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)' }) {
   );
 }
 
-const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false, onSamplesReady = null, onKeyScaleChange = null }, ref) {
+const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primaryColor = 'hsl(162, 52%, 68%)', backgroundMode = false, onSamplesReady = null, onKeyScaleChange = null, onInstrumentChange = null }, ref) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [samplesLoading, setSamplesLoading] = useState(false);
   const [samplesReady, setSamplesReady] = useState(false);
@@ -2301,6 +2302,13 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
       onKeyScaleChange(currentKey, currentScaleType);
     }
   }, [currentKey, currentScaleType, onKeyScaleChange]);
+
+  // Notify parent when instrument changes
+  useEffect(() => {
+    if (onInstrumentChange) {
+      onInstrumentChange(currentInstrument);
+    }
+  }, [currentInstrument, onInstrumentChange]);
 
   // Generate current scale based on key and scale type (memoized to prevent stale closures)
   const scale = React.useMemo(() =>
@@ -2413,6 +2421,7 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
     { name: 'music box', type: 'musicBox' },
     { name: 'cello', type: 'sampledCello' },
     { name: 'flute', type: 'organicFlute' },
+    { name: 'harp', type: 'sampledHarp' },
     { name: 'voice', type: 'sampledVoice' },
     { name: 'rainstick', type: 'sampledRainstick' },
     { name: 'perc', type: 'sampledPerc' }
@@ -4213,6 +4222,7 @@ function Still() {
   // Shared music state - synced from DroneMode, used by HarpMode
   const [sharedMusicKey, setSharedMusicKey] = useState(3); // D#
   const [sharedMusicScaleType, setSharedMusicScaleType] = useState(13); // insen
+  const [sharedInstrument, setSharedInstrument] = useState(0); // handpan
 
   // Settings hint timer - shows hint every 20 seconds until settings opened
   useEffect(() => {
@@ -4918,6 +4928,7 @@ function Still() {
               const modes = [
                 { key: 'hum', icon: '∿', label: 'Hum' },
                 { key: 'harp', icon: '𝄃', label: 'Harp' },
+                { key: 'strings', icon: '𝄢', label: 'Strings' },
                 { key: 'singingbowl', icon: '◠', label: 'Singing Bowl' },
                 { key: 'gaze', icon: '◯', label: 'Gaze' },
                 { key: 'breathwork', icon: '◎', label: 'Breathe' },
@@ -5484,6 +5495,15 @@ function Still() {
           <HarpMode primaryHue={primaryHue} musicKey={sharedMusicKey} musicScaleType={sharedMusicScaleType} />
         )}
 
+        {/* Strings - Multi-instrument harp mode */}
+        {view === 'strings' && (
+          <StringsMode
+            primaryHue={primaryHue}
+            musicKey={sharedMusicKey}
+            musicScaleType={sharedMusicScaleType}
+          />
+        )}
+
         {/* Breathwork View is now always mounted below for WebGL warmup */}
 
         {/* Pre-warmed Lungs GazeMode - always mounted to prevent WebGL lag on first breathwork visit */}
@@ -5518,6 +5538,7 @@ function Still() {
             backgroundMode={view !== 'hum'}
             onSamplesReady={handleSamplesReady}
             onKeyScaleChange={(key, scale) => { setSharedMusicKey(key); setSharedMusicScaleType(scale); }}
+            onInstrumentChange={(instrument) => setSharedInstrument(instrument)}
           />
         </div>
         {false && view === 'breathwork-old' && (
