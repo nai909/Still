@@ -3687,23 +3687,25 @@ const DroneMode = React.forwardRef(function DroneMode({ primaryHue = 162, primar
             haptic.tap();
           }}
           style={{
-            position: 'absolute',
+            position: 'fixed',
             bottom: 'calc(6% + env(safe-area-inset-bottom, 0px))',
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 100,
+            zIndex: 9999,
             textAlign: 'center',
             cursor: 'pointer',
-            padding: '0.5rem 1rem',
-            opacity: 0.7,
-            transition: 'opacity 0.3s ease',
+            padding: '0.75rem 1.5rem',
+            background: 'rgba(0, 0, 0, 0.3)',
+            borderRadius: '1rem',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
           }}
         >
           <div style={{
             fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
             letterSpacing: '0.15em',
             textTransform: 'lowercase',
-            color: `hsla(${primaryHue}, 52%, 68%, 0.85)`,
+            color: `hsla(${primaryHue}, 52%, 68%, 0.95)`,
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
           }}>

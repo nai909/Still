@@ -64,7 +64,6 @@ export default function StringsMode({
   const sampleBuffersRef = useRef({});
   const handpanSamplesRef = useRef({});
   const animationRef = useRef(null);
-  const lastFrameRef = useRef(0);
   const stringsRef = useRef([]);
   const dimsRef = useRef({ W: 0, H: 0 });
   const activeRef = useRef(new Map());
@@ -92,8 +91,12 @@ export default function StringsMode({
   // Generate scale frequencies
   const generateScale = useCallback((keyIndex, scaleTypeIndex, octaves = 2) => {
     const keyName = KEYS[keyIndex];
+    if (!keyName) return [];
     const baseFreq = KEY_FREQUENCIES[keyName];
-    const intervals = SCALE_TYPES[scaleTypeIndex].intervals;
+    if (!baseFreq) return [];
+    const scaleType = SCALE_TYPES[scaleTypeIndex];
+    if (!scaleType || !scaleType.intervals) return [];
+    const intervals = scaleType.intervals;
     const frequencies = [];
 
     for (let oct = 0; oct < octaves; oct++) {
@@ -118,6 +121,8 @@ export default function StringsMode({
 
     const frequencies = generateScale(musicKey, musicScaleType, 2);
     const numStrings = frequencies.length;
+    if (numStrings < 2) return; // Need at least 2 strings
+
     const strings = [];
 
     const margin = W * 0.08;
@@ -252,6 +257,7 @@ export default function StringsMode({
 
     // Start foley interval
     foleyIntervalRef.current = setInterval(() => {
+      if (audioCtx.state === 'closed') return;
       const tex = TEXTURES[currentTextureRef.current];
       if (tex && tex.foley) {
         playFoley(audioCtx, masterGain, tex.foleyType);
@@ -261,6 +267,7 @@ export default function StringsMode({
 
   // Foley sounds for ambient textures
   const playFoley = (ctx, masterGain, type) => {
+    if (!ctx || ctx.state === 'closed' || !masterGain) return;
     if (Math.random() > 0.4) return;
     const now = ctx.currentTime;
 
@@ -707,226 +714,156 @@ export default function StringsMode({
   }, []);
 
   // =============================================
-  // PHYSICS
+  // LIFECYCLE
   // =============================================
-  const updatePhysics = useCallback((dt) => {
-    const strings = stringsRef.current;
-    const c = 0.4;
-
-    strings.forEach(s => {
-      const damping = 0.985 + s.normalizedIndex * 0.008;
-      const newDisp = new Float32Array(s.segments);
-
-      for (let i = 1; i < s.segments - 1; i++) {
-        const accel = c * c * (s.displacement[i - 1] + s.displacement[i + 1] - 2 * s.displacement[i]);
-        newDisp[i] = 2 * s.displacement[i] - s.prevDisplacement[i] + accel;
-        newDisp[i] *= damping;
-      }
-
-      newDisp[0] = 0;
-      newDisp[s.segments - 1] = 0;
-
-      s.prevDisplacement = new Float32Array(s.displacement);
-      s.displacement = newDisp;
-
-      s.energy *= s.decay;
-      if (s.energy < 0.001) s.energy = 0;
-
-      s.glowIntensity *= 0.97;
-      if (s.glowIntensity < 0.005) s.glowIntensity = 0;
-
-      for (let ri = s.ripples.length - 1; ri >= 0; ri--) {
-        const r = s.ripples[ri];
-        r.spread += dt * 400;
-        r.life -= dt * 0.5;
-        if (r.life <= 0) s.ripples.splice(ri, 1);
-      }
-    });
-  }, []);
-
-  // =============================================
-  // DRAW
-  // =============================================
-  const draw = useCallback((ctx) => {
-    const { W, H } = dimsRef.current;
-    const strings = stringsRef.current;
-    const h = primaryHueRef.current;
-    const s = 35;
-    const l = 50;
-
-    ctx.clearRect(0, 0, W, H);
-
-    // Background
-    const totalEnergy = strings.reduce((sum, str) => sum + str.energy, 0) / Math.max(strings.length, 1);
-    const bgL = 1.5 + totalEnergy * 3;
-    ctx.fillStyle = `hsl(${h}, ${s * 0.3}%, ${bgL}%)`;
-    ctx.fillRect(0, 0, W, H);
-
-    // Ambient glow
-    if (totalEnergy > 0.01) {
-      const ambGrad = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.6);
-      const ambA = totalEnergy * 0.06;
-      ambGrad.addColorStop(0, `hsla(${h}, ${s}%, ${l}%, ${ambA})`);
-      ambGrad.addColorStop(1, 'hsla(0, 0%, 0%, 0)');
-      ctx.fillStyle = ambGrad;
-      ctx.fillRect(0, 0, W, H);
-    }
-
-    // Draw strings
-    strings.forEach(str => {
-      // String glow
-      if (str.glowIntensity > 0.01) {
-        ctx.save();
-        ctx.globalAlpha = str.glowIntensity * 0.25;
-        ctx.shadowColor = `hsla(${h}, ${s + 20}%, ${l + 20}%, 0.8)`;
-        ctx.shadowBlur = 15 + str.glowIntensity * 20;
-
-        ctx.beginPath();
-        ctx.moveTo(str.x, str.topY);
-        for (let i = 0; i < str.segments; i++) {
-          const segY = str.topY + (i / (str.segments - 1)) * (str.bottomY - str.topY);
-          const segX = str.x + str.displacement[i];
-          ctx.lineTo(segX, segY);
-        }
-        ctx.strokeStyle = `hsla(${h}, ${s + 20}%, ${l + 25}%, ${0.3 + str.glowIntensity * 0.5})`;
-        ctx.lineWidth = str.thickness + str.glowIntensity * 4;
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // Main string
-      ctx.beginPath();
-      ctx.moveTo(str.x, str.topY);
-      for (let i = 0; i < str.segments; i++) {
-        const t = i / (str.segments - 1);
-        const segY = str.topY + t * (str.bottomY - str.topY);
-        const segX = str.x + str.displacement[i];
-        ctx.lineTo(segX, segY);
-      }
-
-      const stringL = l * 0.4 + str.glowIntensity * l * 0.6 + 10;
-      const stringA = 0.35 + str.energy * 0.5 + str.glowIntensity * 0.15;
-      ctx.strokeStyle = `hsla(${h}, ${s}%, ${stringL}%, ${stringA})`;
-      ctx.lineWidth = str.thickness;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-
-      // Ripples
-      str.ripples.forEach(r => {
-        if (r.life <= 0) return;
-        const rippleAlpha = r.life * 0.4 * r.velocity;
-        ctx.beginPath();
-        ctx.ellipse(str.x, r.y, 3 + r.spread * 0.1, r.spread, 0, 0, Math.PI * 2);
-        ctx.strokeStyle = `hsla(${h}, ${s + 15}%, ${l + 15}%, ${rippleAlpha})`;
-        ctx.lineWidth = 0.5 + r.velocity;
-        ctx.stroke();
-      });
-
-      // Anchor points
-      ctx.beginPath();
-      ctx.arc(str.x, str.topY, 2, 0, Math.PI * 2);
-      ctx.fillStyle = `hsla(${h}, ${s - 10}%, ${l + 20}%, 0.3)`;
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(str.x, str.bottomY, 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = `hsla(${h}, ${s - 10}%, ${l + 15}%, 0.2)`;
-      ctx.fill();
-    });
-
-    // Floating particles
-    if (totalEnergy > 0.05) {
-      strings.forEach(str => {
-        if (str.energy > 0.1 && Math.random() < str.energy * 0.08) {
-          const t = Math.random();
-          const y = str.topY + t * (str.bottomY - str.topY);
-          const seg = Math.floor(t * (str.segments - 1));
-          const x = str.x + (str.displacement[seg] || 0);
-
-          ctx.beginPath();
-          ctx.arc(
-            x + (Math.random() - 0.5) * 8,
-            y + (Math.random() - 0.5) * 4,
-            0.5 + Math.random() * 1.5,
-            0, Math.PI * 2
-          );
-          ctx.fillStyle = `hsla(${h}, ${s + 10}%, ${l + 20}%, ${str.energy * 0.4})`;
-          ctx.fill();
-        }
-      });
-    }
-  }, []);
-
-  // =============================================
-  // MAIN LOOP
-  // =============================================
-  const update = useCallback((ts) => {
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    if (!lastFrameRef.current) lastFrameRef.current = ts;
-    const dt = Math.min((ts - lastFrameRef.current) / 1000, 0.05);
-    lastFrameRef.current = ts;
-
-    // Physics sub-steps
-    const subSteps = 3;
-    const subDt = dt / subSteps;
-    for (let i = 0; i < subSteps; i++) {
-      updatePhysics(subDt);
-    }
-
-    draw(ctx);
-    // Animation loop is managed by the lifecycle effect
-  }, [updatePhysics, draw]);
-
-  // =============================================
-  // RESIZE
-  // =============================================
-  const resize = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
+    // Initial resize
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const W = window.innerWidth;
     const H = window.innerHeight;
-
     canvas.width = W * dpr;
     canvas.height = H * dpr;
     canvas.style.width = W + 'px';
     canvas.style.height = H + 'px';
-
     const ctx = canvas.getContext('2d');
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
+    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     dimsRef.current = { W, H };
-    createStrings();
-  }, [createStrings]);
 
-  // Store callbacks in refs to avoid effect re-runs
-  const resizeRef = useRef(resize);
-  const updateRef = useRef(update);
-  useEffect(() => { resizeRef.current = resize; }, [resize]);
-  useEffect(() => { updateRef.current = update; }, [update]);
-
-  // =============================================
-  // LIFECYCLE
-  // =============================================
-  useEffect(() => {
-    // Use wrapper functions that call the refs
-    const handleResize = () => resizeRef.current();
-    const animate = (ts) => {
-      updateRef.current(ts);
+    // Resize handler
+    const handleResize = () => {
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      const ctx = canvas.getContext('2d');
+      if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      dimsRef.current = { W, H };
     };
-
-    handleResize();
     window.addEventListener('resize', handleResize);
 
-    // Start animation loop
+    // Animation loop
     let running = true;
+    let lastFrame = 0;
     const loop = (ts) => {
       if (!running) return;
-      animate(ts);
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        animationRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      if (!lastFrame) lastFrame = ts;
+      const dt = Math.min((ts - lastFrame) / 1000, 0.05);
+      lastFrame = ts;
+
+      // Physics
+      const strings = stringsRef.current;
+      if (strings && strings.length > 0) {
+        const c = 0.4;
+        strings.forEach(s => {
+          const damping = 0.985 + s.normalizedIndex * 0.008;
+          // Reuse temp array to avoid allocations
+          if (!s.tempDisp) s.tempDisp = new Float32Array(s.segments);
+          const newDisp = s.tempDisp;
+
+          for (let i = 1; i < s.segments - 1; i++) {
+            const accel = c * c * (s.displacement[i - 1] + s.displacement[i + 1] - 2 * s.displacement[i]);
+            newDisp[i] = 2 * s.displacement[i] - s.prevDisplacement[i] + accel;
+            newDisp[i] *= damping;
+          }
+          newDisp[0] = 0;
+          newDisp[s.segments - 1] = 0;
+
+          // Swap arrays instead of creating new ones
+          const temp = s.prevDisplacement;
+          s.prevDisplacement = s.displacement;
+          s.displacement = newDisp;
+          s.tempDisp = temp;
+
+          s.energy *= s.decay;
+          if (s.energy < 0.001) s.energy = 0;
+          s.glowIntensity *= 0.97;
+          if (s.glowIntensity < 0.005) s.glowIntensity = 0;
+          for (let ri = s.ripples.length - 1; ri >= 0; ri--) {
+            const r = s.ripples[ri];
+            r.spread += dt * 400;
+            r.life -= dt * 0.5;
+            if (r.life <= 0) s.ripples.splice(ri, 1);
+          }
+        });
+
+        // Draw
+        const { W, H } = dimsRef.current;
+        if (W > 0 && H > 0) {
+          const h = primaryHueRef.current;
+          const sat = 35;
+          const l = 50;
+          ctx.clearRect(0, 0, W, H);
+          const totalEnergy = strings.reduce((sum, str) => sum + str.energy, 0) / Math.max(strings.length, 1);
+          const bgL = 1.5 + totalEnergy * 3;
+          ctx.fillStyle = `hsl(${h}, ${sat * 0.3}%, ${bgL}%)`;
+          ctx.fillRect(0, 0, W, H);
+          if (totalEnergy > 0.01) {
+            const ambGrad = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.6);
+            ambGrad.addColorStop(0, `hsla(${h}, ${sat}%, ${l}%, ${totalEnergy * 0.06})`);
+            ambGrad.addColorStop(1, 'hsla(0, 0%, 0%, 0)');
+            ctx.fillStyle = ambGrad;
+            ctx.fillRect(0, 0, W, H);
+          }
+          strings.forEach(str => {
+            if (str.glowIntensity > 0.01) {
+              ctx.save();
+              ctx.globalAlpha = str.glowIntensity * 0.25;
+              ctx.shadowColor = `hsla(${h}, ${sat + 20}%, ${l + 20}%, 0.8)`;
+              ctx.shadowBlur = 15 + str.glowIntensity * 20;
+              ctx.beginPath();
+              ctx.moveTo(str.x, str.topY);
+              for (let i = 0; i < str.segments; i++) {
+                const segY = str.topY + (i / (str.segments - 1)) * (str.bottomY - str.topY);
+                ctx.lineTo(str.x + str.displacement[i], segY);
+              }
+              ctx.strokeStyle = `hsla(${h}, ${sat + 20}%, ${l + 25}%, ${0.3 + str.glowIntensity * 0.5})`;
+              ctx.lineWidth = str.thickness + str.glowIntensity * 4;
+              ctx.stroke();
+              ctx.restore();
+            }
+            ctx.beginPath();
+            ctx.moveTo(str.x, str.topY);
+            for (let i = 0; i < str.segments; i++) {
+              const t = i / (str.segments - 1);
+              ctx.lineTo(str.x + str.displacement[i], str.topY + t * (str.bottomY - str.topY));
+            }
+            ctx.strokeStyle = `hsla(${h}, ${sat}%, ${l * 0.4 + str.glowIntensity * l * 0.6 + 10}%, ${0.35 + str.energy * 0.5 + str.glowIntensity * 0.15})`;
+            ctx.lineWidth = str.thickness;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            str.ripples.forEach(r => {
+              if (r.life > 0) {
+                ctx.beginPath();
+                ctx.ellipse(str.x, r.y, 3 + r.spread * 0.1, r.spread, 0, 0, Math.PI * 2);
+                ctx.strokeStyle = `hsla(${h}, ${sat + 15}%, ${l + 15}%, ${r.life * 0.4 * r.velocity})`;
+                ctx.lineWidth = 0.5 + r.velocity;
+                ctx.stroke();
+              }
+            });
+            ctx.beginPath();
+            ctx.arc(str.x, str.topY, 2, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${h}, ${sat - 10}%, ${l + 20}%, 0.3)`;
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(str.x, str.bottomY, 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${h}, ${sat - 10}%, ${l + 15}%, 0.2)`;
+            ctx.fill();
+          });
+        }
+      }
+
       animationRef.current = requestAnimationFrame(loop);
     };
     animationRef.current = requestAnimationFrame(loop);
@@ -1085,7 +1022,7 @@ export default function StringsMode({
           color: `hsla(${primaryHue}, 52%, 68%, 0.6)`,
           fontFamily: '"Jost", sans-serif',
         }}>
-          {KEYS[musicKey].toLowerCase()} {SCALE_TYPES[musicScaleType].name}
+          {(KEYS[musicKey] || 'C').toLowerCase()} {SCALE_TYPES[musicScaleType]?.name || 'major'}
         </div>
       </div>
 
