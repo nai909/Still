@@ -4,7 +4,7 @@ import { KEYS, KEY_FREQUENCIES, SCALE_TYPES } from '../config/constants';
 
 // =============================================
 // HARP MODE — Meditative Virtual Harp
-// Karplus-Strong synthesis with physics-based strings
+// Sampled harp with physics-based string visuals
 // =============================================
 
 export default function HarpMode({ primaryHue = 220 }) {
@@ -12,6 +12,7 @@ export default function HarpMode({ primaryHue = 220 }) {
   const audioCtxRef = useRef(null);
   const masterGainRef = useRef(null);
   const reverbNodeRef = useRef(null);
+  const harpBufferRef = useRef(null);
   const animationRef = useRef(null);
   const lastFrameRef = useRef(0);
   const stringsRef = useRef([]);
@@ -107,6 +108,13 @@ export default function HarpMode({ primaryHue = 220 }) {
     masterGain.connect(audioCtx.destination);
     masterGainRef.current = masterGain;
 
+    // Load harp sample
+    fetch('harp.mp3')
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => { harpBufferRef.current = audioBuffer; })
+      .catch(() => {});
+
     // Reverb
     const reverbTime = 5;
     const sr = audioCtx.sampleRate;
@@ -137,58 +145,36 @@ export default function HarpMode({ primaryHue = 220 }) {
     masterGain.gain.setTargetAtTime(0.65, audioCtx.currentTime, 1.5);
   }, []);
 
-  // Karplus-Strong synthesis
+  // Sampled harp playback - pitch shift from base note (C3 = 130.81Hz)
   const pluckStringAudio = useCallback((string, velocity) => {
     const audioCtx = audioCtxRef.current;
     const masterGain = masterGainRef.current;
-    if (!audioCtx || !masterGain) return;
+    const harpBuffer = harpBufferRef.current;
+    if (!audioCtx || !masterGain || !harpBuffer) return;
 
     const now = audioCtx.currentTime;
     const freq = string.freq;
-    const sr = audioCtx.sampleRate;
-
-    const periodSamples = Math.round(sr / freq);
-    const duration = 3 + (1 - string.normalizedIndex) * 4;
-    const totalSamples = Math.round(sr * duration);
-    const buffer = audioCtx.createBuffer(1, totalSamples, sr);
-    const data = buffer.getChannelData(0);
-
-    // Pluck excitation
-    const pluckPos = string.pluckPoint;
-    for (let i = 0; i < periodSamples; i++) {
-      const pos = i / periodSamples;
-      const pluckEnvelope = Math.sin(Math.PI * pos / pluckPos) * (pos < pluckPos ? 1 : 0)
-                        + Math.sin(Math.PI * pos / (1 - pluckPos)) * (pos >= pluckPos ? 1 : 0);
-      data[i] = (Math.random() * 2 - 1) * 0.8 * velocity * pluckEnvelope;
-    }
-
-    // KS loop
-    const dampingFactor = 0.496 + string.normalizedIndex * 0.003;
-    for (let i = periodSamples; i < totalSamples; i++) {
-      const prev = data[i - periodSamples];
-      const prev2 = data[i - periodSamples + 1] || data[i - periodSamples];
-      data[i] = (prev + prev2) * dampingFactor;
-    }
-
-    // Envelope
-    for (let i = 0; i < totalSamples; i++) {
-      const t = i / sr;
-      const attack = Math.min(t / 0.003, 1);
-      const release = t > duration - 0.5 ? (duration - t) / 0.5 : 1;
-      data[i] *= attack * release;
-    }
+    const baseFreq = 130.81; // C3 - base frequency of the harp sample
+    const playbackRate = freq / baseFreq;
 
     const source = audioCtx.createBufferSource();
-    source.buffer = buffer;
+    source.buffer = harpBuffer;
+    source.playbackRate.value = playbackRate;
 
+    // Filter - brighter for higher strings
     const filter = audioCtx.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.value = 2000 + string.normalizedIndex * 4000 + velocity * 2000;
+    filter.frequency.value = 2000 + string.normalizedIndex * 6000 + velocity * 2000;
     filter.Q.value = 0.5;
 
+    // Gain envelope
     const gain = audioCtx.createGain();
-    gain.gain.setValueAtTime(0.25 + velocity * 0.15, now);
+    gain.gain.value = 0;
+    gain.gain.setTargetAtTime(1.0 * velocity, now, 0.01);
+    gain.gain.setTargetAtTime(0.7 * velocity, now + 0.1, 0.3);
+    gain.gain.setTargetAtTime(0, now + 0.5, 3.0);
 
+    // Stereo panning based on string position
     let output = gain;
     if (audioCtx.createStereoPanner) {
       const panner = audioCtx.createStereoPanner();
@@ -650,6 +636,7 @@ export default function HarpMode({ primaryHue = 220 }) {
       {/* Settings hint */}
       <div
         onClick={() => { haptic.tap(); setShowDrawer(true); }}
+        onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); haptic.tap(); setShowDrawer(true); }}
         style={{
           position: 'fixed',
           bottom: 20,
@@ -663,6 +650,7 @@ export default function HarpMode({ primaryHue = 220 }) {
           textTransform: 'lowercase',
           cursor: 'pointer',
           padding: '8px 16px',
+          touchAction: 'auto',
         }}
       >
         tap for settings
