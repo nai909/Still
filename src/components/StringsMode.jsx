@@ -8,11 +8,29 @@ import { KEYS, KEY_FREQUENCIES, SCALE_TYPES } from '../config/constants';
 // =============================================
 
 const INSTRUMENTS = [
-  { name: 'harp', file: 'harp.mp3', baseFreq: 130.81 },
-  { name: 'piano', file: 'piano.mp3', baseFreq: 130.81 },
-  { name: 'guitar', file: 'guitar.wav', baseFreq: 130.81 },
-  { name: 'cello', file: 'cello.mp3', baseFreq: 130.81 },
+  { name: 'harp', file: 'harp.mp3', baseFreq: 130.81, type: 'sampled' },
+  { name: 'piano', file: 'piano.mp3', baseFreq: 130.81, type: 'sampled' },
+  { name: 'guitar', file: 'guitar.wav', baseFreq: 130.81, type: 'sampled' },
+  { name: 'cello', file: 'cello.mp3', baseFreq: 130.81, type: 'sampled' },
+  { name: 'handpan', type: 'multisampled' },
+  { name: 'synth', type: 'synth' },
+  { name: 'music box', type: 'musicbox' },
+  { name: 'flute', type: 'flute' },
+  { name: 'voice', file: 'samples/voice-c3.m4a', baseFreq: 130.81, type: 'sampled' },
 ];
+
+// Handpan sample frequencies (note name to Hz)
+const HANDPAN_NOTES = {
+  'C2': 65.41, 'Cs2': 69.30, 'D2': 73.42, 'Ds2': 77.78, 'E2': 82.41, 'F2': 87.31,
+  'Fs2': 92.50, 'G2': 98.00, 'Gs2': 103.83, 'A2': 110.00, 'As2': 116.54, 'B2': 123.47,
+  'C3': 130.81, 'Cs3': 138.59, 'D3': 146.83, 'Ds3': 155.56, 'E3': 164.81, 'F3': 174.61,
+  'Fs3': 185.00, 'G3': 196.00, 'Gs3': 207.65, 'A3': 220.00, 'As3': 233.08, 'B3': 246.94,
+  'C4': 261.63, 'Cs4': 277.18, 'D4': 293.66, 'Ds4': 311.13, 'E4': 329.63, 'F4': 349.23,
+  'Fs4': 369.99, 'G4': 392.00, 'Gs4': 415.30, 'A4': 440.00, 'As4': 466.16, 'B4': 493.88,
+  'C5': 523.25, 'Cs5': 554.37, 'D5': 587.33, 'Ds5': 622.25, 'E5': 659.25, 'F5': 698.46,
+  'Fs5': 739.99, 'G5': 783.99, 'Gs5': 830.61, 'A5': 880.00, 'As5': 932.33, 'B5': 987.77,
+  'C6': 1046.50,
+};
 
 export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScaleType = 13 }) {
   const canvasRef = useRef(null);
@@ -22,6 +40,7 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
 
   // Sample buffers for each instrument
   const sampleBuffersRef = useRef({});
+  const handpanSamplesRef = useRef({});
   const animationRef = useRef(null);
   const lastFrameRef = useRef(0);
   const stringsRef = useRef([]);
@@ -126,18 +145,43 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
     masterGain.connect(audioCtx.destination);
     masterGainRef.current = masterGain;
 
-    // Load all instrument samples
-    INSTRUMENTS.forEach((instrument, index) => {
-      // Stagger loading to avoid overwhelming the browser
+    // Load sampled instrument samples
+    let loadIndex = 0;
+    INSTRUMENTS.forEach((instrument) => {
+      if (instrument.type === 'sampled' && instrument.file) {
+        setTimeout(() => {
+          fetch(instrument.file)
+            .then(response => response.arrayBuffer())
+            .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+            .then(audioBuffer => {
+              sampleBuffersRef.current[instrument.name] = audioBuffer;
+            })
+            .catch(() => {});
+        }, loadIndex * 200);
+        loadIndex++;
+      }
+    });
+
+    // Load handpan multi-samples
+    const handpanNotes = [
+      'A2', 'A3', 'A4', 'A5', 'As2', 'As3', 'As4', 'As5',
+      'B2', 'B3', 'B4', 'B5', 'C2', 'C3', 'C4', 'C5', 'C6',
+      'Cs2', 'Cs3', 'Cs4', 'Cs5', 'D2', 'D3', 'D4', 'D5',
+      'Ds2', 'Ds3', 'Ds4', 'Ds5', 'E2', 'E3', 'E4', 'E5',
+      'F2', 'F3', 'F4', 'F5', 'Fs2', 'Fs3', 'Fs4', 'Fs5',
+      'G2', 'G3', 'G4', 'G5', 'Gs2', 'Gs3', 'Gs4', 'Gs5',
+    ];
+    handpanNotes.forEach((note, i) => {
       setTimeout(() => {
-        fetch(instrument.file)
+        fetch(`handpan-${note}.wav`)
           .then(response => response.arrayBuffer())
           .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
           .then(audioBuffer => {
-            sampleBuffersRef.current[instrument.name] = audioBuffer;
+            const freq = HANDPAN_NOTES[note];
+            if (freq) handpanSamplesRef.current[freq] = audioBuffer;
           })
           .catch(() => {});
-      }, index * 200);
+      }, 1000 + i * 50); // Start loading after other samples
     });
 
     // Reverb
@@ -170,13 +214,11 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
     masterGain.gain.setTargetAtTime(0.65, audioCtx.currentTime, 0.1);
   }, []);
 
-  // Play current instrument - pitch shift from base note (C3 = 130.81Hz)
+  // Play current instrument
   const pluckStringAudio = useCallback((string, velocity) => {
     const audioCtx = audioCtxRef.current;
     const masterGain = masterGainRef.current;
-    const instrument = INSTRUMENTS[currentInstrument];
-    const buffer = sampleBuffersRef.current[instrument.name];
-    if (!audioCtx || !masterGain || !buffer) return;
+    if (!audioCtx || !masterGain) return;
 
     // Resume AudioContext if suspended (iOS requirement after user interaction)
     if (audioCtx.state === 'suspended') {
@@ -185,55 +227,233 @@ export default function StringsMode({ primaryHue = 220, musicKey = 3, musicScale
 
     const now = audioCtx.currentTime;
     const freq = string.freq;
-    const playbackRate = freq / instrument.baseFreq;
+    const instrument = INSTRUMENTS[currentInstrument];
 
-    const source = audioCtx.createBufferSource();
-    source.buffer = buffer;
-    source.playbackRate.value = playbackRate;
+    // Helper for stereo panning
+    const applyPanning = (output) => {
+      if (audioCtx.createStereoPanner) {
+        const panner = audioCtx.createStereoPanner();
+        panner.pan.value = (string.normalizedIndex - 0.5) * 1.2;
+        output.connect(panner);
+        panner.connect(masterGain);
+      } else {
+        output.connect(masterGain);
+      }
+    };
 
-    // Filter - brighter for higher strings
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 2000 + string.normalizedIndex * 6000 + velocity * 2000;
-    filter.Q.value = 0.5;
+    if (instrument.type === 'sampled') {
+      // Sampled instruments (harp, piano, guitar, cello, voice)
+      const buffer = sampleBuffersRef.current[instrument.name];
+      if (!buffer) return;
 
-    // Gain envelope - adjust based on instrument
-    const gain = audioCtx.createGain();
-    gain.gain.value = 0;
+      const playbackRate = freq / instrument.baseFreq;
+      const source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.playbackRate.value = playbackRate;
 
-    // Different envelope characteristics per instrument
-    if (instrument.name === 'cello') {
-      gain.gain.setTargetAtTime(0.7 * velocity, now, 0.02);
-      gain.gain.setTargetAtTime(0.5 * velocity, now + 0.2, 0.5);
-      gain.gain.setTargetAtTime(0, now + 1.0, 3.5);
-    } else if (instrument.name === 'guitar') {
-      gain.gain.setTargetAtTime(0.8 * velocity, now, 0.01);
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 2000 + string.normalizedIndex * 6000 + velocity * 2000;
+      filter.Q.value = 0.5;
+
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0;
+
+      // Different envelope characteristics per instrument
+      if (instrument.name === 'cello') {
+        gain.gain.setTargetAtTime(0.7 * velocity, now, 0.02);
+        gain.gain.setTargetAtTime(0.5 * velocity, now + 0.2, 0.5);
+        gain.gain.setTargetAtTime(0, now + 1.0, 3.5);
+      } else if (instrument.name === 'guitar') {
+        gain.gain.setTargetAtTime(0.8 * velocity, now, 0.01);
+        gain.gain.setTargetAtTime(0.5 * velocity, now + 0.15, 0.4);
+        gain.gain.setTargetAtTime(0, now + 0.8, 2.5);
+      } else if (instrument.name === 'piano') {
+        gain.gain.setTargetAtTime(0.8 * velocity, now, 0.01);
+        gain.gain.setTargetAtTime(0.5 * velocity, now + 0.1, 0.3);
+        gain.gain.setTargetAtTime(0, now + 0.5, 2.0);
+      } else if (instrument.name === 'voice') {
+        gain.gain.setTargetAtTime(0.5 * velocity, now, 0.1);
+        gain.gain.setTargetAtTime(0.4 * velocity, now + 0.3, 0.8);
+        gain.gain.setTargetAtTime(0, now + 1.5, 3);
+      } else {
+        // Default harp envelope
+        gain.gain.setTargetAtTime(1.0 * velocity, now, 0.01);
+        gain.gain.setTargetAtTime(0.7 * velocity, now + 0.1, 0.3);
+        gain.gain.setTargetAtTime(0, now + 0.5, 3.0);
+      }
+
+      source.connect(filter);
+      filter.connect(gain);
+      applyPanning(gain);
+      source.start(now);
+
+    } else if (instrument.type === 'multisampled') {
+      // Handpan - find closest sample
+      const samples = handpanSamplesRef.current;
+      const sampleFreqs = Object.keys(samples).map(Number).filter(f => samples[f]);
+      if (sampleFreqs.length === 0) return;
+
+      let closestFreq = sampleFreqs[0];
+      let minDiff = Math.abs(Math.log2(freq / closestFreq));
+      for (const sampleFreq of sampleFreqs) {
+        const diff = Math.abs(Math.log2(freq / sampleFreq));
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestFreq = sampleFreq;
+        }
+      }
+
+      const buffer = samples[closestFreq];
+      if (!buffer) return;
+
+      const playbackRate = freq / closestFreq;
+      const source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.playbackRate.value = playbackRate;
+
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.7 * velocity, now, 0.003);
       gain.gain.setTargetAtTime(0.5 * velocity, now + 0.15, 0.4);
-      gain.gain.setTargetAtTime(0, now + 0.8, 2.5);
-    } else if (instrument.name === 'piano') {
-      gain.gain.setTargetAtTime(0.8 * velocity, now, 0.01);
-      gain.gain.setTargetAtTime(0.5 * velocity, now + 0.1, 0.3);
-      gain.gain.setTargetAtTime(0, now + 0.5, 2.0);
-    } else {
-      // Default harp envelope
-      gain.gain.setTargetAtTime(1.0 * velocity, now, 0.01);
-      gain.gain.setTargetAtTime(0.7 * velocity, now + 0.1, 0.3);
-      gain.gain.setTargetAtTime(0, now + 0.5, 3.0);
-    }
+      gain.gain.setTargetAtTime(0, now + 1.0, 4.0);
 
-    // Stereo panning based on string position
-    let output = gain;
-    if (audioCtx.createStereoPanner) {
-      const panner = audioCtx.createStereoPanner();
-      panner.pan.value = (string.normalizedIndex - 0.5) * 1.2;
-      gain.connect(panner);
-      output = panner;
-    }
+      source.connect(gain);
+      applyPanning(gain);
+      source.start(now);
 
-    source.connect(filter);
-    filter.connect(gain);
-    output.connect(masterGain);
-    source.start(now);
+    } else if (instrument.type === 'synth') {
+      // FM synthesis synth (feltPiano style)
+      const carrier = audioCtx.createOscillator();
+      const modulator = audioCtx.createOscillator();
+      const modGain = audioCtx.createGain();
+      const mainGain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+
+      modulator.frequency.value = freq * 2;
+      modGain.gain.value = freq * 0.5;
+      modulator.connect(modGain);
+      modGain.connect(carrier.frequency);
+
+      carrier.type = 'triangle';
+      carrier.frequency.value = freq;
+
+      filter.type = 'lowpass';
+      filter.frequency.value = freq * 4;
+      filter.Q.value = 0.5;
+      filter.frequency.setTargetAtTime(freq * 1.5, now, 0.3);
+
+      mainGain.gain.value = 0;
+      mainGain.gain.setTargetAtTime(0.25 * velocity, now, 0.01);
+      mainGain.gain.setTargetAtTime(0.15 * velocity, now + 0.1, 0.2);
+      mainGain.gain.setTargetAtTime(0, now + 0.3, 1.5);
+
+      carrier.connect(filter);
+      filter.connect(mainGain);
+      applyPanning(mainGain);
+
+      carrier.start(now);
+      modulator.start(now);
+      carrier.stop(now + 4);
+      modulator.stop(now + 4);
+
+    } else if (instrument.type === 'musicbox') {
+      // Music box - bright sine at octave
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq * 2;
+      gain.gain.value = 0;
+      gain.gain.setTargetAtTime(0.2 * velocity, now, 0.001);
+      gain.gain.setTargetAtTime(0, now + 0.1, 0.6);
+      osc.connect(gain);
+      applyPanning(gain);
+      osc.start(now);
+      osc.stop(now + 2);
+
+    } else if (instrument.type === 'flute') {
+      // Organic flute synthesis with breath
+      const duration = 1.0;
+
+      // Main tone (triangle for hollow quality)
+      const osc = audioCtx.createOscillator();
+      const oscGain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq * 0.97, now);
+      osc.frequency.exponentialRampToValueAtTime(freq, now + 0.25);
+
+      // Gentle vibrato
+      const vibrato = audioCtx.createOscillator();
+      const vibGain = audioCtx.createGain();
+      vibrato.frequency.value = 5;
+      vibGain.gain.setValueAtTime(0, now);
+      vibGain.gain.setTargetAtTime(freq * 0.004, now + 0.3, 0.15);
+      vibrato.connect(vibGain);
+      vibGain.connect(osc.frequency);
+
+      oscGain.gain.setValueAtTime(0, now);
+      oscGain.gain.linearRampToValueAtTime(0.05 * velocity, now + 0.35);
+      oscGain.gain.setTargetAtTime(0, now + 0.5, 0.2);
+
+      // Second harmonic
+      const osc2 = audioCtx.createOscillator();
+      const osc2Gain = audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.value = freq * 2;
+      osc2Gain.gain.setValueAtTime(0, now);
+      osc2Gain.gain.linearRampToValueAtTime(0.01 * velocity, now + 0.35);
+      osc2Gain.gain.setTargetAtTime(0, now + 0.5, 0.15);
+
+      // Breath noise
+      const noiseLen = audioCtx.sampleRate * duration;
+      const noiseBuffer = audioCtx.createBuffer(1, noiseLen, audioCtx.sampleRate);
+      const noiseData = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < noiseLen; i++) {
+        noiseData[i] = Math.random() * 2 - 1;
+      }
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = noiseBuffer;
+
+      const formant = audioCtx.createBiquadFilter();
+      formant.type = 'bandpass';
+      formant.frequency.value = freq * 1.5;
+      formant.Q.value = 2;
+
+      const airBand = audioCtx.createBiquadFilter();
+      airBand.type = 'highpass';
+      airBand.frequency.value = 2000;
+
+      const noiseGain = audioCtx.createGain();
+      noiseGain.gain.setValueAtTime(0, now);
+      noiseGain.gain.linearRampToValueAtTime(0.04 * velocity, now + 0.2);
+      noiseGain.gain.setTargetAtTime(0.02 * velocity, now + 0.3, 0.12);
+      noiseGain.gain.setTargetAtTime(0, now + 0.5, 0.15);
+
+      const lpf = audioCtx.createBiquadFilter();
+      lpf.type = 'lowpass';
+      lpf.frequency.value = Math.min(freq * 6, 4000);
+      lpf.Q.value = 0.5;
+
+      osc.connect(oscGain);
+      osc2.connect(osc2Gain);
+      oscGain.connect(lpf);
+      osc2Gain.connect(lpf);
+      noise.connect(formant);
+      noise.connect(airBand);
+      formant.connect(noiseGain);
+      airBand.connect(noiseGain);
+      noiseGain.connect(lpf);
+      applyPanning(lpf);
+
+      osc.start(now);
+      osc2.start(now);
+      vibrato.start(now);
+      noise.start(now);
+      osc.stop(now + duration);
+      osc2.stop(now + duration);
+      vibrato.stop(now + duration);
+      noise.stop(now + duration);
+    }
 
     // Sympathetic resonance
     stringsRef.current.forEach(s => {

@@ -14,7 +14,6 @@ import { breathTechniques } from './data/breathTechniques';
 import { haptic } from './config/haptic';
 import { gazeModes, BREATH_CYCLE, BREATH_SPEED, KEYS, KEY_FREQUENCIES, SCALE_TYPES, isMobile } from './config/constants';
 import GazeMode from './components/GazeMode';
-import HarpMode from './components/HarpMode';
 import StringsMode from './components/StringsMode';
 
 // Destructure React hooks for compatibility with original code
@@ -4926,7 +4925,6 @@ function Still() {
             {(() => {
               const modes = [
                 { key: 'hum', icon: '∿', label: 'Hum' },
-                { key: 'harp', icon: '𝄃', label: 'Harp' },
                 { key: 'strings', icon: '𝄢', label: 'Strings' },
                 { key: 'gaze', icon: '◯', label: 'Gaze' },
                 { key: 'breathwork', icon: '◎', label: 'Breathe' },
@@ -5483,12 +5481,7 @@ function Still() {
           />
         )}
 
-        {/* Harp - Meditative virtual harp */}
-        {view === 'harp' && (
-          <HarpMode primaryHue={primaryHue} musicKey={sharedMusicKey} musicScaleType={sharedMusicScaleType} />
-        )}
-
-        {/* Strings - Multi-instrument harp mode */}
+        {/* Strings - Multi-instrument mode */}
         {view === 'strings' && (
           <StringsMode
             primaryHue={primaryHue}
