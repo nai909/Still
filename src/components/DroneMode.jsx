@@ -1497,6 +1497,9 @@ const DroneMode = React.forwardRef(function DroneMode({
 
   // Handle touch end - detect swipe vs tap
   const handleTouchEnd = useCallback((e) => {
+    // Prevent click event from being synthesized (prevents double-play)
+    e.preventDefault();
+
     if (backgroundMode || showScaleSelector || !ctxRef.current) return;
 
     const endX = e.changedTouches[0].clientX;
