@@ -2301,7 +2301,9 @@ function Still() {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '2.5rem',
+              gap: 'clamp(1rem, 3vh, 2.5rem)',
+              padding: '2rem 1rem',
+              overflowY: 'auto',
               animation: 'colorOverlayIn 0.6s ease-out',
             }}
           >
@@ -2342,8 +2344,8 @@ function Still() {
             <div
               onClick={(e) => e.stopPropagation()}
               style={{
-                marginTop: '1rem',
-                paddingTop: '2rem',
+                marginTop: 'clamp(0.5rem, 2vh, 1rem)',
+                paddingTop: 'clamp(1rem, 2vh, 2rem)',
                 borderTop: '1px solid rgba(255, 255, 255, 0.1)',
                 opacity: 0,
                 animation: `colorWordIn 0.6s ease-out ${0.1 + COLOR_PRESETS.length * 0.08}s forwards`,
