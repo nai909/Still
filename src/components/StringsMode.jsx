@@ -42,6 +42,11 @@ const TEXTURES = [
 
 export default function StringsMode({
   primaryHue = 220,
+  // Shared drone state from App.jsx
+  currentKey: propCurrentKey,
+  onKeyChange,
+  droneEnabled: propDroneEnabled,
+  onDroneToggle,
 }) {
   const canvasRef = useRef(null);
   const audioCtxRef = useRef(null);
@@ -49,8 +54,7 @@ export default function StringsMode({
   const reverbNodeRef = useRef(null);
   const noiseGainRef = useRef(null);
   const foleyIntervalRef = useRef(null);
-  const droneNodesRef = useRef([]);
-  const droneGainRef = useRef(null);
+  // Note: Drone oscillators removed - using shared drone from DroneMode
 
   // Sample buffers for each instrument
   const sampleBuffersRef = useRef({});
@@ -68,12 +72,17 @@ export default function StringsMode({
   const [showLabel, setShowLabel] = useState(true);
   const [currentInstrument, setCurrentInstrument] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  // Independent local state for StringsMode settings
-  const [currentKey, setCurrentKey] = useState(3); // D#
+  // Use shared key from props, fallback to local state
+  const [localCurrentKey, setLocalCurrentKey] = useState(3); // D#
+  const currentKey = propCurrentKey !== undefined ? propCurrentKey : localCurrentKey;
+  const setCurrentKey = onKeyChange || setLocalCurrentKey;
   const [currentScaleType, setCurrentScaleType] = useState(0); // major
   const [currentTexture, setCurrentTexture] = useState(2); // forest
   const [showNotes, setShowNotes] = useState(false);
-  const [droneEnabled, setDroneEnabled] = useState(false);
+  // Use shared drone state from props, fallback to local state
+  const [localDroneEnabled, setLocalDroneEnabled] = useState(false);
+  const droneEnabled = propDroneEnabled !== undefined ? propDroneEnabled : localDroneEnabled;
+  const setDroneEnabled = onDroneToggle || setLocalDroneEnabled;
   const currentTextureRef = useRef(currentTexture);
   const labelTimeoutRef = useRef(null);
 
@@ -93,30 +102,8 @@ export default function StringsMode({
     showNotesRef.current = showNotes;
   }, [showNotes]);
 
-  // Control drone volume when enabled/disabled
-  useEffect(() => {
-    const droneGain = droneGainRef.current;
-    const audioCtx = audioCtxRef.current;
-    if (!droneGain || !audioCtx || audioCtx.state === 'closed') return;
-
-    const targetGain = droneEnabled ? 1 : 0;
-    droneGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.5);
-  }, [droneEnabled]);
-
-  // Update drone frequencies when key changes
-  useEffect(() => {
-    const audioCtx = audioCtxRef.current;
-    if (!audioCtx || audioCtx.state === 'closed') return;
-    if (droneNodesRef.current.length === 0) return;
-
-    const keyFreq = KEY_FREQUENCIES[KEYS[currentKey]] || 155.56;
-    const baseFreq = keyFreq / 4; // Low octave like DroneMode
-    droneNodesRef.current.forEach(node => {
-      if (node.osc && node.ratio) {
-        node.osc.frequency.setTargetAtTime(baseFreq * node.ratio, audioCtx.currentTime, 0.3);
-      }
-    });
-  }, [currentKey]);
+  // Note: Drone volume and frequency control removed
+  // Using shared drone from DroneMode via props
 
   // Convert frequency to note name
   const freqToNoteName = useCallback((freq) => {
@@ -366,38 +353,7 @@ export default function StringsMode({
     masterGain.connect(reverbNode);
     masterGain.gain.setTargetAtTime(0.65, audioCtx.currentTime, 0.1);
 
-    // Create ambient drone oscillators (harmonic layers)
-    const droneGain = audioCtx.createGain();
-    droneGain.gain.value = 0; // Start silent
-    droneGain.connect(reverbNode);
-    droneGainRef.current = droneGain;
-
-    // Match DroneMode's drone layers exactly
-    const droneLayers = [
-      { ratio: 1, type: 'sine', gain: 0.15, detune: 0 },
-      { ratio: 2, type: 'sine', gain: 0.12, detune: 3 },
-      { ratio: 1.5, type: 'sine', gain: 0.08, detune: -2 },
-      { ratio: 3, type: 'sine', gain: 0.05, detune: 5 },
-      { ratio: 4, type: 'sine', gain: 0.03, detune: -4 },
-      { ratio: 0.5, type: 'sine', gain: 0.1, detune: 0 },
-      { ratio: 2.01, type: 'sine', gain: 0.04, detune: 0 },
-      { ratio: 1.498, type: 'sine', gain: 0.03, detune: 0 },
-    ];
-
-    const keyFreq = KEY_FREQUENCIES[KEYS[3]] || 155.56; // D# default
-    const baseFreq = keyFreq / 4; // Low octave like DroneMode
-    droneLayers.forEach(layer => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = layer.type;
-      osc.frequency.value = baseFreq * layer.ratio;
-      osc.detune.value = layer.detune || 0;
-      gain.gain.value = layer.gain;
-      osc.connect(gain);
-      gain.connect(droneGain);
-      osc.start();
-      droneNodesRef.current.push({ osc, gain, ratio: layer.ratio });
-    });
+    // Note: Drone oscillators removed - using shared drone from DroneMode
 
     // Start foley interval
     foleyIntervalRef.current = setInterval(() => {
@@ -1135,25 +1091,15 @@ export default function StringsMode({
       // Fade out audio on unmount for smooth transition
       const audioCtx = audioCtxRef.current;
       const masterGain = masterGainRef.current;
-      const droneGain = droneGainRef.current;
       if (audioCtx && audioCtx.state !== 'closed') {
         try {
           const now = audioCtx.currentTime;
-          // Fade out drone and master gain smoothly (0.3s time constant)
-          if (droneGain) {
-            droneGain.gain.setTargetAtTime(0, now, 0.3);
-          }
+          // Fade out master gain smoothly (0.3s time constant)
           if (masterGain) {
             masterGain.gain.setTargetAtTime(0, now, 0.3);
           }
-          // Stop drone oscillators after fade completes (~1 second)
+          // Close audio context after fade
           setTimeout(() => {
-            droneNodesRef.current.forEach(node => {
-              if (node.osc) {
-                try { node.osc.stop(); } catch (e) {}
-              }
-            });
-            droneNodesRef.current = [];
             try { audioCtx.close(); } catch (e) {}
           }, 1000);
         } catch (e) { /* ignore */ }
@@ -1161,7 +1107,6 @@ export default function StringsMode({
       // Clear refs so remount gets fresh context
       audioCtxRef.current = null;
       masterGainRef.current = null;
-      droneGainRef.current = null;
     };
   }, []); // Empty deps - only run on mount/unmount
 

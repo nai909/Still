@@ -298,6 +298,11 @@ const DroneMode = React.forwardRef(function DroneMode({
   primaryColor = 'hsl(162, 52%, 68%)',
   backgroundMode = false,
   onSamplesReady = null,
+  // Shared drone state from App.jsx
+  currentKey: propCurrentKey,
+  onKeyChange,
+  droneEnabled: propDroneEnabled,
+  onDroneToggle,
 }, ref) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [samplesLoading, setSamplesLoading] = useState(false);
@@ -307,15 +312,21 @@ const DroneMode = React.forwardRef(function DroneMode({
   const totalSamplesToLoad = 20; // Number of handpan samples
   const [currentInstrument, setCurrentInstrument] = useState(0); // handpan
   const [currentTexture, setCurrentTexture] = useState(2); // forest
-  const [currentKey, setCurrentKey] = useState(3); // D#
+  // Use prop if provided, otherwise use local state (backwards compat)
+  const [localCurrentKey, setLocalCurrentKey] = useState(3); // D#
+  const currentKey = propCurrentKey !== undefined ? propCurrentKey : localCurrentKey;
+  const setCurrentKey = onKeyChange || setLocalCurrentKey;
   const [currentScaleType, setCurrentScaleType] = useState(0); // major
   const [showLabel, setShowLabel] = useState(false);
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
   const [breathValue, setBreathValue] = useState(0);
   const [showNotes, setShowNotes] = useState(false);
-  const [droneEnabled, setDroneEnabled] = useState(false);
-  const droneEnabledRef = useRef(true);
+  // Use prop if provided, otherwise use local state
+  const [localDroneEnabled, setLocalDroneEnabled] = useState(false);
+  const droneEnabled = propDroneEnabled !== undefined ? propDroneEnabled : localDroneEnabled;
+  const setDroneEnabled = onDroneToggle || setLocalDroneEnabled;
+  const droneEnabledRef = useRef(droneEnabled);
   const backgroundModeRef = useRef(backgroundMode);
 
   // Keep refs in sync with state/props for animation loop access
@@ -325,10 +336,8 @@ const DroneMode = React.forwardRef(function DroneMode({
 
   useEffect(() => {
     backgroundModeRef.current = backgroundMode;
-    // Turn off drone when entering background mode
-    if (backgroundMode && droneEnabled) {
-      setDroneEnabled(false);
-    }
+    // Note: We no longer turn off drone when entering background mode
+    // The drone is shared and should persist across mode switches
   }, [backgroundMode]);
 
   // Generate current scale based on key and scale type (memoized to prevent stale closures)
@@ -746,7 +755,7 @@ const DroneMode = React.forwardRef(function DroneMode({
 
       // Modulate drone (respects drone toggle AND background mode)
       droneOscillatorsRef.current.forEach(node => {
-        const droneMultiplier = (droneEnabledRef.current && !backgroundModeRef.current) ? 1 : 0;
+        const droneMultiplier = droneEnabledRef.current ? 1 : 0;
         const target = node.baseGain * (0.4 + value * 0.6) * droneMultiplier;
         node.gain.gain.setTargetAtTime(target, ctx.currentTime, 0.5);
       });
@@ -814,12 +823,12 @@ const DroneMode = React.forwardRef(function DroneMode({
     });
   }, [currentKey, isInitialized]);
 
-  // Fade drone in/out when toggle changes or when entering/leaving background mode
+  // Fade drone in/out when toggle changes
   useEffect(() => {
     if (!isInitialized || !ctxRef.current || droneOscillatorsRef.current.length === 0) return;
 
-    // Drone only plays when enabled AND not in background mode
-    const targetGain = (droneEnabled && !backgroundMode) ? 1 : 0;
+    // Drone plays when enabled - persists across mode switches
+    const targetGain = droneEnabled ? 1 : 0;
     droneOscillatorsRef.current.forEach(node => {
       node.gain.gain.setTargetAtTime(node.baseGain * targetGain, ctxRef.current.currentTime, 0.3);
     });

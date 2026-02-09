@@ -2045,6 +2045,10 @@ function Still() {
   const [showSettingsHint, setShowSettingsHint] = useState(false);
   const [gazeVisual, setGazeVisual] = useState('geometry');
 
+  // Shared drone state - one drone controlled by all modes
+  const [sharedKey, setSharedKey] = useState(3); // D# default
+  const [sharedDroneEnabled, setSharedDroneEnabled] = useState(false);
+
   // Settings hint timer - shows hint every 20 seconds until settings opened
   useEffect(() => {
     if (hasOpenedSettings) {
@@ -3308,6 +3312,10 @@ function Still() {
         {view === 'strings' && (
           <StringsMode
             primaryHue={primaryHue}
+            currentKey={sharedKey}
+            onKeyChange={setSharedKey}
+            droneEnabled={sharedDroneEnabled}
+            onDroneToggle={setSharedDroneEnabled}
           />
         )}
 
@@ -3344,6 +3352,10 @@ function Still() {
             primaryColor={primaryColor}
             backgroundMode={view !== 'hum'}
             onSamplesReady={handleSamplesReady}
+            currentKey={sharedKey}
+            onKeyChange={setSharedKey}
+            droneEnabled={sharedDroneEnabled}
+            onDroneToggle={setSharedDroneEnabled}
           />
         </div>
         {/* Filter View */}
