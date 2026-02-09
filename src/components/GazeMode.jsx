@@ -23,6 +23,15 @@ import { breathTechniques } from '../data/breathTechniques';
 
 const { useState, useEffect, useRef, useCallback } = React;
 
+// Modes that use Three.js 3D rendering
+const THREE_D_MODES = new Set([
+  'geometry', 'jellyfish', 'flowerOfLife', 'tree', 'fern', 'dandelion',
+  'succulent', 'ripples', 'lungs', 'koiPond', 'lavaTouch', 'mountains',
+  'maloka', 'underwater', 'lotus', 'heartGarden', 'corpusStellae',
+  'machinaTemporis', 'oceanusProfundus', 'arborMundi', 'portaDimensionum',
+  'fungusDimensio', 'peyoteVisio'
+]);
+
 function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false, currentVisual, onVisualChange, breathSession = null, externalTouchRef = null }) {
   // Use primaryHue throughout for consistent color scheme
   const hue = primaryHue;
@@ -8978,7 +8987,7 @@ function GazeMode({ theme, primaryHue = 162, onHueChange, backgroundMode = false
       onTouchEnd={backgroundMode ? undefined : handleInteractionEnd}
     >
       {/* Three.js container for 3D modes */}
-      {(currentMode === 'geometry' || currentMode === 'jellyfish' || currentMode === 'flowerOfLife' ||  currentMode === 'tree' || currentMode === 'fern' || currentMode === 'dandelion' || currentMode === 'succulent' || currentMode === 'ripples' || currentMode === 'lungs' || currentMode === 'koiPond' || currentMode === 'lavaTouch' || currentMode === 'mountains' || currentMode === 'maloka' || currentMode === 'underwater' || currentMode === 'lotus' || currentMode === 'heartGarden' || currentMode === 'corpusStellae' || currentMode === 'machinaTemporis' || currentMode === 'oceanusProfundus' || currentMode === 'arborMundi' || currentMode === 'portaDimensionum' || currentMode === 'fungusDimensio' || currentMode === 'peyoteVisio') && (
+      {THREE_D_MODES.has(currentMode) && (
         <div ref={containerRef} style={{
           width: '100%',
           height: '100%',
