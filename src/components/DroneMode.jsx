@@ -1732,15 +1732,15 @@ const DroneMode = React.forwardRef(function DroneMode({
           }}
           style={{
             position: 'fixed',
-            bottom: 'calc(6% + env(safe-area-inset-bottom, 0px))',
+            bottom: '8%',
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 9999,
             textAlign: 'center',
             cursor: 'pointer',
             padding: '0.4rem 0.75rem',
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: `hsla(${primaryHue}, 52%, 68%, 0.1)`,
+            border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
             borderRadius: '4px',
           }}
         >
@@ -1748,7 +1748,7 @@ const DroneMode = React.forwardRef(function DroneMode({
             fontSize: '0.75rem',
             letterSpacing: '0.15em',
             textTransform: 'lowercase',
-            color: 'rgba(255,255,255,0.6)',
+            color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
           }}>
