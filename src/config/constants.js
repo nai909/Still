@@ -52,7 +52,6 @@ export const gazeModes = [
   { key: 'tree', name: 'Fractal Tree' },
   { key: 'peyoteVisio', name: 'Cacti' },
   { key: 'underwater', name: 'Abyss' },
-  { key: 'corpusStellae', name: 'Astral Body' },
   { key: 'lavaTouch', name: 'Lava Lamp' },
   { key: 'jellyfish2d', name: 'Drift' },
   { key: 'portaDimensionum', name: 'Portal' },

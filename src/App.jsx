@@ -869,7 +869,7 @@ function Still() {
   const [showColorOverlay, setShowColorOverlay] = useState(false);
   const [hasOpenedSettings, setHasOpenedSettings] = useState(false);
   const [showSettingsHint, setShowSettingsHint] = useState(false);
-  const [gazeVisual, setGazeVisual] = useState('geometry');
+  const [gazeVisual, setGazeVisual] = useState('jellyfish2d'); // Drift mode
 
   // Shared drone state - one drone controlled by all modes
   const [sharedKey, setSharedKey] = useState(3); // D# default

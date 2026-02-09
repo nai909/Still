@@ -27,7 +27,7 @@ const { useState, useEffect, useRef, useCallback } = React;
 const THREE_D_MODES = new Set([
   'geometry', 'jellyfish', 'flowerOfLife', 'tree', 'fern', 'dandelion',
   'succulent', 'ripples', 'lungs', 'koiPond', 'lavaTouch', 'mountains',
-  'maloka', 'underwater', 'lotus', 'heartGarden', 'corpusStellae',
+  'maloka', 'underwater', 'lotus', 'heartGarden',
   'machinaTemporis', 'oceanusProfundus', 'arborMundi', 'portaDimensionum',
   'fungusDimensio', 'peyoteVisio'
 ]);
