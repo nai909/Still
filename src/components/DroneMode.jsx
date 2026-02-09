@@ -1738,19 +1738,17 @@ const DroneMode = React.forwardRef(function DroneMode({
             zIndex: 9999,
             textAlign: 'center',
             cursor: 'pointer',
-            padding: '0.75rem 1.5rem',
-            background: 'rgba(0, 0, 0, 0.3)',
-            border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
-            borderRadius: '1rem',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
+            padding: '0.4rem 0.75rem',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '4px',
           }}
         >
           <div style={{
-            fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
+            fontSize: '0.75rem',
             letterSpacing: '0.15em',
             textTransform: 'lowercase',
-            color: `hsla(${primaryHue}, 52%, 68%, 0.95)`,
+            color: 'rgba(255,255,255,0.6)',
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
           }}>
@@ -1807,6 +1805,10 @@ const DroneMode = React.forwardRef(function DroneMode({
           {/* Backdrop */}
           <div
             onClick={() => setShowScaleSelector(false)}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              setShowScaleSelector(false);
+            }}
             style={{
               position: 'absolute',
               inset: 0,
