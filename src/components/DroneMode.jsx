@@ -67,21 +67,8 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
   const triggerGlowRef = useRef(null);
 
   React.useImperativeHandle(ref, () => ({
-    // Detect which pad is under the position without playing (for swipe detection)
-    probePosition: (clientX, clientY) => {
-      if (!rendererRef.current || !cameraRef.current || !raycasterRef.current || !mouseRef.current) return -1;
-      const rect = rendererRef.current.domElement.getBoundingClientRect();
-      mouseRef.current.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-      mouseRef.current.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-      raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
-      const hits = raycasterRef.current.intersectObjects(hitTargetsRef.current, false);
-      if (hits.length > 0) {
-        return hits[0].object.userData.noteIndex;
-      }
-      return -1;
-    },
     handleTap: (clientX, clientY) => {
-      if (!rendererRef.current || !cameraRef.current || !raycasterRef.current || !mouseRef.current) return -1;
+      if (!rendererRef.current || !cameraRef.current || !raycasterRef.current || !mouseRef.current) return false;
       const rect = rendererRef.current.domElement.getBoundingClientRect();
       mouseRef.current.x = ((clientX - rect.left) / rect.width) * 2 - 1;
       mouseRef.current.y = -((clientY - rect.top) / rect.height) * 2 + 1;
@@ -91,9 +78,9 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
         const { noteIndex, visualGroup } = hits[0].object.userData;
         if (visualGroup && triggerGlowRef.current) triggerGlowRef.current(visualGroup);
         if (onPlayNote && scale?.[noteIndex] !== undefined) onPlayNote(noteIndex);
-        return noteIndex; // Return noteIndex for swipe tracking
+        return true;
       }
-      return -1;
+      return false;
     }
   }), [scale, onPlayNote]);
 
@@ -326,10 +313,10 @@ const DroneMode = React.forwardRef(function DroneMode({
   const [currentInstrument, setCurrentInstrument] = useState(0); // handpan
   const [currentTexture, setCurrentTexture] = useState(2); // forest
   // Use prop if provided, otherwise use local state (backwards compat)
-  const [localCurrentKey, setLocalCurrentKey] = useState(3); // D#
+  const [localCurrentKey, setLocalCurrentKey] = useState(5); // F
   const currentKey = propCurrentKey !== undefined ? propCurrentKey : localCurrentKey;
   const setCurrentKey = onKeyChange || setLocalCurrentKey;
-  const [currentScaleType, setCurrentScaleType] = useState(0); // major
+  const [currentScaleType, setCurrentScaleType] = useState(13); // insen
   const [showLabel, setShowLabel] = useState(false);
   const [showScaleSelector, setShowScaleSelector] = useState(false);
   const [breathPhase, setBreathPhase] = useState('inhale');
@@ -437,8 +424,7 @@ const DroneMode = React.forwardRef(function DroneMode({
   const wheelTimeoutRef = useRef(null);
   const touchStartRef = useRef({ x: 0, y: 0, time: 0 });
   const lastTouchRef = useRef({ x: 0, y: 0 });
-  const lastTapTimeRef = useRef(0);
-  const swipePlaysRef = useRef(new Map()); // Track pad plays during swipe to prevent double-triggers
+  const touchActiveRef = useRef(false); // Track if touch is active to prevent click
   const currentTextureRef = useRef(currentTexture);
   currentTextureRef.current = currentTexture;
   const pianoBufferRef = useRef(null);
@@ -1495,49 +1481,21 @@ const DroneMode = React.forwardRef(function DroneMode({
       initAudio();
     }
 
+    touchActiveRef.current = true;
+
     const clientX = e.touches[0].clientX;
     const clientY = e.touches[0].clientY;
     touchStartRef.current = { x: clientX, y: clientY, time: Date.now() };
     lastTouchRef.current = { x: clientX, y: clientY };
-
-    // Clear swipe play tracking for new touch
-    swipePlaysRef.current.clear();
-
-    // Play note immediately on touch (for swipe-to-play)
-    if (ctxRef.current) {
-      const noteIndex = handpanViewRef.current?.handleTap(clientX, clientY);
-      if (noteIndex >= 0) {
-        swipePlaysRef.current.set(noteIndex, performance.now());
-      }
-    }
   }, [backgroundMode, showScaleSelector, isInitialized, initAudio]);
 
-  // Handle touch move - swipe-to-play polyphony
+  // Handle touch move
   const handleTouchMove = useCallback((e) => {
     if (backgroundMode || showScaleSelector || !isInitialized) return;
-
-    const clientX = e.touches[0].clientX;
-    const clientY = e.touches[0].clientY;
-    lastTouchRef.current = { x: clientX, y: clientY };
-
-    // Check if we're over a pad and play it (swipe-to-play)
-    if (ctxRef.current && handpanViewRef.current) {
-      // First probe to see which pad we're over (without playing)
-      const noteIndex = handpanViewRef.current.probePosition(clientX, clientY);
-      if (noteIndex >= 0) {
-        const lastPlayTime = swipePlaysRef.current.get(noteIndex) || 0;
-        const now = performance.now();
-        // Only play if this pad wasn't played in the last 150ms (prevent rapid re-triggers)
-        if (now - lastPlayTime > 150) {
-          swipePlaysRef.current.set(noteIndex, now);
-          // Now actually play the note
-          handpanViewRef.current.handleTap(clientX, clientY);
-        }
-      }
-    }
+    lastTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   }, [backgroundMode, showScaleSelector, isInitialized]);
 
-  // Handle touch end - detect swipe up to open settings
+  // Handle touch end - detect swipe vs tap
   const handleTouchEnd = useCallback((e) => {
     if (backgroundMode || showScaleSelector || !ctxRef.current) return;
 
@@ -1555,15 +1513,22 @@ const DroneMode = React.forwardRef(function DroneMode({
       if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY < 0) {
         setShowScaleSelector(true);
       }
+    } else {
+      // Tap - play note
+      handpanViewRef.current?.handleTap(touchStartRef.current.x, touchStartRef.current.y);
     }
-    // Notes are now played on touchStart, so no need to handle tap here
 
-    // Clear swipe tracking on touch end
-    swipePlaysRef.current.clear();
+    // Clear touch active flag after a delay (to prevent click from also firing)
+    setTimeout(() => {
+      touchActiveRef.current = false;
+    }, 300);
   }, [backgroundMode, showScaleSelector]);
 
-  // Handle click (for desktop)
+  // Handle click (for desktop - skip if touch was just handled)
   const handleClick = useCallback((e) => {
+    // Skip if touch was just handled (prevents double-play on mobile)
+    if (touchActiveRef.current) return;
+
     if (backgroundMode || showScaleSelector) return;
     if (!isInitialized) {
       initAudio();
@@ -1772,6 +1737,7 @@ const DroneMode = React.forwardRef(function DroneMode({
             cursor: 'pointer',
             padding: '0.75rem 1.5rem',
             background: 'rgba(0, 0, 0, 0.3)',
+            border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
             borderRadius: '1rem',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',

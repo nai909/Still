@@ -73,10 +73,10 @@ export default function StringsMode({
   const [currentInstrument, setCurrentInstrument] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   // Use shared key from props, fallback to local state
-  const [localCurrentKey, setLocalCurrentKey] = useState(3); // D#
+  const [localCurrentKey, setLocalCurrentKey] = useState(5); // F
   const currentKey = propCurrentKey !== undefined ? propCurrentKey : localCurrentKey;
   const setCurrentKey = onKeyChange || setLocalCurrentKey;
-  const [currentScaleType, setCurrentScaleType] = useState(0); // major
+  const [currentScaleType, setCurrentScaleType] = useState(13); // insen
   const [currentTexture, setCurrentTexture] = useState(2); // forest
   const [showNotes, setShowNotes] = useState(false);
   // Use shared drone state from props, fallback to local state
@@ -1262,8 +1262,12 @@ export default function StringsMode({
             zIndex: 10,
             textAlign: 'center',
             cursor: 'pointer',
-            padding: '0.5rem 1rem',
-            opacity: 0.7,
+            padding: '0.75rem 1.5rem',
+            background: 'rgba(0, 0, 0, 0.3)',
+            border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
+            borderRadius: '1rem',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
             transition: 'opacity 0.3s ease',
           }}
         >
@@ -1271,7 +1275,7 @@ export default function StringsMode({
             fontSize: 'clamp(0.9rem, 3vw, 1.1rem)',
             letterSpacing: '0.15em',
             textTransform: 'lowercase',
-            color: `hsla(${primaryHue}, 52%, 68%, 0.85)`,
+            color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
           }}>

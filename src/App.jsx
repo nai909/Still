@@ -872,7 +872,7 @@ function Still() {
   const [gazeVisual, setGazeVisual] = useState('jellyfish2d'); // Drift mode
 
   // Shared drone state - one drone controlled by all modes
-  const [sharedKey, setSharedKey] = useState(3); // D# default
+  const [sharedKey, setSharedKey] = useState(5); // F default
   const [sharedDroneEnabled, setSharedDroneEnabled] = useState(false);
 
   // Settings hint timer - shows hint every 20 seconds until settings opened

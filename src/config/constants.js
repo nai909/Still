@@ -49,7 +49,7 @@ export const gazeModes = [
   { key: 'fungusDimensio', name: 'Mycelium' },
   { key: 'maloka', name: 'Maloka' },
   { key: 'machinaTemporis', name: 'Clockwork' },
-  { key: 'tree', name: 'Fractal Tree' },
+  { key: 'tree', name: 'Branches' },
   { key: 'peyoteVisio', name: 'Cacti' },
   { key: 'underwater', name: 'Abyss' },
   { key: 'lavaTouch', name: 'Lava Lamp' },
