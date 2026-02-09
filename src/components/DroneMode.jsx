@@ -6,7 +6,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
 import { haptic } from '../config/haptic';
-import { KEYS, KEY_FREQUENCIES, SCALE_TYPES } from '../config/constants';
+import { KEYS, KEY_FREQUENCIES, SCALE_TYPES, isMobile } from '../config/constants';
 import GazeMode from './GazeMode';
 
 const { useState, useEffect, useRef, useCallback } = React;
