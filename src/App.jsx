@@ -25,24 +25,6 @@ const themes = {
     cardBg: 'rgba(255,255,255,0.03)',
     border: 'rgba(255,255,255,0.1)',
   },
-  cosmos: {
-    name: 'Cosmos',
-    bg: '#000',
-    text: '#E4E0E8',
-    textMuted: '#8080A0',
-    accent: '#7FDBCA',
-    cardBg: 'rgba(255,255,255,0.03)',
-    border: 'rgba(255,255,255,0.1)',
-  },
-  dawn: {
-    name: 'Dawn',
-    bg: '#000',
-    text: '#E8E4DC',
-    textMuted: '#7a7570',
-    accent: '#7FDBCA',
-    cardBg: 'rgba(255,255,255,0.03)',
-    border: 'rgba(255,255,255,0.1)',
-  },
 };
 
 // ============================================================================
@@ -51,13 +33,7 @@ const themes = {
 
 const defaultSettings = {
   theme: 'void',
-  scrollSpeed: 1,
-  depthEffect: true,
-  particles: false,
   reducedMotion: false,
-  breathMode: false,      // Quotes advance with breath
-  autoAdvance: false,     // Auto-advance quotes
-  autoAdvanceInterval: 20, // Seconds between quotes
   primaryHue: 162,        // App color scheme (162 = teal)
 };
 
@@ -72,33 +48,12 @@ const COLOR_PRESETS = [
 ];
 
 const STORAGE_KEYS = {
-  SAVED_QUOTES: 'still_saved_quotes',
   SETTINGS: 'still_settings',
 };
 
 // ============================================================================
 // UTILITIES
 // ============================================================================
-
-const shuffleArray = (array) => {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-};
-
-const loadSavedQuotes = () => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEYS.SAVED_QUOTES);
-    return saved ? JSON.parse(saved) : [];
-  } catch { return []; }
-};
-
-const saveSavedQuotes = (quotes) => {
-  try { localStorage.setItem(STORAGE_KEYS.SAVED_QUOTES, JSON.stringify(quotes)); } catch {}
-};
 
 const loadSettings = () => {
   try {
@@ -128,27 +83,16 @@ function BreathworkView({ breathSession, breathTechniques, startBreathSession, s
   const swipeStartRef = useRef(null);
   const wheelAccumRef = useRef(0);
   const wheelTimeoutRef = useRef(null);
-  const labelTimeoutRef = useRef(null);
-  const fadeInTimeoutRef = useRef(null);
   const wasActiveRef = useRef(false);
   const phaseTransitionRef = useRef(null);
 
-  // Reset breath session and show label when view becomes active (fade in then out)
+  // Reset breath session when view becomes active
   useEffect(() => {
     // Only trigger when transitioning from inactive to active
     if (isActive && !wasActiveRef.current) {
       stopBreathSession();
-      // Fade in after brief delay
-      fadeInTimeoutRef.current = setTimeout(() => setShowLabel(true), 50);
-      // Fade out after 2 seconds
-      labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 2000);
     }
     wasActiveRef.current = isActive;
-
-    return () => {
-      if (fadeInTimeoutRef.current) clearTimeout(fadeInTimeoutRef.current);
-      if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
-    };
   }, [isActive, stopBreathSession]);
 
   // Smooth phase text transitions with fade
@@ -856,15 +800,8 @@ function Still() {
   }, [introFading]);
 
   // Core state
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [savedQuotes, setSavedQuotes] = useState([]);
-  const [shuffledQuotes, setShuffledQuotes] = useState([]);
   const [view, setView] = useState('hum'); // Start with music/handpan
   const [showModeMenu, setShowModeMenu] = useState(false);
-  const [selectedSchools, setSelectedSchools] = useState(new Set());
-  const [selectedThemes, setSelectedThemes] = useState(new Set());
-  const [showSavedOnly, setShowSavedOnly] = useState(false);
-  const [toast, setToast] = useState(null);
   const [settings, setSettings] = useState(defaultSettings);
   const [showColorOverlay, setShowColorOverlay] = useState(false);
   const [hasOpenedSettings, setHasOpenedSettings] = useState(false);
@@ -931,21 +868,7 @@ function Still() {
     }, 4000);
   }, [view]);
 
-  // ============================================================================
-  // SCROLL STATE
-  // ============================================================================
-
-  const [displayProgress, setDisplayProgress] = useState(0);
-  const isAnimating = useRef(false);
-  const touchHistory = useRef([]);
-  const touchStartY = useRef(0);
-  const touchStartX = useRef(0);
-  const lastTouchY = useRef(0);
   const containerRef = useRef(null);
-
-  // Text reveal state (gentle fade-in)
-  const [textRevealed, setTextRevealed] = useState(false);
-  const revealTimeoutRef = useRef(null);
 
   // ============================================================================
   // BREATH SESSION STATE (for dedicated breathwork view)
@@ -964,44 +887,6 @@ function Still() {
     totalCycles: 10,
   });
   const breathSessionRef = useRef(null);
-
-  // ============================================================================
-  // BREATHING - The heartbeat of the app (ambient background)
-  // Inhale: 5s (0→1), Exhale: 6s (1→0), Total cycle: 11s
-  // ============================================================================
-
-  const breathCycleCount = useRef(0);
-
-  useEffect(() => {
-    const INHALE_DURATION = 5000;
-    const EXHALE_DURATION = 6000;
-
-    let animationFrame;
-    let startTime = Date.now();
-    let inhaling = true;
-
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const duration = inhaling ? INHALE_DURATION : EXHALE_DURATION;
-      const progress = Math.min(elapsed / duration, 1);
-
-      if (progress >= 1) {
-        // Switch breath direction
-        inhaling = !inhaling;
-        startTime = Date.now();
-
-        // Count complete cycles (after full exhale)
-        if (inhaling) {
-          breathCycleCount.current++;
-        }
-      }
-
-      animationFrame = requestAnimationFrame(animate);
-    };
-
-    animationFrame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [settings.breathMode]);
 
   // ============================================================================
   // BREATH SESSION CONTROLS (for dedicated breathwork view)
@@ -1111,284 +996,8 @@ function Still() {
 
   // Initialize
   useEffect(() => {
-    const saved = loadSavedQuotes();
-    setSavedQuotes(saved);
-    setShuffledQuotes(shuffleArray(allQuotes));
     setSettings(loadSettings());
   }, []);
-
-  // Filter quotes
-  const filteredQuotes = shuffledQuotes.filter(q => {
-    const schoolMatch = selectedSchools.size === 0 || selectedSchools.has(q.school);
-    const themeMatch = selectedThemes.size === 0 || (q.themes && q.themes.some(t => selectedThemes.has(t)));
-    const savedMatch = !showSavedOnly || savedQuotes.some(s => s.author + '-' + s.text.substring(0, 30) === q.author + '-' + q.text.substring(0, 30));
-    return schoolMatch && themeMatch && savedMatch;
-  });
-
-  const currentQuote = filteredQuotes[currentIndex % Math.max(filteredQuotes.length, 1)];
-
-  // ============================================================================
-  // TEXT REVEAL - Gentle fade-in, no anxiety
-  // ============================================================================
-
-  useEffect(() => {
-    if (!currentQuote) return;
-
-    // Clear any existing timeout
-    if (revealTimeoutRef.current) {
-      clearTimeout(revealTimeoutRef.current);
-    }
-
-    // Start hidden, then fade in after a brief moment
-    setTextRevealed(false);
-    revealTimeoutRef.current = setTimeout(() => {
-      setTextRevealed(true);
-    }, 100);
-
-    return () => {
-      if (revealTimeoutRef.current) {
-        clearTimeout(revealTimeoutRef.current);
-      }
-    };
-  }, [currentIndex, currentQuote]);
-
-  // ============================================================================
-  // SIMPLE SCROLL SYSTEM - Direct, responsive, no fighting physics
-  // ============================================================================
-
-  // Go to next/previous quote with smooth CSS transition
-  const goToQuote = useCallback((direction) => {
-    if (isAnimating.current) return;
-
-    const newIndex = direction > 0
-      ? (currentIndex + 1) % filteredQuotes.length
-      : Math.max(0, currentIndex - 1);
-
-    if (newIndex === currentIndex) return;
-
-    isAnimating.current = true;
-    setDisplayProgress(direction > 0 ? 1 : -1);
-
-    setTimeout(() => {
-      setCurrentIndex(newIndex);
-      setDisplayProgress(0);
-      isAnimating.current = false;
-    }, 800); // Slower, like smoke clearing
-  }, [currentIndex, filteredQuotes.length]);
-
-  // Breath mode: advance quote every 2 breath cycles (~22s)
-  const lastBreathAdvance = useRef(0);
-  useEffect(() => {
-    if (!settings.breathMode || view !== 'scroll') return;
-
-    const checkBreathAdvance = setInterval(() => {
-      if (breathCycleCount.current >= lastBreathAdvance.current + 2) {
-        lastBreathAdvance.current = breathCycleCount.current;
-        goToQuote(1);
-      }
-    }, 1000);
-
-    return () => clearInterval(checkBreathAdvance);
-  }, [settings.breathMode, view, goToQuote]);
-
-  // Accumulated scroll for threshold detection
-  const scrollAccum = useRef(0);
-  const SCROLL_THRESHOLD = 80; // Pixels needed to trigger next quote
-
-  // ============================================================================
-  // INPUT HANDLERS - Simple and direct
-  // ============================================================================
-
-  const wheelAccumX = useRef(0);
-
-  const handleWheel = useCallback((e) => {
-    if (view !== 'scroll' || isAnimating.current) return;
-    e.preventDefault();
-
-    // Horizontal scroll - change visual
-    wheelAccumX.current += e.deltaX;
-    if (Math.abs(wheelAccumX.current) > SCROLL_THRESHOLD) {
-      const direction = wheelAccumX.current > 0 ? 1 : -1;
-      const currentIndex = gazeModes.findIndex(m => m.key === gazeVisual);
-      const newIndex = (currentIndex + direction + gazeModes.length) % gazeModes.length;
-      setGazeVisual(gazeModes[newIndex].key);
-      haptic.tap();
-      wheelAccumX.current = 0;
-      return;
-    }
-
-    // Vertical scroll - change quote
-    scrollAccum.current += e.deltaY * settings.scrollSpeed;
-
-    if (scrollAccum.current > SCROLL_THRESHOLD) {
-      scrollAccum.current = 0;
-      goToQuote(1);
-    } else if (scrollAccum.current < -SCROLL_THRESHOLD) {
-      scrollAccum.current = 0;
-      goToQuote(-1);
-    }
-  }, [view, settings.scrollSpeed, goToQuote, gazeVisual, setGazeVisual]);
-
-  const handleTouchStart = useCallback((e) => {
-    if (view !== 'scroll') return;
-    touchStartY.current = e.touches[0].clientY;
-    touchStartX.current = e.touches[0].clientX;
-    lastTouchY.current = e.touches[0].clientY;
-    touchHistory.current = [{ y: e.touches[0].clientY, x: e.touches[0].clientX, time: Date.now() }];
-  }, [view]);
-
-  const handleTouchMove = useCallback((e) => {
-    if (view !== 'scroll' || isAnimating.current) return;
-    e.preventDefault();
-
-    const touchY = e.touches[0].clientY;
-    const totalDelta = touchStartY.current - touchY;
-
-    // Track for velocity
-    touchHistory.current.push({ y: touchY, time: Date.now() });
-    touchHistory.current = touchHistory.current.slice(-5);
-
-    // Show visual feedback (subtle parallax)
-    const progress = Math.max(-0.5, Math.min(0.5, totalDelta / 300));
-    setDisplayProgress(progress);
-
-    lastTouchY.current = touchY;
-  }, [view]);
-
-  const handleTouchEnd = useCallback((e) => {
-    if (view !== 'scroll' || isAnimating.current) return;
-
-    const endX = e.changedTouches[0].clientX;
-    const endY = e.changedTouches[0].clientY;
-    const deltaX = endX - touchStartX.current;
-    const deltaY = touchStartY.current - endY;
-
-    // Calculate velocity from recent touches
-    const recent = touchHistory.current;
-    let velocity = 0;
-    if (recent.length >= 2) {
-      const first = recent[0];
-      const last = recent[recent.length - 1];
-      const dt = last.time - first.time;
-      if (dt > 0) velocity = (first.y - last.y) / dt;
-    }
-
-    // Check for horizontal swipe first (to change visual)
-    const swipeThreshold = 80;
-    if (Math.abs(deltaX) > swipeThreshold && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-      // Horizontal swipe detected - change visual
-      const direction = deltaX > 0 ? -1 : 1;
-      const currentIndex = gazeModes.findIndex(m => m.key === gazeVisual);
-      const newIndex = (currentIndex + direction + gazeModes.length) % gazeModes.length;
-      setGazeVisual(gazeModes[newIndex].key);
-      haptic.tap();
-      setDisplayProgress(0);
-      return;
-    }
-
-    // Vertical swipe - change quote
-    const dominated = Math.abs(deltaY) > 50 || Math.abs(velocity) > 0.5;
-
-    if (dominated && (deltaY > 30 || velocity > 0.3)) {
-      goToQuote(1);
-    } else if (dominated && (deltaY < -30 || velocity < -0.3)) {
-      goToQuote(-1);
-    } else {
-      // Snap back
-      setDisplayProgress(0);
-    }
-  }, [view, goToQuote, gazeVisual, setGazeVisual]);
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (view !== 'scroll') return;
-
-      if (e.key === 'ArrowDown' || e.key === ' ') {
-        e.preventDefault();
-        goToQuote(1);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        goToQuote(-1);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [view, goToQuote]);
-
-  // ============================================================================
-  // QUOTE MANAGEMENT
-  // ============================================================================
-
-  const showToast = (message) => {
-    setToast(message);
-    setTimeout(() => setToast(null), 2000);
-  };
-
-  const toggleSave = (quote) => {
-    const quoteId = quote.author + '-' + quote.text.substring(0, 30);
-    const isCurrentlySaved = savedQuotes.some(q => q.author + '-' + q.text.substring(0, 30) === quoteId);
-    let newSaved;
-    if (isCurrentlySaved) {
-      newSaved = savedQuotes.filter(q => q.author + '-' + q.text.substring(0, 30) !== quoteId);
-      showToast('Removed from saved');
-      // Turn off "saved only" filter if no more saved quotes
-      if (newSaved.length === 0 && showSavedOnly) {
-        setShowSavedOnly(false);
-      }
-    } else {
-      newSaved = [...savedQuotes, quote];
-      showToast('Saved to collection');
-    }
-    setSavedQuotes(newSaved);
-    saveSavedQuotes(newSaved);
-  };
-
-  const isQuoteSaved = (quote) => {
-    if (!quote) return false;
-    const quoteId = quote.author + '-' + quote.text.substring(0, 30);
-    return savedQuotes.some(q => q.author + '-' + q.text.substring(0, 30) === quoteId);
-  };
-
-  const toggleSchool = (school) => {
-    setSelectedSchools(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(school)) newSet.delete(school);
-      else newSet.add(school);
-      return newSet;
-    });
-    setCurrentIndex(0);
-    indexRef.current = 0;
-    physicsRef.current.position = 0;
-    physicsRef.current.velocity = 0;
-    applyTransforms(0);
-  };
-
-  const toggleTheme = (theme) => {
-    setSelectedThemes(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(theme)) newSet.delete(theme);
-      else newSet.add(theme);
-      return newSet;
-    });
-    setCurrentIndex(0);
-    indexRef.current = 0;
-    physicsRef.current.position = 0;
-    physicsRef.current.velocity = 0;
-    applyTransforms(0);
-  };
-
-
-  // Visual transforms are now handled directly in applyTransforms via refs
-
-  if (!currentQuote) {
-    return (
-      <div style={{ background: currentTheme.bg, color: currentTheme.text, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        Loading...
-      </div>
-    );
-  }
 
   // ============================================================================
   // RENDER
@@ -1455,10 +1064,6 @@ function Still() {
 
       <div
         ref={containerRef}
-        onTouchStart={handleTouchStart}
-        onWheel={handleWheel}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
         style={{
           minHeight: '100vh',
           height: '100vh',
@@ -1467,22 +1072,9 @@ function Still() {
           color: currentTheme.text,
           fontFamily: '"Jost", sans-serif',
           position: 'relative',
-          touchAction: view === 'scroll' ? 'none' : 'auto',
           transition: 'background 0.5s ease',
         }}
       >
-        {/* Background visual for scroll mode - very dim, slow */}
-        {(view === 'scroll' || view === 'filter') && (
-          <div style={{ opacity: 0.4 }}>
-            <GazeMode
-              theme={currentTheme}
-              primaryHue={settings.primaryHue}
-              backgroundMode={true}
-              currentVisual={gazeVisual}
-            />
-          </div>
-        )}
-
         {/* Vignette */}
         <div style={{
           position: 'absolute',
@@ -1707,394 +1299,6 @@ function Still() {
           <ZenWaterBoard primaryHue={settings.primaryHue} />
         )}
 
-        {/* Main Scroll View (legacy - kept for reference) */}
-        {view === 'scroll' && currentQuote && (
-          <main style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
-            {/* Quote Card - emerges like smoke, fades during breath focus */}
-            <div
-              style={{
-                position: 'absolute',
-                width: '100%',
-                maxWidth: '700px',
-                padding: '0 2rem',
-                textAlign: 'center',
-                willChange: 'transform, opacity, filter',
-                transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.8s ease-out, filter 0.8s ease-out',
-                opacity: Math.abs(displayProgress) > 0.3 ? 0 : 1 - Math.abs(displayProgress) * 2,
-                filter: `blur(${Math.abs(displayProgress) * 12}px)`,
-                transform: `translate3d(0, ${displayProgress * -40}px, 0) scale(${1 - Math.abs(displayProgress) * 0.05})`,
-              }}
-            >
-              <blockquote style={{
-                fontSize: 'clamp(1.6rem, 6vw, 3rem)',
-                fontFamily: '"Jost", sans-serif',
-                fontWeight: 500,
-                lineHeight: 1.6,
-                color: currentTheme.text,
-                margin: 0,
-                letterSpacing: '0.02em',
-                textShadow: '0 2px 15px rgba(0,0,0,0.4)',
-                opacity: textRevealed ? 1 : 0,
-                transform: textRevealed ? 'translateY(0)' : 'translateY(8px)',
-                transition: 'opacity 0.8s ease-out, transform 0.8s ease-out',
-              }}>
-                {currentQuote.text}
-              </blockquote>
-
-              <div className="quote-meta" style={{
-                marginTop: '2rem',
-                transition: 'opacity 0.8s ease-out 0.3s, transform 0.8s ease-out 0.3s',
-                opacity: textRevealed
-                  ? Math.max(0, 1 - Math.abs(displayProgress) * 3)
-                  : 0,
-                transform: textRevealed ? 'translateY(0)' : 'translateY(8px)',
-              }}>
-                <div style={{
-                  fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
-                  fontFamily: '"Jost", sans-serif',
-                  fontWeight: 500,
-                  color: currentTheme.textMuted,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                }}>
-                  {currentQuote.author}
-                </div>
-
-                {/* HIDDEN FOR MINIMAL UI - Tags and save/filter buttons preserved for later
-                <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <span style={{
-                    padding: '0.3rem 0.8rem',
-                    background: `hsla(${primaryHue}, 52%, 68%, 0.15)`,
-                    borderRadius: '4px',
-                    color: primaryColor,
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.25)`,
-                  }}>
-                    {currentQuote.school}
-                  </span>
-                  {currentQuote.themes && currentQuote.themes.slice(0, 2).map(theme => (
-                    <span key={theme} style={{
-                      padding: '0.25rem 0.6rem',
-                      background: `hsla(${primaryHue}, 52%, 68%, 0.1)`,
-                      borderRadius: '3px',
-                      color: `hsla(${primaryHue}, 52%, 68%, 0.7)`,
-                      fontSize: '0.65rem',
-                      letterSpacing: '0.05em',
-                      textTransform: 'lowercase',
-                    }}>
-                      {theme}
-                    </span>
-                  ))}
-                  <span style={{ fontSize: '0.75rem', color: currentTheme.textMuted }}>{currentQuote.era}</span>
-                </div>
-
-                <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-                  <button
-                    onClick={() => setTimeout(() => toggleSave(currentQuote), 80)}
-                    style={{
-                      background: currentTheme.cardBg,
-                      border: `1px solid ${currentTheme.border}`,
-                      color: isQuoteSaved(currentQuote) ? primaryColor : currentTheme.textMuted,
-                      padding: '0.75rem 1.25rem',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      transition: 'all 0.5s ease',
-                    }}
-                  >
-                    <span style={{ fontSize: '1.1rem' }}>{isQuoteSaved(currentQuote) ? '♥' : '♡'}</span>save
-                  </button>
-                  <button
-                    onClick={() => setTimeout(() => setView('filter'), 80)}
-                    style={{
-                      background: currentTheme.cardBg,
-                      border: `1px solid ${currentTheme.border}`,
-                      color: (selectedSchools.size > 0 || selectedThemes.size > 0) ? primaryColor : currentTheme.textMuted,
-                      padding: '0.75rem 1.25rem',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      transition: 'all 0.5s ease',
-                    }}
-                  >
-                    <span style={{ fontSize: '1.1rem' }}>◉</span>filter
-                  </button>
-                </div>
-                END HIDDEN FOR MINIMAL UI */}
-              </div>
-            </div>
-          </main>
-        )}
-
-        {/* Breathe View */}
-        {view === 'breathe' && (
-          <main style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2,
-            background: breathSession.isActive ? 'transparent' : currentTheme.bg,
-            transition: 'background 0.5s ease',
-          }}>
-            {/* Technique Selection (when not in session) */}
-            {!breathSession.isActive && (
-              <div style={{ textAlign: 'center', padding: '2rem' }}>
-                <h2 style={{
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.25em',
-                  textTransform: 'uppercase',
-                  color: currentTheme.textMuted,
-                  marginBottom: '2rem',
-                }}>
-                  Choose Your Breath
-                </h2>
-
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1rem',
-                  maxWidth: '320px',
-                  margin: '0 auto',
-                }}>
-                  {Object.entries(breathTechniques).map(([key, tech]) => (
-                    <button
-                      key={key}
-                      onClick={() => startBreathSession(key)}
-                      style={{
-                        background: currentTheme.cardBg,
-                        border: `1px solid ${currentTheme.border}`,
-                        borderRadius: '12px',
-                        padding: '1.25rem 1.5rem',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.5s ease',
-                      }}
-                    >
-                      <div style={{
-                        fontSize: '1rem',
-                        fontFamily: '"Jost", sans-serif',
-                        color: currentTheme.text,
-                        marginBottom: '0.25rem',
-                      }}>
-                        {tech.name}
-                      </div>
-                      <div style={{
-                        fontSize: '0.75rem',
-                        color: currentTheme.textMuted,
-                        fontFamily: '"Jost", sans-serif',
-                      }}>
-                        {tech.description}
-                      </div>
-                      <div style={{
-                        fontSize: '0.65rem',
-                        color: currentTheme.textMuted,
-                        marginTop: '0.5rem',
-                        opacity: 0.7,
-                      }}>
-                        {tech.phases.map(p => `${p.label} ${p.duration}s`).join(' → ')}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Active Breath Session */}
-            {breathSession.isActive && (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-                height: '100%',
-                position: 'relative',
-              }}>
-                {/* Ripples Visualization Background */}
-                <GazeMode
-                  theme={currentTheme}
-                  primaryHue={settings.primaryHue}
-                  backgroundMode={false}
-                  currentVisual="ripples"
-                />
-
-                {/* Phase Label Overlay */}
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  textAlign: 'center',
-                  zIndex: 10,
-                  pointerEvents: 'none',
-                }}>
-                  <div style={{
-                    fontSize: '1.8rem',
-                    fontFamily: '"Jost", sans-serif',
-                    color: currentTheme.text,
-                    opacity: 0.85,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    textShadow: '0 2px 10px rgba(0,0,0,0.3)',
-                  }}>
-                    {breathTechniques[breathSession.technique]?.phases[breathSession.phaseIndex]?.label}
-                  </div>
-                </div>
-
-                {/* Controls */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: '2rem',
-                  display: 'flex',
-                  gap: '1rem',
-                  zIndex: 10,
-                }}>
-                  <button
-                    onClick={togglePauseBreathSession}
-                    style={{
-                      background: currentTheme.cardBg,
-                      border: `1px solid ${currentTheme.border}`,
-                      color: currentTheme.text,
-                      padding: '0.75rem 1.5rem',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontFamily: '"Jost", sans-serif',
-                    }}
-                  >
-                    {breathSession.isPaused ? '▶ Resume' : '⏸ Pause'}
-                  </button>
-                  <button
-                    onClick={stopBreathSession}
-                    style={{
-                      background: 'transparent',
-                      border: `1px solid ${currentTheme.border}`,
-                      color: currentTheme.textMuted,
-                      padding: '0.75rem 1.5rem',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontFamily: '"Jost", sans-serif',
-                    }}
-                  >
-                    ✕ End
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Session Complete Screen */}
-            {breathSession.isComplete && (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-                height: '100%',
-                position: 'relative',
-                padding: '2rem',
-                textAlign: 'center',
-              }}>
-                {/* Soft glow background */}
-                <div style={{
-                  position: 'absolute',
-                  width: '300px',
-                  height: '300px',
-                  borderRadius: '50%',
-                  background: `radial-gradient(circle, ${currentTheme.accent}15 0%, transparent 70%)`,
-                  animation: 'pulse 4s ease-in-out infinite',
-                }} />
-
-                <div style={{
-                  fontSize: '0.7rem',
-                  letterSpacing: '0.25em',
-                  textTransform: 'uppercase',
-                  color: currentTheme.textMuted,
-                  marginBottom: '1rem',
-                }}>
-                  Session Complete
-                </div>
-
-                <div style={{
-                  fontSize: '1.1rem',
-                  fontFamily: '"Jost", sans-serif',
-                  color: currentTheme.text,
-                  marginBottom: '0.5rem',
-                  opacity: 0.9,
-                }}>
-                  {breathSession.cycleCount} breaths · {Math.floor(breathSession.sessionTime / 60)}:{String(breathSession.sessionTime % 60).padStart(2, '0')}
-                </div>
-
-                <div style={{
-                  fontSize: '1rem',
-                  fontFamily: '"Jost", sans-serif',
-                  color: currentTheme.textMuted,
-                  maxWidth: '280px',
-                  lineHeight: 1.6,
-                  marginTop: '2rem',
-                  marginBottom: '3rem',
-                }}>
-                  Consider setting your phone aside and carrying this calm with you.
-                </div>
-
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.75rem',
-                  width: '100%',
-                  maxWidth: '200px',
-                }}>
-                  <button
-                    onClick={() => startBreathSession(breathSession.technique)}
-                    style={{
-                      background: currentTheme.cardBg,
-                      border: `1px solid ${currentTheme.border}`,
-                      color: currentTheme.text,
-                      padding: '0.85rem 1.5rem',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontFamily: '"Jost", sans-serif',
-                    }}
-                  >
-                    Breathe Again
-                  </button>
-                  <button
-                    onClick={stopBreathSession}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: currentTheme.textMuted,
-                      padding: '0.75rem 1.5rem',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem',
-                      fontFamily: '"Jost", sans-serif',
-                      opacity: 0.7,
-                    }}
-                  >
-                    Done
-                  </button>
-                </div>
-              </div>
-            )}
-          </main>
-        )}
-
         {/* Gaze View - Sacred Geometry */}
         {view === 'gaze' && (
           <div style={{ position: 'absolute', inset: 0 }}>
@@ -2162,132 +1366,6 @@ function Still() {
             onDroneToggle={setSharedDroneEnabled}
           />
         </div>
-        {/* Filter View */}
-        {view === 'filter' && (
-          <main style={{ position: 'absolute', top: '80px', left: 0, right: 0, bottom: 0, zIndex: 2, padding: '2rem', overflowY: 'auto' }}>
-            <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-              {/* Saved toggle */}
-              <button
-                onClick={() => setTimeout(() => setShowSavedOnly(!showSavedOnly), 80)}
-                style={{
-                  display: 'block',
-                  margin: '0 auto 3rem',
-                  background: 'transparent',
-                  border: 'none',
-                  color: showSavedOnly ? primaryColor : currentTheme.textMuted,
-                  padding: '0.5rem 1rem',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  transition: 'all 0.5s ease',
-                  opacity: showSavedOnly ? 1 : 0.6,
-                  letterSpacing: '0.1em',
-                }}
-              >
-                ♡ saved only
-              </button>
-
-              {/* Schools */}
-              <h2 style={{ fontSize: '0.7rem', letterSpacing: '0.25em', color: currentTheme.textMuted, marginBottom: '1.5rem', textAlign: 'center', fontWeight: 400 }}>schools of thought</h2>
-              {selectedSchools.size > 0 && (
-                <button onClick={() => setTimeout(() => setSelectedSchools(new Set()), 80)} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: `${primaryColor}80`, fontSize: '0.7rem', cursor: 'pointer', letterSpacing: '0.1em' }}>clear</button>
-              )}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', marginBottom: '3rem' }}>
-                {allSchools.map(school => {
-                  const isSelected = selectedSchools.has(school);
-                  return (
-                    <button
-                      key={school}
-                      onClick={() => setTimeout(() => toggleSchool(school), 80)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: isSelected ? primaryColor : currentTheme.textMuted,
-                        padding: '0.5rem 0.75rem',
-                        cursor: 'pointer',
-                        fontSize: '0.8rem',
-                        transition: 'all 0.5s ease',
-                        opacity: isSelected ? 1 : 0.6,
-                        letterSpacing: '0.05em',
-                      }}
-                    >
-                      {school}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Themes */}
-              <h2 style={{ fontSize: '0.7rem', letterSpacing: '0.25em', color: currentTheme.textMuted, marginBottom: '1.5rem', textAlign: 'center', fontWeight: 400 }}>themes</h2>
-              {selectedThemes.size > 0 && (
-                <button onClick={() => setTimeout(() => setSelectedThemes(new Set()), 80)} style={{ display: 'block', margin: '0 auto 1.5rem', background: 'none', border: 'none', color: `${primaryColor}80`, fontSize: '0.7rem', cursor: 'pointer', letterSpacing: '0.1em' }}>clear</button>
-              )}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', justifyContent: 'center' }}>
-                {allThemes.map(theme => {
-                  const isSelected = selectedThemes.has(theme);
-                  return (
-                    <button
-                      key={theme}
-                      onClick={() => setTimeout(() => toggleTheme(theme), 80)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: isSelected ? primaryColor : currentTheme.textMuted,
-                        padding: '0.4rem 0.6rem',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem',
-                        transition: 'all 0.5s ease',
-                        opacity: isSelected ? 1 : 0.5,
-                        letterSpacing: '0.03em',
-                      }}
-                    >
-                      {theme}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={() => setTimeout(() => setView('scroll'), 80)}
-                style={{
-                  display: 'block',
-                  margin: '3rem auto 0',
-                  background: 'transparent',
-                  border: 'none',
-                  color: currentTheme.textMuted,
-                  padding: '1rem 2rem',
-                  cursor: 'pointer',
-                  fontSize: '0.75rem',
-                  letterSpacing: '0.15em',
-                  transition: 'all 0.5s ease',
-                }}
-              >
-                return
-              </button>
-            </div>
-          </main>
-        )}
-
-        {/* Toast */}
-        {toast && (
-          <div style={{
-            position: 'fixed',
-            bottom: '2rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: `${currentTheme.text}15`,
-            backdropFilter: 'blur(10px)',
-            border: `1px solid ${currentTheme.border}`,
-            padding: '0.75rem 1.5rem',
-            borderRadius: '8px',
-            color: currentTheme.text,
-            fontSize: '0.85rem',
-            zIndex: 200,
-            animation: 'fadeIn 0.5s ease',
-          }}>
-            {toast}
-          </div>
-        )}
-
         {/* Color Overlay - triggered by tapping STILL logo */}
         {showColorOverlay && (
           <div

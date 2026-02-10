@@ -740,7 +740,7 @@ export default function StringsMode({
         string.displacement[i] += displacement * (Math.random() > 0.5 ? 1 : -1);
       }
     } catch (e) {
-      console.warn('exciteStringVisual error:', e);
+      // Silently handle animation errors
     }
   }, []);
 
@@ -782,7 +782,7 @@ export default function StringsMode({
         haptic.tap();
       }
     } catch (e) {
-      console.warn('pluck error:', e);
+      // Silently handle pluck errors
     }
   }, [pluckStringAudio, exciteStringVisual]);
 
@@ -857,7 +857,7 @@ export default function StringsMode({
 
       activeRef.current.set(id, { x, y });
     } catch (e) {
-      console.warn('handleMove error:', e);
+      // Silently handle move errors
     }
   }, [pluck]);
 
@@ -1049,7 +1049,6 @@ export default function StringsMode({
       }
       } catch (e) {
         // Silently continue on errors to prevent crash
-        console.warn('StringsMode animation error:', e);
       }
 
       animationRef.current = requestAnimationFrame(loop);
