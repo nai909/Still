@@ -50,13 +50,11 @@ export const gazeModes = [
   { key: 'maloka', name: 'Maloka' },
   { key: 'machinaTemporis', name: 'Clockwork' },
   { key: 'tree', name: 'Branches' },
-  { key: 'peyoteVisio', name: 'Cacti' },
   { key: 'underwater', name: 'Abyss' },
   { key: 'lavaTouch', name: 'Lava Lamp' },
   { key: 'jellyfish2d', name: 'Drift' },
   { key: 'portaDimensionum', name: 'Portal' },
   { key: 'mountains', name: 'Mountains' },
-  { key: 'arborMundi', name: 'World Tree' },
 ];
 
 export const gazeShapes = [

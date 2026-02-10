@@ -69,7 +69,6 @@ export default function StringsMode({
   const audioCloseTimeoutRef = useRef(null);
   const mountedRef = useRef(true);
 
-  const [showLabel, setShowLabel] = useState(true);
   const [currentInstrument, setCurrentInstrument] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   // Use shared key from props, fallback to local state
@@ -84,7 +83,6 @@ export default function StringsMode({
   const droneEnabled = propDroneEnabled !== undefined ? propDroneEnabled : localDroneEnabled;
   const setDroneEnabled = onDroneToggle || setLocalDroneEnabled;
   const currentTextureRef = useRef(currentTexture);
-  const labelTimeoutRef = useRef(null);
 
   // Keep hue ref updated
   useEffect(() => {
@@ -1037,19 +1035,6 @@ export default function StringsMode({
             ctx.lineCap = 'round';
             ctx.stroke();
 
-            // Draw ripples
-            if (str.ripples && Array.isArray(str.ripples)) {
-              for (let ri = 0; ri < str.ripples.length; ri++) {
-                const r = str.ripples[ri];
-                if (r && r.life > 0 && typeof r.y === 'number' && typeof r.spread === 'number') {
-                  ctx.beginPath();
-                  ctx.ellipse(x, r.y, 3 + r.spread * 0.1, r.spread, 0, 0, Math.PI * 2);
-                  ctx.strokeStyle = `hsla(${h}, ${sat + 15}%, ${l + 15}%, ${r.life * 0.4 * (r.velocity || 0.5)})`;
-                  ctx.lineWidth = 0.5 + (r.velocity || 0.5);
-                  ctx.stroke();
-                }
-              }
-            }
 
             ctx.beginPath();
             ctx.arc(x, topY, 2, 0, Math.PI * 2);
@@ -1071,15 +1056,17 @@ export default function StringsMode({
     };
     animationRef.current = requestAnimationFrame(loop);
 
-    labelTimeoutRef.current = setTimeout(() => setShowLabel(false), 2500);
     mountedRef.current = true;
+
+    // Initialize audio on mount - user has already tapped "touch to begin"
+    // so we can create AudioContext without waiting for another touch
+    initAudio();
 
     return () => {
       running = false;
       mountedRef.current = false;
       window.removeEventListener('resize', handleResize);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      if (labelTimeoutRef.current) clearTimeout(labelTimeoutRef.current);
       if (foleyIntervalRef.current) clearInterval(foleyIntervalRef.current);
 
       // Cancel any pending audio close timeout
@@ -1216,39 +1203,6 @@ export default function StringsMode({
         background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(3,3,6,0.6) 60%, rgba(3,3,6,0.98) 85%)',
       }} />
 
-      {/* Center label */}
-      <div style={{
-        position: 'fixed',
-        top: '18%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 10,
-        textAlign: 'center',
-        pointerEvents: 'none',
-        opacity: showLabel ? 0.8 : 0,
-        transition: 'opacity 1s ease',
-      }}>
-        <div style={{
-          fontSize: 'clamp(1.5rem, 5vw, 2.2rem)',
-          letterSpacing: '0.3em',
-          textTransform: 'lowercase',
-          color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
-          fontFamily: '"Jost", sans-serif',
-          fontWeight: 300,
-          marginBottom: '0.5rem',
-        }}>
-          strings
-        </div>
-        <div style={{
-          fontSize: 'clamp(0.7rem, 2.5vw, 0.9rem)',
-          letterSpacing: '0.2em',
-          textTransform: 'lowercase',
-          color: `hsla(${primaryHue}, 52%, 68%, 0.6)`,
-          fontFamily: '"Jost", sans-serif',
-        }}>
-          {(KEYS[currentKey] || 'C').toLowerCase()} {SCALE_TYPES[currentScaleType]?.name || 'major'}
-        </div>
-      </div>
 
       {/* Instrument indicator - hidden when settings open */}
       {!showSettings && (
@@ -1262,22 +1216,20 @@ export default function StringsMode({
             zIndex: 10,
             textAlign: 'center',
             cursor: 'pointer',
-            padding: '0.4rem 0.75rem',
-            background: `hsla(${primaryHue}, 52%, 68%, 0.1)`,
-            border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
-            borderRadius: '4px',
-            transition: 'opacity 0.3s ease',
+            padding: '0.5rem 1rem',
           }}
         >
           <div style={{
-            fontSize: '0.75rem',
+            fontSize: '1rem',
             letterSpacing: '0.15em',
             textTransform: 'lowercase',
-            color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
+            color: `hsla(${primaryHue}, 45%, 65%, 0.85)`,
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
           }}>
+            <span style={{ opacity: 0.6, marginRight: '0.5em' }}>‹</span>
             {INSTRUMENTS[currentInstrument].name}
+            <span style={{ opacity: 0.6, marginLeft: '0.5em' }}>›</span>
           </div>
         </div>
       )}

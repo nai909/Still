@@ -95,15 +95,8 @@ const HandpanView = React.forwardRef(function HandpanView({ scale, onPlayNote, p
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    // Camera position: native iOS keeps original size, web gets larger handpan
-    const isNativeApp = Capacitor.isNativePlatform();
-    if (isNativeApp) {
-      camera.position.set(0, 8.5, 6); // Original size for iOS native app
-    } else if (isMobile) {
-      camera.position.set(0, 6, 4.5); // Larger handpan for mobile web browser
-    } else {
-      camera.position.set(0, 6, 4.2); // Larger handpan for desktop
-    }
+    // Camera position: consistent across all platforms, edges always visible
+    camera.position.set(0, 8.5, 6);
     camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
@@ -1738,21 +1731,20 @@ const DroneMode = React.forwardRef(function DroneMode({
             zIndex: 9999,
             textAlign: 'center',
             cursor: 'pointer',
-            padding: '0.4rem 0.75rem',
-            background: `hsla(${primaryHue}, 52%, 68%, 0.1)`,
-            border: `1px solid hsla(${primaryHue}, 52%, 68%, 0.3)`,
-            borderRadius: '4px',
+            padding: '0.5rem 1rem',
           }}
         >
           <div style={{
-            fontSize: '0.75rem',
+            fontSize: '1rem',
             letterSpacing: '0.15em',
             textTransform: 'lowercase',
-            color: `hsla(${primaryHue}, 52%, 68%, 0.9)`,
+            color: `hsla(${primaryHue}, 45%, 65%, 0.85)`,
             fontFamily: '"Jost", sans-serif',
             fontWeight: 300,
           }}>
+            <span style={{ opacity: 0.6, marginRight: '0.5em' }}>‹</span>
             {instruments[currentInstrument].name}
+            <span style={{ opacity: 0.6, marginLeft: '0.5em' }}>›</span>
           </div>
         </div>
       )}
