@@ -898,6 +898,38 @@ const DroneMode = React.forwardRef(function DroneMode({
       }
     };
 
+    // Handle native iOS audio session reactivation
+    const handleNativeAudioReactivated = () => {
+      console.log('[DroneMode] Native audio reactivated - forcing complete reinit');
+      // Stop drone oscillators
+      droneOscillatorsRef.current.forEach(node => {
+        if (node.osc) {
+          try { node.osc.stop(); } catch (e) {}
+        }
+      });
+      droneOscillatorsRef.current = [];
+      // Close old context completely
+      if (ctxRef.current) {
+        try {
+          ctxRef.current.close();
+        } catch (e) {}
+        ctxRef.current = null;
+      }
+      // Clear sample buffers
+      pianoBufferRef.current = null;
+      guitarBufferRef.current = null;
+      harpBufferRef.current = null;
+      celloBufferRef.current = null;
+      handpanBufferRef.current = null;
+      voiceBufferRef.current = null;
+      rainstickBufferRef.current = null;
+      percBufferRef.current = null;
+      handpanSamplesRef.current = {};
+      // Mark for reinit
+      needsReinit = true;
+      setIsInitialized(false);
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Resume/reinit on any touch after returning
@@ -908,6 +940,7 @@ const DroneMode = React.forwardRef(function DroneMode({
     // Also listen for page focus
     window.addEventListener('focus', resumeAudio);
     window.addEventListener('pageshow', resumeAudio);
+    window.addEventListener('nativeAudioReactivated', handleNativeAudioReactivated);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -916,6 +949,7 @@ const DroneMode = React.forwardRef(function DroneMode({
       document.removeEventListener('click', handleTouchReinit);
       window.removeEventListener('focus', resumeAudio);
       window.removeEventListener('pageshow', resumeAudio);
+      window.removeEventListener('nativeAudioReactivated', handleNativeAudioReactivated);
     };
   }, [initAudio]);
 

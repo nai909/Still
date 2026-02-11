@@ -71,6 +71,7 @@ export default function StringsMode({
 
   const [currentInstrument, setCurrentInstrument] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   // Use shared key from props, fallback to local state
   const [localCurrentKey, setLocalCurrentKey] = useState(5); // F
   const currentKey = propCurrentKey !== undefined ? propCurrentKey : localCurrentKey;
@@ -299,12 +300,18 @@ export default function StringsMode({
     silentSource.start();
 
     const masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0;
-    masterGain.connect(audioCtx.destination);
+    masterGain.gain.value = 0.7; // Start at audible level immediately
     masterGainRef.current = masterGain;
+
+    // Set up dry output immediately (no reverb delay on first tap) - like DroneMode
+    const dryGain = audioCtx.createGain();
+    dryGain.gain.value = 0.8;
+    masterGain.connect(dryGain);
+    dryGain.connect(audioCtx.destination);
 
     // Load sampled instrument samples
     let loadIndex = 0;
+    let audioWarmedUp = false;
     INSTRUMENTS.forEach((instrument) => {
       if (instrument.type === 'sampled' && instrument.file) {
         setTimeout(() => {
@@ -313,6 +320,21 @@ export default function StringsMode({
             .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
             .then(audioBuffer => {
               sampleBuffersRef.current[instrument.name] = audioBuffer;
+
+              // CRITICAL: Play a very quiet note on first sample to fully warm up iOS audio
+              // Silent buffers don't fully wake the audio hardware - need real audio source
+              if (!audioWarmedUp && masterGainRef.current) {
+                audioWarmedUp = true;
+                const warmupSource = audioCtx.createBufferSource();
+                warmupSource.buffer = audioBuffer;
+                const warmupGain = audioCtx.createGain();
+                warmupGain.gain.value = 0.01; // Nearly inaudible
+                warmupSource.connect(warmupGain);
+                warmupGain.connect(audioCtx.destination);
+                warmupSource.start();
+                // Stop after 100ms
+                setTimeout(() => { try { warmupSource.stop(); } catch(e) {} }, 100);
+              }
             })
             .catch(() => {});
         }, loadIndex * 200);
@@ -369,7 +391,6 @@ export default function StringsMode({
     reverbGain.connect(audioCtx.destination);
 
     masterGain.connect(reverbNode);
-    masterGain.gain.setTargetAtTime(0.65, audioCtx.currentTime, 0.1);
 
     // Note: Drone oscillators removed - using shared drone from DroneMode
 
@@ -384,6 +405,8 @@ export default function StringsMode({
         playFoley(ctx, gain, tex.foleyType);
       }
     }, 1500 + Math.random() * 2000);
+
+    setIsInitialized(true);
   }, []);
 
   // Foley sounds for ambient textures
@@ -1170,11 +1193,30 @@ export default function StringsMode({
         // Always mark for reinit when returning from background
         // iOS can leave context in broken state that appears "running"
         needsReinit = true;
+        setIsInitialized(false); // Reset so next touch will reinit
         // Also try to resume in case context is still valid
         resumeAudio();
         setTimeout(resumeAudio, 100);
         setTimeout(resumeAudio, 300);
       }
+    };
+
+    // Handle native iOS audio session reactivation
+    const handleNativeAudioReactivated = () => {
+      console.log('[StringsMode] Native audio reactivated - forcing complete reinit');
+      // Close old context completely
+      if (audioCtxRef.current) {
+        try {
+          audioCtxRef.current.close();
+        } catch (e) {}
+        audioCtxRef.current = null;
+      }
+      // Clear sample buffers
+      sampleBuffersRef.current = {};
+      handpanSamplesRef.current = {};
+      // Mark for reinit
+      needsReinit = true;
+      setIsInitialized(false);
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -1184,6 +1226,7 @@ export default function StringsMode({
     document.addEventListener('click', handleTouchReinit, { capture: true });
     window.addEventListener('focus', resumeAudio);
     window.addEventListener('pageshow', resumeAudio);
+    window.addEventListener('nativeAudioReactivated', handleNativeAudioReactivated);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -1192,6 +1235,7 @@ export default function StringsMode({
       document.removeEventListener('click', handleTouchReinit, { capture: true });
       window.removeEventListener('focus', resumeAudio);
       window.removeEventListener('pageshow', resumeAudio);
+      window.removeEventListener('nativeAudioReactivated', handleNativeAudioReactivated);
     };
   }, [initAudio]);
 
@@ -1199,13 +1243,19 @@ export default function StringsMode({
   const onTouchStart = useCallback((e) => {
     // Don't handle canvas touches when settings is open
     if (showSettings) return;
+
+    // Initialize audio on first touch (like DroneMode)
+    if (!isInitialized) {
+      initAudio();
+    }
+
     e.preventDefault();
     const t = e.changedTouches[0];
     touchStartRef.current = { x: t.clientX, y: t.clientY, time: Date.now() };
     for (const touch of e.changedTouches) {
       handleStart(touch.identifier, touch.clientX, touch.clientY);
     }
-  }, [handleStart, showSettings]);
+  }, [handleStart, showSettings, isInitialized, initAudio]);
 
   const onTouchMove = useCallback((e) => {
     if (showSettings) return;
