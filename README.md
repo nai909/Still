@@ -1,146 +1,67 @@
-# Philos - Endless Philosophy Quotes
+# Still
 
-An immersive, cinematic philosophy quotes app with a unique depth-scroll effect where quotes emerge from the distance as you scroll.
-
-![Philos Screenshot](screenshot.png)
+A meditative sound and visualization app for iOS. Play ambient instruments, follow guided breathing, and find calm through interactive audio-visual experiences.
 
 ## Features
 
-- **🌊 Depth Scroll Effect** - Quotes emerge from the void and drift toward you as you scroll, creating a meditative experience
-- **💾 Local Storage** - Your saved quotes persist across sessions
-- **📱 PWA Support** - Install on mobile home screens, works offline
-- **🎯 Filter by School** - Focus on Stoicism, Existentialism, Buddhism, Taoism, and 15+ other philosophical traditions
-- **☀️ Daily Quote** - A new quote each day to start your morning
-- **📤 Share** - Native sharing on mobile, clipboard copy on desktop
-- **🌟 250+ Quotes** - From Marcus Aurelius to Alan Watts, Rumi to Camus
+**Hum Mode** — Tap to play melodic notes with ambient drone accompaniment. Notes follow musical scales and keys.
 
-## Schools of Thought Included
+**Strings Mode** — Strum across harp-style strings for flowing, expressive sound.
 
-- Stoicism (Seneca, Marcus Aurelius, Epictetus)
-- Existentialism (Nietzsche, Sartre, Kierkegaard, Frankl)
-- Absurdism (Camus)
-- Classical Greek (Socrates, Plato, Aristotle)
-- Buddhism (Buddha, Thich Nhat Hanh)
-- Zen Buddhism (Dōgen, Bashō)
-- Taoism (Lao Tzu, Zhuangzi)
-- Sufism (Rumi, Hafiz)
-- Confucianism (Confucius)
-- Transcendentalism (Emerson, Thoreau)
-- Depth Psychology (Jung, Campbell)
-- And more...
+**Gaze Mode** — Immersive 3D visuals powered by Three.js for focused meditation.
 
-## Quick Start
+**Guide Mode** — Guided breathing exercises with various techniques.
 
-### Option 1: Create React App
+## Instruments
 
-```bash
-npx create-react-app philos-app
-cd philos-app
-# Replace src/App.js with the content of philos.jsx
-# Copy manifest.json and service-worker.js to public/
-npm start
-```
-
-### Option 2: Vite (Recommended for speed)
-
-```bash
-npm create vite@latest philos-app -- --template react
-cd philos-app
-# Replace src/App.jsx with philos.jsx
-# Copy manifest.json and service-worker.js to public/
-npm install
-npm run dev
-```
-
-### Option 3: Next.js
-
-```bash
-npx create-next-app@latest philos-app
-cd philos-app
-# Create pages/index.js and import the Philos component
-npm run dev
-```
-
-## PWA Setup
-
-1. Copy `manifest.json` to your `public/` folder
-2. Copy `service-worker.js` to your `public/` folder
-3. Add these lines to your `public/index.html` `<head>`:
-
-```html
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#1a1a2e">
-<meta name="apple-mobile-web-app-capable" content="yes">
-```
-
-4. Build and deploy your app
-5. On mobile, use "Add to Home Screen" to install
-
-## Controls
-
-- **Scroll/Swipe** - Navigate between quotes
-- **Arrow Keys** - Up/Down navigation (desktop)
-- **Spacebar** - Next quote (desktop)
-- **♡ Button** - Save quote to collection
-- **↗ Button** - Share quote
-
-## Customization
-
-### Adding More Quotes
-
-Add to the `allQuotes` array in `philos.jsx`:
-
-```javascript
-{ 
-  text: "Your quote here.", 
-  author: "Philosopher Name", 
-  school: "School of Thought", 
-  era: "Century" 
-}
-```
-
-### Changing Colors
-
-Edit the `getSchoolColor` function to customize the color scheme for each philosophical school.
-
-### Adjusting Scroll Speed
-
-Modify the sensitivity values in `handleWheel` and `handleTouchMove`:
-
-```javascript
-const sensitivity = 0.003; // Lower = slower scroll
-```
+- Handpan (multi-sampled across 4 octaves)
+- Piano
+- Guitar
+- Cello
+- Harp
+- Synth
+- Music Box
+- Flute
+- Voice
+- Rainstick
+- Percussion
 
 ## Tech Stack
 
-- React 18+
-- CSS-in-JS (inline styles)
-- Local Storage API
-- Web Share API
-- Service Workers (PWA)
-- Google Fonts (Cormorant Garamond, Jost)
+- React 18
+- Three.js (3D visualizations)
+- Web Audio API
+- Capacitor (iOS native build)
+- Vite
 
-## Browser Support
+## Development
 
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-- Mobile Safari (iOS 14+)
-- Chrome for Android
+```bash
+# Install dependencies
+npm install
+
+# Run dev server
+npm run dev
+
+# Build for production
+npm run build
+
+# Sync to iOS
+npx cap sync ios
+
+# Open in Xcode
+npx cap open ios
+```
+
+## Building for iOS
+
+```bash
+npm run build
+npx cap sync ios
+cd ios/App
+xcodebuild -workspace App.xcworkspace -scheme App -configuration Release
+```
 
 ## License
 
-MIT - Feel free to use, modify, and distribute.
-
-## Contributing
-
-PRs welcome! Especially:
-- More quotes from underrepresented philosophers
-- Translations
-- Accessibility improvements
-- Performance optimizations
-
----
-
-*"The unexamined life is not worth living."* — Socrates
+MIT
