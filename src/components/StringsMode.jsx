@@ -10,7 +10,7 @@ import { KEYS, KEY_FREQUENCIES, SCALE_TYPES } from '../config/constants';
 const INSTRUMENTS = [
   { name: 'harp', file: 'harp.mp3', baseFreq: 130.81, type: 'sampled' },
   { name: 'piano', file: 'piano.mp3', baseFreq: 130.81, type: 'sampled' },
-  { name: 'guitar', file: 'guitar.wav', baseFreq: 130.81, type: 'sampled' },
+  { name: 'guitar', file: 'guitar.m4a', baseFreq: 130.81, type: 'sampled' },
   { name: 'cello', file: 'cello.mp3', baseFreq: 130.81, type: 'sampled' },
   { name: 'handpan', type: 'multisampled' },
   { name: 'synth', type: 'synth' },
@@ -311,7 +311,7 @@ export default function StringsMode({
     ];
     handpanNotes.forEach((note, i) => {
       setTimeout(() => {
-        fetch(`handpan-${note}.wav`)
+        fetch(`handpan-${note}.m4a`)
           .then(response => response.arrayBuffer())
           .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
           .then(audioBuffer => {

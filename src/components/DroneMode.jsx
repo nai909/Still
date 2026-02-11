@@ -564,7 +564,7 @@ const DroneMode = React.forwardRef(function DroneMode({
 
     setTimeout(() => {
       // Load guitar sample
-      fetch('guitar.wav', { signal })
+      fetch('guitar.m4a', { signal })
         .then(response => response.arrayBuffer())
         .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
         .then(audioBuffer => { guitarBufferRef.current = audioBuffer; })
@@ -614,26 +614,26 @@ const DroneMode = React.forwardRef(function DroneMode({
     // Load handpan samples - using original recorded samples for best quality
     // Original samples: As2, B2, C3, C4, C5, Cs2, Cs3, Cs5, Ds2, Ds3, Ds4, Ds5, F2, F3, F4, F5, G3, G4, Gs3, Gs4
     const handpanKeySamples = [
-      ['handpan-Cs2.wav', 69.30],   // C#2 - original
-      ['handpan-Ds2.wav', 77.78],   // D#2 - original
-      ['handpan-F2.wav', 87.31],    // F2 - original
-      ['handpan-As2.wav', 116.54],  // A#2 - original
-      ['handpan-B2.wav', 123.47],   // B2 - original
-      ['handpan-C3.wav', 130.81],   // C3 - original
-      ['handpan-Cs3.wav', 138.59],  // C#3 - original
-      ['handpan-Ds3.wav', 155.56],  // D#3 - original
-      ['handpan-F3.wav', 174.61],   // F3 - original
-      ['handpan-G3.wav', 196.00],   // G3 - original
-      ['handpan-Gs3.wav', 207.65],  // G#3 - original
-      ['handpan-C4.wav', 261.63],   // C4 - original
-      ['handpan-Ds4.wav', 311.13],  // D#4 - original
-      ['handpan-F4.wav', 349.23],   // F4 - original
-      ['handpan-G4.wav', 392.00],   // G4 - original
-      ['handpan-Gs4.wav', 415.30],  // G#4 - original
-      ['handpan-C5.wav', 523.25],   // C5 - original
-      ['handpan-Cs5.wav', 554.37],  // C#5 - original
-      ['handpan-Ds5.wav', 622.25],  // D#5 - original
-      ['handpan-F5.wav', 698.46],   // F5 - original
+      ['handpan-Cs2.m4a', 69.30],   // C#2 - original
+      ['handpan-Ds2.m4a', 77.78],   // D#2 - original
+      ['handpan-F2.m4a', 87.31],    // F2 - original
+      ['handpan-As2.m4a', 116.54],  // A#2 - original
+      ['handpan-B2.m4a', 123.47],   // B2 - original
+      ['handpan-C3.m4a', 130.81],   // C3 - original
+      ['handpan-Cs3.m4a', 138.59],  // C#3 - original
+      ['handpan-Ds3.m4a', 155.56],  // D#3 - original
+      ['handpan-F3.m4a', 174.61],   // F3 - original
+      ['handpan-G3.m4a', 196.00],   // G3 - original
+      ['handpan-Gs3.m4a', 207.65],  // G#3 - original
+      ['handpan-C4.m4a', 261.63],   // C4 - original
+      ['handpan-Ds4.m4a', 311.13],  // D#4 - original
+      ['handpan-F4.m4a', 349.23],   // F4 - original
+      ['handpan-G4.m4a', 392.00],   // G4 - original
+      ['handpan-Gs4.m4a', 415.30],  // G#4 - original
+      ['handpan-C5.m4a', 523.25],   // C5 - original
+      ['handpan-Cs5.m4a', 554.37],  // C#5 - original
+      ['handpan-Ds5.m4a', 622.25],  // D#5 - original
+      ['handpan-F5.m4a', 698.46],   // F5 - original
     ];
     setSamplesLoading(true);
     samplesLoadedCountRef.current = 0;
