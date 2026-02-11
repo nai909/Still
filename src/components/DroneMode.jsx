@@ -476,7 +476,19 @@ const DroneMode = React.forwardRef(function DroneMode({
       ctxRef.current = null;
     }
 
-    if (ctxRef.current) return;
+    // Check if we have a valid, non-closed audio context
+    if (ctxRef.current && ctxRef.current.state !== 'closed') {
+      // Just resume if suspended
+      if (ctxRef.current.state === 'suspended') {
+        ctxRef.current.resume();
+      }
+      return;
+    }
+
+    // Clear the stale closed context
+    if (ctxRef.current && ctxRef.current.state === 'closed') {
+      ctxRef.current = null;
+    }
 
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     ctxRef.current = ctx;

@@ -1110,6 +1110,42 @@ export default function StringsMode({
     }
   }, [showSettings]);
 
+  // Handle app backgrounding/foregrounding - resume or reinit audio
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        if (audioCtxRef.current) {
+          if (audioCtxRef.current.state === 'closed') {
+            // Context is dead, reinitialize on next interaction
+            audioCtxRef.current = null;
+          } else if (audioCtxRef.current.state === 'suspended') {
+            audioCtxRef.current.resume();
+          }
+        }
+      }
+    };
+
+    const handleInteraction = () => {
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        initAudio();
+      } else if (audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('touchstart', handleInteraction, { passive: true });
+    window.addEventListener('focus', handleInteraction);
+    window.addEventListener('pageshow', handleInteraction);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('touchstart', handleInteraction);
+      window.removeEventListener('focus', handleInteraction);
+      window.removeEventListener('pageshow', handleInteraction);
+    };
+  }, [initAudio]);
+
   // Touch handlers with swipe detection for settings
   const onTouchStart = useCallback((e) => {
     // Don't handle canvas touches when settings is open
