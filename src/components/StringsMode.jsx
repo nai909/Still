@@ -365,13 +365,15 @@ export default function StringsMode({
 
     // Note: Drone oscillators removed - using shared drone from DroneMode
 
-    // Start foley interval
+    // Start foley interval - use refs to get current context
     foleyIntervalRef.current = setInterval(() => {
       if (!mountedRef.current) return;
-      if (audioCtx.state === 'closed') return;
+      const ctx = audioCtxRef.current;
+      const gain = masterGainRef.current;
+      if (!ctx || ctx.state === 'closed' || !gain) return;
       const tex = TEXTURES[currentTextureRef.current];
       if (tex && tex.foley) {
-        playFoley(audioCtx, masterGain, tex.foleyType);
+        playFoley(ctx, gain, tex.foleyType);
       }
     }, 1500 + Math.random() * 2000);
   }, []);
@@ -825,10 +827,14 @@ export default function StringsMode({
     // Skip if component unmounted
     if (!mountedRef.current) return;
 
-    // Initialize or reinitialize audio if needed
+    // Skip if no audio context (document handlers will reinit)
     if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-      initAudio(true); // Force reinit to ensure fresh context and samples
-    } else if (audioCtxRef.current.state === 'suspended') {
+      activeRef.current.set(id, { x, y });
+      return;
+    }
+
+    // Resume if suspended
+    if (audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume();
     }
     activeRef.current.set(id, { x, y });
@@ -838,7 +844,7 @@ export default function StringsMode({
       pluck(s, y, 0.6);
       lastPluckedRef.current.set(s.index, performance.now());
     }
-  }, [initAudio, findNearestString, pluck]);
+  }, [findNearestString, pluck]);
 
   const handleMove = useCallback((id, x, y) => {
     if (!mountedRef.current) return;
@@ -1142,22 +1148,21 @@ export default function StringsMode({
     };
 
     const handleTouchReinit = () => {
-      if (needsReinit || (audioCtxRef.current && audioCtxRef.current.state === 'closed')) {
+      const ctx = audioCtxRef.current;
+
+      // Force reinit if: flagged, no context, closed, or not running
+      if (needsReinit || !ctx || ctx.state === 'closed' || ctx.state !== 'running') {
         needsReinit = false;
         initAudio(true); // Force reinit
-      } else if (!audioCtxRef.current) {
-        initAudio(true); // No context, force init
-      } else {
-        resumeAudio();
       }
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        if (audioCtxRef.current && audioCtxRef.current.state === 'closed') {
-          needsReinit = true;
-        }
-        // Multiple attempts with delays for iOS
+        // Always mark for reinit when returning from background
+        // iOS can leave context in broken state that appears "running"
+        needsReinit = true;
+        // Also try to resume in case context is still valid
         resumeAudio();
         setTimeout(resumeAudio, 100);
         setTimeout(resumeAudio, 300);
@@ -1165,17 +1170,18 @@ export default function StringsMode({
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('touchstart', handleTouchReinit, { passive: true });
+    // Use capture phase so reinit happens BEFORE canvas handlers
+    document.addEventListener('touchstart', handleTouchReinit, { passive: true, capture: true });
     document.addEventListener('touchend', handleTouchReinit, { passive: true });
-    document.addEventListener('click', handleTouchReinit);
+    document.addEventListener('click', handleTouchReinit, { capture: true });
     window.addEventListener('focus', resumeAudio);
     window.addEventListener('pageshow', resumeAudio);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('touchstart', handleTouchReinit);
+      document.removeEventListener('touchstart', handleTouchReinit, { capture: true });
       document.removeEventListener('touchend', handleTouchReinit);
-      document.removeEventListener('click', handleTouchReinit);
+      document.removeEventListener('click', handleTouchReinit, { capture: true });
       window.removeEventListener('focus', resumeAudio);
       window.removeEventListener('pageshow', resumeAudio);
     };
