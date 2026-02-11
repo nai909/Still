@@ -271,6 +271,10 @@ export default function StringsMode({
       foleyIntervalRef.current = null;
     }
 
+    // Clear old sample buffers - they're tied to the old AudioContext and won't work with new one
+    sampleBuffersRef.current = {};
+    handpanSamplesRef.current = {};
+
     // Create new audio context (or recreate if previous was closed)
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     audioCtxRef.current = audioCtx;

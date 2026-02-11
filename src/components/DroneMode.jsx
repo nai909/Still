@@ -490,6 +490,17 @@ const DroneMode = React.forwardRef(function DroneMode({
       ctxRef.current = null;
     }
 
+    // Clear old sample buffers - they're tied to the old AudioContext and won't work with new one
+    pianoBufferRef.current = null;
+    guitarBufferRef.current = null;
+    harpBufferRef.current = null;
+    celloBufferRef.current = null;
+    handpanBufferRef.current = null;
+    voiceBufferRef.current = null;
+    rainstickBufferRef.current = null;
+    percBufferRef.current = null;
+    handpanSamplesRef.current = {};
+
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     ctxRef.current = ctx;
 
