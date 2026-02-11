@@ -252,9 +252,17 @@ export default function StringsMode({
   // =============================================
   // AUDIO ENGINE
   // =============================================
-  const initAudio = useCallback(() => {
+  const initAudio = useCallback((forceReinit = false) => {
     // Don't initialize if component is unmounted
     if (!mountedRef.current) return;
+
+    // If forcing reinit, clean up old context completely
+    if (forceReinit && audioCtxRef.current) {
+      try {
+        audioCtxRef.current.close();
+      } catch (e) {}
+      audioCtxRef.current = null;
+    }
 
     // Check if we have a valid, non-closed audio context
     if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
@@ -819,7 +827,7 @@ export default function StringsMode({
 
     // Initialize or reinitialize audio if needed
     if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-      initAudio();
+      initAudio(true); // Force reinit to ensure fresh context and samples
     } else if (audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume();
     }
@@ -1116,37 +1124,60 @@ export default function StringsMode({
 
   // Handle app backgrounding/foregrounding - resume or reinit audio
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        if (audioCtxRef.current) {
-          if (audioCtxRef.current.state === 'closed') {
-            // Context is dead, reinitialize on next interaction
-            audioCtxRef.current = null;
-          } else if (audioCtxRef.current.state === 'suspended') {
-            audioCtxRef.current.resume();
-          }
+    let needsReinit = false;
+
+    const resumeAudio = async () => {
+      if (audioCtxRef.current && audioCtxRef.current.state === 'closed') {
+        needsReinit = true;
+      }
+      if (!audioCtxRef.current) return;
+
+      if (audioCtxRef.current.state !== 'running') {
+        try {
+          await audioCtxRef.current.resume();
+        } catch (e) {
+          needsReinit = true;
         }
       }
     };
 
-    const handleInteraction = () => {
-      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
-        initAudio();
-      } else if (audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume();
+    const handleTouchReinit = () => {
+      if (needsReinit || (audioCtxRef.current && audioCtxRef.current.state === 'closed')) {
+        needsReinit = false;
+        initAudio(true); // Force reinit
+      } else if (!audioCtxRef.current) {
+        initAudio(true); // No context, force init
+      } else {
+        resumeAudio();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        if (audioCtxRef.current && audioCtxRef.current.state === 'closed') {
+          needsReinit = true;
+        }
+        // Multiple attempts with delays for iOS
+        resumeAudio();
+        setTimeout(resumeAudio, 100);
+        setTimeout(resumeAudio, 300);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('touchstart', handleInteraction, { passive: true });
-    window.addEventListener('focus', handleInteraction);
-    window.addEventListener('pageshow', handleInteraction);
+    document.addEventListener('touchstart', handleTouchReinit, { passive: true });
+    document.addEventListener('touchend', handleTouchReinit, { passive: true });
+    document.addEventListener('click', handleTouchReinit);
+    window.addEventListener('focus', resumeAudio);
+    window.addEventListener('pageshow', resumeAudio);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('touchstart', handleInteraction);
-      window.removeEventListener('focus', handleInteraction);
-      window.removeEventListener('pageshow', handleInteraction);
+      document.removeEventListener('touchstart', handleTouchReinit);
+      document.removeEventListener('touchend', handleTouchReinit);
+      document.removeEventListener('click', handleTouchReinit);
+      window.removeEventListener('focus', resumeAudio);
+      window.removeEventListener('pageshow', resumeAudio);
     };
   }, [initAudio]);
 
