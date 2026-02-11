@@ -290,6 +290,14 @@ export default function StringsMode({
     // Resume audio context immediately (required for mobile browsers)
     audioCtx.resume().catch(() => {});
 
+    // CRITICAL: Play silent buffer immediately to warm up iOS audio hardware
+    // This prevents iOS from keeping audio suspended
+    const silentBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.1, audioCtx.sampleRate);
+    const silentSource = audioCtx.createBufferSource();
+    silentSource.buffer = silentBuffer;
+    silentSource.connect(audioCtx.destination);
+    silentSource.start();
+
     const masterGain = audioCtx.createGain();
     masterGain.gain.value = 0;
     masterGain.connect(audioCtx.destination);
