@@ -3,8 +3,31 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { allQuotes, allThemes, allSchools } from './data/quotes';
 import { breathTechniques } from './data/breathTechniques';
 import { haptic } from './config/haptic';
-import { gazeModes } from './config/constants';
 import GazeMode from './components/GazeMode';
+
+// Lazy load the 3D zen garden mode
+const ZenGardenMode = React.lazy(() => import('./components/ZenGardenMode'));
+
+
+// Gaze modes inlined to avoid importing constants.js which pulls in THREE at startup
+const gazeModes = [
+  { key: 'geometry', name: 'Torus' },
+  { key: 'ripples', name: 'Ripples' },
+  { key: 'fern', name: 'Fern' },
+  { key: 'oceanusProfundus', name: 'Deep Ocean' },
+  { key: 'dandelion', name: 'Dandelion' },
+  { key: 'fungusDimensio', name: 'Mycelium' },
+  { key: 'maloka', name: 'Maloka' },
+  { key: 'machinaTemporis', name: 'Clockwork' },
+  { key: 'tree', name: 'Branches' },
+  { key: 'underwater', name: 'Abyss' },
+  { key: 'lavaTouch', name: 'Lava Lamp' },
+  { key: 'jellyfish2d', name: 'Drift' },
+  { key: 'portaDimensionum', name: 'Portal' },
+  { key: 'mountains', name: 'Mountains' },
+];
+
+const KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 import StringsMode from './components/StringsMode';
 import DroneMode from './components/DroneMode';
 
@@ -1160,6 +1183,7 @@ function Still() {
                 { key: 'gaze', icon: '◯', label: 'Gaze' },
                 { key: 'breathwork', icon: '◎', label: 'Breathe' },
                 { key: 'zenboard', icon: '∞', label: 'Impermanence' },
+                { key: 'zengarden', icon: '⋮⋮⋮', label: 'Zen Garden' },
               ];
               const currentMode = modes.find(m => m.key === view) || modes[0];
               return (
@@ -1297,6 +1321,13 @@ function Still() {
         {/* Zen Water Board - Draw with water on stone */}
         {view === 'zenboard' && (
           <ZenWaterBoard primaryHue={settings.primaryHue} />
+        )}
+
+        {/* Zen Garden - 3D sand raking */}
+        {view === 'zengarden' && (
+          <React.Suspense fallback={<div style={{ position: 'absolute', inset: 0, background: '#000' }} />}>
+            <ZenGardenMode primaryHue={settings.primaryHue} />
+          </React.Suspense>
         )}
 
         {/* Gaze View - Sacred Geometry */}
