@@ -28,8 +28,8 @@ const KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 import StringsMode from './components/StringsMode';
 import DroneMode from './components/DroneMode';
 
-// Lazy load ZenGardenMode to reduce initial bundle size
-const ZenGardenMode = React.lazy(() => import('./components/ZenGardenMode'));
+// Lazy load ZenGardenMode to reduce initial bundle size (temporarily disabled)
+// const ZenGardenMode = React.lazy(() => import('./components/ZenGardenMode'));
 
 // Destructure React hooks for compatibility with original code
 const { useState, useEffect, useRef, useCallback } = React;
@@ -848,7 +848,7 @@ function Still() {
                 { key: 'strings', icon: '𝄢', label: 'Strings' },
                 { key: 'gaze', icon: '◯', label: 'Gaze' },
                 { key: 'breathwork', icon: '◎', label: 'Breathe' },
-                { key: 'zengarden', icon: '⋮⋮⋮', label: 'Zen Garden' },
+                // { key: 'zengarden', icon: '⋮⋮⋮', label: 'Zen Garden' }, // temporarily disabled
               ];
               const currentMode = modes.find(m => m.key === view) || modes[0];
               return (
@@ -1000,12 +1000,12 @@ function Still() {
           </div>
         )}
 
-        {/* Zen Garden - Meditative sandbox */}
-        {view === 'zengarden' && (
+        {/* Zen Garden - Meditative sandbox (temporarily disabled for debugging) */}
+        {/* {view === 'zengarden' && (
           <React.Suspense fallback={<div style={{ position: 'absolute', inset: 0, background: '#000' }} />}>
             <ZenGardenMode primaryHue={primaryHue} />
           </React.Suspense>
-        )}
+        )} */}
 
         {/* Strings - Multi-instrument mode */}
         {view === 'strings' && (
